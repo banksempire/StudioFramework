@@ -1,0 +1,767 @@
+/* ═══════════════════════════════════════════════════════════════════════════
+   Studio Framework — VSCode-inspired Theme
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+:root {
+  --sf-bg: #1e1e1e;
+  --sf-bg-light: #252526;
+  --sf-bg-lighter: #2d2d2d;
+  --sf-bg-hover: #2a2d2e;
+  --sf-border: #3c3c3c;
+  --sf-text: #cccccc;
+  --sf-text-muted: #858585;
+  --sf-text-bright: #e0e0e0;
+  --sf-accent: #007acc;
+  --sf-accent-hover: #1a8ad4;
+  --sf-active: #37373d;
+  --sf-selection: #264f78;
+  --sf-font: 'Segoe UI', -apple-system, BlinkMacSystemFont, sans-serif;
+  --sf-mono: 'Consolas', 'Fira Code', 'JetBrains Mono', monospace;
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html, body, #app {
+  height: 100%;
+  width: 100%;
+  overflow: hidden;
+  background: var(--sf-bg);
+  color: var(--sf-text);
+  font-family: var(--sf-font);
+  font-size: 13px;
+  user-select: none;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   Root Layout
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+.sf-root {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  width: 100%;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   Menu Bar
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+.sf-menu-bar {
+  display: flex;
+  align-items: center;
+  height: 30px;
+  background: var(--sf-bg-lighter);
+  border-bottom: 1px solid var(--sf-border);
+  flex-shrink: 0;
+  -webkit-app-region: drag;
+}
+
+.sf-menu-items {
+  display: flex;
+  height: 100%;
+  -webkit-app-region: no-drag;
+}
+
+.sf-menu-item {
+  position: relative;
+  padding: 0 10px;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+  color: var(--sf-text);
+  font-size: 13px;
+  white-space: nowrap;
+}
+
+.sf-menu-item:hover {
+  background: var(--sf-active);
+}
+
+.sf-menu-dropdown {
+  display: none;
+  position: absolute;
+  top: 100%;
+  left: 0;
+  min-width: 200px;
+  background: var(--sf-bg-lighter);
+  border: 1px solid var(--sf-border);
+  border-top: none;
+  z-index: 1000;
+  padding: 4px 0;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.4);
+}
+
+.sf-menu-dropdown.open {
+  display: block;
+}
+
+.sf-menu-dropdown-item {
+  padding: 5px 20px;
+  cursor: pointer;
+  color: var(--sf-text);
+  font-size: 13px;
+}
+
+.sf-menu-dropdown-item:hover {
+  background: var(--sf-accent);
+  color: #fff;
+}
+
+.sf-menu-separator {
+  height: 1px;
+  background: var(--sf-border);
+  margin: 4px 10px;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   Workbench (Docker + TagWindow + AppFrame + PropertyWindow)
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+.sf-workbench {
+  display: flex;
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   Docker (left icon bar)
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+.sf-docker {
+  display: flex;
+  flex-direction: column;
+  width: 48px;
+  background: var(--sf-bg-lighter);
+  border-right: 1px solid var(--sf-border);
+  flex-shrink: 0;
+  padding-top: 4px;
+  gap: 2px;
+}
+
+.sf-docker-handle {
+  width: 100%;
+  height: 8px;
+  flex-shrink: 0;
+}
+
+.sf-docker-tag {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 48px;
+  height: 48px;
+  cursor: pointer;
+  color: var(--sf-text-muted);
+  border-left: 2px solid transparent;
+  transition: color 0.15s;
+}
+
+.sf-docker-tag:hover {
+  color: var(--sf-text);
+}
+
+.sf-docker-tag.active {
+  color: var(--sf-text-bright);
+  border-left-color: var(--sf-text-bright);
+}
+
+.sf-docker-tag-icon {
+  font-size: 24px;
+  line-height: 1;
+}
+
+.sf-docker-tag-badge {
+  position: absolute;
+  top: 4px;
+  right: 6px;
+  background: var(--sf-accent);
+  color: #fff;
+  font-size: 10px;
+  font-weight: bold;
+  min-width: 16px;
+  height: 16px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 4px;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   Tag Window (expandable sidebar)
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+.sf-tag-window {
+  width: 260px;
+  background: var(--sf-bg-light);
+  border-right: 1px solid var(--sf-border);
+  display: flex;
+  flex-direction: column;
+  flex-shrink: 0;
+  overflow: hidden;
+  transition: width 0.2s;
+}
+
+.sf-tag-window-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 12px;
+  height: 35px;
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--sf-text-muted);
+  flex-shrink: 0;
+}
+
+.sf-tag-window-collapse {
+  background: none;
+  border: none;
+  color: var(--sf-text-muted);
+  cursor: pointer;
+  font-size: 14px;
+  padding: 2px 6px;
+  border-radius: 3px;
+}
+
+.sf-tag-window-collapse:hover {
+  background: var(--sf-active);
+  color: var(--sf-text);
+}
+
+.sf-tag-window-content {
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+
+/* ─── File Tree ──────────────────────────────────────────────────────────── */
+
+.sf-file-tree {
+  padding: 4px 0;
+}
+
+.sf-file-item {
+  display: flex;
+  align-items: center;
+  padding: 4px 12px;
+  cursor: pointer;
+  white-space: nowrap;
+  font-size: 13px;
+  gap: 4px;
+}
+
+.sf-file-item:hover {
+  background: var(--sf-bg-hover);
+}
+
+.sf-file-item.indent { padding-left: 28px; }
+.sf-file-item.indent2 { padding-left: 44px; }
+
+.sf-file-arrow {
+  font-size: 10px;
+  width: 14px;
+  text-align: center;
+  color: var(--sf-text-muted);
+}
+
+/* ─── Search ─────────────────────────────────────────────────────────────── */
+
+.sf-search-panel {
+  padding: 8px;
+}
+
+.sf-search-box {
+  display: flex;
+  gap: 4px;
+  margin-bottom: 8px;
+}
+
+.sf-search-box input {
+  flex: 1;
+  background: var(--sf-bg);
+  border: 1px solid var(--sf-border);
+  color: var(--sf-text);
+  padding: 4px 8px;
+  font-size: 13px;
+  outline: none;
+  font-family: var(--sf-font);
+}
+
+.sf-search-box input:focus {
+  border-color: var(--sf-accent);
+}
+
+.sf-search-box button {
+  background: var(--sf-bg);
+  border: 1px solid var(--sf-border);
+  color: var(--sf-text);
+  cursor: pointer;
+  padding: 4px 8px;
+}
+
+.sf-search-results {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.sf-search-result {
+  padding: 4px 8px;
+  cursor: pointer;
+  font-size: 12px;
+}
+
+.sf-search-result:hover {
+  background: var(--sf-bg-hover);
+}
+
+.sf-search-file {
+  color: var(--sf-accent);
+  display: block;
+}
+
+.sf-search-match {
+  color: var(--sf-text-muted);
+}
+
+/* ─── Source Control ─────────────────────────────────────────────────────── */
+
+.sf-scm-panel {
+  padding: 8px;
+}
+
+.sf-scm-section {
+  margin-bottom: 12px;
+}
+
+.sf-scm-section-title {
+  font-weight: 600;
+  font-size: 12px;
+  text-transform: uppercase;
+  margin-bottom: 4px;
+  color: var(--sf-text-muted);
+}
+
+.sf-scm-file {
+  padding: 3px 8px;
+  font-family: var(--sf-mono);
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.sf-scm-file.modified { color: #e2b714; }
+.sf-scm-file.added { color: #4ec9b0; }
+.sf-scm-file:hover { background: var(--sf-bg-hover); }
+
+.sf-scm-empty {
+  color: var(--sf-text-muted);
+  padding: 4px 8px;
+  font-style: italic;
+  font-size: 12px;
+}
+
+.sf-scm-commit {
+  display: flex;
+  gap: 4px;
+  margin-top: 8px;
+}
+
+.sf-scm-commit input {
+  flex: 1;
+  background: var(--sf-bg);
+  border: 1px solid var(--sf-border);
+  color: var(--sf-text);
+  padding: 4px 8px;
+  font-size: 13px;
+  outline: none;
+  font-family: var(--sf-font);
+}
+
+.sf-scm-commit button {
+  background: var(--sf-accent);
+  border: none;
+  color: #fff;
+  padding: 4px 12px;
+  cursor: pointer;
+  font-size: 13px;
+}
+
+/* ─── Extensions ─────────────────────────────────────────────────────────── */
+
+.sf-ext-panel {
+  padding: 8px;
+}
+
+.sf-ext-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px;
+  cursor: pointer;
+  border-radius: 4px;
+}
+
+.sf-ext-item:hover {
+  background: var(--sf-bg-hover);
+}
+
+.sf-ext-item span:first-child {
+  font-size: 22px;
+}
+
+.sf-ext-item strong {
+  font-size: 13px;
+}
+
+.sf-ext-item small {
+  color: var(--sf-text-muted);
+  font-size: 11px;
+}
+
+/* ─── Settings ───────────────────────────────────────────────────────────── */
+
+.sf-settings-panel {
+  padding: 8px;
+}
+
+.sf-settings-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 6px 8px;
+}
+
+.sf-settings-item label {
+  font-size: 13px;
+}
+
+.sf-settings-item input[type="number"] {
+  width: 60px;
+  background: var(--sf-bg);
+  border: 1px solid var(--sf-border);
+  color: var(--sf-text);
+  padding: 2px 6px;
+  font-size: 13px;
+  text-align: right;
+  outline: none;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   App Frame
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+.sf-app-frame {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-width: 0;
+  background: var(--sf-bg);
+}
+
+/* ─── Tab Bar ────────────────────────────────────────────────────────────── */
+
+.sf-tab-bar {
+  display: flex;
+  align-items: center;
+  height: 35px;
+  background: var(--sf-bg-light);
+  flex-shrink: 0;
+  overflow: hidden;
+}
+
+.sf-tab-container {
+  display: flex;
+  flex: 1;
+  overflow-x: auto;
+  overflow-y: hidden;
+  height: 100%;
+}
+
+.sf-tab-container::-webkit-scrollbar { height: 3px; }
+.sf-tab-container::-webkit-scrollbar-thumb { background: var(--sf-border); }
+
+.sf-tab {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 0 12px;
+  height: 100%;
+  cursor: pointer;
+  background: var(--sf-bg);
+  border-right: 1px solid var(--sf-border);
+  color: var(--sf-text-muted);
+  white-space: nowrap;
+  font-size: 13px;
+  min-width: 0;
+  flex-shrink: 0;
+}
+
+.sf-tab:hover {
+  background: var(--sf-bg-hover);
+}
+
+.sf-tab.active {
+  background: var(--sf-bg);
+  color: var(--sf-text);
+  border-top: 2px solid var(--sf-accent);
+}
+
+.sf-tab-icon {
+  font-size: 14px;
+}
+
+.sf-tab-label {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.sf-tab-close {
+  font-size: 12px;
+  padding: 2px;
+  border-radius: 3px;
+  visibility: hidden;
+}
+
+.sf-tab:hover .sf-tab-close,
+.sf-tab.active .sf-tab-close {
+  visibility: visible;
+}
+
+.sf-tab-close:hover {
+  background: rgba(255,255,255,0.15);
+  color: var(--sf-text-bright);
+}
+
+.sf-tab-new {
+  background: none;
+  border: none;
+  color: var(--sf-text-muted);
+  cursor: pointer;
+  font-size: 18px;
+  padding: 0 12px;
+  height: 100%;
+  flex-shrink: 0;
+}
+
+.sf-tab-new:hover {
+  color: var(--sf-text);
+  background: var(--sf-bg-hover);
+}
+
+/* ─── Panel Container ────────────────────────────────────────────────────── */
+
+.sf-panel-container {
+  flex: 1;
+  overflow: auto;
+  position: relative;
+}
+
+/* ─── Welcome Panel ──────────────────────────────────────────────────────── */
+
+.sf-welcome {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  background: var(--sf-bg);
+}
+
+.sf-welcome-content {
+  text-align: center;
+  max-width: 500px;
+}
+
+.sf-welcome-content h1 {
+  font-size: 32px;
+  font-weight: 300;
+  margin-bottom: 8px;
+  color: var(--sf-text-bright);
+}
+
+.sf-welcome-content p {
+  color: var(--sf-text-muted);
+  margin-bottom: 32px;
+  font-size: 14px;
+}
+
+.sf-welcome-shortcuts {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  text-align: left;
+}
+
+.sf-shortcut {
+  font-size: 13px;
+  color: var(--sf-text);
+}
+
+.sf-shortcut kbd {
+  display: inline-block;
+  background: var(--sf-bg-lighter);
+  border: 1px solid var(--sf-border);
+  border-radius: 3px;
+  padding: 1px 8px;
+  margin-right: 8px;
+  font-family: var(--sf-mono);
+  font-size: 12px;
+  min-width: 60px;
+  text-align: center;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   Property Window (right sidebar)
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+.sf-property-window {
+  width: 260px;
+  background: var(--sf-bg-light);
+  border-left: 1px solid var(--sf-border);
+  display: flex;
+  flex-direction: column;
+  flex-shrink: 0;
+  overflow: hidden;
+}
+
+.sf-property-window-header {
+  padding: 0 12px;
+  height: 35px;
+  display: flex;
+  align-items: center;
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--sf-text-muted);
+  flex-shrink: 0;
+}
+
+.sf-property-sections {
+  flex: 1;
+  overflow-y: auto;
+}
+
+.sf-property-section {
+  padding: 8px 0;
+}
+
+.sf-property-section-title {
+  padding: 6px 12px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--sf-text);
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+}
+
+.sf-property-field {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 5px 12px;
+  font-size: 13px;
+}
+
+.sf-property-field label {
+  color: var(--sf-text-muted);
+  flex-shrink: 0;
+  margin-right: 8px;
+}
+
+.sf-property-field input[type="text"],
+.sf-property-field input[type="number"],
+.sf-property-field select {
+  background: var(--sf-bg);
+  border: 1px solid var(--sf-border);
+  color: var(--sf-text);
+  padding: 2px 6px;
+  font-size: 13px;
+  outline: none;
+  font-family: var(--sf-font);
+  width: 120px;
+}
+
+.sf-property-field input:focus,
+.sf-property-field select:focus {
+  border-color: var(--sf-accent);
+}
+
+.sf-property-field input[type="checkbox"] {
+  accent-color: var(--sf-accent);
+}
+
+.sf-property-field select {
+  cursor: pointer;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   Status Bar
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+.sf-status-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: 24px;
+  background: var(--sf-accent);
+  color: #fff;
+  font-size: 12px;
+  padding: 0 10px;
+  flex-shrink: 0;
+}
+
+.sf-status-left,
+.sf-status-right {
+  display: flex;
+  gap: 16px;
+}
+
+.sf-status-item {
+  white-space: nowrap;
+  cursor: default;
+}
+
+.sf-status-item:hover {
+  opacity: 0.8;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   Scrollbar styling
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--sf-border);
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #555;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   Selection
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+::selection {
+  background: var(--sf-selection);
+}

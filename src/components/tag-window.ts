@@ -1,0 +1,57 @@
+import { Component } from '../core/component.js';
+
+export class TagWindow extends Component {
+  private titleEl: HTMLElement;
+  private contentEl: HTMLElement;
+  private _visible: boolean = true;
+  private width: number = 260;
+
+  constructor(title: string = 'Explorer') {
+    super('div', { className: 'sf-tag-window' });
+
+    const header = document.createElement('div');
+    header.className = 'sf-tag-window-header';
+
+    this.titleEl = document.createElement('span');
+    this.titleEl.className = 'sf-tag-window-title';
+    this.titleEl.textContent = title;
+    header.appendChild(this.titleEl);
+
+    const collapseBtn = document.createElement('button');
+    collapseBtn.className = 'sf-tag-window-collapse';
+    collapseBtn.textContent = '✕';
+    collapseBtn.addEventListener('click', () => this.toggle());
+    header.appendChild(collapseBtn);
+
+    this.el.appendChild(header);
+
+    this.contentEl = document.createElement('div');
+    this.contentEl.className = 'sf-tag-window-content';
+    this.el.appendChild(this.contentEl);
+  }
+
+  setContent(component: Component): this {
+    this.contentEl.innerHTML = '';
+    this.contentEl.appendChild(component.el);
+    return this;
+  }
+
+  setTitle(title: string): void {
+    this.titleEl.textContent = title;
+  }
+
+  toggle(): void {
+    this._visible = !this._visible;
+    if (this._visible) {
+      this.el.style.width = this.width + 'px';
+      this.el.style.display = '';
+    } else {
+      this.el.style.width = '0';
+      this.el.style.display = 'none';
+    }
+  }
+
+  get visible(): boolean {
+    return this._visible;
+  }
+}

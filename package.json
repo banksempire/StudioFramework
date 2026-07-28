@@ -1,0 +1,15 @@
+{
+  "name": "studioframework",
+  "version": "1.0.0",
+  "description": "VSCode-like UI framework in TypeScript",
+  "type": "module",
+  "scripts": {
+    "dev": "vite --host 0.0.0.0 --port 7492",
+    "build": "tsc && vite build",
+    "preview": "vite preview"
+  },
+  "devDependencies": {
+    "typescript": "^5.7.0",
+    "vite": "^6.0.0"
+  }
+}
