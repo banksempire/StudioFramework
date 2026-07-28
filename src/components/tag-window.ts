@@ -41,14 +41,20 @@ export class TagWindow extends Component {
   }
 
   toggle(): void {
-    this._visible = !this._visible;
-    if (this._visible) {
-      this.el.style.width = this.width + 'px';
-      this.el.style.display = '';
-    } else {
-      this.el.style.width = '0';
-      this.el.style.display = 'none';
-    }
+    if (this._visible) this.collapse();
+    else this.expand();
+  }
+
+  expand(): void {
+    this._visible = true;
+    this.el.style.width = this.width + 'px';
+    this.el.style.display = '';
+  }
+
+  collapse(): void {
+    this._visible = false;
+    this.el.style.width = '0';
+    this.el.style.display = 'none';
   }
 
   get visible(): boolean {

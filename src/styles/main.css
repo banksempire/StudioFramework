@@ -54,6 +54,7 @@ html, body, #app {
 .sf-menu-bar {
   display: flex;
   align-items: center;
+  justify-content: space-between;
   height: 30px;
   background: var(--sf-bg-lighter);
   border-bottom: 1px solid var(--sf-border);
@@ -117,6 +118,33 @@ html, body, #app {
   height: 1px;
   background: var(--sf-border);
   margin: 4px 10px;
+}
+
+/* ─── Menu Actions (right side) ─────────────────────────────────────────── */
+
+.sf-menu-actions {
+  display: flex;
+  align-items: center;
+  height: 100%;
+  -webkit-app-region: no-drag;
+}
+
+.sf-menu-action-btn {
+  background: none;
+  border: none;
+  color: var(--sf-text-muted);
+  cursor: pointer;
+  font-size: 14px;
+  padding: 0 10px;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.sf-menu-action-btn:hover {
+  background: var(--sf-active);
+  color: var(--sf-text);
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════

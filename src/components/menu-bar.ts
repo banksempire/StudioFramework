@@ -2,12 +2,17 @@ import { Component } from '../core/component.js';
 
 export class MenuBar extends Component {
   private menuContainer: Component;
+  private actionsContainer: HTMLElement;
 
   constructor() {
     super('div', { className: 'sf-menu-bar' });
 
     this.menuContainer = new Component('div', { className: 'sf-menu-items' });
     this.el.appendChild(this.menuContainer.el);
+
+    this.actionsContainer = document.createElement('div');
+    this.actionsContainer.className = 'sf-menu-actions';
+    this.el.appendChild(this.actionsContainer);
   }
 
   addMenu(label: string, items: { label: string; action?: () => void; separator?: boolean }[]): this {
@@ -55,6 +60,19 @@ export class MenuBar extends Component {
     });
 
     this.menuContainer.el.appendChild(menuItem);
+    return this;
+  }
+
+  addAction(icon: string, tooltip: string, onClick: () => void): this {
+    const btn = document.createElement('button');
+    btn.className = 'sf-menu-action-btn';
+    btn.textContent = icon;
+    btn.title = tooltip;
+    btn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      onClick();
+    });
+    this.actionsContainer.appendChild(btn);
     return this;
   }
 

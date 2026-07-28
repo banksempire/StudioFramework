@@ -15,6 +15,8 @@ export interface PropertyField {
 
 export class PropertyWindow extends Component {
   private contents: Component;
+  private _visible: boolean = true;
+  private width: number = 260;
 
   constructor() {
     super('div', { className: 'sf-property-window' });
@@ -26,6 +28,27 @@ export class PropertyWindow extends Component {
 
     this.contents = new Component('div', { className: 'sf-property-sections' });
     this.el.appendChild(this.contents.el);
+  }
+
+  toggle(): void {
+    if (this._visible) this.collapse();
+    else this.expand();
+  }
+
+  expand(): void {
+    this._visible = true;
+    this.el.style.width = this.width + 'px';
+    this.el.style.display = '';
+  }
+
+  collapse(): void {
+    this._visible = false;
+    this.el.style.width = '0';
+    this.el.style.display = 'none';
+  }
+
+  get visible(): boolean {
+    return this._visible;
   }
 
   setSections(sections: PropertySection[]): void {

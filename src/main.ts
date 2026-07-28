@@ -123,6 +123,11 @@ propertyWindow.setSections([
 ]);
 workbench.appendChild(propertyWindow.el);
 
+// ─── Menu bar action: toggle property window ─────────────────────────────
+menuBar.addAction('◫', 'Toggle Property Window', () => {
+  propertyWindow.toggle();
+});
+
 // 3. Status Bar
 const statusBar = new StatusBar();
 statusBar.setItems([
@@ -138,6 +143,17 @@ root.appendChild(statusBar.el);
 // ─── Docker → TagWindow interaction ─────────────────────────────────────────
 
 docker.onTagSelected = (tagId: string) => {
+  // Single click: expand tag window if collapsed, then switch content
+  if (!tagWindow.visible) tagWindow.expand();
+  switchTagContent(tagId);
+};
+
+docker.onTagDoubleClicked = (tagId: string) => {
+  // Double click: collapse the tag window
+  tagWindow.collapse();
+};
+
+function switchTagContent(tagId: string) {
   switch (tagId) {
     case 'explorer':
       tagWindow.setTitle('Files');
@@ -164,7 +180,7 @@ docker.onTagSelected = (tagId: string) => {
 
 // Activate explorer by default
 docker.setActive('explorer');
-showFileExplorer(tagWindow);
+switchTagContent('explorer');
 
 // ─── AppFrame tab interaction ───────────────────────────────────────────────
 

@@ -10,7 +10,10 @@ export interface DockerTagConfig {
 export class Docker extends Component {
   private tags: Map<string, { el: HTMLElement; config: DockerTagConfig }> = new Map();
   private activeTagId: string | null = null;
+  private clickTimer: ReturnType<typeof setTimeout> | null = null;
+  private lastClickedTagId: string | null = null;
   public onTagSelected?: (tagId: string) => void;
+  public onTagDoubleClicked?: (tagId: string) => void;
 
   constructor() {
     super('div', { className: 'sf-docker' });
@@ -39,7 +42,23 @@ export class Docker extends Component {
 
     tagEl.addEventListener('click', () => {
       this.setActive(config.id);
-      this.onTagSelected?.(config.id);
+
+      // Double-click detection
+      if (this.clickTimer && this.lastClickedTagId === config.id) {
+        // Double click
+        clearTimeout(this.clickTimer);
+        this.clickTimer = null;
+        this.lastClickedTagId = null;
+        this.onTagDoubleClicked?.(config.id);
+      } else {
+        // First click — wait to see if it's a double-click
+        this.lastClickedTagId = config.id;
+        this.clickTimer = setTimeout(() => {
+          this.clickTimer = null;
+          this.lastClickedTagId = null;
+          this.onTagSelected?.(config.id);
+        }, 300);
+      }
     });
 
     this.el.appendChild(tagEl);
