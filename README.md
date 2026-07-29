@@ -98,6 +98,8 @@ Top bar with dropdown menus, a left toggle button (48px wide, matching Docker), 
 | ☰ | Far left | 48px | Toggle Docker + DockerPanel |
 | ◫ | Far right | auto | Toggle Property Panel |
 
+Menus are defined in the `menus` array inside `MenuBar.vue`. Each menu has a `label` and `items` array with `{ label, action?, separator? }`.
+
 ### Docker
 
 ```vue
@@ -165,11 +167,16 @@ All colors are defined as CSS custom properties in `src/styles/main.css`. To cre
   --sf-bg: #1e1e1e;
   --sf-bg-light: #252526;
   --sf-bg-lighter: #2d2d2d;
+  --sf-bg-hover: #2a2d2e;
+  --sf-border: #3c3c3c;
   --sf-text: #cccccc;
   --sf-text-muted: #858585;
-  --sf-text-bright: #ffffff;
-  --sf-border: #3c3c3c;
-  --sf-active: #37373d;
+  --sf-text-bright: #e0e0e0;
   --sf-accent: #007acc;
+  --sf-accent-hover: #1a8ad4;
+  --sf-active: #37373d;
+  --sf-selection: #264f78;
+  --sf-font: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  --sf-mono: 'Consolas', 'Courier New', monospace;
 }
 ```
