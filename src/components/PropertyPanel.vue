@@ -7,14 +7,14 @@ defineProps<{
 }>();
 
 const emit = defineEmits<{
-  'update:width': [width: number];
+  'collapse': [];
 }>();
 
-const { width, dragging, onMouseDown } = useResize({
+const { width, dragging, willCollapse, onMouseDown } = useResize({
   min: 180,
   max: 500,
   direction: 'left',
-  onResize: (w) => emit('update:width', w),
+  onCollapse: () => emit('collapse'),
 });
 
 interface FieldDef {
@@ -58,7 +58,10 @@ const sections: Section[] = reactive([
 <template>
   <div
     class="sf-property-panel"
-    :class="{ 'sf-property-panel--dragging': dragging }"
+    :class="{
+      'sf-property-panel--dragging': dragging,
+      'sf-property-panel--will-collapse': willCollapse,
+    }"
     :style="visible ? { width: width + 'px' } : { width: '0', display: 'none' }"
   >
     <div

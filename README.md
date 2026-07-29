@@ -13,7 +13,7 @@ A VSCode-like UI framework built with **Vue 3** + **TypeScript**. Provides a ful
 - **Sidebar Toggle** — ☰ button to hide/restore left sidebar, remembers panel state
 - **Panel Toggle** — ◫ button to show/hide the property panel
 - **Double-click Dock Tags** — toggles Docker Panel expansion
-- **Resizable Panels** — drag panel edges to resize Docker Panel and Property Panel
+- **Resizable Panels** — drag panel edges to resize (180–500px). Dragging past ~80px collapses the panel with a live glow indicator on the opposite edge
 - **VSCode Dark Theme** — CSS custom properties for easy re-theming
 
 ## Layout
@@ -132,10 +132,15 @@ Menus are defined in the `menus` array inside `MenuBar.vue`. Each menu has a `la
 <DockerPanel
   :active-tag="activeTag"
   :visible="visible"
+  @collapse="onPanelCollapse"
 />
 ```
 
 Content switches via `v-if` based on `activeTag`. Add new panels by extending the template conditionals.
+
+| Event | Payload | Description |
+|:---|:---|:---|
+| `collapse` | – | Emitted when resize drag crosses the collapse threshold |
 
 ### Workspace
 
@@ -148,10 +153,17 @@ Tabs and content are self-contained. Edit the `tabs` ref to customize.
 ### PropertyPanel
 
 ```vue
-<PropertyPanel :visible="visible" />
+<PropertyPanel
+  :visible="visible"
+  @collapse="onPanelCollapse"
+/>
 ```
 
 Form fields use `v-model` for two-way binding. Edit the `sections` reactive array to add/remove fields.
+
+| Event | Payload | Description |
+|:---|:---|:---|
+| `collapse` | – | Emitted when resize drag crosses the collapse threshold |
 
 ### StatusBar
 
@@ -160,6 +172,31 @@ Form fields use `v-model` for two-way binding. Edit the `sections` reactive arra
 ```
 
 Left and right items are defined in the component. Edit `leftItems` / `rightItems` arrays.
+
+## Composable
+
+### useResize
+
+Reusable resize logic for panel edges.
+
+```ts
+import { useResize } from '../composables/useResize.js';
+
+const { width, dragging, willCollapse, onMouseDown } = useResize({
+  min: 180,              // Minimum visible width (px)
+  max: 500,              // Maximum width (px)
+  direction: 'right',    // 'left' | 'right' — which edge the handle is on
+  collapseThreshold: 80, // Width below which collapse triggers on mouseup
+  onCollapse: () => { … },
+});
+```
+
+| Return | Type | Description |
+|:---|:---|:---|
+| `width` | `Ref<number>` | Current panel width |
+| `dragging` | `Ref<boolean>` | `true` while the user is dragging |
+| `willCollapse` | `Ref<boolean>` | `true` when drag crosses collapse threshold (live indicator) |
+| `onMouseDown` | `(e: MouseEvent) => void` | Bind to the resize handle's `@mousedown` |
 
 ## Theme
 

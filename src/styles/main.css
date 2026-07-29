@@ -322,6 +322,28 @@ html, body, #app {
   left: 0;
 }
 
+/* ─── Collapse indicator on opposite edge during drag ────────────────── */
+
+.sf-docker-panel--will-collapse {
+  /* glow on left edge (opposite of right resize handle) */
+  border-left: 2px solid var(--sf-accent);
+  box-shadow: inset 3px 0 6px -2px var(--sf-accent);
+}
+
+.sf-docker-panel--will-collapse .sf-panel-resize-handle {
+  background: transparent !important;
+}
+
+.sf-property-panel--will-collapse {
+  /* glow on right edge (opposite of left resize handle) */
+  border-right: 2px solid var(--sf-accent);
+  box-shadow: inset -3px 0 6px -2px var(--sf-accent);
+}
+
+.sf-property-panel--will-collapse .sf-panel-resize-handle {
+  background: transparent !important;
+}
+
 /* Make panels position-relative for the absolute handle */
 .sf-docker-panel,
 .sf-property-panel {

@@ -8,14 +8,14 @@ const props = defineProps<{
 }>();
 
 const emit = defineEmits<{
-  'update:width': [width: number];
+  'collapse': [];
 }>();
 
-const { width, dragging, onMouseDown } = useResize({
+const { width, dragging, willCollapse, onMouseDown } = useResize({
   min: 180,
   max: 500,
   direction: 'right',
-  onResize: (w) => emit('update:width', w),
+  onCollapse: () => emit('collapse'),
 });
 
 const title = computed(() => {
@@ -34,7 +34,11 @@ const title = computed(() => {
 <template>
   <div
     class="sf-docker-panel"
-    :class="{ 'sf-docker-panel--hidden': !visible, 'sf-docker-panel--dragging': dragging }"
+    :class="{
+      'sf-docker-panel--hidden': !visible,
+      'sf-docker-panel--dragging': dragging,
+      'sf-docker-panel--will-collapse': willCollapse,
+    }"
     :style="visible ? { width: width + 'px' } : {}"
   >
     <div class="sf-docker-panel-header">

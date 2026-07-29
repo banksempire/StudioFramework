@@ -60,11 +60,15 @@ function togglePropertyPanel() {
       <DockerPanel
         :active-tag="activeDockerTag"
         :visible="dockerPanelVisible && leftSidebarVisible"
+        @collapse="dockerPanelVisible = false"
       />
 
       <Workspace />
 
-      <PropertyPanel :visible="propertyPanelVisible" />
+      <PropertyPanel
+        :visible="propertyPanelVisible"
+        @collapse="propertyPanelVisible = false"
+      />
     </div>
 
     <StatusBar />
