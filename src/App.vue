@@ -40,6 +40,8 @@ function toggleLeftPanel() {
 <template>
   <div class="sf-root">
     <MenuBar
+      :left-panel-visible="leftPanelVisible"
+      :right-panel-visible="rightPanelVisible"
       @toggle-left-panel="toggleLeftPanel"
       @toggle-right-panel="rightPanelVisible = !rightPanelVisible"
     />

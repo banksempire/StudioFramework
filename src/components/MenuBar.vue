@@ -1,6 +1,11 @@
 <script setup lang="ts">
 import { ref } from 'vue';
 
+const props = defineProps<{
+  leftPanelVisible?: boolean;
+  rightPanelVisible?: boolean;
+}>();
+
 defineEmits<{
   'toggle-right-panel': [];
   'toggle-left-panel': [];
@@ -92,10 +97,10 @@ function closeAll() {
     <div class="sf-menu-actions sf-menu-actions--left">
       <button
         class="sf-menu-action-btn"
-        title="Toggle Left Panel"
+        :title="props.leftPanelVisible ? 'Collapse Left Panel' : 'Expand Left Panel'"
         @click="$emit('toggle-left-panel')"
       >
-        ☰
+        {{ props.leftPanelVisible ? '\u25A8' : '\u25EB' }}
       </button>
     </div>
 
@@ -126,10 +131,10 @@ function closeAll() {
     <div class="sf-menu-actions">
       <button
         class="sf-menu-action-btn"
-        title="Toggle Right Panel"
+        :title="props.rightPanelVisible ? 'Collapse Right Panel' : 'Expand Right Panel'"
         @click="$emit('toggle-right-panel')"
       >
-        ◫
+        {{ props.rightPanelVisible ? '\u25A7' : '\u25EB' }}
       </button>
     </div>
   </div>
