@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { reactive } from 'vue';
-import { useResize } from '../composables/useResize.js';
+import Panel from './Panel.vue';
 
 defineProps<{
   visible: boolean;
@@ -9,13 +9,6 @@ defineProps<{
 const emit = defineEmits<{
   'collapse': [];
 }>();
-
-const { width, dragging, willCollapse, onMouseDown } = useResize({
-  min: 180,
-  max: 500,
-  direction: 'left',
-  onCollapse: () => emit('collapse'),
-});
 
 interface FieldDef {
   label: string;
@@ -56,26 +49,17 @@ const sections: Section[] = reactive([
 </script>
 
 <template>
-  <div
-    class="sf-right-panel"
-    :class="{
-      'sf-right-panel--dragging': dragging,
-      'sf-right-panel--will-collapse': willCollapse,
-    }"
-    :style="visible ? { width: width + 'px' } : { width: '0', display: 'none' }"
+  <Panel
+    title="Properties"
+    :visible="visible"
+    position="right"
+    @collapse="emit('collapse')"
   >
-    <div
-      class="sf-panel-resize-handle sf-panel-resize-handle--left"
-      @mousedown="onMouseDown"
-    />
+    <div class="sf-property-sections">
+      <div v-for="section in sections" :key="section.title" class="sf-property-section">
+        <div class="sf-property-section-title">{{ section.title }}</div>
 
-    <div class="sf-right-panel-header">Properties</div>
-
-    <div class="sf-right-panel-sections">
-      <div v-for="section in sections" :key="section.title" class="sf-right-panel-section">
-        <div class="sf-right-panel-section-title">{{ section.title }}</div>
-
-        <div v-for="field in section.fields" :key="field.label" class="sf-right-panel-field">
+        <div v-for="field in section.fields" :key="field.label" class="sf-property-field">
           <label>{{ field.label }}</label>
 
           <select
@@ -101,5 +85,5 @@ const sections: Section[] = reactive([
         </div>
       </div>
     </div>
-  </div>
+  </Panel>
 </template>

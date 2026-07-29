@@ -166,7 +166,7 @@ html, body, #app {
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════
-   Workbench (Docker + DockerPanel + Workspace + RightPanel)
+   Workbench (Docker + Panel + Workspace + Panel)
    ═══════════════════════════════════════════════════════════════════════════ */
 
 .sf-workbench {
@@ -241,21 +241,32 @@ html, body, #app {
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════
-   Docker Panel
+   Panel (shared base for DockerPanel and RightPanel)
    ═══════════════════════════════════════════════════════════════════════════ */
 
-.sf-docker-panel {
-  width: 260px;
+.sf-panel {
   background: var(--sf-bg-light);
-  border-right: 1px solid var(--sf-border);
   display: flex;
   flex-direction: column;
   flex-shrink: 0;
   overflow: hidden;
-  transition: width 0.2s;
+  position: relative;
 }
 
-.sf-docker-panel-header {
+.sf-panel--left {
+  border-right: 1px solid var(--sf-border);
+}
+
+.sf-panel--right {
+  border-left: 1px solid var(--sf-border);
+}
+
+.sf-panel--hidden {
+  display: none !important;
+  border: none !important;
+}
+
+.sf-panel-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -269,30 +280,10 @@ html, body, #app {
   flex-shrink: 0;
 }
 
-.sf-docker-panel-collapse {
-  background: none;
-  border: none;
-  color: var(--sf-text-muted);
-  cursor: pointer;
-  font-size: 14px;
-  padding: 2px 6px;
-  border-radius: 3px;
-}
-
-.sf-docker-panel-collapse:hover {
-  background: var(--sf-active);
-  color: var(--sf-text);
-}
-
-.sf-docker-panel-content {
+.sf-panel-content {
   flex: 1;
   overflow-y: auto;
   overflow-x: hidden;
-}
-
-.sf-docker-panel--hidden {
-  display: none !important;
-  border: none !important;
 }
 
 /* ─── Resize Handles ────────────────────────────────────────────────────── */
@@ -309,8 +300,7 @@ html, body, #app {
 }
 
 .sf-panel-resize-handle:hover,
-.sf-docker-panel--dragging .sf-panel-resize-handle,
-.sf-right-panel--dragging .sf-panel-resize-handle {
+.sf-panel--dragging .sf-panel-resize-handle {
   background: var(--sf-accent);
 }
 
@@ -324,30 +314,21 @@ html, body, #app {
 
 /* ─── Collapse indicator on opposite edge during drag ────────────────── */
 
-.sf-docker-panel--will-collapse {
-  /* glow on left edge (opposite of right resize handle) */
-  border-left: 2px solid var(--sf-accent);
+.sf-panel--will-collapse {
   box-shadow: inset 3px 0 6px -2px var(--sf-accent);
 }
 
-.sf-docker-panel--will-collapse .sf-panel-resize-handle {
+.sf-panel--will-collapse .sf-panel-resize-handle {
   background: transparent !important;
 }
 
-.sf-right-panel--will-collapse {
-  /* glow on right edge (opposite of left resize handle) */
+.sf-panel--will-collapse[data-collapse-edge="left"] {
+  border-left: 2px solid var(--sf-accent);
+}
+
+.sf-panel--will-collapse[data-collapse-edge="right"] {
   border-right: 2px solid var(--sf-accent);
   box-shadow: inset -3px 0 6px -2px var(--sf-accent);
-}
-
-.sf-right-panel--will-collapse .sf-panel-resize-handle {
-  background: transparent !important;
-}
-
-/* Make panels position-relative for the absolute handle */
-.sf-docker-panel,
-.sf-right-panel {
-  position: relative;
 }
 
 /* ─── File Tree ──────────────────────────────────────────────────────────── */
@@ -726,42 +707,19 @@ html, body, #app {
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════
-   Right Panel
+   Property Fields (inside Right Panel)
    ═══════════════════════════════════════════════════════════════════════════ */
 
-.sf-right-panel {
-  width: 260px;
-  background: var(--sf-bg-light);
-  border-left: 1px solid var(--sf-border);
-  display: flex;
-  flex-direction: column;
-  flex-shrink: 0;
-  overflow: hidden;
-}
-
-.sf-right-panel-header {
-  padding: 0 12px;
-  height: 35px;
-  display: flex;
-  align-items: center;
-  font-size: 11px;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-  color: var(--sf-text-muted);
-  flex-shrink: 0;
-}
-
-.sf-right-panel-sections {
+.sf-property-sections {
   flex: 1;
   overflow-y: auto;
 }
 
-.sf-right-panel-section {
+.sf-property-section {
   padding: 8px 0;
 }
 
-.sf-right-panel-section-title {
+.sf-property-section-title {
   padding: 6px 12px;
   font-size: 12px;
   font-weight: 600;
@@ -770,7 +728,7 @@ html, body, #app {
   letter-spacing: 0.3px;
 }
 
-.sf-right-panel-field {
+.sf-property-field {
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -778,15 +736,15 @@ html, body, #app {
   font-size: 13px;
 }
 
-.sf-right-panel-field label {
+.sf-property-field label {
   color: var(--sf-text-muted);
   flex-shrink: 0;
   margin-right: 8px;
 }
 
-.sf-right-panel-field input[type="text"],
-.sf-right-panel-field input[type="number"],
-.sf-right-panel-field select {
+.sf-property-field input[type="text"],
+.sf-property-field input[type="number"],
+.sf-property-field select {
   background: var(--sf-bg);
   border: 1px solid var(--sf-border);
   color: var(--sf-text);
@@ -797,16 +755,16 @@ html, body, #app {
   width: 120px;
 }
 
-.sf-right-panel-field input:focus,
-.sf-right-panel-field select:focus {
+.sf-property-field input:focus,
+.sf-property-field select:focus {
   border-color: var(--sf-accent);
 }
 
-.sf-right-panel-field input[type="checkbox"] {
+.sf-property-field input[type="checkbox"] {
   accent-color: var(--sf-accent);
 }
 
-.sf-right-panel-field select {
+.sf-property-field select {
   cursor: pointer;
 }
 

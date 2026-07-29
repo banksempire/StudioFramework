@@ -55,9 +55,10 @@ src/
 ├── components/
 │   ├── MenuBar.vue            # Top bar with dropdown menus + action buttons
 │   ├── Docker.vue             # Left icon bar (Activity Bar)
-│   ├── DockerPanel.vue        # Left panel with content panels
+│   ├── Panel.vue              # Shared panel base (resize + header + slot)
+│   ├── DockerPanel.vue        # Left panel wrapping Panel with content
 │   ├── Workspace.vue          # Centered tabbed editor
-│   ├── RightPanel.vue         # Right panel with form fields
+│   ├── RightPanel.vue         # Right panel wrapping Panel with form fields
 │   └── StatusBar.vue          # Bottom status bar
 ├── composables/
 │   └── useResize.ts          # Resize composable for draggable panel edges
@@ -133,7 +134,38 @@ Menus are defined in the `menus` array inside `MenuBar.vue`. Each menu has a `la
 | `tag-selected` | `tagId: string` | Single click (300ms debounce) |
 | `tag-double-clicked` | `tagId: string` | Double click — toggles panel |
 
+### Panel (base)
+
+Shared panel component handling resize, visibility, and layout. Both `DockerPanel` and `RightPanel` wrap this component.
+
+```vue
+<Panel
+  title="Files"
+  :visible="panelVisible"
+  position="left"
+  @collapse="onCollapse"
+>
+  <p>Slot your panel content here</p>
+</Panel>
+```
+
+| Prop | Type | Description |
+|:---|:---|:---|
+| `title` | `string` | Header title displayed at top |
+| `visible` | `boolean` | Show/hide the panel |
+| `position` | `'left' \| 'right'` | Which side the panel sits on (drives border, handle, and collapse-glow sides) |
+
+| Event | Payload | Description |
+|:---|:---|:---|
+| `collapse` | – | Emitted when resize drag crosses the collapse threshold |
+
+| Slot | Description |
+|:---|:---|
+| _default_ | Panel body content |
+
 ### DockerPanel
+
+Thin wrapper around `Panel` with `position="left"`. Title derived from `activeTag`.
 
 ```vue
 <DockerPanel
@@ -158,6 +190,8 @@ Content switches via `v-if` based on `activeTag`. Add new panels by extending th
 Tabs and content are self-contained. Edit the `tabs` ref to customize.
 
 ### RightPanel
+
+Thin wrapper around `Panel` with `position="right"` and title `"Properties"`.
 
 ```vue
 <RightPanel
