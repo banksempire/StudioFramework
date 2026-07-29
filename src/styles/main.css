@@ -310,7 +310,7 @@ html, body, #app {
 
 .sf-panel-resize-handle:hover,
 .sf-docker-panel--dragging .sf-panel-resize-handle,
-.sf-property-panel--dragging .sf-panel-resize-handle {
+.sf-right-panel--dragging .sf-panel-resize-handle {
   background: var(--sf-accent);
 }
 
@@ -334,19 +334,19 @@ html, body, #app {
   background: transparent !important;
 }
 
-.sf-property-panel--will-collapse {
+.sf-right-panel--will-collapse {
   /* glow on right edge (opposite of left resize handle) */
   border-right: 2px solid var(--sf-accent);
   box-shadow: inset -3px 0 6px -2px var(--sf-accent);
 }
 
-.sf-property-panel--will-collapse .sf-panel-resize-handle {
+.sf-right-panel--will-collapse .sf-panel-resize-handle {
   background: transparent !important;
 }
 
 /* Make panels position-relative for the absolute handle */
 .sf-docker-panel,
-.sf-property-panel {
+.sf-right-panel {
   position: relative;
 }
 
@@ -726,10 +726,10 @@ html, body, #app {
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════
-   Property Panel
+   Right Panel
    ═══════════════════════════════════════════════════════════════════════════ */
 
-.sf-property-panel {
+.sf-right-panel {
   width: 260px;
   background: var(--sf-bg-light);
   border-left: 1px solid var(--sf-border);
@@ -739,7 +739,7 @@ html, body, #app {
   overflow: hidden;
 }
 
-.sf-property-panel-header {
+.sf-right-panel-header {
   padding: 0 12px;
   height: 35px;
   display: flex;
@@ -752,16 +752,16 @@ html, body, #app {
   flex-shrink: 0;
 }
 
-.sf-property-sections {
+.sf-right-panel-sections {
   flex: 1;
   overflow-y: auto;
 }
 
-.sf-property-section {
+.sf-right-panel-section {
   padding: 8px 0;
 }
 
-.sf-property-section-title {
+.sf-right-panel-section-title {
   padding: 6px 12px;
   font-size: 12px;
   font-weight: 600;
@@ -770,7 +770,7 @@ html, body, #app {
   letter-spacing: 0.3px;
 }
 
-.sf-property-field {
+.sf-right-panel-field {
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -778,15 +778,15 @@ html, body, #app {
   font-size: 13px;
 }
 
-.sf-property-field label {
+.sf-right-panel-field label {
   color: var(--sf-text-muted);
   flex-shrink: 0;
   margin-right: 8px;
 }
 
-.sf-property-field input[type="text"],
-.sf-property-field input[type="number"],
-.sf-property-field select {
+.sf-right-panel-field input[type="text"],
+.sf-right-panel-field input[type="number"],
+.sf-right-panel-field select {
   background: var(--sf-bg);
   border: 1px solid var(--sf-border);
   color: var(--sf-text);
@@ -797,16 +797,16 @@ html, body, #app {
   width: 120px;
 }
 
-.sf-property-field input:focus,
-.sf-property-field select:focus {
+.sf-right-panel-field input:focus,
+.sf-right-panel-field select:focus {
   border-color: var(--sf-accent);
 }
 
-.sf-property-field input[type="checkbox"] {
+.sf-right-panel-field input[type="checkbox"] {
   accent-color: var(--sf-accent);
 }
 
-.sf-property-field select {
+.sf-right-panel-field select {
   cursor: pointer;
 }
 

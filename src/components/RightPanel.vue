@@ -57,10 +57,10 @@ const sections: Section[] = reactive([
 
 <template>
   <div
-    class="sf-property-panel"
+    class="sf-right-panel"
     :class="{
-      'sf-property-panel--dragging': dragging,
-      'sf-property-panel--will-collapse': willCollapse,
+      'sf-right-panel--dragging': dragging,
+      'sf-right-panel--will-collapse': willCollapse,
     }"
     :style="visible ? { width: width + 'px' } : { width: '0', display: 'none' }"
   >
@@ -69,13 +69,13 @@ const sections: Section[] = reactive([
       @mousedown="onMouseDown"
     />
 
-    <div class="sf-property-panel-header">Properties</div>
+    <div class="sf-right-panel-header">Properties</div>
 
-    <div class="sf-property-sections">
-      <div v-for="section in sections" :key="section.title" class="sf-property-section">
-        <div class="sf-property-section-title">{{ section.title }}</div>
+    <div class="sf-right-panel-sections">
+      <div v-for="section in sections" :key="section.title" class="sf-right-panel-section">
+        <div class="sf-right-panel-section-title">{{ section.title }}</div>
 
-        <div v-for="field in section.fields" :key="field.label" class="sf-property-field">
+        <div v-for="field in section.fields" :key="field.label" class="sf-right-panel-field">
           <label>{{ field.label }}</label>
 
           <select

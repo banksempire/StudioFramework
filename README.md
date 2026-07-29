@@ -1,6 +1,6 @@
 # Studio Framework
 
-A VSCode-like UI framework built with **Vue 3** + **TypeScript**. Provides a fully functional IDE shell layout with panels, tabs, menus, and property panels — all styled with a VSCode-dark theme.
+A VSCode-like UI framework built with **Vue 3** + **TypeScript**. Provides a fully functional IDE shell layout with panels, tabs, and menus — all styled with a VSCode-dark theme.
 
 ## Features
 
@@ -8,10 +8,10 @@ A VSCode-like UI framework built with **Vue 3** + **TypeScript**. Provides a ful
 - **Docker (Activity Bar)** — left icon bar with badges, active indicators, single/double-click support
 - **Docker Panel** — expandable panel with content switching (File Explorer, Search, SCM, Extensions, Settings)
 - **Workspace** — tabbed editor area with welcome screen and editor placeholder
-- **Property Panel** — right panel with reactive form fields (`v-model` bound)
+- **Right Panel** — right panel with reactive form fields (`v-model` bound)
 - **Status Bar** — bottom bar with left/right-aligned items
 - **Panel Toggle** — ☰ button to hide/restore left panel, remembers panel state
-- **Panel Toggle** — ◫ button to show/hide the property panel
+- **Panel Toggle** — ◫ button to show/hide the right panel
 - **Double-click Dock Tags** — toggles Docker Panel expansion
 - **Resizable Panels** — drag panel edges to resize (180–500px). Dragging past ~80px collapses the panel with a live glow indicator on the opposite edge
 - **VSCode Dark Theme** — CSS custom properties for easy re-theming
@@ -23,7 +23,7 @@ A VSCode-like UI framework built with **Vue 3** + **TypeScript**. Provides a ful
 │ ☰  File  Edit  Selection  View  Help               ◫        │
 ├──────┬───────────────┬──────────────────┬────────────────────┤
 │      │               │                  │                    │
-│ Dock │  Docker       │    Workspace     │  Property          │
+│ Dock │  Docker       │    Workspace     │  Right Panel       │
 │  er  │   Panel       │   (Tabbed)       │   Panel            │
 │      │               │                  │                    │
 ├──────┴───────────────┴──────────────────┴────────────────────┤
@@ -34,7 +34,7 @@ A VSCode-like UI framework built with **Vue 3** + **TypeScript**. Provides a ful
 | UI Element | Description |
 |:---|:---|
 | ☰ (48px) | Toggle left panel — hides/restores Docker + DockerPanel, remembers panel state |
-| ◫ | Toggle Property Panel visibility |
+| ◫ | Toggle Right Panel visibility |
 
 ## Tech Stack
 
@@ -57,7 +57,7 @@ src/
 │   ├── Docker.vue             # Left icon bar (Activity Bar)
 │   ├── DockerPanel.vue        # Left panel with content panels
 │   ├── Workspace.vue          # Centered tabbed editor
-│   ├── PropertyPanel.vue      # Right panel with property form fields
+│   ├── RightPanel.vue         # Right panel with form fields
 │   └── StatusBar.vue          # Bottom status bar
 ├── composables/
 │   └── useResize.ts          # Resize composable for draggable panel edges
@@ -87,19 +87,21 @@ npm run dev
 
 ### MenuBar
 
-Top bar with dropdown menus, a left toggle button (48px wide, matching Docker), and a right property panel toggle.
+Top bar with dropdown menus, a left toggle button (48px wide, matching Docker), and a right panel toggle.
 
 ```vue
 <MenuBar
   @toggle-left-panel="…"
-  @toggle-property-panel="…"
+  @toggle-right-panel="…"
 />
 ```
 
 | Button | Position | Width | Action |
 |:---|:---|:---|:---|
 | ☰ | Far left | 48px | Toggle Docker + DockerPanel |
-| ◫ | Far right | 48px | Toggle Property Panel |
+| ◫ | Far right | 48px | Toggle Right Panel |
+
+Emits `toggle-right-panel` when the ◫ button is clicked.
 
 Menus are defined in the `menus` array inside `MenuBar.vue`. Each menu has a `label` and `items` array with `{ label, action?, separator? }`.
 
@@ -150,10 +152,10 @@ Content switches via `v-if` based on `activeTag`. Add new panels by extending th
 
 Tabs and content are self-contained. Edit the `tabs` ref to customize.
 
-### PropertyPanel
+### RightPanel
 
 ```vue
-<PropertyPanel
+<RightPanel
   :visible="visible"
   @collapse="onPanelCollapse"
 />

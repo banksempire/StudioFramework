@@ -4,14 +4,14 @@ import MenuBar from './components/MenuBar.vue';
 import Docker from './components/Docker.vue';
 import DockerPanel from './components/DockerPanel.vue';
 import Workspace from './components/Workspace.vue';
-import PropertyPanel from './components/PropertyPanel.vue';
+import RightPanel from './components/RightPanel.vue';
 import StatusBar from './components/StatusBar.vue';
 
 const activeDockerTag = ref('explorer');
 const leftPanelVisible = ref(true);
 const dockerPanelVisible = ref(true);
 const savedPanelState = ref(true);
-const propertyPanelVisible = ref(true);
+const rightPanelVisible = ref(true);
 
 function onTagSelected(tagId: string) {
   if (!leftPanelVisible.value) leftPanelVisible.value = true;
@@ -35,17 +35,13 @@ function toggleLeftPanel() {
     dockerPanelVisible.value = savedPanelState.value;
   }
 }
-
-function togglePropertyPanel() {
-  propertyPanelVisible.value = !propertyPanelVisible.value;
-}
 </script>
 
 <template>
   <div class="sf-root">
     <MenuBar
       @toggle-left-panel="toggleLeftPanel"
-      @toggle-property-panel="togglePropertyPanel"
+      @toggle-right-panel="rightPanelVisible = !rightPanelVisible"
     />
 
     <div class="sf-workbench">
@@ -65,9 +61,9 @@ function togglePropertyPanel() {
 
       <Workspace />
 
-      <PropertyPanel
-        :visible="propertyPanelVisible"
-        @collapse="propertyPanelVisible = false"
+      <RightPanel
+        :visible="rightPanelVisible"
+        @collapse="rightPanelVisible = false"
       />
     </div>
 
