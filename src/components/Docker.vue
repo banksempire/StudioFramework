@@ -3,6 +3,8 @@ import { ref } from 'vue';
 
 const props = defineProps<{
   activeTag: string;
+  visible?: boolean;
+  panelVisible?: boolean;
 }>();
 
 const emit = defineEmits<{
@@ -47,13 +49,16 @@ function onTagClick(tagId: string) {
 </script>
 
 <template>
-  <div class="sf-docker">
+  <div
+    class="sf-docker"
+    :style="{ display: visible !== undefined && !visible ? 'none' : '' }"
+  >
     <div class="sf-docker-handle" />
     <div
       v-for="tag in tags"
       :key="tag.id"
       class="sf-docker-tag"
-      :class="{ active: props.activeTag === tag.id }"
+      :class="{ active: props.activeTag === tag.id && props.panelVisible !== false }"
       :title="tag.label"
       @click="onTagClick(tag.id)"
     >

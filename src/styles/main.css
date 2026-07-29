@@ -167,7 +167,6 @@ html, body, #app {
   flex-direction: column;
   width: 48px;
   background: var(--sf-bg-lighter);
-  border-right: 1px solid var(--sf-border);
   flex-shrink: 0;
   padding-top: 4px;
   gap: 2px;
@@ -271,6 +270,11 @@ html, body, #app {
   flex: 1;
   overflow-y: auto;
   overflow-x: hidden;
+}
+
+.sf-docker-panel--hidden {
+  display: none !important;
+  border: none !important;
 }
 
 /* ─── File Tree ──────────────────────────────────────────────────────────── */

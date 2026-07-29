@@ -3,6 +3,7 @@ import { ref } from 'vue';
 
 defineEmits<{
   'toggle-property-panel': [];
+  'toggle-left-sidebar': [];
 }>();
 
 interface MenuItem {
@@ -88,6 +89,16 @@ function closeAll() {
 
 <template>
   <div class="sf-menu-bar" @mouseleave="closeAll">
+    <div class="sf-menu-actions sf-menu-actions--left">
+      <button
+        class="sf-menu-action-btn"
+        title="Toggle Left Sidebar"
+        @click="$emit('toggle-left-sidebar')"
+      >
+        ☰
+      </button>
+    </div>
+
     <div class="sf-menu-items">
       <div
         v-for="menu in menus"

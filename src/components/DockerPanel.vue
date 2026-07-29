@@ -22,7 +22,8 @@ const title = computed(() => {
 <template>
   <div
     class="sf-docker-panel"
-    :style="{ width: visible ? '260px' : '0', display: visible ? '' : 'none' }"
+    :class="{ 'sf-docker-panel--hidden': !visible }"
+    :style="visible ? { width: '260px' } : {}"
   >
     <div class="sf-docker-panel-header">
       <span class="sf-docker-panel-title">{{ title }}</span>
