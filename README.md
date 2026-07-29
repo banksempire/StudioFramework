@@ -177,6 +177,11 @@ Thin wrapper around `Panel` with `position="left"`. Title derived from `activeTa
 
 Content switches via `v-if` based on `activeTag`. Add new panels by extending the template conditionals.
 
+| Prop | Type | Description |
+|:---|:---|:---|
+| `active-tag` | `string` | Which content panel to display (explorer, search, etc.) |
+| `visible` | `boolean` | Show/hide the panel (passed through to Panel) |
+
 | Event | Payload | Description |
 |:---|:---|:---|
 | `collapse` | – | Emitted when resize drag crosses the collapse threshold |
@@ -201,6 +206,10 @@ Thin wrapper around `Panel` with `position="right"` and title `"Properties"`.
 ```
 
 Form fields use `v-model` for two-way binding. Edit the `sections` reactive array to add/remove fields.
+
+| Prop | Type | Description |
+|:---|:---|:---|
+| `visible` | `boolean` | Show/hide the panel (passed through to Panel) |
 
 | Event | Payload | Description |
 |:---|:---|:---|
