@@ -159,6 +159,12 @@ html, body, #app {
   justify-content: flex-start;
 }
 
+/* Right toggle button — same fixed width */
+.sf-menu-actions:not(.sf-menu-actions--left) .sf-menu-action-btn {
+  width: 48px;
+  justify-content: center;
+}
+
 /* ═══════════════════════════════════════════════════════════════════════════
    Workbench (Docker + DockerPanel + Workspace + PropertyPanel)
    ═══════════════════════════════════════════════════════════════════════════ */
@@ -287,6 +293,39 @@ html, body, #app {
 .sf-docker-panel--hidden {
   display: none !important;
   border: none !important;
+}
+
+/* ─── Resize Handles ────────────────────────────────────────────────────── */
+
+.sf-panel-resize-handle {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 4px;
+  cursor: col-resize;
+  z-index: 10;
+  background: transparent;
+  transition: background 0.15s;
+}
+
+.sf-panel-resize-handle:hover,
+.sf-docker-panel--dragging .sf-panel-resize-handle,
+.sf-property-panel--dragging .sf-panel-resize-handle {
+  background: var(--sf-accent);
+}
+
+.sf-panel-resize-handle--right {
+  right: 0;
+}
+
+.sf-panel-resize-handle--left {
+  left: 0;
+}
+
+/* Make panels position-relative for the absolute handle */
+.sf-docker-panel,
+.sf-property-panel {
+  position: relative;
 }
 
 /* ─── File Tree ──────────────────────────────────────────────────────────── */

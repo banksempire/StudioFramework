@@ -1,10 +1,22 @@
 <script setup lang="ts">
 import { computed } from 'vue';
+import { useResize } from '../composables/useResize.js';
 
 const props = defineProps<{
   activeTag: string;
   visible: boolean;
 }>();
+
+const emit = defineEmits<{
+  'update:width': [width: number];
+}>();
+
+const { width, dragging, onMouseDown } = useResize({
+  min: 180,
+  max: 500,
+  direction: 'right',
+  onResize: (w) => emit('update:width', w),
+});
 
 const title = computed(() => {
   const map: Record<string, string> = {
@@ -22,8 +34,8 @@ const title = computed(() => {
 <template>
   <div
     class="sf-docker-panel"
-    :class="{ 'sf-docker-panel--hidden': !visible }"
-    :style="visible ? { width: '260px' } : {}"
+    :class="{ 'sf-docker-panel--hidden': !visible, 'sf-docker-panel--dragging': dragging }"
+    :style="visible ? { width: width + 'px' } : {}"
   >
     <div class="sf-docker-panel-header">
       <span class="sf-docker-panel-title">{{ title }}</span>
@@ -127,5 +139,10 @@ const title = computed(() => {
         </div>
       </div>
     </div>
+
+    <div
+      class="sf-panel-resize-handle sf-panel-resize-handle--right"
+      @mousedown="onMouseDown"
+    />
   </div>
 </template>

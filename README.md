@@ -13,6 +13,7 @@ A VSCode-like UI framework built with **Vue 3** + **TypeScript**. Provides a ful
 - **Sidebar Toggle** — ☰ button to hide/restore left sidebar, remembers panel state
 - **Panel Toggle** — ◫ button to show/hide the property panel
 - **Double-click Dock Tags** — toggles Docker Panel expansion
+- **Resizable Panels** — drag panel edges to resize Docker Panel and Property Panel
 - **VSCode Dark Theme** — CSS custom properties for easy re-theming
 
 ## Layout
@@ -58,6 +59,8 @@ src/
 │   ├── Workspace.vue          # Centered tabbed editor
 │   ├── PropertyPanel.vue      # Right sidebar with property form fields
 │   └── StatusBar.vue          # Bottom status bar
+├── composables/
+│   └── useResize.ts          # Resize composable for draggable panel edges
 ├── styles/
 │   └── main.css               # Global theme + layout CSS
 ├── core/
@@ -96,7 +99,7 @@ Top bar with dropdown menus, a left toggle button (48px wide, matching Docker), 
 | Button | Position | Width | Action |
 |:---|:---|:---|:---|
 | ☰ | Far left | 48px | Toggle Docker + DockerPanel |
-| ◫ | Far right | auto | Toggle Property Panel |
+| ◫ | Far right | 48px | Toggle Property Panel |
 
 Menus are defined in the `menus` array inside `MenuBar.vue`. Each menu has a `label` and `items` array with `{ label, action?, separator? }`.
 

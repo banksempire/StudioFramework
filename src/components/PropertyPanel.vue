@@ -1,9 +1,21 @@
 <script setup lang="ts">
 import { reactive } from 'vue';
+import { useResize } from '../composables/useResize.js';
 
 defineProps<{
   visible: boolean;
 }>();
+
+const emit = defineEmits<{
+  'update:width': [width: number];
+}>();
+
+const { width, dragging, onMouseDown } = useResize({
+  min: 180,
+  max: 500,
+  direction: 'left',
+  onResize: (w) => emit('update:width', w),
+});
 
 interface FieldDef {
   label: string;
@@ -46,8 +58,14 @@ const sections: Section[] = reactive([
 <template>
   <div
     class="sf-property-panel"
-    :style="{ width: visible ? '260px' : '0', display: visible ? '' : 'none' }"
+    :class="{ 'sf-property-panel--dragging': dragging }"
+    :style="visible ? { width: width + 'px' } : { width: '0', display: 'none' }"
   >
+    <div
+      class="sf-panel-resize-handle sf-panel-resize-handle--left"
+      @mousedown="onMouseDown"
+    />
+
     <div class="sf-property-panel-header">Properties</div>
 
     <div class="sf-property-sections">
