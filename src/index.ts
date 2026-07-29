@@ -1,10 +1,12 @@
-import { MenuBar } from './components/menu-bar.js';
-import { Docker } from './components/docker.js';
-import { DockerPanel } from './components/docker-panel.js';
-import { Workspace } from './components/workspace.js';
-import { RightPanel } from './components/right-panel.js';
-import { StatusBar } from './components/status-bar.js';
+// Vue 3 component exports (the real app uses .vue SFCs directly)
+export { default as Panel } from './components/Panel.vue';
+export { default as PanelSubSection } from './components/PanelSubSection.vue';
+export { default as PanelComponent } from './components/PanelComponent.vue';
 
+// Types
+export * from './types/panel.js';
+
+// Legacy DOM-based components (no longer imported by the Vue app)
 export { Component, Container } from './core/component.js';
 export { MenuBar } from './components/menu-bar.js';
 export { Docker } from './components/docker.js';

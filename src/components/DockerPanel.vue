@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed } from 'vue';
+import type { PanelPayload } from '../types/panel.js';
 import Panel from './Panel.vue';
 
 const props = defineProps<{
@@ -22,110 +23,174 @@ const title = computed(() => {
   };
   return map[props.activeTag] || 'Explorer';
 });
+
+const payload = computed<PanelPayload>(() => {
+  switch (props.activeTag) {
+    case 'explorer':
+      return {
+        title: title.value,
+        sections: [
+          {
+            id: 'workspace',
+            label: 'Workspace',
+            subSections: [
+              {
+                id: 'file-tree',
+                displayName: 'Project Files',
+                expanded: true,
+                actionButtons: [
+                  { id: 'refresh', icon: '⟳', tooltip: 'Refresh' },
+                  { id: 'collapse-all', icon: '⊟', tooltip: 'Collapse All' },
+                ],
+                components: [
+                  {
+                    type: 'tree',
+                    id: 'explorer-tree',
+                    contents: [
+                      { id: 'src', label: 'src', icon: '📁', expanded: true, children: [
+                        { id: 'components', label: 'components', icon: '📁', expanded: true, children: [
+                          { id: 'menubar', label: 'MenuBar.vue', icon: '📄' },
+                          { id: 'docker', label: 'Docker.vue', icon: '📄' },
+                          { id: 'workspace', label: 'Workspace.vue', icon: '📄' },
+                        ]},
+                        { id: 'composables', label: 'composables', icon: '📁', children: [
+                          { id: 'useresize', label: 'useResize.ts', icon: '📄' },
+                        ]},
+                        { id: 'styles', label: 'styles', icon: '📁', children: [
+                          { id: 'maincss', label: 'main.css', icon: '📄' },
+                        ]},
+                      ]},
+                      { id: 'package', label: 'package.json', icon: '📄' },
+                      { id: 'tsconfig', label: 'tsconfig.json', icon: '📄' },
+                      { id: 'readme', label: 'README.md', icon: '📄' },
+                    ],
+                  },
+                ],
+              },
+              {
+                id: 'outline',
+                displayName: 'Outline',
+                expanded: false,
+                lazyLoad: true,
+                components: [],
+              },
+            ],
+          },
+        ],
+      };
+
+    case 'search':
+      return {
+        title: title.value,
+        sections: [
+          {
+            id: 'search-section',
+            label: 'Search',
+            subSections: [
+              {
+                id: 'search-files',
+                displayName: 'Search Results',
+                components: [
+                  { type: 'textBox', id: 'search-input', contents: { value: '', placeholder: 'Search files...', label: 'Find' } },
+                  { type: 'label', id: 'search-result-1', contents: { text: 'App.vue — import { ref } from \'vue\'' } },
+                  { type: 'label', id: 'search-result-2', contents: { text: 'MenuBar.vue — addMenu' } },
+                  { type: 'label', id: 'search-result-3', contents: { text: 'Docker.vue — onTagSelected' } },
+                ],
+              },
+            ],
+          },
+        ],
+      };
+
+    case 'source-control':
+      return {
+        title: title.value,
+        sections: [
+          {
+            id: 'scm-section',
+            label: 'Changes',
+            subSections: [
+              {
+                id: 'changes',
+                displayName: 'Changes (3)',
+                components: [
+                  { type: 'label', id: 'change-1', contents: { text: 'M  Workspace.vue' } },
+                  { type: 'label', id: 'change-2', contents: { text: 'A  StatusBar.vue' } },
+                  { type: 'label', id: 'change-3', contents: { text: 'M  main.css' } },
+                ],
+              },
+              {
+                id: 'staged',
+                displayName: 'Staged (0)',
+                components: [
+                  { type: 'label', id: 'staged-empty', contents: { text: 'No staged changes' } },
+                ],
+              },
+              {
+                id: 'commit',
+                displayName: 'Commit',
+                components: [
+                  { type: 'textBox', id: 'commit-msg', contents: { value: '', placeholder: 'Commit message...' } },
+                  { type: 'button', id: 'commit-btn', contents: { label: '✓ Commit', variant: 'primary' } },
+                ],
+              },
+            ],
+          },
+        ],
+      };
+
+    case 'extensions':
+      return {
+        title: title.value,
+        sections: [{
+          id: 'ext',
+          label: 'Extensions',
+          subSections: [
+            {
+              id: 'installed',
+              displayName: 'Installed',
+              components: [
+                { type: 'label', id: 'ext-1', contents: { text: '🧩 Theme: Dark+ — Default dark theme' } },
+                { type: 'label', id: 'ext-2', contents: { text: '🎨 Icon Pack — Material icons' } },
+                { type: 'label', id: 'ext-3', contents: { text: '🐛 Debugger — Integrated debugger' } },
+              ],
+            },
+          ],
+        }],
+      };
+
+    case 'settings':
+      return {
+        title: title.value,
+        sections: [{
+          id: 'settings-sec',
+          label: 'Settings',
+          subSections: [
+            {
+              id: 'editor-settings',
+              displayName: 'Editor',
+              components: [
+                { type: 'slider', id: 'font-size', contents: { min: 10, max: 32, value: 14, label: 'Font Size' } },
+                { type: 'dropdown', id: 'tab-size', contents: { options: ['2', '4', '8'], value: '2', label: 'Tab Size' } },
+                { type: 'checkbox', id: 'auto-save', contents: { checked: true, label: 'Auto Save' } },
+                { type: 'checkbox', id: 'minimap', contents: { checked: true, label: 'Minimap' } },
+              ],
+            },
+          ],
+        }],
+      };
+
+    default:
+      return { title: title.value, sections: [] };
+  }
+});
 </script>
 
 <template>
   <Panel
-    :title="title"
+    :payload="payload"
     :visible="visible"
     position="left"
     @collapse="emit('collapse')"
-  >
-    <!-- File Explorer -->
-    <div v-if="activeTag === 'explorer'" class="sf-file-tree">
-      <div class="sf-file-item folder expanded">
-        <span class="sf-file-arrow">▼</span> 📁 src
-      </div>
-      <div class="sf-file-item indent">
-        <span class="sf-file-arrow">▼</span> 📁 components
-      </div>
-      <div class="sf-file-item indent2">📄 MenuBar.vue</div>
-      <div class="sf-file-item indent2">📄 Docker.vue</div>
-      <div class="sf-file-item indent2">📄 Workspace.vue</div>
-      <div class="sf-file-item indent">📁 core</div>
-      <div class="sf-file-item indent2">📄 component.ts</div>
-      <div class="sf-file-item indent">📁 styles</div>
-      <div class="sf-file-item indent2">📄 main.css</div>
-      <div class="sf-file-item">📁 tests</div>
-      <div class="sf-file-item">📄 package.json</div>
-      <div class="sf-file-item">📄 tsconfig.json</div>
-      <div class="sf-file-item">📄 README.md</div>
-    </div>
-
-    <!-- Search -->
-    <div v-else-if="activeTag === 'search'" class="sf-search-panel">
-      <div class="sf-search-box">
-        <input type="text" placeholder="Search files..." />
-        <button>🔍</button>
-      </div>
-      <div class="sf-search-results">
-        <div class="sf-search-result">
-          <span class="sf-search-file">App.vue</span>
-          <span class="sf-search-match">import { ref } from 'vue'</span>
-        </div>
-        <div class="sf-search-result">
-          <span class="sf-search-file">MenuBar.vue</span>
-          <span class="sf-search-match">addMenu</span>
-        </div>
-        <div class="sf-search-result">
-          <span class="sf-search-file">Docker.vue</span>
-          <span class="sf-search-match">onTagSelected</span>
-        </div>
-      </div>
-    </div>
-
-    <!-- Source Control -->
-    <div v-else-if="activeTag === 'source-control'" class="sf-scm-panel">
-      <div class="sf-scm-section">
-        <div class="sf-scm-section-title">Changes (3)</div>
-        <div class="sf-scm-file modified">M  Workspace.vue</div>
-        <div class="sf-scm-file added">A  StatusBar.vue</div>
-        <div class="sf-scm-file modified">M  main.css</div>
-      </div>
-      <div class="sf-scm-section">
-        <div class="sf-scm-section-title">Staged (0)</div>
-        <div class="sf-scm-empty">No staged changes</div>
-      </div>
-      <div class="sf-scm-commit">
-        <input type="text" placeholder="Commit message..." />
-        <button>✓ Commit</button>
-      </div>
-    </div>
-
-    <!-- Extensions -->
-    <div v-else-if="activeTag === 'extensions'" class="sf-ext-panel">
-      <div class="sf-ext-item">
-        <span>🧩</span>
-        <div><strong>Theme: Dark+</strong><br /><small>Default dark theme</small></div>
-      </div>
-      <div class="sf-ext-item">
-        <span>🎨</span>
-        <div><strong>Icon Pack</strong><br /><small>Material icons</small></div>
-      </div>
-      <div class="sf-ext-item">
-        <span>🐛</span>
-        <div><strong>Debugger</strong><br /><small>Integrated debugger</small></div>
-      </div>
-    </div>
-
-    <!-- Settings -->
-    <div v-else-if="activeTag === 'settings'" class="sf-settings-panel">
-      <div class="sf-settings-item">
-        <label>Font Size</label>
-        <input type="number" value="14" />
-      </div>
-      <div class="sf-settings-item">
-        <label>Tab Size</label>
-        <input type="number" value="2" />
-      </div>
-      <div class="sf-settings-item">
-        <label>Auto Save</label>
-        <input type="checkbox" checked />
-      </div>
-      <div class="sf-settings-item">
-        <label>Minimap</label>
-        <input type="checkbox" checked />
-      </div>
-    </div>
-  </Panel>
+  />
 </template>

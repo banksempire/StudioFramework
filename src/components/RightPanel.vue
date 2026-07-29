@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { reactive } from 'vue';
+import type { PanelPayload } from '../types/panel.js';
 import Panel from './Panel.vue';
 
 defineProps<{
@@ -10,80 +10,77 @@ const emit = defineEmits<{
   'collapse': [];
 }>();
 
-interface FieldDef {
-  label: string;
-  model: string | number | boolean;
-  type: 'text' | 'number' | 'checkbox' | 'select';
-  options?: string[];
-}
-
-interface Section {
-  title: string;
-  fields: FieldDef[];
-}
-
-const sections: Section[] = reactive([
-  {
-    title: 'Font',
-    fields: [
-      { label: 'Family', model: 'Consolas', type: 'select', options: ['Consolas', 'Fira Code', 'JetBrains Mono', 'Monaco'] },
-      { label: 'Size', model: 14, type: 'number' },
-      { label: 'Ligatures', model: true, type: 'checkbox' },
-    ],
-  },
-  {
-    title: 'Language',
-    fields: [
-      { label: 'Mode', model: 'TypeScript', type: 'select', options: ['TypeScript', 'JavaScript', 'CSS', 'HTML', 'JSON'] },
-      { label: 'Tab Size', model: 2, type: 'number' },
-    ],
-  },
-  {
-    title: 'Workspace',
-    fields: [
-      { label: 'Auto Save', model: false, type: 'checkbox' },
-      { label: 'Word Wrap', model: true, type: 'checkbox' },
-    ],
-  },
-]);
+const payload: PanelPayload = {
+  title: 'Properties',
+  sections: [
+    {
+      id: 'font',
+      label: 'Font',
+      subSections: [
+        {
+          id: 'font-settings',
+          displayName: 'Font Settings',
+          components: [
+            {
+              type: 'dropdown',
+              id: 'font-family',
+              contents: {
+                options: ['Consolas', 'Fira Code', 'JetBrains Mono', 'Monaco'],
+                value: 'Consolas',
+                label: 'Family',
+              },
+            },
+            { type: 'slider', id: 'font-size', contents: { min: 10, max: 32, value: 14, label: 'Size' } },
+            { type: 'checkbox', id: 'ligatures', contents: { checked: true, label: 'Ligatures' } },
+          ],
+        },
+      ],
+    },
+    {
+      id: 'language',
+      label: 'Language',
+      subSections: [
+        {
+          id: 'lang-settings',
+          displayName: 'Language Settings',
+          components: [
+            {
+              type: 'dropdown',
+              id: 'lang-mode',
+              contents: {
+                options: ['TypeScript', 'JavaScript', 'CSS', 'HTML', 'JSON'],
+                value: 'TypeScript',
+                label: 'Mode',
+              },
+            },
+            { type: 'dropdown', id: 'tab-size', contents: { options: ['2', '4', '8'], value: '2', label: 'Tab Size' } },
+          ],
+        },
+      ],
+    },
+    {
+      id: 'workspace',
+      label: 'Workspace',
+      subSections: [
+        {
+          id: 'ws-settings',
+          displayName: 'Workspace Settings',
+          components: [
+            { type: 'checkbox', id: 'auto-save', contents: { checked: false, label: 'Auto Save' } },
+            { type: 'checkbox', id: 'word-wrap', contents: { checked: true, label: 'Word Wrap' } },
+          ],
+        },
+      ],
+    },
+  ],
+};
 </script>
 
 <template>
   <Panel
-    title="Properties"
+    :payload="payload"
     :visible="visible"
     position="right"
     @collapse="emit('collapse')"
-  >
-    <div class="sf-property-sections">
-      <div v-for="section in sections" :key="section.title" class="sf-property-section">
-        <div class="sf-property-section-title">{{ section.title }}</div>
-
-        <div v-for="field in section.fields" :key="field.label" class="sf-property-field">
-          <label>{{ field.label }}</label>
-
-          <select
-            v-if="field.type === 'select' && field.options"
-            v-model="field.model"
-          >
-            <option v-for="opt in field.options" :key="opt" :value="opt">
-              {{ opt }}
-            </option>
-          </select>
-
-          <input
-            v-else-if="field.type === 'checkbox'"
-            v-model="field.model"
-            type="checkbox"
-          />
-
-          <input
-            v-else
-            v-model="field.model"
-            :type="field.type"
-          />
-        </div>
-      </div>
-    </div>
-  </Panel>
+  />
 </template>
