@@ -126,6 +126,7 @@ html, body, #app {
   display: flex;
   align-items: center;
   height: 100%;
+  margin-left: auto;
   -webkit-app-region: no-drag;
 }
 
@@ -145,6 +146,17 @@ html, body, #app {
 .sf-menu-action-btn:hover {
   background: var(--sf-active);
   color: var(--sf-text);
+}
+
+/* Left toggle button — matches Docker width */
+.sf-menu-actions--left {
+  margin-left: 0;
+}
+
+.sf-menu-actions--left .sf-menu-action-btn {
+  width: 48px;
+  padding-left: 17px;
+  justify-content: flex-start;
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════

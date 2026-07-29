@@ -18,7 +18,7 @@ A VSCode-like UI framework built with **Vue 3** + **TypeScript**. Provides a ful
 ## Layout
 
 ```
-┌────────────── Menu Bar ──────────────────────────────────────┐
+┌────────────────── Menu Bar ──────────────────────────────────┐
 │ ☰  File  Edit  Selection  View  Help               ◫        │
 ├──────┬───────────────┬──────────────────┬────────────────────┤
 │      │               │                  │                    │
@@ -29,6 +29,11 @@ A VSCode-like UI framework built with **Vue 3** + **TypeScript**. Provides a ful
 │ Ln 1, Col 1  Spaces: 2  UTF-8    TypeScript  🟢 main  ⚠ 0  │
 └────────────── Status Bar ────────────────────────────────────┘
 ```
+
+| UI Element | Description |
+|:---|:---|
+| ☰ (48px) | Toggle left sidebar — hides/restores Docker + DockerPanel, remembers panel state |
+| ◫ | Toggle Property Panel visibility |
 
 ## Tech Stack
 
@@ -79,6 +84,8 @@ npm run dev
 
 ### MenuBar
 
+Top bar with dropdown menus, a left toggle button (48px wide, matching Docker), and a right property panel toggle.
+
 ```vue
 <MenuBar
   @toggle-left-sidebar="…"
@@ -86,7 +93,10 @@ npm run dev
 />
 ```
 
-Menus are defined inline in the component. To customize, edit the `menus` array in `MenuBar.vue`.
+| Button | Position | Width | Action |
+|:---|:---|:---|:---|
+| ☰ | Far left | 48px | Toggle Docker + DockerPanel |
+| ◫ | Far right | auto | Toggle Property Panel |
 
 ### Docker
 
