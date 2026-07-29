@@ -33,8 +33,8 @@ A VSCode-like UI framework built with **Vue 3** + **TypeScript**. Provides a ful
 
 | UI Element | Description |
 |:---|:---|
-| ☰ (48px) | Toggle left panel — hides/restores Docker + DockerPanel, remembers panel state |
-| ◫ | Toggle Right Panel visibility |
+| ☰ (48px) | `◫` / `◨` — Toggle left panel. Icon reflects panel state |
+| ◫ | `◫` / `◧` — Toggle right panel. Icon reflects panel state |
 
 ## Tech Stack
 
@@ -91,17 +91,22 @@ Top bar with dropdown menus, a left toggle button (48px wide, matching Docker), 
 
 ```vue
 <MenuBar
+  :left-panel-visible="leftPanelVisible"
+  :right-panel-visible="rightPanelVisible"
   @toggle-left-panel="…"
   @toggle-right-panel="…"
 />
 ```
 
-| Button | Position | Width | Action |
-|:---|:---|:---|:---|
-| ☰ | Far left | 48px | Toggle Docker + DockerPanel |
-| ◫ | Far right | 48px | Toggle Right Panel |
+| Button | Position | Width | Icon (collapsed → expanded) | Action |
+|:---|:---|:---|:---|:---|
+| ☰ | Far left | 48px | ◫ → ◨ | Toggle Docker + DockerPanel |
+| ◫ | Far right | 48px | ◫ → ◧ | Toggle Right Panel |
 
-Emits `toggle-right-panel` when the ◫ button is clicked.
+| Prop | Type | Description |
+|:---|:---|:---|
+| `left-panel-visible` | `boolean` | Current left panel state (drives icon) |
+| `right-panel-visible` | `boolean` | Current right panel state (drives icon) |
 
 Menus are defined in the `menus` array inside `MenuBar.vue`. Each menu has a `label` and `items` array with `{ label, action?, separator? }`.
 
