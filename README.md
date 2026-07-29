@@ -1,16 +1,16 @@
 # Studio Framework
 
-A VSCode-like UI framework built with **Vue 3** + **TypeScript**. Provides a fully functional IDE shell layout with sidebars, tabs, menus, and property panels — all styled with a VSCode-dark theme.
+A VSCode-like UI framework built with **Vue 3** + **TypeScript**. Provides a fully functional IDE shell layout with panels, tabs, menus, and property panels — all styled with a VSCode-dark theme.
 
 ## Features
 
 - **Menu Bar** — multi-level dropdown menus with hover-to-open behavior
 - **Docker (Activity Bar)** — left icon bar with badges, active indicators, single/double-click support
-- **Docker Panel (Sidebar)** — expandable panel with content switching (File Explorer, Search, SCM, Extensions, Settings)
+- **Docker Panel** — expandable panel with content switching (File Explorer, Search, SCM, Extensions, Settings)
 - **Workspace** — tabbed editor area with welcome screen and editor placeholder
-- **Property Panel** — right sidebar with reactive form fields (`v-model` bound)
+- **Property Panel** — right panel with reactive form fields (`v-model` bound)
 - **Status Bar** — bottom bar with left/right-aligned items
-- **Sidebar Toggle** — ☰ button to hide/restore left sidebar, remembers panel state
+- **Panel Toggle** — ☰ button to hide/restore left panel, remembers panel state
 - **Panel Toggle** — ◫ button to show/hide the property panel
 - **Double-click Dock Tags** — toggles Docker Panel expansion
 - **Resizable Panels** — drag panel edges to resize (180–500px). Dragging past ~80px collapses the panel with a live glow indicator on the opposite edge
@@ -33,7 +33,7 @@ A VSCode-like UI framework built with **Vue 3** + **TypeScript**. Provides a ful
 
 | UI Element | Description |
 |:---|:---|
-| ☰ (48px) | Toggle left sidebar — hides/restores Docker + DockerPanel, remembers panel state |
+| ☰ (48px) | Toggle left panel — hides/restores Docker + DockerPanel, remembers panel state |
 | ◫ | Toggle Property Panel visibility |
 
 ## Tech Stack
@@ -55,9 +55,9 @@ src/
 ├── components/
 │   ├── MenuBar.vue            # Top bar with dropdown menus + action buttons
 │   ├── Docker.vue             # Left icon bar (Activity Bar)
-│   ├── DockerPanel.vue        # Left sidebar with content panels
+│   ├── DockerPanel.vue        # Left panel with content panels
 │   ├── Workspace.vue          # Centered tabbed editor
-│   ├── PropertyPanel.vue      # Right sidebar with property form fields
+│   ├── PropertyPanel.vue      # Right panel with property form fields
 │   └── StatusBar.vue          # Bottom status bar
 ├── composables/
 │   └── useResize.ts          # Resize composable for draggable panel edges
@@ -91,7 +91,7 @@ Top bar with dropdown menus, a left toggle button (48px wide, matching Docker), 
 
 ```vue
 <MenuBar
-  @toggle-left-sidebar="…"
+  @toggle-left-panel="…"
   @toggle-property-panel="…"
 />
 ```
@@ -108,7 +108,7 @@ Menus are defined in the `menus` array inside `MenuBar.vue`. Each menu has a `la
 ```vue
 <Docker
   :active-tag="activeTag"
-  :visible="leftSidebarVisible"
+  :visible="leftPanelVisible"
   :panel-visible="dockerPanelVisible"
   @tag-selected="onTagSelected"
   @tag-double-clicked="onTagDoubleClicked"

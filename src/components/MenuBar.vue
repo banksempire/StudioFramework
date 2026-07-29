@@ -3,7 +3,7 @@ import { ref } from 'vue';
 
 defineEmits<{
   'toggle-property-panel': [];
-  'toggle-left-sidebar': [];
+  'toggle-left-panel': [];
 }>();
 
 interface MenuItem {
@@ -51,7 +51,7 @@ const menus: Menu[] = [
   {
     label: 'View',
     items: [
-      { label: 'Toggle Sidebar', action: () => console.log('Sidebar') },
+      { label: 'Toggle Left Panel', action: () => console.log('Toggle Left Panel') },
       { label: 'Toggle Terminal', action: () => console.log('Terminal') },
       { label: '', separator: true },
       { label: 'Zoom In', action: () => console.log('Zoom In') },
@@ -92,8 +92,8 @@ function closeAll() {
     <div class="sf-menu-actions sf-menu-actions--left">
       <button
         class="sf-menu-action-btn"
-        title="Toggle Left Sidebar"
-        @click="$emit('toggle-left-sidebar')"
+        title="Toggle Left Panel"
+        @click="$emit('toggle-left-panel')"
       >
         ☰
       </button>

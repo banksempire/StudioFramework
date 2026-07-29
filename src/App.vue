@@ -8,13 +8,13 @@ import PropertyPanel from './components/PropertyPanel.vue';
 import StatusBar from './components/StatusBar.vue';
 
 const activeDockerTag = ref('explorer');
-const leftSidebarVisible = ref(true);
+const leftPanelVisible = ref(true);
 const dockerPanelVisible = ref(true);
 const savedPanelState = ref(true);
 const propertyPanelVisible = ref(true);
 
 function onTagSelected(tagId: string) {
-  if (!leftSidebarVisible.value) leftSidebarVisible.value = true;
+  if (!leftPanelVisible.value) leftPanelVisible.value = true;
   if (!dockerPanelVisible.value) dockerPanelVisible.value = true;
   activeDockerTag.value = tagId;
 }
@@ -23,15 +23,15 @@ function onTagDoubleClicked(_tagId: string) {
   dockerPanelVisible.value = !dockerPanelVisible.value;
 }
 
-function toggleLeftSidebar() {
-  if (leftSidebarVisible.value) {
+function toggleLeftPanel() {
+  if (leftPanelVisible.value) {
     // Hide: remember panel state, then collapse everything
     savedPanelState.value = dockerPanelVisible.value;
     dockerPanelVisible.value = false;
-    leftSidebarVisible.value = false;
+    leftPanelVisible.value = false;
   } else {
     // Restore: bring back to previous state
-    leftSidebarVisible.value = true;
+    leftPanelVisible.value = true;
     dockerPanelVisible.value = savedPanelState.value;
   }
 }
@@ -44,14 +44,14 @@ function togglePropertyPanel() {
 <template>
   <div class="sf-root">
     <MenuBar
-      @toggle-left-sidebar="toggleLeftSidebar"
+      @toggle-left-panel="toggleLeftPanel"
       @toggle-property-panel="togglePropertyPanel"
     />
 
     <div class="sf-workbench">
       <Docker
         :active-tag="activeDockerTag"
-        :visible="leftSidebarVisible"
+        :visible="leftPanelVisible"
         :panel-visible="dockerPanelVisible"
         @tag-selected="onTagSelected"
         @tag-double-clicked="onTagDoubleClicked"
@@ -59,7 +59,7 @@ function togglePropertyPanel() {
 
       <DockerPanel
         :active-tag="activeDockerTag"
-        :visible="dockerPanelVisible && leftSidebarVisible"
+        :visible="dockerPanelVisible && leftPanelVisible"
         @collapse="dockerPanelVisible = false"
       />
 
