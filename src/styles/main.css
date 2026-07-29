@@ -166,7 +166,7 @@ html, body, #app {
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════
-   Workbench (Docker + DockerPanel + Workspace + PropertyPanel)
+   Workbench (Docker + DockerPanel + Workspace + RightPanel)
    ═══════════════════════════════════════════════════════════════════════════ */
 
 .sf-workbench {
