@@ -1,0 +1,153 @@
+# Panel
+
+Content of a `Panel` should be rendered base on json or other structure format (such as protobuf. I am just making an example, I am not sure if protobuf can be used in this case. You should choose a format follow industry best practice).
+
+## Components tree of a panel
+
+``` text
+Title
+    Section 1
+        Sub-section 1.1
+            Component
+            Component
+            Component
+            ...
+        Sub-section 1.2
+            Component
+            Component
+            Component
+            ...
+        ...
+    Section 2
+    ...
+```
+
+## Discriptions
+
+Note: `:>` means an item at the right most; `:<` means an item at the left most
+    eg: [`...` button :>] means [`...` button] should at the right most end of an layout
+
+Title: A simple title bar on top of the Panel.
+    Layout: [Panel Display Name :<] [`...` button :>]
+    [`...` button]: click to display a dropdown list to select which `Sub-section` to show in the current `Section`
+
+Section: Groups of Sub-sections
+    Placed right below title bar to switch between groups of sub_sections
+    Layout: Section 1 | Section 2 | [`...` button :>]
+        Evenly spaced. Show only if have more than 1 section.
+    [`...` button]: Show only when not all sections can be displayed. Click to show menu for hidden sections.
+
+Sub-section: Groups of components
+    layout: [`Expand/collapse components indicator`  :<] [`Sub-section display name`] [`[Other buttons` :>]
+    [`Expand/collapse components indicator`]: Indicate if current sub-section is expanded/collapsed.
+    [`[Other buttons`]: Optional, add if needed. Click to open menu/run utilities related to this sub-section, if any. Such as a refresh button to reload components of the sub_section; or a menu to make some config.
+
+Component:
+    The interaction component.
+    Such as:
+        table of object properties
+        file tree
+        list of content
+        slice bar: like a volume adjustment slice bar
+        dropdown menu
+        text box
+        etc.
+
+
+## Behaviors
+
+### Vertical scrolling
+
+When contents in the panel is too long to be fit in one screen. Panel should be display in below example.
+
+[Panel Title]
+[Section] # If showed
+[Sub-section 1] # Collapsed
+[Sub-section 2] # Expanded
+component 2.1
+component 2.2
+... 
+[Sub-section 3] # Expanded subsection has 3 components.
+component 3.2 
+... # The component that used a lot of space, such as a file tree
+...
+...
+[Sub-section 4] # Collapsed components at the buttom of the the panel, in order.
+[Sub-section 4] # Collapsed
+
+### Sub-section sizing, expand and collapse
+
+Single click the sub-section bar to toggle expand/collapse sub-section.
+Drag sub-section edge (top/buttom edge) to resize space between sub-sections.
+Expanded sub_section must mantain a minimum height. And cannot drag-to-collapse.
+
+### Unified data loading interface
+
+This is the spec for all elements of the studio framework.
+
+The UI should be defined just by json or similar structured format.
+
+Below is an navie example to define the whole app UI, for showcase only. You do not need to define the schema according to my example:
+
+```python
+{
+    "menu bar":[
+        "File":[
+            "New File",
+            "New Window",
+            "spacing line"
+            "Open",
+            "Open recent":{
+                "lazy load": True # If a content is marked as lazy loaded, then it content and all sub-content is only load when triggered.
+            },
+            "spacing line"
+            ...
+        ]
+    ]
+    "docker":[
+        "Files":[
+            "Icon": "xxx",
+            "Sections":[
+                {
+                    "display name": "Section 1",
+                    "component type": "PanelSection",
+                    "component id" : "xxxxx",
+                    "components":[
+                        {
+                            "display name": "sub-section",
+                            "component type": "PanelSubSection",
+                            "component id" : "xxxxx",
+                            "lazy_load":  False # If a content is marked as lazy loaded, then it content and all sub-content is only load when triggered.
+                            "components":[
+                                {
+                                    "component type": "Tree",
+                                    "component id": "aaaa",
+                                    "contents":{
+                                        ...
+                                    }
+                                },
+                                {
+                                    "component type": "KeyValueList",
+                                    "component id": "bbb",
+                                    "contents":[
+                                        {"key": "Key1", "Value": 123,}
+                                        {"key": "Key2", "Value": 321, "read-only": True}
+                                    ]
+                                }
+                            ]
+                        }, ...
+
+                    ]
+
+                }
+            ]
+        ]
+    ]
+}
+
+```
+
+The payload should be auto built recursively and send to client side in one go, on app launch, for responsive UI rendering. Sub contents under node that marked as "lazy load" can be skiped during launch.
+
+This simplify and structualize Data exchange between backend and frontend.
+
