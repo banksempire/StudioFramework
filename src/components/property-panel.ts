@@ -13,16 +13,16 @@ export interface PropertyField {
   onChange?: (value: string | boolean | number) => void;
 }
 
-export class PropertyWindow extends Component {
+export class PropertyPanel extends Component {
   private contents: Component;
   private _visible: boolean = true;
   private width: number = 260;
 
   constructor() {
-    super('div', { className: 'sf-property-window' });
+    super('div', { className: 'sf-property-panel' });
 
     const header = document.createElement('div');
-    header.className = 'sf-property-window-header';
+    header.className = 'sf-property-panel-header';
     header.textContent = 'Properties';
     this.el.appendChild(header);
 

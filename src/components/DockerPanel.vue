@@ -21,14 +21,14 @@ const title = computed(() => {
 
 <template>
   <div
-    class="sf-tag-window"
+    class="sf-docker-panel"
     :style="{ width: visible ? '260px' : '0', display: visible ? '' : 'none' }"
   >
-    <div class="sf-tag-window-header">
-      <span class="sf-tag-window-title">{{ title }}</span>
+    <div class="sf-docker-panel-header">
+      <span class="sf-docker-panel-title">{{ title }}</span>
     </div>
 
-    <div class="sf-tag-window-content">
+    <div class="sf-docker-panel-content">
       <!-- File Explorer -->
       <div v-if="activeTag === 'explorer'" class="sf-file-tree">
         <div class="sf-file-item folder expanded">
@@ -39,7 +39,7 @@ const title = computed(() => {
         </div>
         <div class="sf-file-item indent2">📄 MenuBar.vue</div>
         <div class="sf-file-item indent2">📄 Docker.vue</div>
-        <div class="sf-file-item indent2">📄 AppFrame.vue</div>
+        <div class="sf-file-item indent2">📄 Workspace.vue</div>
         <div class="sf-file-item indent">📁 core</div>
         <div class="sf-file-item indent2">📄 component.ts</div>
         <div class="sf-file-item indent">📁 styles</div>
@@ -76,7 +76,7 @@ const title = computed(() => {
       <div v-else-if="activeTag === 'source-control'" class="sf-scm-panel">
         <div class="sf-scm-section">
           <div class="sf-scm-section-title">Changes (3)</div>
-          <div class="sf-scm-file modified">M  AppFrame.vue</div>
+          <div class="sf-scm-file modified">M  Workspace.vue</div>
           <div class="sf-scm-file added">A  StatusBar.vue</div>
           <div class="sf-scm-file modified">M  main.css</div>
         </div>

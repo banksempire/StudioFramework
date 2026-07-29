@@ -2,32 +2,32 @@
 import { ref } from 'vue';
 import MenuBar from './components/MenuBar.vue';
 import Docker from './components/Docker.vue';
-import TagWindow from './components/TagWindow.vue';
-import AppFrame from './components/AppFrame.vue';
-import PropertyWindow from './components/PropertyWindow.vue';
+import DockerPanel from './components/DockerPanel.vue';
+import Workspace from './components/Workspace.vue';
+import PropertyPanel from './components/PropertyPanel.vue';
 import StatusBar from './components/StatusBar.vue';
 
 const activeDockerTag = ref('explorer');
-const tagWindowVisible = ref(true);
-const propertyWindowVisible = ref(true);
+const dockerPanelVisible = ref(true);
+const propertyPanelVisible = ref(true);
 
 function onTagSelected(tagId: string) {
-  if (!tagWindowVisible.value) tagWindowVisible.value = true;
+  if (!dockerPanelVisible.value) dockerPanelVisible.value = true;
   activeDockerTag.value = tagId;
 }
 
 function onTagDoubleClicked(_tagId: string) {
-  tagWindowVisible.value = false;
+  dockerPanelVisible.value = false;
 }
 
-function togglePropertyWindow() {
-  propertyWindowVisible.value = !propertyWindowVisible.value;
+function togglePropertyPanel() {
+  propertyPanelVisible.value = !propertyPanelVisible.value;
 }
 </script>
 
 <template>
   <div class="sf-root">
-    <MenuBar @toggle-property="togglePropertyWindow" />
+    <MenuBar @toggle-property-panel="togglePropertyPanel" />
 
     <div class="sf-workbench">
       <Docker
@@ -36,14 +36,14 @@ function togglePropertyWindow() {
         @tag-double-clicked="onTagDoubleClicked"
       />
 
-      <TagWindow
+      <DockerPanel
         :active-tag="activeDockerTag"
-        :visible="tagWindowVisible"
+        :visible="dockerPanelVisible"
       />
 
-      <AppFrame />
+      <Workspace />
 
-      <PropertyWindow :visible="propertyWindowVisible" />
+      <PropertyPanel :visible="propertyPanelVisible" />
     </div>
 
     <StatusBar />

@@ -38,7 +38,7 @@ function newTab() {
 </script>
 
 <template>
-  <div class="sf-app-frame">
+  <div class="sf-workspace">
     <!-- Tab Bar -->
     <div class="sf-tab-bar">
       <div class="sf-tab-container">

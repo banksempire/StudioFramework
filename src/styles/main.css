@@ -148,7 +148,7 @@ html, body, #app {
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════
-   Workbench (Docker + TagWindow + AppFrame + PropertyWindow)
+   Workbench (Docker + DockerPanel + Workspace + PropertyPanel)
    ═══════════════════════════════════════════════════════════════════════════ */
 
 .sf-workbench {
@@ -227,7 +227,7 @@ html, body, #app {
    Tag Window (expandable sidebar)
    ═══════════════════════════════════════════════════════════════════════════ */
 
-.sf-tag-window {
+.sf-docker-panel {
   width: 260px;
   background: var(--sf-bg-light);
   border-right: 1px solid var(--sf-border);
@@ -238,7 +238,7 @@ html, body, #app {
   transition: width 0.2s;
 }
 
-.sf-tag-window-header {
+.sf-docker-panel-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -252,7 +252,7 @@ html, body, #app {
   flex-shrink: 0;
 }
 
-.sf-tag-window-collapse {
+.sf-docker-panel-collapse {
   background: none;
   border: none;
   color: var(--sf-text-muted);
@@ -262,12 +262,12 @@ html, body, #app {
   border-radius: 3px;
 }
 
-.sf-tag-window-collapse:hover {
+.sf-docker-panel-collapse:hover {
   background: var(--sf-active);
   color: var(--sf-text);
 }
 
-.sf-tag-window-content {
+.sf-docker-panel-content {
   flex: 1;
   overflow-y: auto;
   overflow-x: hidden;
@@ -489,7 +489,7 @@ html, body, #app {
    App Frame
    ═══════════════════════════════════════════════════════════════════════════ */
 
-.sf-app-frame {
+.sf-workspace {
   display: flex;
   flex-direction: column;
   flex: 1;
@@ -652,7 +652,7 @@ html, body, #app {
    Property Window (right sidebar)
    ═══════════════════════════════════════════════════════════════════════════ */
 
-.sf-property-window {
+.sf-property-panel {
   width: 260px;
   background: var(--sf-bg-light);
   border-left: 1px solid var(--sf-border);
@@ -662,7 +662,7 @@ html, body, #app {
   overflow: hidden;
 }
 
-.sf-property-window-header {
+.sf-property-panel-header {
   padding: 0 12px;
   height: 35px;
   display: flex;

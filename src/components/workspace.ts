@@ -7,7 +7,7 @@ export interface TabConfig {
   closable?: boolean;
 }
 
-export class AppFrame extends Component {
+export class Workspace extends Component {
   private tabBar: Component;
   private tabContainer: HTMLElement;
   private panelContainer: HTMLElement;
@@ -17,7 +17,7 @@ export class AppFrame extends Component {
   public onTabClosed?: (tabId: string) => void;
 
   constructor() {
-    super('div', { className: 'sf-app-frame' });
+    super('div', { className: 'sf-workspace' });
 
     // Tab bar
     this.tabBar = new Component('div', { className: 'sf-tab-bar' });

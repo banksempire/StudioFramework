@@ -2,7 +2,7 @@
 import { ref } from 'vue';
 
 defineEmits<{
-  'toggle-property': [];
+  'toggle-property-panel': [];
 }>();
 
 interface MenuItem {
@@ -115,8 +115,8 @@ function closeAll() {
     <div class="sf-menu-actions">
       <button
         class="sf-menu-action-btn"
-        title="Toggle Property Window"
-        @click="$emit('toggle-property')"
+        title="Toggle Property Panel"
+        @click="$emit('toggle-property-panel')"
       >
         ◫
       </button>

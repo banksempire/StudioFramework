@@ -45,10 +45,10 @@ const sections: Section[] = reactive([
 
 <template>
   <div
-    class="sf-property-window"
+    class="sf-property-panel"
     :style="{ width: visible ? '260px' : '0', display: visible ? '' : 'none' }"
   >
-    <div class="sf-property-window-header">Properties</div>
+    <div class="sf-property-panel-header">Properties</div>
 
     <div class="sf-property-sections">
       <div v-for="section in sections" :key="section.title" class="sf-property-section">
