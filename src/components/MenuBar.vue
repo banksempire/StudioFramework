@@ -100,7 +100,7 @@ function closeAll() {
         :title="props.leftPanelVisible ? 'Collapse Left Panel' : 'Expand Left Panel'"
         @click="$emit('toggle-left-panel')"
       >
-        {{ props.leftPanelVisible ? '\u25A8' : '\u25EB' }}
+        {{ props.leftPanelVisible ? '\u25E8' : '\u25EB' }}
       </button>
     </div>
 
@@ -134,7 +134,7 @@ function closeAll() {
         :title="props.rightPanelVisible ? 'Collapse Right Panel' : 'Expand Right Panel'"
         @click="$emit('toggle-right-panel')"
       >
-        {{ props.rightPanelVisible ? '\u25A7' : '\u25EB' }}
+        {{ props.rightPanelVisible ? '\u25E7' : '\u25EB' }}
       </button>
     </div>
   </div>
