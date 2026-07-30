@@ -282,6 +282,106 @@ html, body, #app {
   position: relative;
 }
 
+.sf-panel-title {
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+
+
+/* ─── Section tabs ──────────────────────────────────────────────────────── */
+
+.sf-panel-tabs-wrapper {
+  position: relative;
+  flex-shrink: 0;
+}
+
+.sf-panel-tabs {
+  display: flex;
+  align-items: center;
+  height: 32px;
+  background: var(--sf-bg-lighter);
+  border-bottom: 1px solid var(--sf-border);
+  overflow: hidden;
+}
+
+.sf-panel-tab {
+  flex: 1 1 auto;
+  min-width: fit-content;
+  height: 100%;
+  background: none;
+  border: none;
+  border-bottom: 2px solid transparent;
+  color: var(--sf-text-muted);
+  cursor: pointer;
+  font-family: var(--sf-font);
+  font-size: 11px;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+  padding: 0 10px;
+  white-space: nowrap;
+  overflow: hidden;
+  transition: color 0.15s, border-color 0.15s;
+}
+
+.sf-panel-tab:hover {
+  color: var(--sf-text);
+}
+
+.sf-panel-tab--active {
+  color: var(--sf-text-bright);
+  border-bottom-color: var(--sf-accent);
+}
+
+.sf-panel-tab--overflow {
+  flex: 0 0 28px;
+  font-size: 14px;
+  padding: 0;
+  text-align: center;
+}
+
+/* ─── Tabs overflow dropdown ───────────────────────────────────────────── */
+
+.sf-panel-tabs-dropdown {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  z-index: 50;
+  min-width: 140px;
+  background: var(--sf-bg-lighter);
+  border: 1px solid var(--sf-border);
+  border-radius: 4px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+  padding: 4px 0;
+}
+
+.sf-panel-tabs-dropdown-item {
+  display: block;
+  width: 100%;
+  padding: 4px 12px;
+  background: none;
+  border: none;
+  color: var(--sf-text);
+  cursor: pointer;
+  font-family: var(--sf-font);
+  font-size: 12px;
+  text-align: left;
+  white-space: nowrap;
+}
+
+.sf-panel-tabs-dropdown-item:hover {
+  background: var(--sf-bg-hover);
+}
+
+.sf-panel-tabs-dropdown-item--active {
+  color: var(--sf-text-bright);
+  border-left: 3px solid var(--sf-accent);
+  padding-left: 9px;
+}
+
 /* ─── Resize Handles ────────────────────────────────────────────────────── */
 
 .sf-panel-resize-handle {
@@ -300,6 +400,10 @@ html, body, #app {
   background: var(--sf-accent);
 }
 
+.sf-panel--will-collapse .sf-panel-resize-handle {
+  background: transparent !important;
+}
+
 .sf-panel-resize-handle--right {
   right: 0;
 }
@@ -308,20 +412,25 @@ html, body, #app {
   left: 0;
 }
 
-/* ─── Collapse indicator on opposite edge during drag ────────────────── */
+/* ─── Collapse indicator overlay ─────────────────────────────────────────── */
 
-.sf-panel--will-collapse .sf-panel-resize-handle {
-  background: transparent !important;
+.sf-panel-dtc-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 100;
+  pointer-events: none;
 }
 
-.sf-panel--will-collapse[data-collapse-edge="left"] {
+/* Left panel: glow on left (opposite), top, bottom. Handle is on right. */
+.sf-panel-dtc-overlay--left {
   box-shadow:
     inset 3px 0 0 0 var(--sf-accent),
     inset 0 3px 0 0 var(--sf-accent),
     inset 0 -3px 0 0 var(--sf-accent);
 }
 
-.sf-panel--will-collapse[data-collapse-edge="right"] {
+/* Right panel: glow on right (opposite), top, bottom. Handle is on left. */
+.sf-panel-dtc-overlay--right {
   box-shadow:
     inset -3px 0 0 0 var(--sf-accent),
     inset 0 3px 0 0 var(--sf-accent),
@@ -333,280 +442,6 @@ html, body, #app {
 .sf-panel-body {
   flex: 1;
   min-height: 0;
-  overflow-y: auto;
-  overflow-x: hidden;
-}
-
-/* ─── File Tree ─────────────────────────────────────────────────────────── */
-
-.sf-file-tree {
-  padding: 4px 0;
-}
-
-.sf-file-item {
-  display: flex;
-  align-items: center;
-  padding: 4px 12px;
-  cursor: pointer;
-  white-space: nowrap;
-  font-size: 13px;
-  gap: 4px;
-}
-
-.sf-file-item:hover {
-  background: var(--sf-bg-hover);
-}
-
-.sf-file-item.indent { padding-left: 28px; }
-.sf-file-item.indent2 { padding-left: 44px; }
-
-.sf-file-arrow {
-  font-size: 10px;
-  width: 14px;
-  text-align: center;
-  color: var(--sf-text-muted);
-}
-
-/* ─── Search ─────────────────────────────────────────────────────────────── */
-
-.sf-search-panel {
-  padding: 8px;
-}
-
-.sf-search-box {
-  display: flex;
-  gap: 4px;
-  margin-bottom: 8px;
-}
-
-.sf-search-box input {
-  flex: 1;
-  background: var(--sf-bg);
-  border: 1px solid var(--sf-border);
-  color: var(--sf-text);
-  padding: 4px 8px;
-  font-size: 13px;
-  outline: none;
-  font-family: var(--sf-font);
-}
-
-.sf-search-box input:focus {
-  border-color: var(--sf-accent);
-}
-
-.sf-search-box button {
-  background: var(--sf-bg);
-  border: 1px solid var(--sf-border);
-  color: var(--sf-text);
-  cursor: pointer;
-  padding: 4px 8px;
-}
-
-.sf-search-results {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-}
-
-.sf-search-result {
-  padding: 4px 8px;
-  cursor: pointer;
-  font-size: 12px;
-}
-
-.sf-search-result:hover {
-  background: var(--sf-bg-hover);
-}
-
-.sf-search-file {
-  color: var(--sf-accent);
-  display: block;
-}
-
-.sf-search-match {
-  color: var(--sf-text-muted);
-}
-
-/* ─── Source Control ─────────────────────────────────────────────────────── */
-
-.sf-scm-panel {
-  padding: 8px;
-}
-
-.sf-scm-section {
-  margin-bottom: 12px;
-}
-
-.sf-scm-section-title {
-  font-weight: 600;
-  font-size: 12px;
-  text-transform: uppercase;
-  margin-bottom: 4px;
-  color: var(--sf-text-muted);
-}
-
-.sf-scm-file {
-  padding: 3px 8px;
-  font-family: var(--sf-mono);
-  font-size: 12px;
-  cursor: pointer;
-}
-
-.sf-scm-file.modified { color: #e2b714; }
-.sf-scm-file.added { color: #4ec9b0; }
-.sf-scm-file:hover { background: var(--sf-bg-hover); }
-
-.sf-scm-empty {
-  color: var(--sf-text-muted);
-  padding: 4px 8px;
-  font-style: italic;
-  font-size: 12px;
-}
-
-.sf-scm-commit {
-  display: flex;
-  gap: 4px;
-  margin-top: 8px;
-}
-
-.sf-scm-commit input {
-  flex: 1;
-  background: var(--sf-bg);
-  border: 1px solid var(--sf-border);
-  color: var(--sf-text);
-  padding: 4px 8px;
-  font-size: 13px;
-  outline: none;
-  font-family: var(--sf-font);
-}
-
-.sf-scm-commit button {
-  background: var(--sf-accent);
-  border: none;
-  color: #fff;
-  padding: 4px 12px;
-  cursor: pointer;
-  font-size: 13px;
-}
-
-/* ─── Extensions ─────────────────────────────────────────────────────────── */
-
-.sf-ext-panel {
-  padding: 8px;
-}
-
-.sf-ext-item {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 8px;
-  cursor: pointer;
-  border-radius: 4px;
-}
-
-.sf-ext-item:hover {
-  background: var(--sf-bg-hover);
-}
-
-.sf-ext-item span:first-child {
-  font-size: 22px;
-}
-
-.sf-ext-item strong {
-  font-size: 13px;
-}
-
-.sf-ext-item small {
-  color: var(--sf-text-muted);
-  font-size: 11px;
-}
-
-/* ─── Settings ───────────────────────────────────────────────────────────── */
-
-.sf-settings-panel {
-  padding: 8px;
-}
-
-.sf-settings-item {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 6px 8px;
-}
-
-.sf-settings-item label {
-  font-size: 13px;
-}
-
-.sf-settings-item input[type="number"] {
-  width: 60px;
-  background: var(--sf-bg);
-  border: 1px solid var(--sf-border);
-  color: var(--sf-text);
-  padding: 2px 6px;
-  font-size: 13px;
-  text-align: right;
-  outline: none;
-}
-
-/* ─── Property Fields ───────────────────────────────────────────────────── */
-
-.sf-property-sections {
-  flex: 1;
-  overflow-y: auto;
-}
-
-.sf-property-section {
-  padding: 8px 0;
-}
-
-.sf-property-section-title {
-  padding: 6px 12px;
-  font-size: 12px;
-  font-weight: 600;
-  color: var(--sf-text);
-  text-transform: uppercase;
-  letter-spacing: 0.3px;
-}
-
-.sf-property-field {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 5px 12px;
-  font-size: 13px;
-}
-
-.sf-property-field label {
-  color: var(--sf-text-muted);
-  flex-shrink: 0;
-  margin-right: 8px;
-}
-
-.sf-property-field input[type="text"],
-.sf-property-field input[type="number"],
-.sf-property-field select {
-  background: var(--sf-bg);
-  border: 1px solid var(--sf-border);
-  color: var(--sf-text);
-  padding: 2px 6px;
-  font-size: 13px;
-  outline: none;
-  font-family: var(--sf-font);
-  width: 120px;
-}
-
-.sf-property-field input:focus,
-.sf-property-field select:focus {
-  border-color: var(--sf-accent);
-}
-
-.sf-property-field input[type="checkbox"] {
-  accent-color: var(--sf-accent);
-}
-
-.sf-property-field select {
-  cursor: pointer;
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════
