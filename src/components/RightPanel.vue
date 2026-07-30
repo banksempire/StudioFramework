@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import Panel from './Panel.vue';
+import type { PanelSection } from './Panel.vue';
 
 defineProps<{
   visible: boolean;
@@ -8,6 +9,10 @@ defineProps<{
 const emit = defineEmits<{
   'collapse': [];
 }>();
+
+const sections: PanelSection[] = [
+  { id: 'properties', label: 'Properties' },
+];
 </script>
 
 <template>
@@ -15,6 +20,7 @@ const emit = defineEmits<{
     title="Properties"
     :visible="visible"
     position="right"
+    :sections="sections"
     @collapse="emit('collapse')"
   />
 </template>
