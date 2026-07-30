@@ -26,31 +26,6 @@ const tags: DockerTag[] = [
   { id: 'extensions', icon: '🧩', label: 'Extensions' },
   { id: 'settings', icon: '⚙️', label: 'Settings' },
 ];
-
-let clickCount = 0;
-let clickTimer: ReturnType<typeof setTimeout> | null = null;
-let lastClickedTag = '';
-
-function onTagClick(tagId: string) {
-  if (lastClickedTag !== tagId) {
-    // Different tag clicked — reset
-    clickCount = 0;
-    if (clickTimer) clearTimeout(clickTimer);
-    lastClickedTag = tagId;
-  }
-  clickCount++;
-
-  if (clickCount === 1) {
-    emit('tag-selected', tagId);
-    clickTimer = setTimeout(() => {
-      clickCount = 0;
-    }, 300);
-  } else if (clickCount === 2) {
-    clearTimeout(clickTimer!);
-    clickCount = 0;
-    emit('tag-double-clicked', tagId);
-  }
-}
 </script>
 
 <template>
@@ -65,7 +40,8 @@ function onTagClick(tagId: string) {
       class="sf-docker-tag"
       :class="{ active: props.activeTag === tag.id && props.panelVisible !== false }"
       :title="tag.label"
-      @click="onTagClick(tag.id)"
+      @click="emit('tag-selected', tag.id)"
+      @dblclick="emit('tag-double-clicked', tag.id)"
     >
       <span class="sf-docker-tag-icon">{{ tag.icon }}</span>
       <span v-if="tag.badge" class="sf-docker-tag-badge">{{ tag.badge }}</span>
