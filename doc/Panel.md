@@ -10,7 +10,6 @@ A resizable panel with title bar and optional section tabs. Both the left Docker
 | `visible` | `boolean` | `true` | Show or hide the panel |
 | `position` | `'left' \| 'right'` | — | Which side. Drives border, resize-handle, and collapse-glow side |
 | `sections` | `PanelSection[]` | `[]` | Section tabs below the title bar |
-| `activeSection` | `string` | — | ID of the currently active section |
 
 ```ts
 interface PanelSection {
@@ -56,13 +55,12 @@ row of tab buttons plus an optional overflow button.
     shrinking below its label width. Text is never truncated.
 - The `☰` overflow button has a fixed width (`flex: 0 0 28px`) and sits at
   the rightmost end of the row.
-- The row container has `overflow: hidden` — tabs that exceed the width are
-  clipped (hidden via `display: none` by JS before they visually overflow).
+- The row container has `overflow: hidden`.
 
 #### Overflow detection
 
-A `ResizeObserver` on the tab row fires `recompute()` (throttled via
-`requestAnimationFrame`).
+A `ResizeObserver` on the tab row (attached via `watch(tabsRow, …, { immediate:
+true })`) fires `recompute()` throttled through `requestAnimationFrame`.
 
 1. **Measure** — each tab is temporarily set to `flex: 0 0 auto` so it
    renders at its natural content width. `offsetWidth` is read for every tab.
@@ -101,6 +99,22 @@ dropdown menu.
 Clicking a section tab emits `select-section` with the section ID but does
 **not** change the panel. Panel switching is handled by the Docker icon bar
 outside the Panel component.
+
+The selected section index is persisted per panel via a `Map<string, number>`
+keyed by section IDs. Switching panels and back restores the last-selected
+section.
+
+## Docker icon bar
+
+Managed by `App.vue`, not `Panel.vue`. Single-click behavior:
+
+| Click | Panel state | Result |
+|:---|:---|:---|
+| Same icon | Open | Close panel |
+| Same icon | Closed | Open panel |
+| Different icon | Any | Switch and open |
+
+No double-click — single click toggles.
 
 ## Composable
 
