@@ -29,13 +29,13 @@ const { width, dragging, willCollapse, onMouseDown } = useResize({
 
 <template>
   <div
-    v-if="visible"
     class="sf-panel"
     :class="[
       'sf-panel--' + position,
       {
         'sf-panel--dragging': dragging,
         'sf-panel--will-collapse': willCollapse,
+        'sf-panel--hidden': !visible,
       },
     ]"
     :data-collapse-edge="willCollapse ? oppositeEdge : undefined"

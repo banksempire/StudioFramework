@@ -1,5 +1,4 @@
 <script setup lang="ts">
-import { ref } from 'vue';
 
 const props = defineProps<{
   activeTag: string;
@@ -28,22 +27,23 @@ const tags: DockerTag[] = [
   { id: 'settings', icon: '⚙️', label: 'Settings' },
 ];
 
-const clickTimer = ref<ReturnType<typeof setTimeout> | null>(null);
-const lastClicked = ref<string | null>(null);
+let clickCount = 0;
+let clickTimer: ReturnType<typeof setTimeout> | null = null;
 
 function onTagClick(tagId: string) {
-  if (clickTimer.value && lastClicked.value === tagId) {
-    clearTimeout(clickTimer.value);
-    clickTimer.value = null;
-    lastClicked.value = null;
-    emit('tag-double-clicked', tagId);
-  } else {
-    lastClicked.value = tagId;
-    clickTimer.value = setTimeout(() => {
-      clickTimer.value = null;
-      lastClicked.value = null;
-      emit('tag-selected', tagId);
+  clickCount++;
+
+  if (clickCount === 1) {
+    // First click — emit immediately, then start double-click window
+    emit('tag-selected', tagId);
+    clickTimer = setTimeout(() => {
+      clickCount = 0;
     }, 300);
+  } else if (clickCount === 2) {
+    // Second click within window — emit double-click
+    clearTimeout(clickTimer!);
+    clickCount = 0;
+    emit('tag-double-clicked', tagId);
   }
 }
 </script>
