@@ -15,6 +15,9 @@
   --sf-accent-hover: #1a8ad4;
   --sf-active: #37373d;
   --sf-selection: #264f78;
+  --sf-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+  --sf-text-on-accent: #fff;
+  --sf-close-hover: rgba(255, 255, 255, 0.15);
   --sf-font: 'Segoe UI', -apple-system, BlinkMacSystemFont, sans-serif;
   --sf-mono: 'Consolas', 'Fira Code', 'JetBrains Mono', monospace;
 }
@@ -95,7 +98,7 @@ html, body, #app {
   border-top: none;
   z-index: 1000;
   padding: 4px 0;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.4);
+  box-shadow: var(--sf-shadow);
 }
 
 .sf-menu-dropdown.open {
@@ -111,7 +114,7 @@ html, body, #app {
 
 .sf-menu-dropdown-item:hover {
   background: var(--sf-accent);
-  color: #fff;
+  color: var(--sf-text-on-accent);
 }
 
 .sf-menu-separator {
@@ -228,7 +231,7 @@ html, body, #app {
   top: 4px;
   right: 6px;
   background: var(--sf-accent);
-  color: #fff;
+  color: var(--sf-text-on-accent);
   font-size: 10px;
   font-weight: bold;
   min-width: 16px;
@@ -354,7 +357,7 @@ html, body, #app {
   background: var(--sf-bg-lighter);
   border: 1px solid var(--sf-border);
   border-radius: 4px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+  box-shadow: var(--sf-shadow);
   padding: 4px 0;
 }
 
@@ -526,7 +529,7 @@ html, body, #app {
 }
 
 .sf-tab-close:hover {
-  background: rgba(255,255,255,0.15);
+  background: var(--sf-close-hover);
   color: var(--sf-text-bright);
 }
 
@@ -617,7 +620,7 @@ html, body, #app {
   justify-content: space-between;
   height: 24px;
   background: var(--sf-accent);
-  color: #fff;
+  color: var(--sf-text-on-accent);
   font-size: 12px;
   padding: 0 10px;
   flex-shrink: 0;
@@ -657,7 +660,7 @@ html, body, #app {
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #555;
+  background: var(--sf-text-muted);
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════
