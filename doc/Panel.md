@@ -41,15 +41,66 @@ interface PanelSection {
 - On release below 100px, `collapse` is emitted. The parent typically hides the panel.
 - On release above 100px, the panel snaps back to the 150px minimum.
 
-### Section tabs
+### Section selection bar (SSB)
 
-- Appear only when `sections.length > 1`.
-- **Enough space:** tabs are evenly spaced (`flex: 1 1 auto`).
-- **Tight space:** tabs shrink to natural content width. Words are never truncated.
-- **Overflow:** when tabs no longer fit, a `☰` button appears on the right. Overflowed tabs go into a dropdown.
-- **Active tab in overflow:** the `☰` button turns blue (active indicator). The active tab itself is not visible in the row — it only appears in the dropdown menu.
-- **Click outside** the dropdown closes it.
-- Clicking a section tab does **not** change the panel — it only selects a section within the current panel. Panel switching happens via the Docker icon bar.
+Appears only when `sections.length > 1`. Rendered below the title bar as a
+row of tab buttons plus an optional overflow button.
+
+#### Layout
+
+- Each tab is a `<button>` styled with `flex: 1 1 0%` and
+  `min-width: max-content`.
+  - **Equal spacing** — when the row has enough room, all tabs share the
+    available space equally (`flex-grow: 1` from the `0%` flex-basis).
+  - **Content minimum** — `min-width: max-content` prevents any tab from
+    shrinking below its label width. Text is never truncated.
+- The `☰` overflow button has a fixed width (`flex: 0 0 28px`) and sits at
+  the rightmost end of the row.
+- The row container has `overflow: hidden` — tabs that exceed the width are
+  clipped (hidden via `display: none` by JS before they visually overflow).
+
+#### Overflow detection
+
+A `ResizeObserver` on the tab row fires `recompute()` (throttled via
+`requestAnimationFrame`).
+
+1. **Measure** — each tab is temporarily set to `flex: 0 0 auto` so it
+   renders at its natural content width. `offsetWidth` is read for every tab.
+2. **Compute fit** — cumulative widths are summed left-to-right. At each
+   position, the algorithm checks whether the cumulative width + 28px
+   (reserved for the `☰` button) fits in the container's `clientWidth`.
+   The first position that doesn't fit becomes the split point.
+3. **Apply** — tabs beyond the split point receive `display: none`.
+   Flex styles are restored to `flex: 1 1 0%` on visible tabs so they fill
+   the remaining space equally.
+
+When the split point changes, Vue reactively toggles `hasOverflow` which
+shows/hides the `☰` button. The ResizeObserver fires again naturally
+(because the DOM changed), and `recompute()` re-measures with the new layout.
+This converges in 1–2 frames.
+
+#### Active tab in overflow
+
+If the active section index falls beyond the visible split, the `☰` button
+gains the `.sf-panel-tab--active` class (blue bottom-border). The active tab
+label is not swapped into the visible row — it only appears inside the
+dropdown menu.
+
+#### Overflow menu
+
+- Clicking `☰` opens a dropdown positioned below the tab row.
+- The dropdown lists every overflowed section (those after the split point).
+- The active section gets a blue left-border in the dropdown.
+- Clicking a dropdown item selects that section and closes the menu.
+- **Click outside** — a global `click` listener (added when the menu opens
+  via a `setTimeout(0)` to avoid self-closing) hides the menu when any
+  click lands outside `.sf-panel-tabs-wrapper`.
+
+#### Section vs panel switching
+
+Clicking a section tab emits `select-section` with the section ID but does
+**not** change the panel. Panel switching is handled by the Docker icon bar
+outside the Panel component.
 
 ## Composable
 

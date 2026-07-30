@@ -311,8 +311,8 @@ html, body, #app {
 }
 
 .sf-panel-tab {
-  flex: 1 1 auto;
-  min-width: fit-content;
+  flex: 1 1 0%;
+  min-width: max-content;
   height: 100%;
   background: none;
   border: none;

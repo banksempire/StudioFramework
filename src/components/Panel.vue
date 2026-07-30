@@ -42,7 +42,9 @@ const { width, dragging, willCollapse, onMouseDown } = useResize({
 const activeIndex = ref(0);
 const overflowOpen = ref(false);
 const tabsRow = ref<HTMLElement | null>(null);
-const visibleCount = ref(100); // all visible initially
+
+/** How many tabs to show before the ☰ button. Updated by ResizeObserver. */
+const visibleCount = ref(100);
 
 const hasOverflow = computed(() =>
   props.sections.length > 1 && visibleCount.value < props.sections.length,
@@ -57,7 +59,6 @@ watch(() => props.activeSection, (val) => {
   }
 }, { immediate: true });
 
-// Click handlers
 function selectSection(idx: number) {
   activeIndex.value = idx;
   emit('select-section', props.sections[idx].id);
@@ -74,63 +75,83 @@ function selectOverflowSection(sectionId: string) {
 function getTabs(): HTMLElement[] {
   if (!tabsRow.value) return [];
   return Array.from(
-    tabsRow.value.querySelectorAll<HTMLElement>('.sf-panel-tab:not(.sf-panel-tab--overflow)'),
+    tabsRow.value.querySelectorAll<HTMLElement>(
+      '.sf-panel-tab:not(.sf-panel-tab--overflow)',
+    ),
   );
 }
 
-let observer: ResizeObserver | null = null;
-
-function recalc() {
+/** Measure each tab's content width, compute how many fit. */
+function recompute() {
   const tabs = getTabs();
-  if (tabs.length === 0 || props.sections.length <= 1) {
-    visibleCount.value = props.sections.length;
-    return;
-  }
+  const n = tabs.length;
+  if (n === 0) return;
+
   const row = tabsRow.value!;
+  const containerW = row.clientWidth;
+  const BTN_W = 28; // ☰ button width
 
-  // Temporarily show all tabs
-  for (const t of tabs) t.style.display = '';
-
-  const overflows = row.scrollWidth > row.clientWidth;
-  if (!overflows) {
-    visibleCount.value = props.sections.length;
-    syncDisplay();
-    return;
+  // Step 1: measure every tab at its natural content width
+  for (const t of tabs) {
+    t.style.flex = '0 0 auto';
+    t.style.display = '';
   }
 
-  // Binary search for max count that fits (reserving room for ☰ button)
-  let lo = 1;
-  let hi = props.sections.length;
+  const widths: number[] = [];
+  for (const t of tabs) {
+    widths.push(t.offsetWidth);
+  }
 
-  while (lo < hi) {
-    const mid = Math.floor((lo + hi + 1) / 2);
-    for (let i = 0; i < tabs.length; i++) {
-      tabs[i].style.display = i < mid ? '' : 'none';
-    }
-    if (row.scrollWidth > row.clientWidth) {
-      hi = mid - 1;
+  // Step 2: find how many consecutive tabs (from left) fit
+  let used = 0;
+  let fit = n;
+  for (let i = 0; i < n; i++) {
+    const need = used + widths[i] + (i < n - 1 ? BTN_W : 0);
+    if (need <= containerW) {
+      used += widths[i];
     } else {
-      lo = mid;
+      fit = i;
+      break;
     }
   }
 
-  visibleCount.value = Math.max(1, lo);
-  syncDisplay();
+  // At least 1 tab must be visible
+  if (fit === 0) fit = 1;
+
+  // Step 3: restore normal flex and apply visibility
+  for (const t of tabs) {
+    t.style.flex = '';
+  }
+
+  if (fit !== visibleCount.value) {
+    visibleCount.value = fit;
+  }
+
+  for (let i = 0; i < n; i++) {
+    tabs[i].style.display = i < fit ? '' : 'none';
+  }
 }
 
-function syncDisplay() {
-  const tabs = getTabs();
-  for (let i = 0; i < tabs.length; i++) {
-    tabs[i].style.display = i < visibleCount.value ? '' : 'none';
-  }
+// ── ResizeObserver ────────────────────────────────────────────────────────
+
+let observer: ResizeObserver | null = null;
+let pending = false;
+
+function scheduleRecompute() {
+  if (pending) return;
+  pending = true;
+  requestAnimationFrame(() => {
+    pending = false;
+    recompute();
+  });
 }
 
 onMounted(() => {
   if (tabsRow.value) {
-    observer = new ResizeObserver(() => recalc());
+    observer = new ResizeObserver(() => scheduleRecompute());
     observer.observe(tabsRow.value);
   }
-  nextTick(() => recalc());
+  nextTick(() => recompute());
 });
 
 onUnmounted(() => {
@@ -149,7 +170,6 @@ function onClickOutside(e: MouseEvent) {
 
 watch(overflowOpen, (val) => {
   if (val) {
-    // Use setTimeout to avoid the same click that opened it from closing it
     setTimeout(() => document.addEventListener('click', onClickOutside), 0);
   } else {
     document.removeEventListener('click', onClickOutside);
