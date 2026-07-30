@@ -12,50 +12,54 @@ const emit = defineEmits<{
   'collapse': [];
 }>();
 
-// Each Docker panel has its own sections — they are sub-contexts WITHIN a panel.
-// Only panels with multiple sections show the tab bar.
+interface PanelDef {
+  title: string;
+  sections: PanelSection[];
+}
 
-const sectionsMap: Record<string, PanelSection[]> = {
-  explorer: [
-    { id: 'files', label: 'Files' },
-    { id: 'outline', label: 'Outline' },
-    { id: 'timeline', label: 'Timeline' },
-    { id: 'npm', label: 'NPM Scripts' },
-    { id: 'todo', label: 'TODO' },
-  ],
-  search: [
-    { id: 'search', label: 'Search' },
-  ],
-  'source-control': [
-    { id: 'scm', label: 'SCM' },
-  ],
-  debug: [
-    { id: 'variables', label: 'Variables' },
-    { id: 'watch', label: 'Watch' },
-    { id: 'callstack', label: 'Call Stack' },
-  ],
-  extensions: [
-    { id: 'extensions', label: 'Extensions' },
-  ],
-  settings: [
-    { id: 'editor', label: 'Editor' },
-    { id: 'workspace', label: 'Workspace' },
-  ],
+const panels: Record<string, PanelDef> = {
+  explorer: {
+    title: 'Files',
+    sections: [
+      { id: 'files', label: 'Files' },
+      { id: 'outline', label: 'Outline' },
+      { id: 'timeline', label: 'Timeline' },
+      { id: 'npm', label: 'NPM Scripts' },
+      { id: 'todo', label: 'TODO' },
+    ],
+  },
+  search: {
+    title: 'Search',
+    sections: [{ id: 'search', label: 'Search' }],
+  },
+  'source-control': {
+    title: 'Source Control',
+    sections: [{ id: 'scm', label: 'SCM' }],
+  },
+  debug: {
+    title: 'Debug',
+    sections: [
+      { id: 'variables', label: 'Variables' },
+      { id: 'watch', label: 'Watch' },
+      { id: 'callstack', label: 'Call Stack' },
+    ],
+  },
+  extensions: {
+    title: 'Extensions',
+    sections: [{ id: 'extensions', label: 'Extensions' }],
+  },
+  settings: {
+    title: 'Settings',
+    sections: [
+      { id: 'editor', label: 'Editor' },
+      { id: 'workspace', label: 'Workspace' },
+    ],
+  },
 };
 
-const sections = computed(() => sectionsMap[props.activeTag] ?? []);
-
-const title = computed(() => {
-  const map: Record<string, string> = {
-    explorer: 'Files',
-    search: 'Search',
-    'source-control': 'Source Control',
-    extensions: 'Extensions',
-    settings: 'Settings',
-    debug: 'Debug',
-  };
-  return map[props.activeTag] || 'Explorer';
-});
+const def = computed(() => panels[props.activeTag] ?? panels.explorer);
+const title = computed(() => def.value.title);
+const sections = computed(() => def.value.sections);
 </script>
 
 <template>

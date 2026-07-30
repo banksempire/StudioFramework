@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, ref, watch, onMounted, onUnmounted, nextTick } from 'vue';
+import { computed, ref, watch, onUnmounted, nextTick } from 'vue';
 import { useResize } from '../composables/useResize.js';
 
 export interface PanelSection {
@@ -12,7 +12,6 @@ const props = withDefaults(defineProps<{
   visible: boolean;
   position: 'left' | 'right';
   sections?: PanelSection[];
-  activeSection?: string;
 }>(), {
   visible: true,
   sections: () => [],
@@ -51,13 +50,6 @@ const hasOverflow = computed(() =>
 );
 
 const overflowTabs = computed(() => props.sections.slice(visibleCount.value));
-
-watch(() => props.activeSection, (val) => {
-  if (val) {
-    const i = props.sections.findIndex(s => s.id === val);
-    if (i >= 0) activeIndex.value = i;
-  }
-}, { immediate: true });
 
 // Remember active index per panel (keyed by sections fingerprint)
 const savedIndex = new Map<string, number>();
@@ -172,27 +164,16 @@ function scheduleRecompute() {
   });
 }
 
-onMounted(() => {
-  observe();
-  nextTick(() => recompute());
-});
-
 // Re-attach ResizeObserver when tabsRow element changes (v-if toggles it)
 watch(tabsRow, (el) => {
   observer?.disconnect();
+  observer = null;
   if (el) {
     observer = new ResizeObserver(() => scheduleRecompute());
     observer.observe(el);
     nextTick(() => recompute());
   }
-});
-
-function observe() {
-  if (tabsRow.value) {
-    observer = new ResizeObserver(() => scheduleRecompute());
-    observer.observe(tabsRow.value);
-  }
-}
+}, { immediate: true });
 
 onUnmounted(() => {
   observer?.disconnect();
@@ -228,7 +209,6 @@ watch(overflowOpen, (val) => {
         'sf-panel--hidden': !visible,
       },
     ]"
-    :data-collapse-edge="willCollapse ? oppositeEdge : undefined"
     :style="{ width: width + 'px' }"
   >
     <div

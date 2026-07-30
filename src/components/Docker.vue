@@ -29,18 +29,23 @@ const tags: DockerTag[] = [
 
 let clickCount = 0;
 let clickTimer: ReturnType<typeof setTimeout> | null = null;
+let lastClickedTag = '';
 
 function onTagClick(tagId: string) {
+  if (lastClickedTag !== tagId) {
+    // Different tag clicked — reset
+    clickCount = 0;
+    if (clickTimer) clearTimeout(clickTimer);
+    lastClickedTag = tagId;
+  }
   clickCount++;
 
   if (clickCount === 1) {
-    // First click — emit immediately, then start double-click window
     emit('tag-selected', tagId);
     clickTimer = setTimeout(() => {
       clickCount = 0;
     }, 300);
   } else if (clickCount === 2) {
-    // Second click within window — emit double-click
     clearTimeout(clickTimer!);
     clickCount = 0;
     emit('tag-double-clicked', tagId);
