@@ -136,32 +136,38 @@ Menus are defined in the `menus` array inside `MenuBar.vue`. Each menu has a `la
 
 ### Panel (base)
 
-Shared panel component handling resize, visibility, and layout. Both `DockerPanel` and `RightPanel` wrap this component.
+Shared panel component. Renders a `PanelPayload` into title bar, section tabs, sub-sections, and leaf components. Both `DockerPanel` and `RightPanel` pass different payloads to this same component.
 
 ```vue
 <Panel
-  title="Files"
+  :payload="panelPayload"
   :visible="panelVisible"
   position="left"
   @collapse="onCollapse"
->
-  <p>Slot your panel content here</p>
-</Panel>
+/>
 ```
 
 | Prop | Type | Description |
 |:---|:---|:---|
-| `title` | `string` | Header title displayed at top |
+| `payload` | `PanelPayload` | Structured content tree (see `src/types/panel.ts`) |
 | `visible` | `boolean` | Show/hide the panel |
 | `position` | `'left' \| 'right'` | Which side the panel sits on (drives border, handle, and collapse-glow sides) |
 
 | Event | Payload | Description |
 |:---|:---|:---|
-| `collapse` | – | Emitted when resize drag crosses the collapse threshold |
+| `collapse` | – | Emitted when horizontal panel-edge drag crosses the collapse threshold |
+| `action` | `(subsectionId, actionId)` | Fired when a sub-section action button is clicked |
+| `component-change` | `(componentId, value)` | Fired when a leaf component's value changes |
 
-| Slot | Description |
-|:---|:---|
-| _default_ | Panel body content |
+#### Height model
+
+Sub-sections do **not** auto-fill available space. Blank space at the bottom is allowed. Height changes only via:
+
+1. **Drag** — adjusts the dragged sub-section and its next sibling inversely.
+2. **Window resize** — squeezes/restores the topmost expanded sub-section first, then cascades down. When all expanded sub-sections reach their minimum height, the panel body scrolls.
+3. **Expand/collapse** — space is transferred to/from the lowest expanded sub-section.
+
+Each sub-section defines its own `minHeight` (default 60px) in the payload.
 
 ### DockerPanel
 
@@ -246,6 +252,26 @@ const { width, dragging, willCollapse, onMouseDown } = useResize({
 | `width` | `Ref<number>` | Current panel width |
 | `dragging` | `Ref<boolean>` | `true` while the user is dragging |
 | `willCollapse` | `Ref<boolean>` | `true` when drag crosses collapse threshold (live indicator) |
+| `onMouseDown` | `(e: MouseEvent) => void` | Bind to the resize handle's `@mousedown` |
+
+### useVerticalResize
+
+Vertical resize between adjacent sub-sections. No collapse threshold — only min-height clamping.
+
+```ts
+import { useVerticalResize } from '../composables/useVerticalResize.js';
+
+const { dragging, onMouseDown } = useVerticalResize({
+  min: 60,                     // Minimum height (px) — per sub-section
+  onDrag: (delta) => { … },    // Called on each mousemove with Y delta
+  onDragStart: () => { … },    // Optional: called on mousedown
+  onDragEnd: () => { … },      // Optional: called on mouseup
+});
+```
+
+| Return | Type | Description |
+|:---|:---|:---|
+| `dragging` | `Ref<boolean>` | `true` while the user is dragging |
 | `onMouseDown` | `(e: MouseEvent) => void` | Bind to the resize handle's `@mousedown` |
 
 ## Theme

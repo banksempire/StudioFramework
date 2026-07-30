@@ -251,6 +251,7 @@ html, body, #app {
   flex-shrink: 0;
   overflow: hidden;
   position: relative;
+  min-width: 100px;
 }
 
 .sf-panel--left {
@@ -309,142 +310,22 @@ html, body, #app {
 
 /* ─── Collapse indicator on opposite edge during drag ────────────────── */
 
-.sf-panel--will-collapse {
-  box-shadow: inset 3px 0 6px -2px var(--sf-accent);
-}
-
 .sf-panel--will-collapse .sf-panel-resize-handle {
   background: transparent !important;
 }
 
 .sf-panel--will-collapse[data-collapse-edge="left"] {
-  border-left: 2px solid var(--sf-accent);
+  box-shadow:
+    inset 3px 0 0 0 var(--sf-accent),
+    inset 0 3px 0 0 var(--sf-accent),
+    inset 0 -3px 0 0 var(--sf-accent);
 }
 
 .sf-panel--will-collapse[data-collapse-edge="right"] {
-  border-right: 2px solid var(--sf-accent);
-  box-shadow: inset -3px 0 6px -2px var(--sf-accent);
-}
-
-/* ─── Panel Section Tabs ────────────────────────────────────────────────── */
-
-.sf-panel-tabs {
-  display: flex;
-  align-items: center;
-  height: 35px;
-  background: var(--sf-bg-lighter);
-  border-bottom: 1px solid var(--sf-border);
-  flex-shrink: 0;
-  overflow: hidden;
-  gap: 0;
-  position: relative;
-}
-
-.sf-panel-tab {
-  flex: 1;
-  height: 100%;
-  background: none;
-  border: none;
-  border-bottom: 2px solid transparent;
-  color: var(--sf-text-muted);
-  cursor: pointer;
-  font-family: var(--sf-font);
-  font-size: 12px;
-  font-weight: 500;
-  text-transform: uppercase;
-  letter-spacing: 0.3px;
-  padding: 0 12px;
-  white-space: nowrap;
-  transition: color 0.15s, border-color 0.15s;
-}
-
-.sf-panel-tab:hover {
-  color: var(--sf-text);
-}
-
-.sf-panel-tab--active {
-  color: var(--sf-text-bright);
-  border-bottom-color: var(--sf-accent);
-}
-
-.sf-panel-tab--overflow {
-  flex: 0 0 32px;
-  font-size: 16px;
-  padding: 0 8px;
-}
-
-/* ─── Panel Dropdowns ───────────────────────────────────────────────────── */
-
-.sf-panel-dropdown {
-  position: absolute;
-  top: 100%;
-  left: 0;
-  z-index: 50;
-  min-width: 180px;
-  background: var(--sf-bg-lighter);
-  border: 1px solid var(--sf-border);
-  border-radius: 4px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
-  padding: 4px 0;
-  max-height: 260px;
-  overflow-y: auto;
-}
-
-.sf-panel-dropdown--right {
-  left: auto;
-  right: 0;
-}
-
-.sf-panel-dropdown-item {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 4px 12px;
-  font-size: 12px;
-  color: var(--sf-text);
-  cursor: pointer;
-  white-space: nowrap;
-  width: 100%;
-  box-sizing: border-box;
-}
-
-.sf-panel-dropdown-item:hover {
-  background: var(--sf-bg-hover);
-}
-
-.sf-panel-dropdown-item--btn {
-  background: none;
-  border: none;
-  font-family: var(--sf-font);
-  text-align: left;
-}
-
-.sf-panel-dropdown-item input[type="checkbox"] {
-  accent-color: var(--sf-accent);
-  flex-shrink: 0;
-}
-
-.sf-panel-dropdown-label {
-  flex: 1;
-  min-width: 0;
-}
-
-/* ─── Panel Menu Button ─────────────────────────────────────────────────── */
-
-.sf-panel-menu-btn {
-  background: none;
-  border: none;
-  color: var(--sf-text-muted);
-  cursor: pointer;
-  font-size: 16px;
-  padding: 2px 6px;
-  border-radius: 3px;
-  line-height: 1;
-}
-
-.sf-panel-menu-btn:hover {
-  background: var(--sf-active);
-  color: var(--sf-text);
+  box-shadow:
+    inset -3px 0 0 0 var(--sf-accent),
+    inset 0 3px 0 0 var(--sf-accent),
+    inset 0 -3px 0 0 var(--sf-accent);
 }
 
 /* ─── Panel Body ────────────────────────────────────────────────────────── */
@@ -454,245 +335,257 @@ html, body, #app {
   min-height: 0;
   overflow-y: auto;
   overflow-x: hidden;
-  display: flex;
-  flex-direction: column;
 }
 
-/* ─── Sub-Section ───────────────────────────────────────────────────────── */
+/* ─── File Tree ─────────────────────────────────────────────────────────── */
 
-.sf-sub-section {
-  display: flex;
-  flex-direction: column;
-  flex-shrink: 0;
-  overflow: hidden;
-}
-
-.sf-sub-section:not(.sf-sub-section--collapsed) {
-  min-height: 60px;
-}
-
-.sf-sub-section--collapsed {
-  flex-shrink: 0;
-}
-
-.sf-sub-section-header {
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  padding: 6px 12px;
-  cursor: pointer;
-  user-select: none;
-  flex-shrink: 0;
-  font-size: 12px;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.3px;
-  color: var(--sf-text);
-}
-
-.sf-sub-section-header:hover {
-  background: var(--sf-bg-hover);
-}
-
-.sf-sub-section-arrow {
-  font-size: 10px;
-  color: var(--sf-text-muted);
-  width: 14px;
-  text-align: center;
-  flex-shrink: 0;
-}
-
-.sf-sub-section-title {
-  flex: 1;
-  min-width: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.sf-sub-section-spacer {
-  flex: 1;
-}
-
-.sf-sub-section-action {
-  background: none;
-  border: none;
-  color: var(--sf-text-muted);
-  cursor: pointer;
-  font-size: 14px;
-  padding: 2px 4px;
-  border-radius: 3px;
-  line-height: 1;
-  flex-shrink: 0;
-}
-
-.sf-sub-section-action:hover {
-  background: var(--sf-active);
-  color: var(--sf-text);
-}
-
-.sf-sub-section-body {
-  flex: 1;
-  overflow-y: auto;
+.sf-file-tree {
   padding: 4px 0;
 }
 
-.sf-sub-section-loading {
-  padding: 12px;
+.sf-file-item {
+  display: flex;
+  align-items: center;
+  padding: 4px 12px;
+  cursor: pointer;
+  white-space: nowrap;
+  font-size: 13px;
+  gap: 4px;
+}
+
+.sf-file-item:hover {
+  background: var(--sf-bg-hover);
+}
+
+.sf-file-item.indent { padding-left: 28px; }
+.sf-file-item.indent2 { padding-left: 44px; }
+
+.sf-file-arrow {
+  font-size: 10px;
+  width: 14px;
+  text-align: center;
   color: var(--sf-text-muted);
+}
+
+/* ─── Search ─────────────────────────────────────────────────────────────── */
+
+.sf-search-panel {
+  padding: 8px;
+}
+
+.sf-search-box {
+  display: flex;
+  gap: 4px;
+  margin-bottom: 8px;
+}
+
+.sf-search-box input {
+  flex: 1;
+  background: var(--sf-bg);
+  border: 1px solid var(--sf-border);
+  color: var(--sf-text);
+  padding: 4px 8px;
+  font-size: 13px;
+  outline: none;
+  font-family: var(--sf-font);
+}
+
+.sf-search-box input:focus {
+  border-color: var(--sf-accent);
+}
+
+.sf-search-box button {
+  background: var(--sf-bg);
+  border: 1px solid var(--sf-border);
+  color: var(--sf-text);
+  cursor: pointer;
+  padding: 4px 8px;
+}
+
+.sf-search-results {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.sf-search-result {
+  padding: 4px 8px;
+  cursor: pointer;
+  font-size: 12px;
+}
+
+.sf-search-result:hover {
+  background: var(--sf-bg-hover);
+}
+
+.sf-search-file {
+  color: var(--sf-accent);
+  display: block;
+}
+
+.sf-search-match {
+  color: var(--sf-text-muted);
+}
+
+/* ─── Source Control ─────────────────────────────────────────────────────── */
+
+.sf-scm-panel {
+  padding: 8px;
+}
+
+.sf-scm-section {
+  margin-bottom: 12px;
+}
+
+.sf-scm-section-title {
+  font-weight: 600;
+  font-size: 12px;
+  text-transform: uppercase;
+  margin-bottom: 4px;
+  color: var(--sf-text-muted);
+}
+
+.sf-scm-file {
+  padding: 3px 8px;
+  font-family: var(--sf-mono);
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.sf-scm-file.modified { color: #e2b714; }
+.sf-scm-file.added { color: #4ec9b0; }
+.sf-scm-file:hover { background: var(--sf-bg-hover); }
+
+.sf-scm-empty {
+  color: var(--sf-text-muted);
+  padding: 4px 8px;
   font-style: italic;
   font-size: 12px;
 }
 
-.sf-sub-section-handle {
-  height: 4px;
-  flex-shrink: 0;
-  cursor: row-resize;
-  background: transparent;
-  transition: background 0.15s;
-}
-
-.sf-sub-section-handle:hover,
-.sf-sub-section--dragging .sf-sub-section-handle {
-  background: var(--sf-accent);
-}
-
-/* ─── Component: Tree ───────────────────────────────────────────────────── */
-
-.sf-tree-children {
-  /* container for recursive tree nodes */
-}
-
-.sf-tree-node {
+.sf-scm-commit {
   display: flex;
-  align-items: center;
+  gap: 4px;
+  margin-top: 8px;
+}
+
+.sf-scm-commit input {
+  flex: 1;
+  background: var(--sf-bg);
+  border: 1px solid var(--sf-border);
+  color: var(--sf-text);
+  padding: 4px 8px;
+  font-size: 13px;
+  outline: none;
+  font-family: var(--sf-font);
+}
+
+.sf-scm-commit button {
+  background: var(--sf-accent);
+  border: none;
+  color: #fff;
   padding: 4px 12px;
   cursor: pointer;
-  white-space: nowrap;
   font-size: 13px;
-  gap: 4px;
-  user-select: none;
 }
 
-.sf-tree-node:hover {
+/* ─── Extensions ─────────────────────────────────────────────────────────── */
+
+.sf-ext-panel {
+  padding: 8px;
+}
+
+.sf-ext-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px;
+  cursor: pointer;
+  border-radius: 4px;
+}
+
+.sf-ext-item:hover {
   background: var(--sf-bg-hover);
 }
 
-.sf-tree-arrow,
-.sf-tree-arrow-spacer {
-  font-size: 10px;
-  width: 14px;
-  text-align: center;
+.sf-ext-item span:first-child {
+  font-size: 22px;
+}
+
+.sf-ext-item strong {
+  font-size: 13px;
+}
+
+.sf-ext-item small {
   color: var(--sf-text-muted);
-  flex-shrink: 0;
-}
-
-.sf-tree-icon {
-  flex-shrink: 0;
-}
-
-.sf-tree-label {
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.sf-tree-indent-1 { padding-left: 28px; }
-.sf-tree-indent-2 { padding-left: 44px; }
-.sf-tree-indent-3 { padding-left: 60px; }
-.sf-tree-indent-4 { padding-left: 76px; }
-.sf-tree-indent-5 { padding-left: 92px; }
-.sf-tree-indent-6 { padding-left: 108px; }
-
-/* ─── Component: Table ──────────────────────────────────────────────────── */
-
-.sf-table table {
-  width: 100%;
-  border-collapse: collapse;
-  font-size: 12px;
-}
-
-.sf-table th {
-  text-align: left;
-  padding: 4px 12px;
-  font-weight: 600;
-  color: var(--sf-text-muted);
-  border-bottom: 1px solid var(--sf-border);
-  text-transform: uppercase;
   font-size: 11px;
+}
+
+/* ─── Settings ───────────────────────────────────────────────────────────── */
+
+.sf-settings-panel {
+  padding: 8px;
+}
+
+.sf-settings-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 6px 8px;
+}
+
+.sf-settings-item label {
+  font-size: 13px;
+}
+
+.sf-settings-item input[type="number"] {
+  width: 60px;
+  background: var(--sf-bg);
+  border: 1px solid var(--sf-border);
+  color: var(--sf-text);
+  padding: 2px 6px;
+  font-size: 13px;
+  text-align: right;
+  outline: none;
+}
+
+/* ─── Property Fields ───────────────────────────────────────────────────── */
+
+.sf-property-sections {
+  flex: 1;
+  overflow-y: auto;
+}
+
+.sf-property-section {
+  padding: 8px 0;
+}
+
+.sf-property-section-title {
+  padding: 6px 12px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--sf-text);
+  text-transform: uppercase;
   letter-spacing: 0.3px;
 }
 
-.sf-table td {
-  padding: 3px 12px;
-  color: var(--sf-text);
-  border-bottom: 1px solid var(--sf-border);
-}
-
-/* ─── Component: Key-Value List ─────────────────────────────────────────── */
-
-.sf-kv-item {
-  display: flex;
-  justify-content: space-between;
-  padding: 3px 12px;
-  font-size: 12px;
-}
-
-.sf-kv-key {
-  color: var(--sf-text-muted);
-}
-
-.sf-kv-value {
-  color: var(--sf-text);
-  font-family: var(--sf-mono);
-}
-
-.sf-kv-value--readonly {
-  opacity: 0.6;
-}
-
-/* ─── Component: Form fields (slider, dropdown, textbox, checkbox) ──────── */
-
-.sf-slider-field,
-.sf-dropdown-field,
-.sf-textbox-field,
-.sf-checkbox-field {
+.sf-property-field {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 4px 12px;
+  padding: 5px 12px;
   font-size: 13px;
-  gap: 8px;
 }
 
-.sf-slider-field label,
-.sf-dropdown-field label,
-.sf-textbox-field label {
+.sf-property-field label {
   color: var(--sf-text-muted);
   flex-shrink: 0;
-  font-size: 12px;
+  margin-right: 8px;
 }
 
-.sf-slider-row {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  flex: 1;
-}
-
-.sf-slider-row input[type="range"] {
-  flex: 1;
-  accent-color: var(--sf-accent);
-}
-
-.sf-slider-value {
-  font-size: 12px;
-  color: var(--sf-text);
-  min-width: 24px;
-  text-align: right;
-}
-
-.sf-dropdown-field select,
-.sf-textbox-field input[type="text"] {
+.sf-property-field input[type="text"],
+.sf-property-field input[type="number"],
+.sf-property-field select {
   background: var(--sf-bg);
   border: 1px solid var(--sf-border);
   color: var(--sf-text);
@@ -700,66 +593,20 @@ html, body, #app {
   font-size: 13px;
   outline: none;
   font-family: var(--sf-font);
-  width: 140px;
+  width: 120px;
 }
 
-.sf-dropdown-field select:focus,
-.sf-textbox-field input[type="text"]:focus {
+.sf-property-field input:focus,
+.sf-property-field select:focus {
   border-color: var(--sf-accent);
 }
 
-.sf-checkbox-field label {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  cursor: pointer;
-  color: var(--sf-text);
-  font-size: 13px;
-  width: 100%;
-}
-
-.sf-checkbox-field input[type="checkbox"] {
+.sf-property-field input[type="checkbox"] {
   accent-color: var(--sf-accent);
 }
 
-/* ─── Component: Button ─────────────────────────────────────────────────── */
-
-.sf-btn {
-  margin: 4px 12px;
-  padding: 4px 16px;
-  border: none;
-  border-radius: 3px;
+.sf-property-field select {
   cursor: pointer;
-  font-family: var(--sf-font);
-  font-size: 13px;
-}
-
-.sf-btn--primary {
-  background: var(--sf-accent);
-  color: #fff;
-}
-
-.sf-btn--primary:hover {
-  background: var(--sf-accent-hover);
-}
-
-.sf-btn--secondary {
-  background: var(--sf-bg-lighter);
-  color: var(--sf-text);
-  border: 1px solid var(--sf-border);
-}
-
-.sf-btn--secondary:hover {
-  background: var(--sf-bg-hover);
-}
-
-/* ─── Component: Label ──────────────────────────────────────────────────── */
-
-.sf-label-text {
-  display: block;
-  padding: 3px 12px;
-  font-size: 12px;
-  color: var(--sf-text);
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════
