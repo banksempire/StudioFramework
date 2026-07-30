@@ -47,7 +47,7 @@ interface PanelSection {
 - **Enough space:** tabs are evenly spaced (`flex: 1 1 auto`).
 - **Tight space:** tabs shrink to natural content width. Words are never truncated.
 - **Overflow:** when tabs no longer fit, a `☰` button appears on the right. Overflowed tabs go into a dropdown.
-- **Active tab in overflow:** the `☰` button turns blue (active state). The active tab label is shown in the last visible slot so it's always displayed.
+- **Active tab in overflow:** the `☰` button turns blue (active indicator). The active tab itself is not visible in the row — it only appears in the dropdown menu.
 - **Click outside** the dropdown closes it.
 - Clicking a section tab does **not** change the panel — it only selects a section within the current panel. Panel switching happens via the Docker icon bar.
 
