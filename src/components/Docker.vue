@@ -8,7 +8,6 @@ const props = defineProps<{
 
 const emit = defineEmits<{
   'tag-selected': [tagId: string];
-  'tag-double-clicked': [tagId: string];
 }>();
 
 interface DockerTag {
@@ -41,7 +40,6 @@ const tags: DockerTag[] = [
       :class="{ active: props.activeTag === tag.id && props.panelVisible !== false }"
       :title="tag.label"
       @click="emit('tag-selected', tag.id)"
-      @dblclick="emit('tag-double-clicked', tag.id)"
     >
       <span class="sf-docker-tag-icon">{{ tag.icon }}</span>
       <span v-if="tag.badge" class="sf-docker-tag-badge">{{ tag.badge }}</span>

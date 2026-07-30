@@ -12,22 +12,21 @@ const leftPanelVisible = ref(true);
 const dockerPanelVisible = ref(true);
 const savedPanelState = ref(true);
 const rightPanelVisible = ref(true);
-const preClickTag = ref(''); // tag before the last click
+
 
 function onTagSelected(tagId: string) {
-  preClickTag.value = activeDockerTag.value;
   if (!leftPanelVisible.value) leftPanelVisible.value = true;
-  activeDockerTag.value = tagId;
-  // Open panel only when switching to a different tag
-  if (tagId !== preClickTag.value) {
-    dockerPanelVisible.value = true;
-  }
-}
 
-function onTagDoubleClicked(tagId: string) {
-  // Only toggle if double-clicking the tag that was active before the click
-  if (tagId === preClickTag.value) {
-    dockerPanelVisible.value = !dockerPanelVisible.value;
+  if (tagId === activeDockerTag.value && dockerPanelVisible.value) {
+    // Same icon, panel open — toggle off
+    dockerPanelVisible.value = false;
+  } else if (tagId === activeDockerTag.value && !dockerPanelVisible.value) {
+    // Same icon, panel collapsed — expand
+    dockerPanelVisible.value = true;
+  } else {
+    // Different icon — switch and expand
+    activeDockerTag.value = tagId;
+    dockerPanelVisible.value = true;
   }
 }
 
@@ -60,7 +59,6 @@ function toggleLeftPanel() {
         :visible="leftPanelVisible"
         :panel-visible="dockerPanelVisible"
         @tag-selected="onTagSelected"
-        @tag-double-clicked="onTagDoubleClicked"
       />
 
       <DockerPanel
