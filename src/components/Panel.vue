@@ -59,6 +59,32 @@ watch(() => props.activeSection, (val) => {
   }
 }, { immediate: true });
 
+// Remember active index per panel (keyed by sections fingerprint)
+const savedIndex = new Map<string, number>();
+let lastKey = '';
+
+function panelKey(sections: PanelSection[]) {
+  return sections.map(s => s.id).join('|');
+}
+
+// Initialise
+lastKey = panelKey(props.sections);
+
+watch(() => props.sections, (sections, old) => {
+  // Save old panel's index
+  if (lastKey) savedIndex.set(lastKey, activeIndex.value);
+  
+  // Build key from sections
+  lastKey = panelKey(sections);
+  
+  // Restore or default to 0
+  activeIndex.value = savedIndex.get(lastKey) ?? 0;
+  
+  visibleCount.value = 100;
+  overflowOpen.value = false;
+  nextTick(() => recompute());
+});
+
 function selectSection(idx: number) {
   activeIndex.value = idx;
   emit('select-section', props.sections[idx].id);
@@ -147,12 +173,26 @@ function scheduleRecompute() {
 }
 
 onMounted(() => {
+  observe();
+  nextTick(() => recompute());
+});
+
+// Re-attach ResizeObserver when tabsRow element changes (v-if toggles it)
+watch(tabsRow, (el) => {
+  observer?.disconnect();
+  if (el) {
+    observer = new ResizeObserver(() => scheduleRecompute());
+    observer.observe(el);
+    nextTick(() => recompute());
+  }
+});
+
+function observe() {
   if (tabsRow.value) {
     observer = new ResizeObserver(() => scheduleRecompute());
     observer.observe(tabsRow.value);
   }
-  nextTick(() => recompute());
-});
+}
 
 onUnmounted(() => {
   observer?.disconnect();
