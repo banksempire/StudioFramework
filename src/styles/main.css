@@ -426,18 +426,18 @@ html, body, #app {
 
 /* Left panel: glow on left (opposite), top, bottom. Handle is on right. */
 .sf-panel-dtc-overlay--left {
-  box-shadow:
-    inset 3px 0 0 0 var(--sf-accent),
-    inset 0 3px 0 0 var(--sf-accent),
-    inset 0 -3px 0 0 var(--sf-accent);
+  background:
+    linear-gradient(to right, var(--sf-accent), transparent 6px),
+    linear-gradient(to bottom, var(--sf-accent), transparent 6px),
+    linear-gradient(to top, var(--sf-accent), transparent 6px);
 }
 
 /* Right panel: glow on right (opposite), top, bottom. Handle is on left. */
 .sf-panel-dtc-overlay--right {
-  box-shadow:
-    inset -3px 0 0 0 var(--sf-accent),
-    inset 0 3px 0 0 var(--sf-accent),
-    inset 0 -3px 0 0 var(--sf-accent);
+  background:
+    linear-gradient(to left, var(--sf-accent), transparent 6px),
+    linear-gradient(to bottom, var(--sf-accent), transparent 6px),
+    linear-gradient(to top, var(--sf-accent), transparent 6px);
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════
