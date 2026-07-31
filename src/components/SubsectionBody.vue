@@ -1,0 +1,346 @@
+<script setup lang="ts">
+import { ref, reactive, computed, watch, onMounted, onUnmounted, nextTick } from 'vue';
+import type { PanelSubSection } from '../types/panel';
+import SubSection from './SubSection.vue';
+
+const props = defineProps<{
+  subSections: PanelSubSection[];
+  hiddenIds: Set<string>;
+}>();
+
+const emit = defineEmits<{
+  utility: [subId: string, utilityId: string];
+}>();
+
+const TITLE_BAR_H = 24;
+
+// ── State ──────────────────────────────────────────────────────────────────
+
+const bodyEl = ref<HTMLElement | null>(null);
+const bodyHeight = ref(0);
+const ready = ref(false);
+
+interface SubState {
+  isExpanded: boolean;
+  height: number;          // variable: current ComponentBody height
+  measuredHeight: number;  // fixed: measured from DOM
+  savedHeight?: number;    // saved when collapsed, restored on expand
+}
+
+const states = reactive<Record<string, SubState>>({});
+
+const visibleSubSections = computed(() =>
+  props.subSections.filter(s => !props.hiddenIds.has(s.id)),
+);
+
+function isResizeable(sub: PanelSubSection): boolean {
+  const st = states[sub.id];
+  return !!st && st.isExpanded && !props.hiddenIds.has(sub.id) && sub.isHeightVariable;
+}
+
+function getBodyHeight(sub: PanelSubSection): number {
+  const st = states[sub.id];
+  if (!st || !st.isExpanded) return 0;
+  if (!sub.isHeightVariable) return st.measuredHeight;
+  return Math.max(st.height, sub.minHeight ?? 0);
+}
+
+/** What to pass as bodyHeight prop to SubSection (null = auto). */
+function bodyHeightFor(sub: PanelSubSection): number | null {
+  if (!sub.isHeightVariable) return null;
+  const st = states[sub.id];
+  if (!st?.isExpanded) return 0;
+  return Math.max(st.height, sub.minHeight ?? 0);
+}
+
+// ── Height distribution ────────────────────────────────────────────────────
+
+function distributeHeight() {
+  if (bodyHeight.value === 0) return;
+  const visible = visibleSubSections.value;
+  if (visible.length === 0) return;
+
+  let used = 0;
+  for (const sub of visible) {
+    used += TITLE_BAR_H;
+    used += getBodyHeight(sub);
+  }
+  const unallocated = bodyHeight.value - used;
+  const resizeable = visible.filter(s => isResizeable(s));
+
+  if (unallocated > 0 && resizeable.length > 0) {
+    // Give all surplus to the first resizeable sub-section
+    states[resizeable[0].id].height += unallocated;
+  } else if (unallocated < 0) {
+    // Squeeze resizeable sub-sections top-to-bottom
+    let remaining = -unallocated;
+    for (const sub of resizeable) {
+      const st = states[sub.id];
+      const minH = sub.minHeight ?? 0;
+      const canGive = st.height - minH;
+      if (canGive > 0) {
+        const give = Math.min(canGive, remaining);
+        st.height -= give;
+        remaining -= give;
+        if (remaining <= 0) break;
+      }
+    }
+  }
+}
+
+// ── Measure fixed sub-sections + set up observers (single pass) ────────────
+
+const fixedObservers = new Map<string, ResizeObserver>();
+
+function measureAndObserve() {
+  fixedObservers.forEach(o => o.disconnect());
+  fixedObservers.clear();
+
+  const body = bodyEl.value;
+  if (!body) return;
+
+  for (const sub of props.subSections) {
+    if (sub.isHeightVariable) continue;
+    if (props.hiddenIds.has(sub.id)) continue;
+    const st = states[sub.id];
+    if (!st?.isExpanded) continue;
+    const el = body.querySelector(`[data-sub-body="${sub.id}"]`) as HTMLElement | null;
+    if (!el) continue;
+
+    st.measuredHeight = el.offsetHeight;
+
+    const obs = new ResizeObserver(() => {
+      const s = states[sub.id];
+      if (s && s.isExpanded && el.isConnected) {
+        s.measuredHeight = el.offsetHeight;
+        distributeHeight();
+      }
+    });
+    obs.observe(el);
+    fixedObservers.set(sub.id, obs);
+  }
+}
+
+// ── Refresh: measure + distribute ───────────────────────────────────────────
+
+function refresh(defer = false) {
+  const run = () => {
+    if (bodyHeight.value === 0) return;
+    measureAndObserve();
+    distributeHeight();
+    ready.value = true;
+  };
+  if (defer) nextTick(run);
+  else run();
+}
+
+// ── React to changes ───────────────────────────────────────────────────────
+
+// Sub-sections change: manage states + refresh (deferred - DOM needs update)
+watch(() => props.subSections, (subs) => {
+  const ids = new Set(subs.map(s => s.id));
+  for (const sub of subs) {
+    if (!states[sub.id]) {
+      states[sub.id] = { isExpanded: true, height: sub.minHeight ?? 0, measuredHeight: 0 };
+    }
+  }
+  for (const key of Object.keys(states)) {
+    if (!ids.has(key)) {
+      delete states[key];
+      fixedObservers.get(key)?.disconnect();
+      fixedObservers.delete(key);
+    }
+  }
+  refresh(true);
+}, { immediate: true });
+
+// Visibility change: refresh (deferred)
+watch(() => props.hiddenIds, () => refresh(true));
+
+// Body height change: refresh (immediate - DOM already correct)
+watch(bodyHeight, () => refresh(false), { flush: 'sync' });
+
+// ── Body ResizeObserver ────────────────────────────────────────────────────
+
+let bodyObserver: ResizeObserver | null = null;
+
+onMounted(() => {
+  const el = bodyEl.value;
+  if (!el) return;
+  bodyHeight.value = el.clientHeight;  // triggers watch -> refresh(false)
+  bodyObserver = new ResizeObserver(() => {
+    bodyHeight.value = el.clientHeight;
+  });
+  bodyObserver.observe(el);
+  requestAnimationFrame(() => refresh(false));  // safety net
+});
+
+// ── Expand / collapse ──────────────────────────────────────────────────────
+
+function toggleExpand(subId: string) {
+  const st = states[subId];
+  if (!st) return;
+  const sub = props.subSections.find(s => s.id === subId)!;
+
+  if (st.isExpanded) {
+    // Collapsing: save height for later restore
+    st.savedHeight = st.height;
+    st.isExpanded = false;
+  } else {
+    // Expanding: restore height, take space back from other resizeable sub-sections
+    st.isExpanded = true;
+    const target = st.savedHeight ?? sub.minHeight ?? 0;
+    let needed = target;
+    for (const s of visibleSubSections.value) {
+      if (s.id === subId || !isResizeable(s)) continue;
+      const sSt = states[s.id];
+      const canGive = sSt.height - (s.minHeight ?? 0);
+      if (canGive > 0) {
+        const give = Math.min(canGive, needed);
+        sSt.height -= give;
+        needed -= give;
+        if (needed <= 0) break;
+      }
+    }
+    st.height = target - needed;  // might not get full amount if others at min
+  }
+  refresh(true);
+}
+
+// ── Drag handles ───────────────────────────────────────────────────────────
+
+function shouldShowHandle(index: number): boolean {
+  const visible = visibleSubSections.value;
+  let hasAbove = false;
+  let hasBelow = false;
+  for (let i = 0; i <= index; i++) {
+    if (isResizeable(visible[i])) hasAbove = true;
+  }
+  for (let i = index + 1; i < visible.length; i++) {
+    if (isResizeable(visible[i])) hasBelow = true;
+  }
+  return hasAbove && hasBelow;
+}
+
+interface DragState {
+  startY: number;
+  aboveIds: string[];
+  belowIds: string[];
+  startHeights: Record<string, number>;
+}
+
+let dragState: DragState | null = null;
+
+function findSub(id: string): PanelSubSection {
+  return props.subSections.find(s => s.id === id)!;
+}
+
+function startDrag(index: number, e: MouseEvent) {
+  e.preventDefault();
+  const visible = visibleSubSections.value;
+  const aboveIds: string[] = [];
+  const belowIds: string[] = [];
+
+  for (let i = 0; i <= index; i++) {
+    if (isResizeable(visible[i])) aboveIds.push(visible[i].id);
+  }
+  for (let i = index + 1; i < visible.length; i++) {
+    if (isResizeable(visible[i])) belowIds.push(visible[i].id);
+  }
+  if (!aboveIds.length || !belowIds.length) return;
+
+  const startHeights: Record<string, number> = {};
+  for (const id of [...aboveIds, ...belowIds]) {
+    startHeights[id] = states[id].height;
+  }
+
+  dragState = { startY: e.clientY, aboveIds, belowIds, startHeights };
+  window.addEventListener('mousemove', onDragMove);
+  window.addEventListener('mouseup', onDragEnd);
+  document.body.classList.add('sf-dragging');
+  document.body.style.userSelect = 'none';
+}
+
+function onDragMove(e: MouseEvent) {
+  if (!dragState) return;
+  const delta = e.clientY - dragState.startY;
+
+  if (delta < 0) {
+    // Drag up: squeeze above (bottom->top), give to first below
+    let freed = 0;
+    const needed = Math.abs(delta);
+    for (let i = dragState.aboveIds.length - 1; i >= 0; i--) {
+      const id = dragState.aboveIds[i];
+      const sub = findSub(id);
+      const startH = dragState.startHeights[id];
+      const minH = sub.minHeight ?? 0;
+      const canGive = startH - minH;
+      const give = Math.min(canGive, needed - freed);
+      states[id].height = startH - give;
+      freed += give;
+      if (freed >= needed) break;
+    }
+    const firstBelow = dragState.belowIds[0];
+    states[firstBelow].height = dragState.startHeights[firstBelow] + freed;
+
+  } else if (delta > 0) {
+    // Drag down: squeeze below (top->bottom), give to last above
+    let freed = 0;
+    const needed = delta;
+    for (const id of dragState.belowIds) {
+      const sub = findSub(id);
+      const startH = dragState.startHeights[id];
+      const minH = sub.minHeight ?? 0;
+      const canGive = startH - minH;
+      const give = Math.min(canGive, needed - freed);
+      states[id].height = startH - give;
+      freed += give;
+      if (freed >= needed) break;
+    }
+    const lastAbove = dragState.aboveIds[dragState.aboveIds.length - 1];
+    states[lastAbove].height = dragState.startHeights[lastAbove] + freed;
+  }
+}
+
+function onDragEnd() {
+  dragState = null;
+  window.removeEventListener('mousemove', onDragMove);
+  window.removeEventListener('mouseup', onDragEnd);
+  document.body.classList.remove('sf-dragging');
+  document.body.style.userSelect = '';
+}
+
+// ── Cleanup ────────────────────────────────────────────────────────────────
+
+onUnmounted(() => {
+  bodyObserver?.disconnect();
+  fixedObservers.forEach(o => o.disconnect());
+  fixedObservers.clear();
+  window.removeEventListener('mousemove', onDragMove);
+  window.removeEventListener('mouseup', onDragEnd);
+});
+</script>
+
+<template>
+  <div ref="bodyEl" class="sf-subsection-body-container" :style="{ overflowY: ready ? 'auto' : 'hidden' }">
+    <template v-for="(sub, i) in visibleSubSections" :key="sub.id">
+      <SubSection
+        :sub-section="sub"
+        :is-expanded="states[sub.id]?.isExpanded ?? true"
+        :body-height="bodyHeightFor(sub)"
+        @toggle-expand="toggleExpand(sub.id)"
+        @utility="emit('utility', sub.id, $event)"
+        @content-changed="refresh(true)"
+      />
+      <div
+        v-if="i < visibleSubSections.length - 1 && shouldShowHandle(i)"
+        class="sf-subsection-drag-wrapper"
+      >
+        <div
+          class="sf-subsection-drag-handle"
+          @mousedown="startDrag(i, $event)"
+        />
+      </div>
+    </template>
+  </div>
+</template>

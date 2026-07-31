@@ -1,20 +1,21 @@
 # Studio Framework
 
-A VSCode-like UI framework built with **Vue 3** + **TypeScript**. Provides a fully functional IDE shell layout with panels, tabs, and menus — all styled with a VSCode-dark theme.
+A VSCode-like UI framework built with **Vue 3** + **TypeScript**. Provides a
+fully functional IDE shell layout with panels, tabs, menus, and a
+data-driven sub-section system - all styled with a VSCode-dark theme.
 
 ## Features
 
-- **Menu Bar** — multi-level dropdown menus with hover-to-open behavior
-- **Docker (Activity Bar)** — left icon bar with badges, active indicators, single/double-click support
-- **Docker Panel** — expandable panel with content switching (File Explorer, Search, SCM, Extensions, Settings)
-- **Workspace** — tabbed editor area with welcome screen and editor placeholder
-- **Right Panel** — right panel with reactive form fields (`v-model` bound)
-- **Status Bar** — bottom bar with left/right-aligned items
-- **Panel Toggle** — ☰ button to hide/restore left panel, remembers panel state
-- **Panel Toggle** — ◫ button to show/hide the right panel
-- **Double-click Dock Tags** — toggles Docker Panel expansion
-- **Resizable Panels** — drag panel edges to resize (180–500px). Dragging past ~80px collapses the panel with a live glow indicator on the opposite edge
-- **VSCode Dark Theme** — CSS custom properties for easy re-theming
+- **Menu Bar** - multi-level dropdown menus with hover-to-open behavior
+- **Docker (Activity Bar)** - left icon bar with badges, active indicators, single-click toggle
+- **Docker Panel** - data-driven panel with sections, sub-sections, and 6 component types
+- **Workspace** - tabbed editor area with welcome screen
+- **Right Panel** - right panel with data-driven sub-sections
+- **Status Bar** - bottom bar with left/right-aligned items
+- **Panel Toggle** - ☰ button to hide/restore left panel, ◫ button for right panel
+- **Resizable Panels** - drag panel edges to resize (150–500px). Dragging past 100px collapses the panel with a gradient glow on three edges
+- **Sub-sections** - collapsible groups with variable/fixed height modes, drag-to-redistribute space, ⋯ visibility toggle
+- **VSCode Dark Theme** - all colors via CSS custom properties for easy re-theming
 
 ## Layout
 
@@ -22,10 +23,11 @@ A VSCode-like UI framework built with **Vue 3** + **TypeScript**. Provides a ful
 ┌────────────────── Menu Bar ──────────────────────────────────┐
 │ ☰  File  Edit  Selection  View  Help               ◫        │
 ├──────┬───────────────┬──────────────────┬────────────────────┤
-│      │               │                  │                    │
-│ Dock │  Docker       │    Workspace     │  Right Panel       │
-│  er  │   Panel       │   (Tabbed)       │   Panel            │
-│      │               │                  │                    │
+│      │ TitleBar  ⋯   │                  │ TitleBar  ⋯       │
+│ Dock ├───────────────┤    Workspace     ├────────────────────┤
+│  er  │ SSB  tab tab  │   (Tabbed)       │ Sub-sections       │
+│      ├───────────────┤                  │                    │
+│      │ Sub-sections  │                  │                    │
 ├──────┴───────────────┴──────────────────┴────────────────────┤
 │ Ln 1, Col 1  Spaces: 2  UTF-8    TypeScript  🟢 main  ⚠ 0  │
 └────────────── Status Bar ────────────────────────────────────┘
@@ -33,8 +35,8 @@ A VSCode-like UI framework built with **Vue 3** + **TypeScript**. Provides a ful
 
 | UI Element | Description |
 |:---|:---|
-| ☰ (48px) | `◫` / `◨` — Toggle left panel. Icon reflects panel state |
-| ◫ | `◫` / `◧` — Toggle right panel. Icon reflects panel state |
+| ☰ (48px) | `◫` / `◨` - Toggle left panel. Icon reflects panel state |
+| ◫ (48px) | `◫` / `◧` - Toggle right panel. Icon reflects panel state |
 
 ## Tech Stack
 
@@ -52,25 +54,25 @@ A VSCode-like UI framework built with **Vue 3** + **TypeScript**. Provides a ful
 src/
 ├── main.ts                    # createApp entry point
 ├── App.vue                    # Root layout, event wiring, state
+├── vue-shims.d.ts             # TypeScript declaration for .vue imports
+├── types/
+│   └── panel.ts               # PanelSection, PanelSubSection, PanelComponent types
 ├── components/
 │   ├── MenuBar.vue            # Top bar with dropdown menus + action buttons
 │   ├── Docker.vue             # Left icon bar (Activity Bar)
-│   ├── Panel.vue              # Shared panel base (resize + header + slot)
-│   ├── DockerPanel.vue        # Left panel wrapping Panel with content
+│   ├── Panel.vue              # Shared panel base (resize + header + SSB + sub-sections)
+│   ├── DockerPanel.vue        # Left panel: 6 panel definitions with sub-sections
+│   ├── RightPanel.vue         # Right panel: Properties with sub-sections
+│   ├── SubsectionBody.vue     # Sub-section layout manager (height, drag, scroll)
+│   ├── SubSection.vue         # Sub-section title bar + component body
+│   ├── PanelComponent.vue     # Renders 6 component types (text, input, button, tree, kv, list)
 │   ├── Workspace.vue          # Centered tabbed editor
-│   ├── RightPanel.vue         # Right panel wrapping Panel with form fields
 │   └── StatusBar.vue          # Bottom status bar
 ├── composables/
-│   └── useResize.ts          # Resize composable for draggable panel edges
-├── styles/
-│   └── main.css               # Global theme + layout CSS
-├── core/
-│   ├── component.ts           # Legacy: DOM-based Component class
-│   └── index.ts               # Legacy: barrel export
-└── index.ts                   # Legacy: public API
+│   └── useResize.ts           # Resize composable for draggable panel edges
+└── styles/
+    └── main.css               # Global theme + layout CSS
 ```
-
-> The `core/` directory and old `.ts` component files are legacy from the initial pure-DOM implementation. They are no longer imported.
 
 ## Getting Started
 
@@ -88,7 +90,8 @@ npm run dev
 
 ### MenuBar
 
-Top bar with dropdown menus, a left toggle button (48px wide, matching Docker), and a right panel toggle.
+Top bar with dropdown menus, a left toggle button (48px wide, matching
+Docker), and a right panel toggle.
 
 ```vue
 <MenuBar
@@ -99,17 +102,18 @@ Top bar with dropdown menus, a left toggle button (48px wide, matching Docker), 
 />
 ```
 
-| Button | Position | Width | Icon (collapsed → expanded) | Action |
+| Button | Position | Width | Icon (collapsed -> expanded) | Action |
 |:---|:---|:---|:---|:---|
-| ☰ | Far left | 48px | ◫ → ◨ | Toggle Docker + DockerPanel |
-| ◫ | Far right | 48px | ◫ → ◧ | Toggle Right Panel |
+| ☰ | Far left | 48px | ◫ -> ◨ | Toggle Docker + DockerPanel |
+| ◫ | Far right | 48px | ◫ -> ◧ | Toggle Right Panel |
 
 | Prop | Type | Description |
 |:---|:---|:---|
 | `left-panel-visible` | `boolean` | Current left panel state (drives icon) |
 | `right-panel-visible` | `boolean` | Current right panel state (drives icon) |
 
-Menus are defined in the `menus` array inside `MenuBar.vue`. Each menu has a `label` and `items` array with `{ label, action?, separator? }`.
+Menus are defined in the `menus` array inside `MenuBar.vue`. Each menu has a
+`label` and `items` array with `{ label, action?, separator? }`.
 
 ### Docker
 
@@ -119,7 +123,6 @@ Menus are defined in the `menus` array inside `MenuBar.vue`. Each menu has a `la
   :visible="leftPanelVisible"
   :panel-visible="dockerPanelVisible"
   @tag-selected="onTagSelected"
-  @tag-double-clicked="onTagDoubleClicked"
 />
 ```
 
@@ -131,47 +134,52 @@ Menus are defined in the `menus` array inside `MenuBar.vue`. Each menu has a `la
 
 | Event | Payload | Description |
 |:---|:---|:---|
-| `tag-selected` | `tagId: string` | Single click (300ms debounce) |
-| `tag-double-clicked` | `tagId: string` | Double click — toggles panel |
+| `tag-selected` | `tagId: string` | Single click - switches panel, toggles if same icon |
+
+Single-click behavior (no double-click):
+
+| Click | Panel state | Result |
+|:---|:---|:---|
+| Same icon | Open | Close panel |
+| Same icon | Closed | Open panel |
+| Different icon | Any | Switch and open |
 
 ### Panel (base)
 
-Shared panel component. Renders a `PanelPayload` into title bar, section tabs, sub-sections, and leaf components. Both `DockerPanel` and `RightPanel` pass different payloads to this same component.
+Shared panel component. Renders title bar, section selection bar (SSB), and
+sub-section body. Both `DockerPanel` and `RightPanel` pass different sections
+to this same component.
 
 ```vue
 <Panel
-  :payload="panelPayload"
+  :title="title"
   :visible="panelVisible"
   position="left"
+  :sections="sections"
   @collapse="onCollapse"
 />
 ```
 
 | Prop | Type | Description |
 |:---|:---|:---|
-| `payload` | `PanelPayload` | Structured content tree (see `src/types/panel.ts`) |
+| `title` | `string` | Panel display name in title bar |
 | `visible` | `boolean` | Show/hide the panel |
-| `position` | `'left' \| 'right'` | Which side the panel sits on (drives border, handle, and collapse-glow sides) |
+| `position` | `'left' \| 'right'` | Which side (drives border, handle, collapse-glow) |
+| `sections` | `PanelSection[]` | Section tabs + sub-sections (see types/panel.ts) |
 
 | Event | Payload | Description |
 |:---|:---|:---|
-| `collapse` | – | Emitted when horizontal panel-edge drag crosses the collapse threshold |
-| `action` | `(subsectionId, actionId)` | Fired when a sub-section action button is clicked |
-| `component-change` | `(componentId, value)` | Fired when a leaf component's value changes |
+| `collapse` | – | Emitted when horizontal panel-edge drag crosses collapse threshold |
+| `select-section` | `sectionId: string` | Emitted when a section tab is clicked |
 
-#### Height model
-
-Sub-sections do **not** auto-fill available space. Blank space at the bottom is allowed. Height changes only via:
-
-1. **Drag** — adjusts the dragged sub-section and its next sibling inversely.
-2. **Window resize** — squeezes/restores the topmost expanded sub-section first, then cascades down. When all expanded sub-sections reach their minimum height, the panel body scrolls.
-3. **Expand/collapse** — space is transferred to/from the lowest expanded sub-section.
-
-Each sub-section defines its own `minHeight` (default 60px) in the payload.
+See [doc/Panel.md](doc/Panel.md) for SSB overflow, DTC glow, and resize details.
+See [doc/sub-section.md](doc/sub-section.md) for sub-section height model, drag
+redistribution, and component types.
 
 ### DockerPanel
 
-Thin wrapper around `Panel` with `position="left"`. Title derived from `activeTag`.
+Thin wrapper around `Panel` with `position="left"`. Title and sections derived
+from `activeTag` via a `panels` record.
 
 ```vue
 <DockerPanel
@@ -180,8 +188,6 @@ Thin wrapper around `Panel` with `position="left"`. Title derived from `activeTa
   @collapse="onPanelCollapse"
 />
 ```
-
-Content switches via `v-if` based on `activeTag`. Add new panels by extending the template conditionals.
 
 | Prop | Type | Description |
 |:---|:---|:---|
@@ -192,13 +198,8 @@ Content switches via `v-if` based on `activeTag`. Add new panels by extending th
 |:---|:---|:---|
 | `collapse` | – | Emitted when resize drag crosses the collapse threshold |
 
-### Workspace
-
-```vue
-<Workspace />
-```
-
-Tabs and content are self-contained. Edit the `tabs` ref to customize.
+Six panel definitions: `explorer`, `search`, `source-control`, `debug`,
+`extensions`, `settings`. Each has sections with sub-sections and components.
 
 ### RightPanel
 
@@ -211,8 +212,6 @@ Thin wrapper around `Panel` with `position="right"` and title `"Properties"`.
 />
 ```
 
-Form fields use `v-model` for two-way binding. Edit the `sections` reactive array to add/remove fields.
-
 | Prop | Type | Description |
 |:---|:---|:---|
 | `visible` | `boolean` | Show/hide the panel (passed through to Panel) |
@@ -221,13 +220,24 @@ Form fields use `v-model` for two-way binding. Edit the `sections` reactive arra
 |:---|:---|:---|
 | `collapse` | – | Emitted when resize drag crosses the collapse threshold |
 
+One section (`Properties`) with three sub-sections: Element, Style, Events.
+
+### Workspace
+
+```vue
+<Workspace />
+```
+
+Tabs and content are self-contained. Edit the `tabs` ref to customize.
+
 ### StatusBar
 
 ```vue
 <StatusBar />
 ```
 
-Left and right items are defined in the component. Edit `leftItems` / `rightItems` arrays.
+Left and right items are defined in the component. Edit `leftItems` /
+`rightItems` arrays.
 
 ## Composable
 
@@ -236,13 +246,13 @@ Left and right items are defined in the component. Edit `leftItems` / `rightItem
 Reusable resize logic for panel edges.
 
 ```ts
-import { useResize } from '../composables/useResize.js';
+import { useResize } from '../composables/useResize';
 
 const { width, dragging, willCollapse, onMouseDown } = useResize({
-  min: 180,              // Minimum visible width (px)
+  min: 150,              // Minimum visible width (px)
   max: 500,              // Maximum width (px)
-  direction: 'right',    // 'left' | 'right' — which edge the handle is on
-  collapseThreshold: 80, // Width below which collapse triggers on mouseup
+  direction: 'right',    // 'left' | 'right' - which edge the handle is on
+  collapseThreshold: 100,// Width below which collapse triggers on mouseup
   onCollapse: () => { … },
 });
 ```
@@ -251,32 +261,13 @@ const { width, dragging, willCollapse, onMouseDown } = useResize({
 |:---|:---|:---|
 | `width` | `Ref<number>` | Current panel width |
 | `dragging` | `Ref<boolean>` | `true` while the user is dragging |
-| `willCollapse` | `Ref<boolean>` | `true` when drag crosses collapse threshold (live indicator) |
-| `onMouseDown` | `(e: MouseEvent) => void` | Bind to the resize handle's `@mousedown` |
-
-### useVerticalResize
-
-Vertical resize between adjacent sub-sections. No collapse threshold — only min-height clamping.
-
-```ts
-import { useVerticalResize } from '../composables/useVerticalResize.js';
-
-const { dragging, onMouseDown } = useVerticalResize({
-  min: 60,                     // Minimum height (px) — per sub-section
-  onDrag: (delta) => { … },    // Called on each mousemove with Y delta
-  onDragStart: () => { … },    // Optional: called on mousedown
-  onDragEnd: () => { … },      // Optional: called on mouseup
-});
-```
-
-| Return | Type | Description |
-|:---|:---|:---|
-| `dragging` | `Ref<boolean>` | `true` while the user is dragging |
+| `willCollapse` | `Ref<boolean>` | `true` when drag crosses collapse threshold (activates glow) |
 | `onMouseDown` | `(e: MouseEvent) => void` | Bind to the resize handle's `@mousedown` |
 
 ## Theme
 
-All colors are defined as CSS custom properties in `src/styles/main.css`. To create a new theme, override these variables:
+All colors are defined as CSS custom properties in `src/styles/main.css`. To
+create a new theme, override these variables:
 
 ```css
 :root {
@@ -292,7 +283,15 @@ All colors are defined as CSS custom properties in `src/styles/main.css`. To cre
   --sf-accent-hover: #1a8ad4;
   --sf-active: #37373d;
   --sf-selection: #264f78;
-  --sf-font: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-  --sf-mono: 'Consolas', 'Courier New', monospace;
+  --sf-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+  --sf-text-on-accent: #fff;
+  --sf-close-hover: rgba(255, 255, 255, 0.15);
+  --sf-font: 'Segoe UI', -apple-system, BlinkMacSystemFont, sans-serif;
+  --sf-mono: 'Consolas', 'Fira Code', 'JetBrains Mono', monospace;
 }
 ```
+
+## Documentation
+
+- [doc/Panel.md](doc/Panel.md) - Panel component: props, SSB, DTC, resize
+- [doc/sub-section.md](doc/sub-section.md) - Sub-sections: height model, drag, components

@@ -440,6 +440,361 @@ html, body, #app {
     linear-gradient(to top, var(--sf-accent), transparent 6px);
 }
 
+/* ─── Panel header button (⋯ visibility toggle) ─────────────────────────── */
+
+.sf-panel-header-btn {
+  background: none;
+  border: none;
+  color: var(--sf-text-muted);
+  cursor: pointer;
+  font-size: 14px;
+  padding: 0 4px;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.sf-panel-header-btn:hover {
+  color: var(--sf-text);
+}
+
+/* ─── Visibility dropdown ──────────────────────────────────────────────── */
+
+.sf-panel-visibility-dropdown {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  z-index: 50;
+  min-width: 160px;
+  background: var(--sf-bg-lighter);
+  border: 1px solid var(--sf-border);
+  border-radius: 4px;
+  box-shadow: var(--sf-shadow);
+  padding: 4px 0;
+}
+
+.sf-panel-visibility-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding: 4px 12px;
+  background: none;
+  border: none;
+  color: var(--sf-text);
+  cursor: pointer;
+  font-family: var(--sf-font);
+  font-size: 12px;
+  text-align: left;
+  white-space: nowrap;
+}
+
+.sf-panel-visibility-item:hover {
+  background: var(--sf-bg-hover);
+}
+
+.sf-panel-visibility-check {
+  width: 14px;
+  text-align: center;
+  color: var(--sf-accent);
+}
+
+.sf-panel-empty {
+  flex: 1;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   Sub-sections
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+.sf-subsection-body-container {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+}
+
+.sf-subsection {
+  flex-shrink: 0;
+  box-shadow: inset 0 1px 0 var(--sf-border);
+}
+
+.sf-subsection:first-child {
+  box-shadow: none;
+}
+
+.sf-subsection-header {
+  display: flex;
+  align-items: center;
+  height: 24px;
+  padding: 0 8px;
+  cursor: pointer;
+  color: var(--sf-text-muted);
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  user-select: none;
+}
+
+.sf-subsection-header:hover {
+  color: var(--sf-text);
+}
+
+.sf-subsection-arrow {
+  width: 16px;
+  text-align: center;
+  font-size: 12px;
+  color: var(--sf-text-muted);
+  transition: transform 0.1s;
+}
+
+.sf-subsection-arrow--expanded {
+  transform: rotate(90deg);
+}
+
+.sf-subsection-label {
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.sf-subsection-utils {
+  display: flex;
+  gap: 2px;
+  opacity: 0;
+  transition: opacity 0.15s;
+}
+
+.sf-subsection-header:hover .sf-subsection-utils {
+  opacity: 1;
+}
+
+.sf-subsection-util {
+  background: none;
+  border: none;
+  color: var(--sf-text-muted);
+  cursor: pointer;
+  font-size: 13px;
+  padding: 2px 4px;
+  border-radius: 3px;
+  display: flex;
+  align-items: center;
+}
+
+.sf-subsection-util:hover {
+  background: var(--sf-active);
+  color: var(--sf-text);
+}
+
+.sf-subsection-body {
+  padding: 4px 0;
+}
+
+/* ─── Drag handle between sub-sections ─────────────────────────────────── */
+
+body.sf-dragging,
+body.sf-dragging * {
+  cursor: row-resize !important;
+}
+
+.sf-subsection-drag-wrapper {
+  height: 0;
+  position: relative;
+  flex-shrink: 0;
+}
+
+.sf-subsection-drag-handle {
+  position: absolute;
+  top: -2px;
+  left: 0;
+  right: 0;
+  height: 4px;
+  cursor: row-resize;
+  background: transparent;
+  z-index: 10;
+  transition: background 0.15s;
+}
+
+.sf-subsection-drag-handle:hover {
+  background: var(--sf-accent);
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   Panel Components
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+.sf-pc {
+  padding: 0 8px;
+}
+
+.sf-pc-text {
+  display: block;
+  padding: 2px 0;
+  color: var(--sf-text);
+  font-size: 12px;
+}
+
+.sf-pc-text--muted {
+  color: var(--sf-text-muted);
+}
+
+.sf-pc-input {
+  width: 100%;
+  padding: 4px 8px;
+  background: var(--sf-bg);
+  border: 1px solid var(--sf-border);
+  border-radius: 3px;
+  color: var(--sf-text);
+  font-family: var(--sf-font);
+  font-size: 12px;
+  outline: none;
+}
+
+.sf-pc-input:focus {
+  border-color: var(--sf-accent);
+}
+
+.sf-pc-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 12px;
+  background: var(--sf-accent);
+  border: none;
+  border-radius: 3px;
+  color: var(--sf-text-on-accent);
+  font-family: var(--sf-font);
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.sf-pc-btn:hover {
+  background: var(--sf-accent-hover);
+}
+
+/* ─── Tree ──────────────────────────────────────────────────────────────── */
+
+.sf-pc-tree {
+  user-select: none;
+}
+
+.sf-pc-tree-node {
+  display: flex;
+  align-items: center;
+  height: 22px;
+  cursor: pointer;
+  color: var(--sf-text);
+  font-size: 13px;
+  border-radius: 2px;
+}
+
+.sf-pc-tree-node:hover {
+  background: var(--sf-bg-hover);
+}
+
+.sf-pc-tree-arrow {
+  width: 16px;
+  text-align: center;
+  font-size: 10px;
+  color: var(--sf-text-muted);
+  flex-shrink: 0;
+  transition: transform 0.1s;
+}
+
+.sf-pc-tree-arrow--expanded {
+  transform: rotate(90deg);
+}
+
+.sf-pc-tree-arrow--leaf {
+  cursor: default;
+}
+
+.sf-pc-tree-icon {
+  margin-right: 4px;
+  font-size: 13px;
+  flex-shrink: 0;
+}
+
+.sf-pc-tree-label {
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.sf-pc-tree-badge {
+  font-size: 10px;
+  color: var(--sf-text-muted);
+  padding: 0 4px;
+}
+
+/* ─── Key-Value List ─────────────────────────────────────────────────────── */
+
+.sf-pc-kv-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 2px 0;
+  font-size: 12px;
+}
+
+.sf-pc-kv-key {
+  color: var(--sf-text-muted);
+}
+
+.sf-pc-kv-val {
+  color: var(--sf-text);
+  text-align: right;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 60%;
+}
+
+/* ─── List ───────────────────────────────────────────────────────────────── */
+
+.sf-pc-list-item {
+  display: flex;
+  align-items: center;
+  height: 22px;
+  padding: 0 4px;
+  cursor: pointer;
+  color: var(--sf-text);
+  font-size: 13px;
+  border-radius: 2px;
+}
+
+.sf-pc-list-item:hover {
+  background: var(--sf-bg-hover);
+}
+
+.sf-pc-list-icon {
+  margin-right: 6px;
+  font-size: 12px;
+  flex-shrink: 0;
+}
+
+.sf-pc-list-label {
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.sf-pc-list-badge {
+  font-size: 10px;
+  background: var(--sf-accent);
+  color: var(--sf-text-on-accent);
+  border-radius: 8px;
+  padding: 0 6px;
+  min-width: 16px;
+  text-align: center;
+}
+
 /* ═══════════════════════════════════════════════════════════════════════════
    Workspace
    ═══════════════════════════════════════════════════════════════════════════ */

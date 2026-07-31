@@ -1,11 +1,8 @@
 <script setup lang="ts">
 import { computed, ref, watch, onUnmounted, nextTick } from 'vue';
-import { useResize } from '../composables/useResize.js';
-
-export interface PanelSection {
-  id: string;
-  label: string;
-}
+import { useResize } from '../composables/useResize';
+import type { PanelSection } from '../types/panel';
+import SubsectionBody from './SubsectionBody.vue';
 
 const props = withDefaults(defineProps<{
   title: string;
@@ -18,7 +15,7 @@ const props = withDefaults(defineProps<{
 });
 
 const emit = defineEmits<{
-  'collapse': [];
+  collapse: [];
   'select-section': [sectionId: string];
 }>();
 
@@ -42,7 +39,6 @@ const activeIndex = ref(0);
 const overflowOpen = ref(false);
 const tabsRow = ref<HTMLElement | null>(null);
 
-/** How many tabs to show before the ☰ button. Updated by ResizeObserver. */
 const visibleCount = ref(100);
 
 const hasOverflow = computed(() =>
@@ -51,7 +47,6 @@ const hasOverflow = computed(() =>
 
 const overflowTabs = computed(() => props.sections.slice(visibleCount.value));
 
-// Remember active index per panel (keyed by sections fingerprint)
 const savedIndex = new Map<string, number>();
 let lastKey = '';
 
@@ -59,21 +54,15 @@ function panelKey(sections: PanelSection[]) {
   return sections.map(s => s.id).join('|');
 }
 
-// Initialise
 lastKey = panelKey(props.sections);
 
 watch(() => props.sections, (sections, old) => {
-  // Save old panel's index
   if (lastKey) savedIndex.set(lastKey, activeIndex.value);
-  
-  // Build key from sections
   lastKey = panelKey(sections);
-  
-  // Restore or default to 0
   activeIndex.value = savedIndex.get(lastKey) ?? 0;
-  
   visibleCount.value = 100;
   overflowOpen.value = false;
+  visibilityMenuOpen.value = false;
   nextTick(() => recompute());
 });
 
@@ -99,7 +88,6 @@ function getTabs(): HTMLElement[] {
   );
 }
 
-/** Measure each tab's content width, compute how many fit. */
 function recompute() {
   const tabs = getTabs();
   const n = tabs.length;
@@ -107,20 +95,16 @@ function recompute() {
 
   const row = tabsRow.value!;
   const containerW = row.clientWidth;
-  const BTN_W = 28; // ☰ button width
+  const BTN_W = 28;
 
-  // Step 1: measure every tab at its natural content width
   for (const t of tabs) {
     t.style.flex = '0 0 auto';
     t.style.display = '';
   }
 
   const widths: number[] = [];
-  for (const t of tabs) {
-    widths.push(t.offsetWidth);
-  }
+  for (const t of tabs) widths.push(t.offsetWidth);
 
-  // Step 2: find how many consecutive tabs (from left) fit
   let used = 0;
   let fit = n;
   for (let i = 0; i < n; i++) {
@@ -132,25 +116,16 @@ function recompute() {
       break;
     }
   }
-
-  // At least 1 tab must be visible
   if (fit === 0) fit = 1;
 
-  // Step 3: restore normal flex and apply visibility
-  for (const t of tabs) {
-    t.style.flex = '';
-  }
+  for (const t of tabs) t.style.flex = '';
 
-  if (fit !== visibleCount.value) {
-    visibleCount.value = fit;
-  }
+  if (fit !== visibleCount.value) visibleCount.value = fit;
 
   for (let i = 0; i < n; i++) {
     tabs[i].style.display = i < fit ? '' : 'none';
   }
 }
-
-// ── ResizeObserver ────────────────────────────────────────────────────────
 
 let observer: ResizeObserver | null = null;
 let pending = false;
@@ -158,13 +133,9 @@ let pending = false;
 function scheduleRecompute() {
   if (pending) return;
   pending = true;
-  requestAnimationFrame(() => {
-    pending = false;
-    recompute();
-  });
+  requestAnimationFrame(() => { pending = false; recompute(); });
 }
 
-// Re-attach ResizeObserver when tabsRow element changes (v-if toggles it)
 watch(tabsRow, (el) => {
   observer?.disconnect();
   observer = null;
@@ -175,12 +146,51 @@ watch(tabsRow, (el) => {
   }
 }, { immediate: true });
 
-onUnmounted(() => {
-  observer?.disconnect();
-  document.removeEventListener('click', onClickOutside);
+// ── Sub-section visibility ─────────────────────────────────────────────────
+
+const visibilityMenuOpen = ref(false);
+const hiddenSubSections = ref<Map<string, Set<string>>>(new Map());
+
+const activeSection = computed(() =>
+  props.sections.length > 0 ? props.sections[activeIndex.value] : null,
+);
+const activeSectionId = computed(() => activeSection.value?.id ?? '');
+const activeSubSections = computed(() => activeSection.value?.subSections ?? []);
+const hasSubSections = computed(() => activeSubSections.value.length > 0);
+
+const activeHiddenIds = computed(() => {
+  const sec = activeSection.value;
+  if (!sec) return new Set<string>();
+  return new Set(hiddenSubSections.value.get(lastKey + '::' + sec.id) ?? []);
 });
 
-// ── Close overflow menu on outside click ──────────────────────────────────
+function toggleSubVisible(subId: string) {
+  const sec = activeSection.value;
+  if (!sec) return;
+  const key = lastKey + '::' + sec.id;
+  let hidden = new Set(hiddenSubSections.value.get(key) ?? []);
+  if (hidden.has(subId)) hidden.delete(subId);
+  else hidden.add(subId);
+  hiddenSubSections.value.set(key, hidden);
+  hiddenSubSections.value = new Map(hiddenSubSections.value);
+}
+
+function onVisClickOutside(e: MouseEvent) {
+  const target = e.target as HTMLElement;
+  if (!target.closest('.sf-panel-header-btn') && !target.closest('.sf-panel-visibility-dropdown')) {
+    visibilityMenuOpen.value = false;
+  }
+}
+
+watch(visibilityMenuOpen, (val) => {
+  if (val) {
+    setTimeout(() => document.addEventListener('click', onVisClickOutside), 0);
+  } else {
+    document.removeEventListener('click', onVisClickOutside);
+  }
+});
+
+// ── Overflow menu click-outside ────────────────────────────────────────────
 
 function onClickOutside(e: MouseEvent) {
   const target = e.target as HTMLElement;
@@ -195,6 +205,14 @@ watch(overflowOpen, (val) => {
   } else {
     document.removeEventListener('click', onClickOutside);
   }
+});
+
+// ── Cleanup ────────────────────────────────────────────────────────────────
+
+onUnmounted(() => {
+  observer?.disconnect();
+  document.removeEventListener('click', onClickOutside);
+  document.removeEventListener('click', onVisClickOutside);
 });
 </script>
 
@@ -220,9 +238,27 @@ watch(overflowOpen, (val) => {
     <!-- Title bar -->
     <div class="sf-panel-header">
       <span class="sf-panel-title">{{ title }}</span>
+      <button
+        v-if="hasSubSections"
+        class="sf-panel-header-btn"
+        @click.stop="visibilityMenuOpen = !visibilityMenuOpen"
+      >⋯</button>
+
+      <!-- Visibility dropdown -->
+      <div v-if="visibilityMenuOpen && hasSubSections" class="sf-panel-visibility-dropdown">
+        <button
+          v-for="sub in activeSubSections"
+          :key="sub.id"
+          class="sf-panel-visibility-item"
+          @click="toggleSubVisible(sub.id)"
+        >
+          <span class="sf-panel-visibility-check">{{ activeHiddenIds.has(sub.id) ? '' : '✓' }}</span>
+          {{ sub.label }}
+        </button>
+      </div>
     </div>
 
-    <!-- Section tab bar — only when multiple sections -->
+    <!-- Section tab bar - only when multiple sections -->
     <div v-if="sections.length > 1" class="sf-panel-tabs-wrapper">
       <div ref="tabsRow" class="sf-panel-tabs">
         <button
@@ -231,37 +267,37 @@ watch(overflowOpen, (val) => {
           class="sf-panel-tab"
           :class="{ 'sf-panel-tab--active': i === activeIndex }"
           @click="selectSection(i)"
-        >
-          {{ sec.label }}
-        </button>
+        >{{ sec.label }}</button>
 
         <button
           v-if="hasOverflow"
           class="sf-panel-tab sf-panel-tab--overflow"
           :class="{ 'sf-panel-tab--active': activeIndex >= visibleCount }"
           @click.stop="overflowOpen = !overflowOpen"
-        >
-          ☰
-        </button>
+        >☰</button>
       </div>
 
-      <div
-        v-if="overflowOpen && hasOverflow"
-        class="sf-panel-tabs-dropdown"
-      >
+      <div v-if="overflowOpen && hasOverflow" class="sf-panel-tabs-dropdown">
         <button
           v-for="sec in overflowTabs"
           :key="sec.id"
           class="sf-panel-tabs-dropdown-item"
           :class="{ 'sf-panel-tabs-dropdown-item--active': sections.indexOf(sec) === activeIndex }"
           @click="selectOverflowSection(sec.id)"
-        >
-          {{ sec.label }}
-        </button>
+        >{{ sec.label }}</button>
       </div>
     </div>
 
-    <!-- DTC glow overlay — renders above all content -->
+    <!-- Sub-section body -->
+    <SubsectionBody
+      v-if="hasSubSections"
+      :key="activeSectionId"
+      :sub-sections="activeSubSections"
+      :hidden-ids="activeHiddenIds"
+    />
+    <div v-else class="sf-panel-empty" />
+
+    <!-- DTC glow overlay - renders above all content -->
     <div
       v-if="willCollapse"
       class="sf-panel-dtc-overlay"
