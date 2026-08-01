@@ -1,21 +1,15 @@
 <script setup lang="ts">
 import { ref } from 'vue';
+import Icon from './Icon.vue';
+import type { WorkspaceTabDef } from '../types/layout';
 
-interface Tab {
-  id: string;
-  label: string;
-  icon?: string;
-  closable?: boolean;
-}
+const props = defineProps<{
+  tabs: WorkspaceTabDef[];
+}>();
 
-const tabs = ref<Tab[]>([
-  { id: 'welcome', label: 'Welcome', icon: '🏠', closable: false },
-  { id: 'app-ts', label: 'app.ts', icon: '📄' },
-  { id: 'utils-ts', label: 'utils.ts', icon: '📄' },
-  { id: 'styles-css', label: 'styles.css', icon: '🎨' },
-]);
-
-const activeTabId = ref('welcome');
+// Local copy - layout props stay immutable, runtime mutations happen here
+const tabs = ref<WorkspaceTabDef[]>([...props.tabs]);
+const activeTabId = ref(tabs.value[0]?.id ?? '');
 
 function selectTab(tabId: string) {
   activeTabId.value = tabId;
@@ -49,10 +43,10 @@ function newTab() {
           :class="{ active: tab.id === activeTabId }"
           @click="selectTab(tab.id)"
         >
-          <span v-if="tab.icon" class="sf-tab-icon">{{ tab.icon }}</span>
+          <Icon v-if="tab.icon" class="sf-tab-icon" :icon="tab.icon" />
           <span class="sf-tab-label">{{ tab.label }}</span>
           <span
-            v-if="tab.closable !== false"
+            v-if="tab.closeable !== false"
             class="sf-tab-close"
             @click.stop="closeTab(tab.id)"
           >✕</span>

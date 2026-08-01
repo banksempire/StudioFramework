@@ -7,6 +7,9 @@ provide the third level of the panel hierarchy:
 Panel > Section > SubSection > Component
 ```
 
+> Sub-section definitions live in the layout JSON (`sections[].subSections`)
+> — see [layout.md](./layout.md) for the file format.
+
 ## Hierarchy
 
 ```typescript

@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue';
+import Icon from './Icon.vue';
 import type { PanelComponent, TreeNode } from '../types/panel';
 
 const props = defineProps<{
@@ -74,7 +75,7 @@ function toggleNode(id: string) {
       class="sf-pc-btn"
       @click="emit('action')"
     >
-      <span v-if="component.icon" class="sf-pc-btn-icon">{{ component.icon }}</span>
+      <Icon v-if="component.icon" :icon="component.icon" />
       {{ component.label }}
     </button>
 
@@ -94,7 +95,7 @@ function toggleNode(id: string) {
             'sf-pc-tree-arrow--leaf': !hasChildren(item.node),
           }"
         >{{ hasChildren(item.node) ? '▸' : '' }}</span>
-        <span v-if="item.node.icon" class="sf-pc-tree-icon">{{ item.node.icon }}</span>
+        <Icon v-if="item.node.icon" class="sf-pc-tree-icon" :icon="item.node.icon" />
         <span class="sf-pc-tree-label">{{ item.node.label }}</span>
         <span v-if="item.node.badge" class="sf-pc-tree-badge">{{ item.node.badge }}</span>
       </div>
@@ -111,7 +112,7 @@ function toggleNode(id: string) {
     <!-- List -->
     <div v-else-if="component.type === 'list'" class="sf-pc-list">
       <div v-for="item in component.items" :key="item.id" class="sf-pc-list-item">
-        <span v-if="item.icon" class="sf-pc-list-icon">{{ item.icon }}</span>
+        <Icon v-if="item.icon" class="sf-pc-list-icon" :icon="item.icon" />
         <span class="sf-pc-list-label">{{ item.label }}</span>
         <span v-if="item.badge" class="sf-pc-list-badge">{{ item.badge }}</span>
       </div>

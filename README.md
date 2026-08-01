@@ -2,11 +2,13 @@
 
 A VSCode-like UI framework built with **Vue 3** + **TypeScript**. Provides a
 fully functional IDE shell layout with panels, tabs, menus, and a
-data-driven sub-section system - all styled with a VSCode-dark theme.
+data-driven sub-section system — **all defined by a single JSON file**
+([`src/layout/app.layout.json`](src/layout/app.layout.json)).
 
 ## Features
 
-- **Menu Bar** - multi-level dropdown menus with hover-to-open behavior
+- **JSON-defined layout** - the entire UI (menu, docker, panels, workspace, status) comes from one file; swap it to build a new app
+- **Menu Bar** - multi-level dropdown menus with accelerators, hover-to-open behavior
 - **Docker (Activity Bar)** - left icon bar with badges, active indicators, single-click toggle
 - **Docker Panel** - data-driven panel with sections, sub-sections, and 6 component types
 - **Workspace** - tabbed editor area with welcome screen
@@ -55,24 +57,61 @@ src/
 ├── main.ts                    # createApp entry point
 ├── App.vue                    # Root layout, event wiring, state
 ├── vue-shims.d.ts             # TypeScript declaration for .vue imports
+├── vite-env.d.ts              # Vite client types
+├── layout/
+│   ├── app.layout.json        # ★ THE layout definition - edit this to reshape the app
+│   └── loadLayout.ts          # Parses + validates the JSON → typed LayoutDefinition
 ├── types/
-│   └── panel.ts               # PanelSection, PanelSubSection, PanelComponent types
+│   ├── panel.ts               # PanelSection, PanelSubSection, PanelComponent types
+│   └── layout.ts              # LayoutDefinition types (mirror the JSON schema)
 ├── components/
-│   ├── MenuBar.vue            # Top bar with dropdown menus + action buttons
-│   ├── Docker.vue             # Left icon bar (Activity Bar)
+│   ├── MenuBar.vue            # Top bar - driven by layout.menu
+│   ├── Docker.vue             # Left icon bar - driven by layout.docker
 │   ├── Panel.vue              # Shared panel base (resize + header + SSB + sub-sections)
-│   ├── DockerPanel.vue        # Left panel: 6 panel definitions with sub-sections
-│   ├── RightPanel.vue         # Right panel: Properties with sub-sections
+│   ├── DockerPanel.vue        # Thin wrapper: Panel + layout panel def (position left)
+│   ├── RightPanel.vue         # Thin wrapper: Panel + layout panel def (position right)
 │   ├── SubsectionBody.vue     # Sub-section layout manager (height, drag, scroll)
 │   ├── SubSection.vue         # Sub-section title bar + component body
 │   ├── PanelComponent.vue     # Renders 6 component types (text, input, button, tree, kv, list)
-│   ├── Workspace.vue          # Centered tabbed editor
-│   └── StatusBar.vue          # Bottom status bar
+│   ├── Icon.vue               # Renders IconDef (unicode char or image)
+│   ├── Workspace.vue          # Centered tabbed editor - driven by layout.workspace
+│   └── StatusBar.vue          # Bottom status bar - driven by layout.status
 ├── composables/
 │   └── useResize.ts           # Resize composable for draggable panel edges
 └── styles/
     └── main.css               # Global theme + layout CSS
 ```
+
+## Define your own app
+
+The whole UI is defined by one file: [`src/layout/app.layout.json`](src/layout/app.layout.json).
+Menu, docker icons + panels, right panel, workspace tabs, and status bar are
+all data in that file. The Vue components are generic renderers.
+
+```json
+{
+  "menu": [ { "id": "file", "label": "File", "items": [
+    { "id": "new-file", "label": "New File", "accelerator": "Ctrl+N", "action": "new-file" }
+  ] } ],
+  "docker": [ {
+    "id": "explorer", "displayName": "Explorer", "icon": "📁",
+    "panel": { "title": "Files", "sections": [ {
+      "id": "files", "label": "Files",
+      "subSections": [ {
+        "id": "project", "label": "Project", "height": "variable", "minHeight": 80,
+        "components": [ { "type": "tree", "nodes": [ ... ] } ]
+      } ]
+    } ] }
+  } ]
+}
+```
+
+- Icons: unicode char (`"📁"`) or image (`{ "type": "image", "url": "/x.svg" }`)
+- Invalid layout → clear error at startup: `app.layout.json: <path>: <message>`
+- Full schema: [doc/layout.md](doc/layout.md)
+- Review copy: [`doc/app.layout.json`](doc/app.layout.json) — a static snapshot
+  of the live layout for reference. The app loads `src/layout/app.layout.json`;
+  edits to the doc copy do **not** affect the running UI.
 
 ## Getting Started
 
@@ -95,10 +134,12 @@ Docker), and a right panel toggle.
 
 ```vue
 <MenuBar
+  :menus="layout.menu"
   :left-panel-visible="leftPanelVisible"
   :right-panel-visible="rightPanelVisible"
   @toggle-left-panel="…"
   @toggle-right-panel="…"
+  @menu-action="onMenuAction"
 />
 ```
 
@@ -109,16 +150,22 @@ Docker), and a right panel toggle.
 
 | Prop | Type | Description |
 |:---|:---|:---|
+| `menus` | `MenuDef[]` | Menus from the layout JSON |
 | `left-panel-visible` | `boolean` | Current left panel state (drives icon) |
 | `right-panel-visible` | `boolean` | Current right panel state (drives icon) |
 
-Menus are defined in the `menus` array inside `MenuBar.vue`. Each menu has a
-`label` and `items` array with `{ label, action?, separator? }`.
+| Event | Payload | Description |
+|:---|:---|:---|
+| `menu-action` | `actionId: string` | Menu item clicked - the host app handles the id |
+
+Menus are defined in the layout JSON (`"menu"`). Each item can carry an
+`action` id, `accelerator`, `icon`, or be a `separator`.
 
 ### Docker
 
 ```vue
 <Docker
+  :items="layout.docker"
   :active-tag="activeTag"
   :visible="leftPanelVisible"
   :panel-visible="dockerPanelVisible"
@@ -128,6 +175,7 @@ Menus are defined in the `menus` array inside `MenuBar.vue`. Each menu has a
 
 | Prop | Type | Description |
 |:---|:---|:---|
+| `items` | `DockerItemDef[]` | Docker tags from the layout JSON |
 | `active-tag` | `string` | Currently active tag id |
 | `visible` | `boolean` | Show/hide the entire Docker bar |
 | `panel-visible` | `boolean` | When `false`, hides active indicator |
@@ -178,12 +226,11 @@ redistribution, and component types.
 
 ### DockerPanel
 
-Thin wrapper around `Panel` with `position="left"`. Title and sections derived
-from `activeTag` via a `panels` record.
+Thin wrapper around `Panel` with `position="left"`, driven by the layout.
 
 ```vue
 <DockerPanel
-  :active-tag="activeTag"
+  :def="dockerDef"
   :visible="visible"
   @collapse="onPanelCollapse"
 />
@@ -191,22 +238,23 @@ from `activeTag` via a `panels` record.
 
 | Prop | Type | Description |
 |:---|:---|:---|
-| `active-tag` | `string` | Which content panel to display (explorer, search, etc.) |
+| `def` | `PanelDef` | Panel definition (`{ title, sections }`) from the layout |
 | `visible` | `boolean` | Show/hide the panel (passed through to Panel) |
 
 | Event | Payload | Description |
 |:---|:---|:---|
 | `collapse` | – | Emitted when resize drag crosses the collapse threshold |
 
-Six panel definitions: `explorer`, `search`, `source-control`, `debug`,
-`extensions`, `settings`. Each has sections with sub-sections and components.
+The six panel definitions live in `src/layout/app.layout.json` under
+`"docker"`. `App.vue` resolves the active tag → `def` and passes it down.
 
 ### RightPanel
 
-Thin wrapper around `Panel` with `position="right"` and title `"Properties"`.
+Thin wrapper around `Panel` with `position="right"`, driven by the layout.
 
 ```vue
 <RightPanel
+  :def="layout.right"
   :visible="visible"
   @collapse="onPanelCollapse"
 />
@@ -214,30 +262,32 @@ Thin wrapper around `Panel` with `position="right"` and title `"Properties"`.
 
 | Prop | Type | Description |
 |:---|:---|:---|
+| `def` | `PanelDef` | Panel definition (`{ title, sections }`) from the layout |
 | `visible` | `boolean` | Show/hide the panel (passed through to Panel) |
 
 | Event | Payload | Description |
 |:---|:---|:---|
 | `collapse` | – | Emitted when resize drag crosses the collapse threshold |
 
-One section (`Properties`) with three sub-sections: Element, Style, Events.
+The right panel definition lives in `src/layout/app.layout.json` under
+`"right"` (set to `null` to disable the panel).
 
 ### Workspace
 
 ```vue
-<Workspace />
+<Workspace :tabs="layout.workspace.tabs" />
 ```
 
-Tabs and content are self-contained. Edit the `tabs` ref to customize.
+Tabs come from the layout JSON; close/new operations are handled internally
+on a local copy.
 
 ### StatusBar
 
 ```vue
-<StatusBar />
+<StatusBar :left="layout.status.left" :right="layout.status.right" />
 ```
 
-Left and right items are defined in the component. Edit `leftItems` /
-`rightItems` arrays.
+Items come from the layout JSON.
 
 ## Composable
 
@@ -293,5 +343,7 @@ create a new theme, override these variables:
 
 ## Documentation
 
+- [doc/layout.md](doc/layout.md) - JSON layout schema: define the whole app from one file
+- [doc/app.layout.json](doc/app.layout.json) - review copy of the current layout definition
 - [doc/Panel.md](doc/Panel.md) - Panel component: props, SSB, DTC, resize
 - [doc/sub-section.md](doc/sub-section.md) - Sub-sections: height model, drag, components

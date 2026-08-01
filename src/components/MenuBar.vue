@@ -1,76 +1,19 @@
 <script setup lang="ts">
 import { ref } from 'vue';
+import Icon from './Icon.vue';
+import type { MenuDef, MenuItemDef } from '../types/layout';
 
 const props = defineProps<{
+  menus: MenuDef[];
   leftPanelVisible?: boolean;
   rightPanelVisible?: boolean;
 }>();
 
-defineEmits<{
+const emit = defineEmits<{
   'toggle-right-panel': [];
   'toggle-left-panel': [];
+  'menu-action': [actionId: string];
 }>();
-
-interface MenuItem {
-  label: string;
-  separator?: boolean;
-  action?: () => void;
-}
-
-interface Menu {
-  label: string;
-  items: MenuItem[];
-}
-
-const menus: Menu[] = [
-  {
-    label: 'File',
-    items: [
-      { label: 'New File', action: () => console.log('New File') },
-      { label: 'Open Folder...', action: () => console.log('Open Folder') },
-      { label: '', separator: true },
-      { label: 'Save', action: () => console.log('Save') },
-      { label: 'Save As...', action: () => console.log('Save As') },
-      { label: '', separator: true },
-      { label: 'Exit', action: () => console.log('Exit') },
-    ],
-  },
-  {
-    label: 'Edit',
-    items: [
-      { label: 'Undo', action: () => console.log('Undo') },
-      { label: 'Redo', action: () => console.log('Redo') },
-      { label: '', separator: true },
-      { label: 'Cut', action: () => console.log('Cut') },
-      { label: 'Copy', action: () => console.log('Copy') },
-      { label: 'Paste', action: () => console.log('Paste') },
-    ],
-  },
-  {
-    label: 'Selection',
-    items: [
-      { label: 'Select All', action: () => console.log('Select All') },
-      { label: 'Expand Selection', action: () => console.log('Expand') },
-    ],
-  },
-  {
-    label: 'View',
-    items: [
-      { label: 'Toggle Left Panel', action: () => console.log('Toggle Left Panel') },
-      { label: 'Toggle Terminal', action: () => console.log('Terminal') },
-      { label: '', separator: true },
-      { label: 'Zoom In', action: () => console.log('Zoom In') },
-      { label: 'Zoom Out', action: () => console.log('Zoom Out') },
-    ],
-  },
-  {
-    label: 'Help',
-    items: [
-      { label: 'About', action: () => alert('Studio Framework v1.0 • Vue 3') },
-      { label: 'Documentation', action: () => console.log('Docs') },
-    ],
-  },
-];
 
 const openMenu = ref<string | null>(null);
 
@@ -82,9 +25,9 @@ function onMenuHover(label: string) {
   if (openMenu.value) openMenu.value = label;
 }
 
-function onItemClick(item: MenuItem) {
+function onItemClick(item: MenuItemDef) {
   openMenu.value = null;
-  item.action?.();
+  if (item.action) emit('menu-action', item.action);
 }
 
 function closeAll() {
@@ -98,7 +41,7 @@ function closeAll() {
       <button
         class="sf-menu-action-btn"
         :title="props.leftPanelVisible ? 'Collapse Left Panel' : 'Expand Left Panel'"
-        @click="$emit('toggle-left-panel')"
+        @click="emit('toggle-left-panel')"
       >
         {{ props.leftPanelVisible ? '\u25E8' : '\u25EB' }}
       </button>
@@ -107,21 +50,23 @@ function closeAll() {
     <div class="sf-menu-items">
       <div
         v-for="menu in menus"
-        :key="menu.label"
+        :key="menu.id"
         class="sf-menu-item"
         @click="onMenuClick(menu.label)"
         @mouseenter="onMenuHover(menu.label)"
       >
         {{ menu.label }}
         <div v-if="openMenu === menu.label" class="sf-menu-dropdown open">
-          <template v-for="(item, i) in menu.items" :key="i">
+          <template v-for="(item, i) in menu.items" :key="item.id ?? i">
             <div v-if="item.separator" class="sf-menu-separator" />
             <div
               v-else
               class="sf-menu-dropdown-item"
               @click.stop="onItemClick(item)"
             >
-              {{ item.label }}
+              <Icon v-if="item.icon" :icon="item.icon" />
+              <span class="sf-menu-dropdown-label">{{ item.label }}</span>
+              <span v-if="item.accelerator" class="sf-menu-dropdown-acc">{{ item.accelerator }}</span>
             </div>
           </template>
         </div>
@@ -132,7 +77,7 @@ function closeAll() {
       <button
         class="sf-menu-action-btn"
         :title="props.rightPanelVisible ? 'Collapse Right Panel' : 'Expand Right Panel'"
-        @click="$emit('toggle-right-panel')"
+        @click="emit('toggle-right-panel')"
       >
         {{ props.rightPanelVisible ? '\u25E7' : '\u25EB' }}
       </button>

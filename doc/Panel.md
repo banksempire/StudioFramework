@@ -4,6 +4,9 @@ A resizable panel with title bar, optional section tabs, and sub-section body.
 Both the left Docker panel and the right Properties panel use the same
 `Panel.vue` component.
 
+> Panel content (title, sections, sub-sections) comes from the layout JSON —
+> see [layout.md](./layout.md).
+
 ## Props
 
 | Prop | Type | Default | Description |
