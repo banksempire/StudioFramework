@@ -5,8 +5,6 @@ defineProps<{
   /** string = unicode char, object = image */
   icon?: IconDef;
 }>();
-
-const emit = defineEmits<{ click: [] }>();
 </script>
 
 <template>
@@ -16,5 +14,5 @@ const emit = defineEmits<{ click: [] }>();
     :src="icon.url"
     alt=""
   />
-  <span v-else-if="icon" class="sf-icon" @click="emit('click')">{{ icon }}</span>
+  <span v-else-if="icon" class="sf-icon">{{ icon }}</span>
 </template>

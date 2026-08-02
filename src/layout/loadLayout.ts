@@ -1,6 +1,6 @@
 import json from './app.layout.json';
 import type { IconDef, PanelComponent, PanelSection, PanelSubSection, PanelUtility, TreeNode } from '../types/panel';
-import type { DockerItemDef, LayoutDefinition, MenuDef, MenuItemDef, PanelDef, StatusItemDef, WorkspaceTabDef } from '../types/layout';
+import type { DockerItemDef, LayoutDefinition, MenuNodeDef, PanelDef, StatusItemDef, WorkspaceTabDef } from '../types/layout';
 
 // ── Validation helpers ─────────────────────────────────────────────────────
 
@@ -155,26 +155,20 @@ function toPanelDef(v: unknown, path: string): PanelDef {
   };
 }
 
-// ── Menu / docker / workspace / status ─────────────────────────────────────
+// ── Menu (one recursive node class for all levels) ─────────────────────────
 
-function toMenuItem(v: unknown, path: string): MenuItemDef {
+function toMenuNode(v: unknown, path: string): MenuNodeDef {
   const r = needRecord(v, path);
-  if (r.separator === true) return { label: '', separator: true };
+  if (r.separator === true) return { separator: true };
   return {
     id: optString(r.id, path + '.id'),
     label: needString(r.label, path + '.label'),
     icon: toIcon(r.icon, path + '.icon'),
     accelerator: optString(r.accelerator, path + '.accelerator'),
     action: optString(r.action, path + '.action'),
-  };
-}
-
-function toMenu(v: unknown, path: string): MenuDef {
-  const r = needRecord(v, path);
-  return {
-    id: needId(r.id, path + '.id'),
-    label: needString(r.label, path + '.label'),
-    items: needArray(r.items, path + '.items').map((it, i) => toMenuItem(it, `${path}.items[${i}]`)),
+    items: r.items === undefined
+      ? undefined
+      : needArray(r.items, path + '.items').map((s, i) => toMenuNode(s, `${path}.items[${i}]`)),
   };
 }
 
@@ -213,7 +207,7 @@ function toWorkspaceTab(v: unknown, path: string): WorkspaceTabDef {
 export function loadLayout(): LayoutDefinition {
   const root = needRecord(json, '<root>');
 
-  const menu = needArray(root.menu ?? [], '<root>.menu').map((m, i) => toMenu(m, `<root>.menu[${i}]`));
+  const menu = needArray(root.menu ?? [], '<root>.menu').map((m, i) => toMenuNode(m, `<root>.menu[${i}]`));
   const docker = needArray(root.docker ?? [], '<root>.docker').map((d, i) => toDockerItem(d, `<root>.docker[${i}]`));
   if (docker.length === 0) fail('<root>.docker', 'at least one docker item is required');
 

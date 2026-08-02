@@ -135,11 +135,36 @@ html, body, #app {
   display: flex;
   align-items: center;
   gap: 6px;
+  position: relative;   /* anchor for nested submenu */
 }
 
 .sf-menu-dropdown-item:hover {
   background: var(--sf-accent);
   color: var(--sf-text-on-accent);
+}
+
+.sf-menu-dropdown-caret {
+  font-size: 9px;
+  margin-left: 8px;
+  color: var(--sf-text-muted);
+  flex-shrink: 0;
+}
+
+.sf-menu-dropdown-item:hover .sf-menu-dropdown-caret {
+  color: var(--sf-text-on-accent);
+}
+
+.sf-menu-submenu {
+  display: block;
+  position: absolute;
+  left: 100%;
+  top: -4px;
+  min-width: 200px;
+  background: var(--sf-bg-lighter);
+  border: 1px solid var(--sf-border);
+  z-index: 1001;
+  padding: 4px 0;
+  box-shadow: var(--sf-shadow);
 }
 
 .sf-menu-dropdown-item:hover .sf-menu-dropdown-acc {

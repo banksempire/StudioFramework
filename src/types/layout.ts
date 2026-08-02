@@ -4,19 +4,22 @@ import type { IconDef, PanelSection } from './panel';
 // Mirrors the shape of src/layout/app.layout.json. The entire UI is built
 // from a single JSON file; these types describe its schema.
 
-export interface MenuItemDef {
+/**
+ * A menu node - one class for every level:
+ * - top-level menu in the bar: { id, label, items }
+ * - submenu parent:            { label, items }
+ * - leaf item:                 { label, action }
+ * - separator:                 { separator: true }
+ * `items` is recursive, so nesting depth is unlimited.
+ */
+export interface MenuNodeDef {
   id?: string;
-  label: string;
+  label?: string;
   icon?: IconDef;
   accelerator?: string;
-  action?: string;    // action id - handled by the host app
+  action?: string;          // leaf: action id handled by the host app
   separator?: boolean;
-}
-
-export interface MenuDef {
-  id: string;
-  label: string;
-  items: MenuItemDef[];
+  items?: MenuNodeDef[];    // children (submenu) - same class, one level down
 }
 
 export interface PanelDef {
@@ -47,7 +50,7 @@ export interface StatusItemDef {
 
 export interface LayoutDefinition {
   app: { title: string };
-  menu: MenuDef[];
+  menu: MenuNodeDef[];      // top-level menus - same class as any submenu
   docker: DockerItemDef[];
   right: PanelDef | null;
   workspace: { tabs: WorkspaceTabDef[] };

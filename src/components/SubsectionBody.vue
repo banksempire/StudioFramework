@@ -55,6 +55,29 @@ function bodyHeightFor(sub: PanelSubSection): number | null {
 
 // ── Height distribution ────────────────────────────────────────────────────
 
+function findSub(id: string): PanelSubSection {
+  return props.subSections.find(s => s.id === id)!;
+}
+
+/**
+ * Reduce the given sub-sections toward their minHeight (top→bottom order).
+ * `heights` is the source of heights (live states, or a drag snapshot).
+ * Returns the total px freed.
+ */
+function squeezeToMin(ids: string[], needed: number, heights?: Record<string, number>): number {
+  let freed = 0;
+  for (const id of ids) {
+    if (freed >= needed) break;
+    const start = heights ? heights[id] : states[id].height;
+    const canGive = start - (findSub(id).minHeight ?? 0);
+    if (canGive <= 0) continue;
+    const give = Math.min(canGive, needed - freed);
+    states[id].height = start - give;
+    freed += give;
+  }
+  return freed;
+}
+
 function distributeHeight() {
   if (bodyHeight.value === 0) return;
   const visible = visibleSubSections.value;
@@ -73,18 +96,7 @@ function distributeHeight() {
     states[resizeable[0].id].height += unallocated;
   } else if (unallocated < 0) {
     // Squeeze resizeable sub-sections top-to-bottom
-    let remaining = -unallocated;
-    for (const sub of resizeable) {
-      const st = states[sub.id];
-      const minH = sub.minHeight ?? 0;
-      const canGive = st.height - minH;
-      if (canGive > 0) {
-        const give = Math.min(canGive, remaining);
-        st.height -= give;
-        remaining -= give;
-        if (remaining <= 0) break;
-      }
-    }
+    squeezeToMin(resizeable.map(s => s.id), -unallocated);
   }
 }
 
@@ -190,37 +202,31 @@ function toggleExpand(subId: string) {
     // Expanding: restore height, take space back from other resizeable sub-sections
     st.isExpanded = true;
     const target = st.savedHeight ?? sub.minHeight ?? 0;
-    let needed = target;
-    for (const s of visibleSubSections.value) {
-      if (s.id === subId || !isResizeable(s)) continue;
-      const sSt = states[s.id];
-      const canGive = sSt.height - (s.minHeight ?? 0);
-      if (canGive > 0) {
-        const give = Math.min(canGive, needed);
-        sSt.height -= give;
-        needed -= give;
-        if (needed <= 0) break;
-      }
-    }
-    st.height = target - needed;  // might not get full amount if others at min
+    const others = visibleSubSections.value
+      .filter(s => s.id !== subId && isResizeable(s))
+      .map(s => s.id);
+    st.height = squeezeToMin(others, target);  // might not get full amount if others at min
   }
   refresh(true);
 }
 
 // ── Drag handles ───────────────────────────────────────────────────────────
 
-function shouldShowHandle(index: number): boolean {
+/** Per-boundary flag: can this handle redistribute space? (resizeable above AND below) */
+const handleFlags = computed(() => {
   const visible = visibleSubSections.value;
+  const flags: boolean[] = [];
   let hasAbove = false;
-  let hasBelow = false;
-  for (let i = 0; i <= index; i++) {
+  for (let i = 0; i < visible.length - 1; i++) {
     if (isResizeable(visible[i])) hasAbove = true;
+    let hasBelow = false;
+    for (let j = i + 1; j < visible.length; j++) {
+      if (isResizeable(visible[j])) { hasBelow = true; break; }
+    }
+    flags.push(hasAbove && hasBelow);
   }
-  for (let i = index + 1; i < visible.length; i++) {
-    if (isResizeable(visible[i])) hasBelow = true;
-  }
-  return hasAbove && hasBelow;
-}
+  return flags;
+});
 
 interface DragState {
   startY: number;
@@ -230,10 +236,6 @@ interface DragState {
 }
 
 let dragState: DragState | null = null;
-
-function findSub(id: string): PanelSubSection {
-  return props.subSections.find(s => s.id === id)!;
-}
 
 function startDrag(index: number, e: MouseEvent) {
   e.preventDefault();
@@ -266,37 +268,14 @@ function onDragMove(e: MouseEvent) {
   const delta = e.clientY - dragState.startY;
 
   if (delta < 0) {
-    // Drag up: squeeze above (bottom->top), give to first below
-    let freed = 0;
-    const needed = Math.abs(delta);
-    for (let i = dragState.aboveIds.length - 1; i >= 0; i--) {
-      const id = dragState.aboveIds[i];
-      const sub = findSub(id);
-      const startH = dragState.startHeights[id];
-      const minH = sub.minHeight ?? 0;
-      const canGive = startH - minH;
-      const give = Math.min(canGive, needed - freed);
-      states[id].height = startH - give;
-      freed += give;
-      if (freed >= needed) break;
-    }
+    // Drag up: squeeze above (bottom→top), give to first below
+    const freed = squeezeToMin([...dragState.aboveIds].reverse(), Math.abs(delta), dragState.startHeights);
     const firstBelow = dragState.belowIds[0];
     states[firstBelow].height = dragState.startHeights[firstBelow] + freed;
 
   } else if (delta > 0) {
-    // Drag down: squeeze below (top->bottom), give to last above
-    let freed = 0;
-    const needed = delta;
-    for (const id of dragState.belowIds) {
-      const sub = findSub(id);
-      const startH = dragState.startHeights[id];
-      const minH = sub.minHeight ?? 0;
-      const canGive = startH - minH;
-      const give = Math.min(canGive, needed - freed);
-      states[id].height = startH - give;
-      freed += give;
-      if (freed >= needed) break;
-    }
+    // Drag down: squeeze below (top→bottom), give to last above
+    const freed = squeezeToMin(dragState.belowIds, delta, dragState.startHeights);
     const lastAbove = dragState.aboveIds[dragState.aboveIds.length - 1];
     states[lastAbove].height = dragState.startHeights[lastAbove] + freed;
   }
@@ -333,7 +312,7 @@ onUnmounted(() => {
         @content-changed="refresh(true)"
       />
       <div
-        v-if="i < visibleSubSections.length - 1 && shouldShowHandle(i)"
+        v-if="i < visibleSubSections.length - 1 && handleFlags[i]"
         class="sf-subsection-drag-wrapper"
       >
         <div

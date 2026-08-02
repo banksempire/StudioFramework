@@ -8,11 +8,36 @@
       "id": "file",
       "label": "File",
       "items": [
-        { "id": "new-file", "label": "New File", "accelerator": "Ctrl+N", "action": "new-file" },
+        {
+          "id": "new-file", "label": "New File", "icon": "📄",
+          "items": [
+            { "id": "new-text", "label": "Text File", "action": "new-file" },
+            { "id": "new-js", "label": "JavaScript File", "icon": "🟨", "action": "new-file" },
+            { "id": "new-ts", "label": "TypeScript File", "icon": "🟦", "action": "new-file" },
+            { "id": "new-vue", "label": "Vue SFC", "icon": "🟩", "action": "new-file" }
+          ]
+        },
         { "id": "open-folder", "label": "Open Folder...", "accelerator": "Ctrl+K Ctrl+O", "action": "open-folder" },
         { "separator": true },
         { "id": "save", "label": "Save", "accelerator": "Ctrl+S", "action": "save" },
         { "id": "save-as", "label": "Save As...", "accelerator": "Ctrl+Shift+S", "action": "save-as" },
+        { "separator": true },
+        {
+          "id": "preferences", "label": "Preferences", "icon": "⚙️",
+          "items": [
+            { "id": "pref-settings", "label": "Settings", "accelerator": "Ctrl+,", "action": "settings" },
+            {
+              "id": "pref-theme", "label": "Color Theme",
+              "items": [
+                { "id": "theme-dark", "label": "Dark (VSCode)", "action": "theme-dark" },
+                { "id": "theme-light", "label": "Light", "action": "theme-light" },
+                { "id": "theme-hc", "label": "High Contrast", "action": "theme-hc" }
+              ]
+            },
+            { "separator": true },
+            { "id": "pref-keybindings", "label": "Keyboard Shortcuts", "accelerator": "Ctrl+K Ctrl+S", "action": "keybindings" }
+          ]
+        },
         { "separator": true },
         { "id": "exit", "label": "Exit", "action": "exit" }
       ]
@@ -26,7 +51,16 @@
         { "separator": true },
         { "id": "cut", "label": "Cut", "accelerator": "Ctrl+X", "action": "cut" },
         { "id": "copy", "label": "Copy", "accelerator": "Ctrl+C", "action": "copy" },
-        { "id": "paste", "label": "Paste", "accelerator": "Ctrl+V", "action": "paste" }
+        { "id": "paste", "label": "Paste", "accelerator": "Ctrl+V", "action": "paste" },
+        { "separator": true },
+        {
+          "id": "convert-case", "label": "Convert Case",
+          "items": [
+            { "id": "case-upper", "label": "UPPERCASE", "action": "convert-case" },
+            { "id": "case-lower", "label": "lowercase", "action": "convert-case" },
+            { "id": "case-title", "label": "Title Case", "action": "convert-case" }
+          ]
+        }
       ]
     },
     {
@@ -34,15 +68,39 @@
       "label": "Selection",
       "items": [
         { "id": "select-all", "label": "Select All", "accelerator": "Ctrl+A", "action": "select-all" },
-        { "id": "expand-selection", "label": "Expand Selection", "action": "expand-selection" }
+        { "id": "expand-selection", "label": "Expand Selection", "action": "expand-selection" },
+        {
+          "id": "select-scope", "label": "Select Scope",
+          "items": [
+            { "id": "scope-word", "label": "Word", "action": "expand-selection" },
+            { "id": "scope-line", "label": "Line", "action": "expand-selection" },
+            { "id": "scope-fn", "label": "Function", "action": "expand-selection" },
+            { "id": "scope-class", "label": "Class", "action": "expand-selection" }
+          ]
+        }
       ]
     },
     {
       "id": "view",
       "label": "View",
       "items": [
-        { "id": "toggle-left-panel", "label": "Toggle Left Panel", "action": "toggle-left-panel" },
-        { "id": "toggle-right-panel", "label": "Toggle Right Panel", "action": "toggle-right-panel" },
+        {
+          "id": "view-appearance", "label": "Appearance", "icon": "🎨",
+          "items": [
+            {
+              "id": "view-layout", "label": "Panel Layout",
+              "items": [
+                { "id": "layout-single", "label": "Single", "action": "layout-single" },
+                { "id": "layout-split", "label": "Split", "action": "layout-split" },
+                { "id": "layout-grid", "label": "Grid", "action": "layout-grid" }
+              ]
+            },
+            { "separator": true },
+            { "id": "view-sidebar", "label": "Toggle Left Panel", "action": "toggle-left-panel" },
+            { "id": "view-statusbar", "label": "Toggle Status Bar", "action": "toggle-statusbar" }
+          ]
+        },
+        { "id": "toggle-terminal", "label": "Toggle Terminal", "action": "toggle-terminal" },
         { "separator": true },
         { "id": "zoom-in", "label": "Zoom In", "accelerator": "Ctrl+=", "action": "zoom-in" },
         { "id": "zoom-out", "label": "Zoom Out", "accelerator": "Ctrl+-", "action": "zoom-out" }
@@ -53,7 +111,14 @@
       "label": "Help",
       "items": [
         { "id": "about", "label": "About", "action": "about" },
-        { "id": "docs", "label": "Documentation", "action": "docs" }
+        {
+          "id": "docs", "label": "Documentation",
+          "items": [
+            { "id": "docs-framework", "label": "Framework Guide", "action": "docs" },
+            { "id": "docs-layout", "label": "Layout JSON Schema", "action": "docs" },
+            { "id": "docs-api", "label": "API Reference", "action": "docs" }
+          ]
+        }
       ]
     }
   ],

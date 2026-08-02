@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed } from 'vue';
+import { reactive, computed } from 'vue';
 import Icon from './Icon.vue';
 import type { PanelComponent, TreeNode } from '../types/panel';
 
@@ -14,7 +14,8 @@ const emit = defineEmits<{
 
 // ── Tree state ─────────────────────────────────────────────────────────────
 
-const expandedNodes = ref<Set<string>>(new Set());
+// reactive Set: add/delete trigger updates directly (no manual re-assignment)
+const expandedNodes = reactive(new Set<string>());
 
 interface FlatNode {
   node: TreeNode;
@@ -24,7 +25,7 @@ interface FlatNode {
 function flatten(nodes: TreeNode[], depth: number, acc: FlatNode[]): FlatNode[] {
   for (const node of nodes) {
     acc.push({ node, depth });
-    if (expandedNodes.value.has(node.id) && node.children?.length) {
+    if (expandedNodes.has(node.id) && node.children?.length) {
       flatten(node.children, depth + 1, acc);
     }
   }
@@ -41,13 +42,13 @@ function hasChildren(node: TreeNode): boolean {
 }
 
 function toggleNode(id: string) {
-  if (expandedNodes.value.has(id)) {
-    expandedNodes.value.delete(id);
-  } else {
-    expandedNodes.value.add(id);
-  }
-  expandedNodes.value = new Set(expandedNodes.value);
+  if (expandedNodes.has(id)) expandedNodes.delete(id);
+  else expandedNodes.add(id);
   emit('content-changed');
+}
+
+function onNodeClick(node: TreeNode) {
+  if (hasChildren(node)) toggleNode(node.id);
 }
 </script>
 
@@ -86,7 +87,7 @@ function toggleNode(id: string) {
         :key="item.node.id"
         class="sf-pc-tree-node"
         :style="{ paddingLeft: 4 + item.depth * 16 + 'px' }"
-        @click="hasChildren(item.node) && toggleNode(item.node.id)"
+        @click="onNodeClick(item.node)"
       >
         <span
           class="sf-pc-tree-arrow"

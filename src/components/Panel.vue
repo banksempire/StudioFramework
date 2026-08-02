@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed, ref, watch, onUnmounted, nextTick } from 'vue';
 import { useResize } from '../composables/useResize';
+import { useClickOutside } from '../composables/useClickOutside';
 import type { PanelSection } from '../types/panel';
 import SubsectionBody from './SubsectionBody.vue';
 
@@ -37,6 +38,7 @@ const { width, dragging, willCollapse, onMouseDown } = useResize({
 
 const activeIndex = ref(0);
 const overflowOpen = ref(false);
+useClickOutside(overflowOpen, '.sf-panel-tabs-wrapper');
 const tabsRow = ref<HTMLElement | null>(null);
 
 const visibleCount = ref(100);
@@ -149,6 +151,7 @@ watch(tabsRow, (el) => {
 // ── Sub-section visibility ─────────────────────────────────────────────────
 
 const visibilityMenuOpen = ref(false);
+useClickOutside(visibilityMenuOpen, ['.sf-panel-header-btn', '.sf-panel-visibility-dropdown']);
 const hiddenSubSections = ref<Map<string, Set<string>>>(new Map());
 
 const activeSection = computed(() =>
@@ -175,45 +178,9 @@ function toggleSubVisible(subId: string) {
   hiddenSubSections.value = new Map(hiddenSubSections.value);
 }
 
-function onVisClickOutside(e: MouseEvent) {
-  const target = e.target as HTMLElement;
-  if (!target.closest('.sf-panel-header-btn') && !target.closest('.sf-panel-visibility-dropdown')) {
-    visibilityMenuOpen.value = false;
-  }
-}
-
-watch(visibilityMenuOpen, (val) => {
-  if (val) {
-    setTimeout(() => document.addEventListener('click', onVisClickOutside), 0);
-  } else {
-    document.removeEventListener('click', onVisClickOutside);
-  }
-});
-
-// ── Overflow menu click-outside ────────────────────────────────────────────
-
-function onClickOutside(e: MouseEvent) {
-  const target = e.target as HTMLElement;
-  if (!target.closest('.sf-panel-tabs-wrapper')) {
-    overflowOpen.value = false;
-  }
-}
-
-watch(overflowOpen, (val) => {
-  if (val) {
-    setTimeout(() => document.addEventListener('click', onClickOutside), 0);
-  } else {
-    document.removeEventListener('click', onClickOutside);
-  }
-});
-
 // ── Cleanup ────────────────────────────────────────────────────────────────
 
-onUnmounted(() => {
-  observer?.disconnect();
-  document.removeEventListener('click', onClickOutside);
-  document.removeEventListener('click', onVisClickOutside);
-});
+onUnmounted(() => observer?.disconnect());
 </script>
 
 <template>
