@@ -73,8 +73,17 @@ function onPanelResize(side: 'left' | 'right', newWidth: number) {
       panelResizeTriggered = true;
     }
   } else if (newWidth < prev) {
-    // Panel getting narrower: allow the next expansion to trigger again
+    // Panel getting narrower: reset trigger + revert auto-hide if the
+    // workspace is now wide enough for both panels.
+    // Uses would-be width (all user-intended panels visible) so the check
+    // is stable. Clearing auto-hidden flags does NOT change user intent
+    // (leftPanelVisible/rightPanelVisible) - so user-collapsed panels
+    // stay collapsed.
     panelResizeTriggered = false;
+    if (calcWouldBeWorkspaceWidth() >= MIN_WORKSPACE_WIDTH) {
+      leftAutoHidden.value = false;
+      rightAutoHidden.value = false;
+    }
   }
 }
 
