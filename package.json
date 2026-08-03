@@ -10,6 +10,7 @@
     "check": "node scripts/check-ui.cjs",
     "check:dtt": "node scripts/check-dtt.cjs",
     "check:active": "node scripts/check-active.cjs",
+    "check:autohide": "node scripts/check-autohide.cjs",
     "typecheck": "vue-tsc --noEmit"
   },
   "devDependencies": {

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, ref } from 'vue';
+import { computed, onMounted, onUnmounted, ref } from 'vue';
 import { layout } from './layout/loadLayout';
 import MenuBar from './components/MenuBar.vue';
 import Docker from './components/Docker.vue';
@@ -14,12 +14,44 @@ const dockerPanelVisible = ref(true);
 const savedPanelState = ref(true);
 const rightPanelVisible = ref(true);
 
+// ── Auto-hide panels on narrow windows ────────────────────────────────────
+
+/** Below this width (px), both panels auto-hide to give the workspace room. */
+const AUTO_HIDE_THRESHOLD = 700;
+const autoHidden = ref(false);
+
+function onResize() {
+  autoHidden.value = window.innerWidth < AUTO_HIDE_THRESHOLD;
+}
+
+onMounted(() => {
+  onResize();
+  window.addEventListener('resize', onResize);
+});
+onUnmounted(() => window.removeEventListener('resize', onResize));
+
+/** Effective visibility: user intent, overridden when the window is too narrow. */
+const effDockerPanelVisible = computed(() =>
+  dockerPanelVisible.value && leftPanelVisible.value && !autoHidden.value,
+);
+const effRightPanelVisible = computed(() =>
+  rightPanelVisible.value && !autoHidden.value,
+);
+
 const activeDockerItem = computed(
   () => layout.docker.find(d => d.id === activeDockerTag.value) ?? layout.docker[0],
 );
 const dockerDef = computed(() => activeDockerItem.value?.panel ?? null);
 
 function onTagSelected(tagId: string) {
+  if (autoHidden.value) {
+    // Panels are auto-hidden: show them (don't toggle)
+    autoHidden.value = false;
+    if (!leftPanelVisible.value) leftPanelVisible.value = true;
+    if (!dockerPanelVisible.value) dockerPanelVisible.value = true;
+    if (tagId !== activeDockerTag.value) activeDockerTag.value = tagId;
+    return;
+  }
   if (!leftPanelVisible.value) leftPanelVisible.value = true;
 
   if (tagId === activeDockerTag.value && dockerPanelVisible.value) {
@@ -36,6 +68,13 @@ function onTagSelected(tagId: string) {
 }
 
 function toggleLeftPanel() {
+  if (autoHidden.value) {
+    // Panels are auto-hidden: show them (don't toggle)
+    autoHidden.value = false;
+    if (!leftPanelVisible.value) leftPanelVisible.value = true;
+    if (!dockerPanelVisible.value) dockerPanelVisible.value = true;
+    return;
+  }
   if (leftPanelVisible.value) {
     // Hide: remember panel state, then collapse everything
     savedPanelState.value = dockerPanelVisible.value;
@@ -48,6 +87,16 @@ function toggleLeftPanel() {
   }
 }
 
+function toggleRightPanel() {
+  if (autoHidden.value) {
+    // Panels are auto-hidden: show them (don't toggle)
+    autoHidden.value = false;
+    if (!rightPanelVisible.value) rightPanelVisible.value = true;
+    return;
+  }
+  rightPanelVisible.value = !rightPanelVisible.value;
+}
+
 // ── Menu actions: defined in the layout JSON, handled here ────────────────
 
 function onMenuAction(actionId: string) {
@@ -56,7 +105,7 @@ function onMenuAction(actionId: string) {
       toggleLeftPanel();
       break;
     case 'toggle-right-panel':
-      rightPanelVisible.value = !rightPanelVisible.value;
+      toggleRightPanel();
       break;
     case 'about':
       alert(`Studio Framework v1.0 • ${layout.app.title}`);
@@ -71,10 +120,10 @@ function onMenuAction(actionId: string) {
   <div class="sf-root">
     <MenuBar
       :menus="layout.menu"
-      :left-panel-visible="leftPanelVisible"
-      :right-panel-visible="rightPanelVisible"
+      :left-panel-visible="!autoHidden && leftPanelVisible"
+      :right-panel-visible="!autoHidden && rightPanelVisible"
       @toggle-left-panel="toggleLeftPanel"
-      @toggle-right-panel="rightPanelVisible = !rightPanelVisible"
+      @toggle-right-panel="toggleRightPanel"
       @menu-action="onMenuAction"
     />
 
@@ -90,7 +139,7 @@ function onMenuAction(actionId: string) {
       <DockerPanel
         v-if="dockerDef"
         :def="dockerDef"
-        :visible="dockerPanelVisible && leftPanelVisible"
+        :visible="effDockerPanelVisible"
         @collapse="dockerPanelVisible = false"
       />
 
@@ -99,7 +148,7 @@ function onMenuAction(actionId: string) {
       <RightPanel
         v-if="layout.right"
         :def="layout.right"
-        :visible="rightPanelVisible"
+        :visible="effRightPanelVisible"
         @collapse="rightPanelVisible = false"
       />
     </div>
