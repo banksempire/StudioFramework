@@ -97,10 +97,10 @@ sub-section's **body** (content area) activates it; clicking another
 sub-section's body deactivates the previous one. Clicking the **title bar**
 only toggles expand/collapse and does NOT activate.
 
-- **Visual cue**: active header gets brighter text.
 - **Button visibility**: utility buttons are `display: none` by default (no
   layout space, label extends full width), shown on hover or when the
-  sub-section is active.
+  sub-section is active. This is the only visual indicator of the active
+  state - the header text color is the same regardless.
 - **Lifecycle**: the active id is cleared when the sub-section is hidden or
   removed from the visible list. Switching panel section (tab) recreates
   `SubsectionBody` and resets active to `null`.
