@@ -97,8 +97,9 @@ in a sub-section (title bar, body, or blank area) activates it; clicking
 another sub-section deactivates the previous one.
 
 - **Visual cue**: active header gets a 2px left accent line + brighter text.
-- **Button visibility**: utility buttons are `opacity: 0` by default (shown on
-  hover), but `opacity: 1` when the sub-section is active — no hover needed.
+- **Button visibility**: utility buttons are `display: none` by default (no
+  layout space, label extends full width), shown on hover or when the
+  sub-section is active.
 - **Lifecycle**: the active id is cleared when the sub-section is hidden or
   removed from the visible list. Switching panel section (tab) recreates
   `SubsectionBody` and resets active to `null`.

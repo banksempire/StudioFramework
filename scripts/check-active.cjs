@@ -26,11 +26,14 @@ const { ensureServer, openApp, makeReporter, finish } = require('./lib/ui-test.c
       return null;
     }
 
-    async function getUtilsOpacity(sub) {
+    async function getUtilsDisplay(sub) {
       if (!sub) return 'N/A';
-      const utils = await sub.$('.sf-subsection-utils');
-      if (!utils) return 'N/A';
-      return page.evaluate(el => getComputedStyle(el).opacity, utils);
+      return page.evaluate(el => {
+        const u = el.querySelector('.sf-subsection-utils');
+        if (!u) return 'N/A';
+        // offsetWidth = 0 means no layout space (display: none)
+        return u.offsetWidth > 0 ? 'shown' : 'hidden';
+      }, sub);
     }
 
     async function isActiveEl(sub) {
@@ -49,9 +52,9 @@ const { ensureServer, openApp, makeReporter, finish } = require('./lib/ui-test.c
     report('found "Project" sub-section', !!projectSub);
     report('found "Outline" sub-section', !!outlineSub);
 
-    // 2. Project utils hidden initially (opacity: 0)
-    const opacityInit = await getUtilsOpacity(projectSub);
-    report('project utils hidden initially', opacityInit === '0', `opacity=${opacityInit}`);
+    // 2. Project utils hidden initially (no space)
+    const displayInit = await getUtilsDisplay(projectSub);
+    report('project utils take no space initially', displayInit === 'hidden', `display=${displayInit}`);
 
     // 3. Click project body (content area) to activate
     const projectBody = await projectSub.$('.sf-subsection-body');
@@ -60,22 +63,22 @@ const { ensureServer, openApp, makeReporter, finish } = require('./lib/ui-test.c
     } else {
       await projectSub.click(); // collapsed - click root
     }
-    await page.waitForTimeout(200);
+    await page.waitForTimeout(50);
 
-    // 4. Project is now active + utils visible
+    // 4. Project is now active + utils take space
     report('project active after body click', await isActiveEl(projectSub));
-    const opacityActive = await getUtilsOpacity(projectSub);
-    report('project utils visible when active', opacityActive === '1', `opacity=${opacityActive}`);
+    const displayActive = await getUtilsDisplay(projectSub);
+    report('project utils take space when active', displayActive === 'shown', `display=${displayActive}`);
 
     // 5. Click outline header to deactivate project
     const outlineHeader = await outlineSub.$('.sf-subsection-header');
     await outlineHeader.click();
-    await page.waitForTimeout(200);
+    await page.waitForTimeout(50);
 
     // 6. Project deactivated, outline activated
     report('project deactivated after clicking outline', !await isActiveEl(projectSub));
-    const opacityDeact = await getUtilsOpacity(projectSub);
-    report('project utils hidden after deactivation', opacityDeact === '0', `opacity=${opacityDeact}`);
+    const displayDeact = await getUtilsDisplay(projectSub);
+    report('project utils take no space after deactivation', displayDeact === 'hidden', `display=${displayDeact}`);
     report('outline active after click', await isActiveEl(outlineSub));
 
     // 7. Only one active at a time

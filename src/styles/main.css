@@ -637,18 +637,13 @@ html, body, #app {
 }
 
 .sf-subsection-utils {
-  display: flex;
+  display: none;
   gap: 2px;
-  opacity: 0;
-  transition: opacity 0.15s;
 }
 
-.sf-subsection-header:hover .sf-subsection-utils {
-  opacity: 1;
-}
-
+.sf-subsection-header:hover .sf-subsection-utils,
 .sf-subsection--active .sf-subsection-utils {
-  opacity: 1;
+  display: flex;
 }
 
 .sf-subsection-util {
