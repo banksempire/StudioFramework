@@ -2,13 +2,13 @@
 
 ## Terminology
 
-- **Workspace**: the box in the centre of the UI (the editor area).
+- **Workspace**: the box in the centre of the UI, between the two panels.
 - **Tile**: a box within the workspace. The workspace is a recursive tree
   of tiles - a split node divides its area into two child tiles.
 - **Tab**: a tile holds an ordered list of tabs; one is active at a time.
 
 The workspace is a **binary split tree** of tiles, like VSCode's editor
-groups. Users can drag tabs between tiles, split tiles by dropping on their
+groups (which we call tiles). Users can drag tabs between tiles, split tiles by dropping on their
 edges, reorder tabs within a tile, resize tiles with sashes, and close tabs —
 all with the tree staying consistent (no duplicated or orphaned tabs, no empty
 tiles except the root).

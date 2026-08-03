@@ -11,7 +11,7 @@ data-driven sub-section system — **all defined by a single JSON file**
 - **Menu Bar** - multi-level dropdown menus with accelerators, hover-to-open behavior
 - **Docker (Activity Bar)** - left icon bar with badges, active indicators, single-click toggle
 - **Docker Panel** - data-driven panel with sections, sub-sections, and 6 component types
-- **Workspace** - tabbed editor area with welcome screen
+- **Workspace** - tabbed tiles with drag-to-split and welcome screen
 - **Right Panel** - right panel with data-driven sub-sections
 - **Status Bar** - bottom bar with left/right-aligned items
 - **Panel Toggle** - ☰ button to hide/restore left panel, ◫ button for right panel
@@ -76,7 +76,7 @@ src/
 │   ├── Icon.vue               # Renders IconDef (unicode char or image)
 │   ├── Workspace.vue          # Workspace root: split-tree renderer + drag-to-tile zones
 │   ├── WorkspaceNode.vue       # Recursive split/tile node (sash between children)
-│   ├── EditorTile.vue          # Editor group: tab strip (drag/close/+) + content
+│   ├── Tile.vue               # Tile: tab strip (drag/close/+) + content
 │   ├── Sash.vue                # Pointer resize handle with min-size clamping
 │   └── StatusBar.vue          # Bottom status bar - driven by layout.status
 ├── workspace/
@@ -286,9 +286,9 @@ The right panel definition lives in `src/layout/app.layout.json` under
 
 Tabs, `minTileWidth` and `minTileHeight` come from the layout JSON; the split
 tree itself is runtime state (`src/workspace/tree.ts`). Drag a tab onto a
-tile's edge to split (the dragged tab takes half the window), onto the strip
+tile's edge to split (the dragged tab takes half the tile), onto the strip
 to reorder/insert, or into the content area to move. Sizes stay proportional
-while the window resizes and only break at min sizes. See
+while the workspace resizes and only break at min sizes. See
 [`doc/workspace.md`](doc/workspace.md) for the model and zones.
 
 ### StatusBar
