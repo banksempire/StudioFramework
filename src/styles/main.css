@@ -662,8 +662,15 @@ html, body, #app {
 /* ─── Drag handle between sub-sections ─────────────────────────────────── */
 
 body.sf-dragging,
-body.sf-dragging * {
+body.sf-dragging *,
+body.sf-dragging-col,
+body.sf-dragging-col * {
   cursor: row-resize !important;
+}
+
+body.sf-dragging-row,
+body.sf-dragging-row * {
+  cursor: col-resize !important;
 }
 
 .sf-subsection-drag-wrapper {

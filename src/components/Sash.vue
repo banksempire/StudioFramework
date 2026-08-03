@@ -24,7 +24,8 @@ function onPointerDown(e: PointerEvent) {
   const dim = props.split.dir === 'row' ? 'width' : 'height';
   minA = subtreeMinSize(a, dim, ws.minTileWidth, ws.minTileHeight);
   maxPos = (props.split.dir === 'row' ? parentRect.width : parentRect.height) - subtreeMinSize(b, dim, ws.minTileWidth, ws.minTileHeight);
-  document.body.classList.add('sf-dragging');
+  const dragClass = props.split.dir === 'row' ? 'sf-dragging-row' : 'sf-dragging-col';
+  document.body.classList.add(dragClass);
 }
 
 function onPointerMove(e: PointerEvent) {
@@ -45,7 +46,8 @@ function onPointerUp(e: PointerEvent) {
   dragging = false;
   el.value?.releasePointerCapture(e.pointerId);
   parentRect = null;
-  document.body.classList.remove('sf-dragging');
+  document.body.classList.remove('sf-dragging-row');
+  document.body.classList.remove('sf-dragging-col');
 }
 </script>
 
