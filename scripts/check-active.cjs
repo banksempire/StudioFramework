@@ -1,7 +1,8 @@
 /**
- * Active sub-section: clicking a sub-section's content/body activates it
- * (utility buttons become always-visible). Clicking another sub-section
- * deactivates the previous one.
+ * Active sub-section tests:
+ * - Clicking the body/content activates the sub-section (buttons visible).
+ * - Clicking the header to collapse/expand does NOT activate.
+ * - Clicking another sub-section's body deactivates the previous one.
  */
 const { ensureServer, openApp, makeReporter, finish } = require('./lib/ui-test.cjs');
 
@@ -13,7 +14,6 @@ const { ensureServer, openApp, makeReporter, finish } = require('./lib/ui-test.c
   try {
     // ── Helpers ────────────────────────────────────────────────────────────
 
-    /** Find the .sf-subsection element whose header label contains the text. */
     async function findSub(labelText) {
       const subs = await page.$$('.sf-subsection');
       for (const sub of subs) {
@@ -31,7 +31,6 @@ const { ensureServer, openApp, makeReporter, finish } = require('./lib/ui-test.c
       return page.evaluate(el => {
         const u = el.querySelector('.sf-subsection-utils');
         if (!u) return 'N/A';
-        // offsetWidth = 0 means no layout space (display: none)
         return u.offsetWidth > 0 ? 'shown' : 'hidden';
       }, sub);
     }
@@ -56,30 +55,39 @@ const { ensureServer, openApp, makeReporter, finish } = require('./lib/ui-test.c
     const displayInit = await getUtilsDisplay(projectSub);
     report('project utils take no space initially', displayInit === 'hidden', `display=${displayInit}`);
 
-    // 3. Click project body (content area) to activate
+    // 3. Click project header (collapse) -> should NOT activate
+    const projectHeader = await projectSub.$('.sf-subsection-header');
+    await projectHeader.click();
+    await page.waitForTimeout(50);
+    report('header click (collapse) does NOT activate', !await isActiveEl(projectSub));
+
+    // 4. Click project header (expand) -> still NOT active
+    await projectHeader.click();
+    await page.waitForTimeout(50);
+    report('header click (expand) does NOT activate', !await isActiveEl(projectSub));
+
+    // 5. Click project body (content) -> activates
     const projectBody = await projectSub.$('.sf-subsection-body');
+    report('project body exists after expand', !!projectBody);
     if (projectBody) {
       await projectBody.click();
-    } else {
-      await projectSub.click(); // collapsed - click root
+      await page.waitForTimeout(50);
     }
-    await page.waitForTimeout(50);
-
-    // 4. Project is now active + utils take space
-    report('project active after body click', await isActiveEl(projectSub));
+    report('body click activates project', await isActiveEl(projectSub));
     const displayActive = await getUtilsDisplay(projectSub);
     report('project utils take space when active', displayActive === 'shown', `display=${displayActive}`);
 
-    // 5. Click outline header to deactivate project
-    const outlineHeader = await outlineSub.$('.sf-subsection-header');
-    await outlineHeader.click();
-    await page.waitForTimeout(50);
-
-    // 6. Project deactivated, outline activated
-    report('project deactivated after clicking outline', !await isActiveEl(projectSub));
+    // 6. Click outline body -> activates outline, deactivates project
+    const outlineBody = await outlineSub.$('.sf-subsection-body');
+    report('outline body exists', !!outlineBody);
+    if (outlineBody) {
+      await outlineBody.click();
+      await page.waitForTimeout(50);
+    }
+    report('project deactivated after clicking outline body', !await isActiveEl(projectSub));
     const displayDeact = await getUtilsDisplay(projectSub);
     report('project utils take no space after deactivation', displayDeact === 'hidden', `display=${displayDeact}`);
-    report('outline active after click', await isActiveEl(outlineSub));
+    report('outline active after body click', await isActiveEl(outlineSub));
 
     // 7. Only one active at a time
     const activeCount = await page.$$eval('.sf-subsection--active', els => els.length);

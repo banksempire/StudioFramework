@@ -22,9 +22,8 @@ const emit = defineEmits<{
   <div
     class="sf-subsection"
     :class="{ 'sf-subsection--collapsed': !isExpanded, 'sf-subsection--active': isActive }"
-    @click="emit('activate')"
   >
-    <!-- Title bar -->
+    <!-- Title bar - click toggles expand/collapse only (does NOT activate) -->
     <div class="sf-subsection-header" @click="emit('toggle-expand')">
       <span class="sf-subsection-arrow" :class="{ 'sf-subsection-arrow--expanded': isExpanded }">❯</span>
       <span class="sf-subsection-label">{{ subSection.label }}{{ !subSection.isHeightVariable ? ' [F]' : '' }}</span>
@@ -39,12 +38,13 @@ const emit = defineEmits<{
       </div>
     </div>
 
-    <!-- Component body -->
+    <!-- Component body - click activates the sub-section -->
     <div
       v-if="isExpanded"
       class="sf-subsection-body"
       :data-sub-body="subSection.id"
       :style="bodyHeight !== null ? { height: bodyHeight + 'px', overflowY: 'auto' } : {}"
+      @click="emit('activate')"
     >
       <PanelComponent
         v-for="(comp, i) in subSection.components"
