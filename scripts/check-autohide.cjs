@@ -3,7 +3,7 @@
  * - Both panels hide when window < 700px
  * - Both panels restore when window grows back
  * - User intent is preserved through auto-hide
- * - Clicking docker/toggle while auto-hidden temporarily shows panels
+ * - Clicking docker/toggle while auto-hidden shows ONLY that side (not both)
  */
 const { ensureServer, openApp, makeReporter, finish } = require('./lib/ui-test.cjs');
 
@@ -70,16 +70,30 @@ const { ensureServer, openApp, makeReporter, finish } = require('./lib/ui-test.c
     await resizeTo(600);
     report('both hidden at 600px', (await panelDisplayed('left')) === false && (await panelDisplayed('right')) === false);
 
-    // 9. Click docker icon while auto-hidden -> panels show (temporary override)
+    // 9. Click LEFT toggle while auto-hidden -> ONLY left shows (not both)
+    await page.locator('.sf-menu-action-btn').first().click();
+    await page.waitForTimeout(50);
+    report('left panel shows after left toggle (override)', await panelDisplayed('left') === true);
+    report('right panel still hidden (per-panel override)', await panelDisplayed('right') === false);
+
+    // 10. Click RIGHT toggle -> right also shows
+    await page.locator('.sf-menu-action-btn').last().click();
+    await page.waitForTimeout(50);
+    report('right panel shows after right toggle', await panelDisplayed('right') === true);
+    report('left panel still visible', await panelDisplayed('left') === true);
+
+    // 11. Resize slightly (still narrow) -> auto-hide re-engages for both
+    await resizeTo(601);
+    report('auto-hide re-engages on resize (left)', await panelDisplayed('left') === false);
+    report('auto-hide re-engages on resize (right)', await panelDisplayed('right') === false);
+
+    // 12. Click docker icon while auto-hidden -> ONLY left shows
     await page.locator('.sf-docker-tag').first().click();
     await page.waitForTimeout(50);
-    report('left panel shows after docker click (override)', await panelDisplayed('left') === true);
+    report('left panel shows after docker click', await panelDisplayed('left') === true);
+    report('right panel still hidden after docker click', await panelDisplayed('right') === false);
 
-    // 10. Resize slightly (still narrow) -> auto-hide re-engages
-    await resizeTo(601);
-    report('auto-hide re-engages on resize', await panelDisplayed('left') === false);
-
-    // 11. No errors
+    // 13. No errors
     report('no console/page errors', errors.length === 0, errors.join('; '));
 
   } catch (e) {

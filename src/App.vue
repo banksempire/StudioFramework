@@ -18,10 +18,13 @@ const rightPanelVisible = ref(true);
 
 /** Below this width (px), both panels auto-hide to give the workspace room. */
 const AUTO_HIDE_THRESHOLD = 700;
-const autoHidden = ref(false);
+const leftAutoHidden = ref(false);
+const rightAutoHidden = ref(false);
 
 function onResize() {
-  autoHidden.value = window.innerWidth < AUTO_HIDE_THRESHOLD;
+  const tooNarrow = window.innerWidth < AUTO_HIDE_THRESHOLD;
+  leftAutoHidden.value = tooNarrow;
+  rightAutoHidden.value = tooNarrow;
 }
 
 onMounted(() => {
@@ -32,10 +35,10 @@ onUnmounted(() => window.removeEventListener('resize', onResize));
 
 /** Effective visibility: user intent, overridden when the window is too narrow. */
 const effDockerPanelVisible = computed(() =>
-  dockerPanelVisible.value && leftPanelVisible.value && !autoHidden.value,
+  dockerPanelVisible.value && leftPanelVisible.value && !leftAutoHidden.value,
 );
 const effRightPanelVisible = computed(() =>
-  rightPanelVisible.value && !autoHidden.value,
+  rightPanelVisible.value && !rightAutoHidden.value,
 );
 
 const activeDockerItem = computed(
@@ -44,9 +47,9 @@ const activeDockerItem = computed(
 const dockerDef = computed(() => activeDockerItem.value?.panel ?? null);
 
 function onTagSelected(tagId: string) {
-  if (autoHidden.value) {
-    // Panels are auto-hidden: show them (don't toggle)
-    autoHidden.value = false;
+  if (leftAutoHidden.value) {
+    // Left panel is auto-hidden: show it (don't toggle)
+    leftAutoHidden.value = false;
     if (!leftPanelVisible.value) leftPanelVisible.value = true;
     if (!dockerPanelVisible.value) dockerPanelVisible.value = true;
     if (tagId !== activeDockerTag.value) activeDockerTag.value = tagId;
@@ -68,9 +71,9 @@ function onTagSelected(tagId: string) {
 }
 
 function toggleLeftPanel() {
-  if (autoHidden.value) {
-    // Panels are auto-hidden: show them (don't toggle)
-    autoHidden.value = false;
+  if (leftAutoHidden.value) {
+    // Left panel is auto-hidden: show it (don't toggle)
+    leftAutoHidden.value = false;
     if (!leftPanelVisible.value) leftPanelVisible.value = true;
     if (!dockerPanelVisible.value) dockerPanelVisible.value = true;
     return;
@@ -88,9 +91,9 @@ function toggleLeftPanel() {
 }
 
 function toggleRightPanel() {
-  if (autoHidden.value) {
-    // Panels are auto-hidden: show them (don't toggle)
-    autoHidden.value = false;
+  if (rightAutoHidden.value) {
+    // Right panel is auto-hidden: show it (don't toggle)
+    rightAutoHidden.value = false;
     if (!rightPanelVisible.value) rightPanelVisible.value = true;
     return;
   }
@@ -120,8 +123,8 @@ function onMenuAction(actionId: string) {
   <div class="sf-root">
     <MenuBar
       :menus="layout.menu"
-      :left-panel-visible="!autoHidden && leftPanelVisible"
-      :right-panel-visible="!autoHidden && rightPanelVisible"
+      :left-panel-visible="!leftAutoHidden && leftPanelVisible"
+      :right-panel-visible="!rightAutoHidden && rightPanelVisible"
       @toggle-left-panel="toggleLeftPanel"
       @toggle-right-panel="toggleRightPanel"
       @menu-action="onMenuAction"
