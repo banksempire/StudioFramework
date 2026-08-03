@@ -1,8 +1,11 @@
 /**
- * Active sub-section tests:
- * - Clicking the body/content activates the sub-section (buttons visible).
- * - Clicking the header to collapse/expand does NOT activate.
- * - Clicking another sub-section's body deactivates the previous one.
+ * Active sub-section + hover interaction tests:
+ *
+ * - Header click (collapse/expand) does NOT activate.
+ * - Body click activates; only one active at a time.
+ * - Hover any part of a sub-section -> show its buttons.
+ * - While hovering, the active sub-section's buttons hide (if different).
+ * - When mouse leaves all sub-sections -> active's buttons re-show.
  */
 const { ensureServer, openApp, makeReporter, finish } = require('./lib/ui-test.cjs');
 
@@ -40,33 +43,64 @@ const { ensureServer, openApp, makeReporter, finish } = require('./lib/ui-test.c
       return page.evaluate(el => el.classList.contains('sf-subsection--active'), sub);
     }
 
-    // ── Tests ──────────────────────────────────────────────────────────────
+    /** Move mouse to the center of a sub-section. */
+    async function hoverSub(sub) {
+      const box = await sub.boundingBox();
+      await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2);
+      await page.waitForTimeout(50);
+    }
 
-    // 1. Initially no subsection is active
-    const activeInit = await page.$('.sf-subsection--active');
-    report('no sub-section active initially', !activeInit);
+    /** Move mouse to the panel header (outside all sub-sections). */
+    async function moveMouseAway() {
+      const header = await page.$('.sf-panel-header');
+      if (header) {
+        const box = await header.boundingBox();
+        await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2);
+      } else {
+        await page.mouse.move(0, 0);
+      }
+      await page.waitForTimeout(50);
+    }
+
+    // ── Setup ──────────────────────────────────────────────────────────────
+
+    await moveMouseAway();
 
     const projectSub = await findSub('Project');
     const outlineSub = await findSub('Outline');
     report('found "Project" sub-section', !!projectSub);
     report('found "Outline" sub-section', !!outlineSub);
 
-    // 2. Project utils hidden initially (no space)
-    const displayInit = await getUtilsDisplay(projectSub);
-    report('project utils take no space initially', displayInit === 'hidden', `display=${displayInit}`);
+    // ── Phase 1: Header click does not activate ────────────────────────────
 
-    // 3. Click project header (collapse) -> should NOT activate
+    report('no sub-section active initially', !await page.$('.sf-subsection--active'));
+
     const projectHeader = await projectSub.$('.sf-subsection-header');
     await projectHeader.click();
     await page.waitForTimeout(50);
     report('header click (collapse) does NOT activate', !await isActiveEl(projectSub));
 
-    // 4. Click project header (expand) -> still NOT active
     await projectHeader.click();
     await page.waitForTimeout(50);
     report('header click (expand) does NOT activate', !await isActiveEl(projectSub));
 
-    // 5. Click project body (content) -> activates
+    // ── Phase 2: Hover shows buttons, move away hides (non-active) ─────────
+
+    await moveMouseAway();
+    report('utils hidden when no hover and no active',
+      (await getUtilsDisplay(projectSub)) === 'hidden');
+
+    await hoverSub(projectSub);
+    report('utils shown on hover (any part of sub-section)',
+      (await getUtilsDisplay(projectSub)) === 'shown');
+
+    await moveMouseAway();
+    report('utils hidden after moving away (not active)',
+      (await getUtilsDisplay(projectSub)) === 'hidden');
+
+    // ── Phase 3: Active + hover interaction ────────────────────────────────
+
+    // Click project body -> activates (mouse at click pos = hovering)
     const projectBody = await projectSub.$('.sf-subsection-body');
     report('project body exists after expand', !!projectBody);
     if (projectBody) {
@@ -74,26 +108,37 @@ const { ensureServer, openApp, makeReporter, finish } = require('./lib/ui-test.c
       await page.waitForTimeout(50);
     }
     report('body click activates project', await isActiveEl(projectSub));
-    const displayActive = await getUtilsDisplay(projectSub);
-    report('project utils take space when active', displayActive === 'shown', `display=${displayActive}`);
 
-    // 6. Click outline body -> activates outline, deactivates project
+    // Move away -> buttons still show (active)
+    await moveMouseAway();
+    report('utils shown when active (no hover)',
+      (await getUtilsDisplay(projectSub)) === 'shown');
+
+    // Hover outline -> project buttons hide (active but not hovered)
+    await hoverSub(outlineSub);
+    report('active utils hidden when hovering another sub-section',
+      (await getUtilsDisplay(projectSub)) === 'hidden');
+
+    // Move away -> project buttons re-show (active)
+    await moveMouseAway();
+    report('active utils re-shown after moving away',
+      (await getUtilsDisplay(projectSub)) === 'shown');
+
+    // ── Phase 4: Deactivation ──────────────────────────────────────────────
+
     const outlineBody = await outlineSub.$('.sf-subsection-body');
     report('outline body exists', !!outlineBody);
     if (outlineBody) {
       await outlineBody.click();
       await page.waitForTimeout(50);
     }
+    await moveMouseAway();
     report('project deactivated after clicking outline body', !await isActiveEl(projectSub));
-    const displayDeact = await getUtilsDisplay(projectSub);
-    report('project utils take no space after deactivation', displayDeact === 'hidden', `display=${displayDeact}`);
     report('outline active after body click', await isActiveEl(outlineSub));
 
-    // 7. Only one active at a time
     const activeCount = await page.$$eval('.sf-subsection--active', els => els.length);
     report('exactly one sub-section active', activeCount === 1, `count=${activeCount}`);
 
-    // 8. No console/page errors
     report('no console/page errors', errors.length === 0, errors.join('; '));
 
   } catch (e) {
