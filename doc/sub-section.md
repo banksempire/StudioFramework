@@ -97,7 +97,7 @@ sub-section's **body** (content area) activates it; clicking another
 sub-section's body deactivates the previous one. Clicking the **title bar**
 only toggles expand/collapse and does NOT activate.
 
-- **Visual cue**: active header gets a 2px left accent line + brighter text.
+- **Visual cue**: active header gets brighter text.
 - **Button visibility**: utility buttons are `display: none` by default (no
   layout space, label extends full width), shown on hover or when the
   sub-section is active.

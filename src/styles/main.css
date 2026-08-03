@@ -614,7 +614,6 @@ html, body, #app {
 
 .sf-subsection--active .sf-subsection-header {
   color: var(--sf-text);
-  box-shadow: inset 2px 0 0 var(--sf-accent);
 }
 
 .sf-subsection-arrow {
