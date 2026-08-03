@@ -9,6 +9,7 @@
     "preview": "vite preview",
     "check": "node scripts/check-ui.cjs",
     "check:dtt": "node scripts/check-dtt.cjs",
+    "check:active": "node scripts/check-active.cjs",
     "typecheck": "vue-tsc --noEmit"
   },
   "devDependencies": {

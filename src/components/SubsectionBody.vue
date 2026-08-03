@@ -33,6 +33,20 @@ const visibleSubSections = computed(() =>
   props.subSections.filter(s => !props.hiddenIds.has(s.id)),
 );
 
+/** Currently active sub-section id (null = none). Only one active at a time. */
+const activeId = ref<string | null>(null);
+
+function activate(id: string) {
+  activeId.value = id;
+}
+
+// Clear active when the active sub-section is hidden or removed
+watch(visibleSubSections, (subs) => {
+  if (activeId.value && !subs.some(s => s.id === activeId.value)) {
+    activeId.value = null;
+  }
+});
+
 function isResizeable(sub: PanelSubSection): boolean {
   const st = states[sub.id];
   return !!st && st.isExpanded && !props.hiddenIds.has(sub.id) && sub.isHeightVariable;
@@ -306,8 +320,10 @@ onUnmounted(() => {
       <SubSection
         :sub-section="sub"
         :is-expanded="states[sub.id]?.isExpanded ?? true"
+        :is-active="activeId === sub.id"
         :body-height="bodyHeightFor(sub)"
         @toggle-expand="toggleExpand(sub.id)"
+        @activate="activate(sub.id)"
         @utility="emit('utility', sub.id, $event)"
         @content-changed="refresh(true)"
       />

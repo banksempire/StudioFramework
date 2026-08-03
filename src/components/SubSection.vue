@@ -5,24 +5,30 @@ import PanelComponent from './PanelComponent.vue';
 defineProps<{
   subSection: PanelSubSection;
   isExpanded: boolean;
+  isActive: boolean;
   /** null = auto-height (fixed sub-section), number = explicit px (variable) */
   bodyHeight: number | null;
 }>();
 
 const emit = defineEmits<{
   'toggle-expand': [];
+  activate: [];
   utility: [utilityId: string];
   'content-changed': [];
 }>();
 </script>
 
 <template>
-  <div class="sf-subsection" :class="{ 'sf-subsection--collapsed': !isExpanded }">
+  <div
+    class="sf-subsection"
+    :class="{ 'sf-subsection--collapsed': !isExpanded, 'sf-subsection--active': isActive }"
+    @click="emit('activate')"
+  >
     <!-- Title bar -->
     <div class="sf-subsection-header" @click="emit('toggle-expand')">
       <span class="sf-subsection-arrow" :class="{ 'sf-subsection-arrow--expanded': isExpanded }">❯</span>
       <span class="sf-subsection-label">{{ subSection.label }}{{ !subSection.isHeightVariable ? ' [F]' : '' }}</span>
-      <div v-if="subSection.utilities?.length" class="sf-subsection-utils" @click.stop>
+      <div v-if="subSection.utilities?.length" class="sf-subsection-utils" @click.stop="emit('activate')">
         <button
           v-for="util in subSection.utilities"
           :key="util.id"

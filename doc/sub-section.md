@@ -87,7 +87,21 @@ Each sub-section has two parts:
   when collapsed.
 - **Display name**: Uppercase, muted text. Fixed `[F]` suffix shown for
   fixed-height sub-sections (debug aid).
-- **Utilities**: Optional minor action buttons (e.g., refresh). Shown on hover.
+- **Utilities**: Optional minor action buttons (e.g., refresh). Shown on hover,
+  or always visible when the sub-section is **active** (see below).
+
+### Active sub-section
+
+Only one sub-section per panel can be **active** at a time. Clicking anywhere
+in a sub-section (title bar, body, or blank area) activates it; clicking
+another sub-section deactivates the previous one.
+
+- **Visual cue**: active header gets a 2px left accent line + brighter text.
+- **Button visibility**: utility buttons are `opacity: 0` by default (shown on
+  hover), but `opacity: 1` when the sub-section is active — no hover needed.
+- **Lifecycle**: the active id is cleared when the sub-section is hidden or
+  removed from the visible list. Switching panel section (tab) recreates
+  `SubsectionBody` and resets active to `null`.
 
 ### ComponentBody
 
