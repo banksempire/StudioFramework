@@ -285,7 +285,7 @@ html, body, #app {
 
 .sf-docker-tag.active {
   color: var(--sf-text-bright);
-  border-left-color: var(--sf-text-bright);
+  border-left-color: var(--sf-accent);
 }
 
 .sf-docker-tag-icon {
