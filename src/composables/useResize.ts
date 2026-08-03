@@ -11,7 +11,7 @@ export interface ResizeOptions {
   onCollapse?: () => void;
   /** Called during drag when width changes (live, not just on mouseup) */
   onResize?: (width: number) => void;
-  /** Collapse threshold in px — drag below this snaps the panel shut. Defaults to min * 0.5 */
+  /** Collapse threshold in px - drag below this snaps the panel shut. Defaults to min * 0.45 */
   collapseThreshold?: number;
 }
 
