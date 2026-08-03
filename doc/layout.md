@@ -201,5 +201,5 @@ they stay generic and reusable.
 | Workspace tabs | `"workspace"` (tabs, `minTileWidth`, `minTileHeight`; the split tree is runtime state - see `doc/workspace.md`) |
 | Status bar items | `"status"` |
 | Panel width / resize limits | `src/composables/useResize.ts` + `Panel.vue` constants |
-| Panel auto-hide threshold | `MIN_WORKSPACE_WIDTH` constant in `src/App.vue` (default 200px - based on workspace width, not window width) |
+| Panel auto-hide threshold | `MIN_WORKSPACE_WIDTH` constant in `src/App.vue` (default 640px - workspace width, not window width) |
 | Colors | CSS custom properties in `src/styles/main.css` `:root` |

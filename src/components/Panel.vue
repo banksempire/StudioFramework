@@ -18,6 +18,7 @@ const props = withDefaults(defineProps<{
 const emit = defineEmits<{
   collapse: [];
   'select-section': [sectionId: string];
+  resize: [width: number];
 }>();
 
 // ── Resize ────────────────────────────────────────────────────────────────
@@ -32,6 +33,7 @@ const { width, dragging, willCollapse, onMouseDown } = useResize({
   direction: resizeDir.value,
   collapseThreshold: Math.round(MIN_WIDTH * 2 / 3),
   onCollapse: () => emit('collapse'),
+  onResize: (w: number) => emit('resize', w),
 });
 
 // ── Section tabs ──────────────────────────────────────────────────────────

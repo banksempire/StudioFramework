@@ -14,90 +14,75 @@ const dockerPanelVisible = ref(true);
 const savedPanelState = ref(true);
 const rightPanelVisible = ref(true);
 
-// ── Auto-hide panels on narrow windows ────────────────────────────────────
+// ── Auto-hide panels based on workspace width ─────────────────────────────
 
-/** Minimum workspace width (px) before panels start auto-hiding. */
-const MIN_WORKSPACE_WIDTH = 200;
+/** Minimum workspace width (px) before panels auto-hide. */
+const MIN_WORKSPACE_WIDTH = 640;
 const leftAutoHidden = ref(false);
 const rightAutoHidden = ref(false);
 
-/** Last known panel widths (retained when panel is hidden, for restore checks). */
+/** Last known panel widths (updated live during drag via @resize emit). */
 const leftPanelWidth = ref(260);
 const rightPanelWidth = ref(260);
 
-/** Suppress auto-hide briefly after a user override (toggle/docker click). */
-let suppressCheck = false;
-let suppressTimer: ReturnType<typeof setTimeout> | undefined;
-function suppressAutoHide() {
-  suppressCheck = true;
-  clearTimeout(suppressTimer);
-  suppressTimer = setTimeout(() => { suppressCheck = false; }, 100);
+/** One-time guard: prevents the panel-expansion trigger from firing twice
+ *  in the same drag. Reset when the panel gets narrower. */
+let panelResizeTriggered = false;
+
+/** Workspace width as if all user-intended panels were visible (ignores auto-hidden).
+ *  Used by the window-resize trigger so the check is stable (no oscillation). */
+function calcWouldBeWorkspaceWidth(): number {
+  const dockerW = 48;
+  const leftW = (leftPanelVisible.value && dockerPanelVisible.value) ? leftPanelWidth.value : 0;
+  const rightW = rightPanelVisible.value ? rightPanelWidth.value : 0;
+  return window.innerWidth - dockerW - leftW - rightW;
 }
 
-function updatePanelWidths() {
-  const lEl = document.querySelector('.sf-panel--left') as HTMLElement | null;
-  const rEl = document.querySelector('.sf-panel--right') as HTMLElement | null;
-  if (lEl && lEl.offsetWidth > 0) leftPanelWidth.value = lEl.offsetWidth;
-  if (rEl && rEl.offsetWidth > 0) rightPanelWidth.value = rEl.offsetWidth;
+/** Actual workspace width (accounts for auto-hidden panels).
+ *  Used by the panel-expansion trigger. */
+function calcActualWorkspaceWidth(): number {
+  const dockerW = 48;
+  const leftW = (leftPanelVisible.value && dockerPanelVisible.value && !leftAutoHidden.value)
+    ? leftPanelWidth.value : 0;
+  const rightW = (rightPanelVisible.value && !rightAutoHidden.value)
+    ? rightPanelWidth.value : 0;
+  return window.innerWidth - dockerW - leftW - rightW;
 }
 
-/**
- * Progressive auto-hide based on the workspace's actual width.
- * Collapse: wider panel first (right if tied), then the narrower.
- * Restore: narrower first (left if tied) — only if the workspace would
- * still be ≥ MIN_WORKSPACE_WIDTH after the panel takes its space back.
- */
-function checkAutoHide() {
-  if (suppressCheck) return;
-  updatePanelWidths();
+// ── Trigger 1: browser window resize → hide/restore BOTH panels ───────────
 
-  const wsEl = document.querySelector('.sf-workspace') as HTMLElement | null;
-  const wsWidth = wsEl?.clientWidth ?? 0;
-  const hasRight = !!layout.right;
+function onWindowResize() {
+  const tooNarrow = calcWouldBeWorkspaceWidth() < MIN_WORKSPACE_WIDTH;
+  leftAutoHidden.value = tooNarrow;
+  if (layout.right) rightAutoHidden.value = tooNarrow;
+}
 
-  if (wsWidth < MIN_WORKSPACE_WIDTH) {
-    // Workspace too narrow — collapse one visible panel at a time
-    if (!leftAutoHidden.value && !rightAutoHidden.value && hasRight) {
-      // Both visible: collapse the wider one (right if tied)
-      if (rightPanelWidth.value >= leftPanelWidth.value) rightAutoHidden.value = true;
+// ── Trigger 2: panel expansion (drag wider) → hide the OTHER panel (one-time) ──
+
+function onPanelResize(side: 'left' | 'right', newWidth: number) {
+  const prev = side === 'left' ? leftPanelWidth.value : rightPanelWidth.value;
+  if (side === 'left') leftPanelWidth.value = newWidth;
+  else rightPanelWidth.value = newWidth;
+
+  if (newWidth > prev && !panelResizeTriggered) {
+    // Panel getting wider: check actual workspace width
+    if (calcActualWorkspaceWidth() < MIN_WORKSPACE_WIDTH) {
+      // Auto-hide the OTHER panel (one-time)
+      if (side === 'left' && layout.right) rightAutoHidden.value = true;
       else leftAutoHidden.value = true;
-    } else if (!leftAutoHidden.value && (rightAutoHidden.value || !hasRight)) {
-      leftAutoHidden.value = true;
-    } else if (!rightAutoHidden.value && hasRight) {
-      rightAutoHidden.value = true;
+      panelResizeTriggered = true;
     }
-  } else {
-    // Workspace wide enough — try to restore (reverse order: narrower first)
-    if (leftAutoHidden.value && rightAutoHidden.value) {
-      if (leftPanelWidth.value <= rightPanelWidth.value) {
-        if (wsWidth - leftPanelWidth.value >= MIN_WORKSPACE_WIDTH) leftAutoHidden.value = false;
-      } else {
-        if (wsWidth - rightPanelWidth.value >= MIN_WORKSPACE_WIDTH) rightAutoHidden.value = false;
-      }
-    } else if (leftAutoHidden.value) {
-      if (wsWidth - leftPanelWidth.value >= MIN_WORKSPACE_WIDTH) leftAutoHidden.value = false;
-    } else if (rightAutoHidden.value) {
-      if (wsWidth - rightPanelWidth.value >= MIN_WORKSPACE_WIDTH) rightAutoHidden.value = false;
-    }
+  } else if (newWidth < prev) {
+    // Panel getting narrower: allow the next expansion to trigger again
+    panelResizeTriggered = false;
   }
 }
-
-let wsObserver: ResizeObserver | null = null;
 
 onMounted(() => {
-  checkAutoHide();
-  window.addEventListener('resize', checkAutoHide);
-  const wsEl = document.querySelector('.sf-workspace');
-  if (wsEl) {
-    wsObserver = new ResizeObserver(() => checkAutoHide());
-    wsObserver.observe(wsEl);
-  }
+  onWindowResize();
+  window.addEventListener('resize', onWindowResize);
 });
-onUnmounted(() => {
-  window.removeEventListener('resize', checkAutoHide);
-  wsObserver?.disconnect();
-  clearTimeout(suppressTimer);
-});
+onUnmounted(() => window.removeEventListener('resize', onWindowResize));
 
 /** Effective visibility: user intent, overridden when the workspace is too narrow. */
 const effDockerPanelVisible = computed(() =>
@@ -116,7 +101,6 @@ function onTagSelected(tagId: string) {
   if (leftAutoHidden.value) {
     // Left panel is auto-hidden: show it (don't toggle)
     leftAutoHidden.value = false;
-    suppressAutoHide();
     if (!leftPanelVisible.value) leftPanelVisible.value = true;
     if (!dockerPanelVisible.value) dockerPanelVisible.value = true;
     if (tagId !== activeDockerTag.value) activeDockerTag.value = tagId;
@@ -141,7 +125,6 @@ function toggleLeftPanel() {
   if (leftAutoHidden.value) {
     // Left panel is auto-hidden: show it (don't toggle)
     leftAutoHidden.value = false;
-    suppressAutoHide();
     if (!leftPanelVisible.value) leftPanelVisible.value = true;
     if (!dockerPanelVisible.value) dockerPanelVisible.value = true;
     return;
@@ -162,7 +145,6 @@ function toggleRightPanel() {
   if (rightAutoHidden.value) {
     // Right panel is auto-hidden: show it (don't toggle)
     rightAutoHidden.value = false;
-    suppressAutoHide();
     if (!rightPanelVisible.value) rightPanelVisible.value = true;
     return;
   }
@@ -213,6 +195,7 @@ function onMenuAction(actionId: string) {
         :def="dockerDef"
         :visible="effDockerPanelVisible"
         @collapse="dockerPanelVisible = false"
+        @resize="onPanelResize('left', $event)"
       />
 
       <Workspace :def="layout.workspace" />
@@ -222,6 +205,7 @@ function onMenuAction(actionId: string) {
         :def="layout.right"
         :visible="effRightPanelVisible"
         @collapse="rightPanelVisible = false"
+        @resize="onPanelResize('right', $event)"
       />
     </div>
 

@@ -9,6 +9,7 @@ defineProps<{
 
 const emit = defineEmits<{
   collapse: [];
+  resize: [width: number];
 }>();
 </script>
 
@@ -19,5 +20,6 @@ const emit = defineEmits<{
     position="left"
     :sections="def.sections"
     @collapse="emit('collapse')"
+    @resize="emit('resize', $event)"
   />
 </template>

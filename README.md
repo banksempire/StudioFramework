@@ -16,7 +16,7 @@ data-driven sub-section system — **all defined by a single JSON file**
 - **Status Bar** - bottom bar with left/right-aligned items
 - **Panel Toggle** - ☰ button to hide/restore left panel, ◫ button for right panel
 - **Resizable Panels** - drag panel edges to resize (150–500px). Dragging past 100px collapses the panel with a gradient glow on three edges
-- **Auto-hide on narrow workspace** - when the workspace width drops below 200px, panels auto-hide progressively (wider panel first, right if tied) and restore in reverse order when space returns. If one panel is already collapsed, auto-hide only triggers if the workspace is still too narrow
+- **Auto-hide on narrow workspace** - two triggers: (1) browser window resize hides both panels when workspace < 640px and restores both when it grows back; (2) expanding a panel (drag wider) that pushes workspace below 640px auto-hides the other panel as a one-time event (user can re-open it without re-triggering). If one panel is already collapsed, the would-be workspace width is calculated without it
 - **Sub-sections** - collapsible groups with variable/fixed height modes, drag-to-redistribute space, ⋯ visibility toggle
 - **VSCode Dark Theme** - all colors via CSS custom properties for easy re-theming
 

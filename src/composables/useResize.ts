@@ -9,6 +9,8 @@ export interface ResizeOptions {
   direction?: 'left' | 'right';
   /** Called on mouseup when width falls below collapseThreshold */
   onCollapse?: () => void;
+  /** Called during drag when width changes (live, not just on mouseup) */
+  onResize?: (width: number) => void;
   /** Collapse threshold in px — drag below this snaps the panel shut. Defaults to min * 0.5 */
   collapseThreshold?: number;
 }
@@ -19,6 +21,7 @@ export function useResize(options: ResizeOptions) {
     max = 500,
     direction = 'right',
     onCollapse,
+    onResize,
     collapseThreshold = Math.round(min * 0.45),
   } = options;
 
@@ -55,6 +58,7 @@ export function useResize(options: ResizeOptions) {
     width.value = displayWidth(rawWidth);
     // Live indicator: glow opposite edge when past collapse threshold
     willCollapse.value = rawWidth <= collapseThreshold;
+    onResize?.(width.value);
   }
 
   function onMouseUp() {
