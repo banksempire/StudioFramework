@@ -98,15 +98,11 @@ sub-section's body deactivates the previous one. Clicking the **title bar**
 only toggles expand/collapse and does NOT activate.
 
 - **Button visibility**: utility buttons are `display: none` by default (no
-  layout space, label extends full width). They are shown when:
-  - The mouse hovers over **any part** of the sub-section, OR
-  - The sub-section is active **and** the mouse is not over any other
-    sub-section.
-
-  Hovering a sub-section hides the active sub-section's buttons (if
-  different). When the mouse leaves all sub-sections, the active
-  sub-section's buttons re-appear. This is the only visual indicator of
-  the active state - the header text color is the same regardless.
+  layout space, label extends full width). They are shown when the
+  sub-section is **active** or when the mouse hovers over **any part** of
+  it. The active sub-section's buttons are always visible regardless of
+  hover. This is the only visual indicator of the active state - the
+  header text color is the same regardless.
 - **Lifecycle**: the active id is cleared when the sub-section is hidden or
   removed from the visible list. Switching panel section (tab) recreates
   `SubsectionBody` and resets active to `null`.

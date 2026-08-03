@@ -114,14 +114,14 @@ const { ensureServer, openApp, makeReporter, finish } = require('./lib/ui-test.c
     report('utils shown when active (no hover)',
       (await getUtilsDisplay(projectSub)) === 'shown');
 
-    // Hover outline -> project buttons hide (active but not hovered)
+    // Hover outline -> project buttons STILL show (active is not hidden by hover)
     await hoverSub(outlineSub);
-    report('active utils hidden when hovering another sub-section',
-      (await getUtilsDisplay(projectSub)) === 'hidden');
+    report('active utils still shown when hovering another sub-section',
+      (await getUtilsDisplay(projectSub)) === 'shown');
 
-    // Move away -> project buttons re-show (active)
+    // Move away -> project buttons still show (active)
     await moveMouseAway();
-    report('active utils re-shown after moving away',
+    report('active utils still shown after moving away',
       (await getUtilsDisplay(projectSub)) === 'shown');
 
     // ── Phase 4: Deactivation ──────────────────────────────────────────────

@@ -632,20 +632,9 @@ html, body, #app {
   gap: 2px;
 }
 
-/* Active sub-section shows buttons when mouse is outside all sub-sections */
-.sf-subsection--active .sf-subsection-utils {
-  display: flex;
-}
-
-/* When mouse is over the sub-section area: hide the active sub-section's
-   buttons (re-shown when mouse leaves, or if this sub-section is hovered) */
-.sf-subsection-body-container:hover .sf-subsection--active .sf-subsection-utils {
-  display: none;
-}
-
-/* When mouse is over the sub-section area: show buttons for the hovered
-   sub-section (higher specificity than the active-hide rule above) */
-.sf-subsection-body-container:hover .sf-subsection:hover .sf-subsection-utils {
+/* Show buttons when the sub-section is active OR hovered (any part) */
+.sf-subsection--active .sf-subsection-utils,
+.sf-subsection:hover .sf-subsection-utils {
   display: flex;
 }
 
