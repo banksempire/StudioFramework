@@ -138,6 +138,10 @@
                 "id": "open-editors",
                 "label": "Open Editors",
                 "height": "fixed",
+                "utilities": [
+                  { "id": "refresh", "icon": "↻", "tooltip": "Refresh" },
+                  { "id": "close-all", "icon": "✕", "tooltip": "Close All" }
+                ],
                 "components": [
                   {
                     "type": "list",
@@ -202,6 +206,10 @@
                 "label": "Outline",
                 "height": "variable",
                 "minHeight": 50,
+                "utilities": [
+                  { "id": "refresh", "icon": "↻", "tooltip": "Refresh" },
+                  { "id": "collapse", "icon": "⤢", "tooltip": "Collapse All" }
+                ],
                 "components": [
                   {
                     "type": "tree",
@@ -222,6 +230,9 @@
                 "label": "Timeline",
                 "height": "variable",
                 "minHeight": 50,
+                "utilities": [
+                  { "id": "refresh", "icon": "↻", "tooltip": "Refresh" }
+                ],
                 "components": [
                   {
                     "type": "list",

@@ -9,171 +9,56 @@
       "label": "File",
       "items": [
         {
-          "id": "new-file",
-          "label": "New File",
-          "icon": "📄",
+          "id": "new-file", "label": "New File", "icon": "📄",
           "items": [
-            {
-              "id": "new-text",
-              "label": "Text File",
-              "action": "new-file"
-            },
-            {
-              "id": "new-js",
-              "label": "JavaScript File",
-              "icon": "🟨",
-              "action": "new-file"
-            },
-            {
-              "id": "new-ts",
-              "label": "TypeScript File",
-              "icon": "🟦",
-              "action": "new-file"
-            },
-            {
-              "id": "new-vue",
-              "label": "Vue SFC",
-              "icon": "🟩",
-              "action": "new-file"
-            }
+            { "id": "new-text", "label": "Text File", "action": "new-file" },
+            { "id": "new-js", "label": "JavaScript File", "icon": "🟨", "action": "new-file" },
+            { "id": "new-ts", "label": "TypeScript File", "icon": "🟦", "action": "new-file" },
+            { "id": "new-vue", "label": "Vue SFC", "icon": "🟩", "action": "new-file" }
           ]
         },
+        { "id": "open-folder", "label": "Open Folder...", "accelerator": "Ctrl+K Ctrl+O", "action": "open-folder" },
+        { "separator": true },
+        { "id": "save", "label": "Save", "accelerator": "Ctrl+S", "action": "save" },
+        { "id": "save-as", "label": "Save As...", "accelerator": "Ctrl+Shift+S", "action": "save-as" },
+        { "separator": true },
         {
-          "id": "open-folder",
-          "label": "Open Folder...",
-          "accelerator": "Ctrl+K Ctrl+O",
-          "action": "open-folder"
-        },
-        {
-          "separator": true
-        },
-        {
-          "id": "save",
-          "label": "Save",
-          "accelerator": "Ctrl+S",
-          "action": "save"
-        },
-        {
-          "id": "save-as",
-          "label": "Save As...",
-          "accelerator": "Ctrl+Shift+S",
-          "action": "save-as"
-        },
-        {
-          "separator": true
-        },
-        {
-          "id": "preferences",
-          "label": "Preferences",
-          "icon": "⚙️",
+          "id": "preferences", "label": "Preferences", "icon": "⚙️",
           "items": [
+            { "id": "pref-settings", "label": "Settings", "accelerator": "Ctrl+,", "action": "settings" },
             {
-              "id": "pref-settings",
-              "label": "Settings",
-              "accelerator": "Ctrl+,",
-              "action": "settings"
-            },
-            {
-              "id": "pref-theme",
-              "label": "Color Theme",
+              "id": "pref-theme", "label": "Color Theme",
               "items": [
-                {
-                  "id": "theme-dark",
-                  "label": "Dark (VSCode)",
-                  "action": "theme-dark"
-                },
-                {
-                  "id": "theme-light",
-                  "label": "Light",
-                  "action": "theme-light"
-                },
-                {
-                  "id": "theme-hc",
-                  "label": "High Contrast",
-                  "action": "theme-hc"
-                }
+                { "id": "theme-dark", "label": "Dark (VSCode)", "action": "theme-dark" },
+                { "id": "theme-light", "label": "Light", "action": "theme-light" },
+                { "id": "theme-hc", "label": "High Contrast", "action": "theme-hc" }
               ]
             },
-            {
-              "separator": true
-            },
-            {
-              "id": "pref-keybindings",
-              "label": "Keyboard Shortcuts",
-              "accelerator": "Ctrl+K Ctrl+S",
-              "action": "keybindings"
-            }
+            { "separator": true },
+            { "id": "pref-keybindings", "label": "Keyboard Shortcuts", "accelerator": "Ctrl+K Ctrl+S", "action": "keybindings" }
           ]
         },
-        {
-          "separator": true
-        },
-        {
-          "id": "exit",
-          "label": "Exit",
-          "action": "exit"
-        }
+        { "separator": true },
+        { "id": "exit", "label": "Exit", "action": "exit" }
       ]
     },
     {
       "id": "edit",
       "label": "Edit",
       "items": [
+        { "id": "undo", "label": "Undo", "accelerator": "Ctrl+Z", "action": "undo" },
+        { "id": "redo", "label": "Redo", "accelerator": "Ctrl+Y", "action": "redo" },
+        { "separator": true },
+        { "id": "cut", "label": "Cut", "accelerator": "Ctrl+X", "action": "cut" },
+        { "id": "copy", "label": "Copy", "accelerator": "Ctrl+C", "action": "copy" },
+        { "id": "paste", "label": "Paste", "accelerator": "Ctrl+V", "action": "paste" },
+        { "separator": true },
         {
-          "id": "undo",
-          "label": "Undo",
-          "accelerator": "Ctrl+Z",
-          "action": "undo"
-        },
-        {
-          "id": "redo",
-          "label": "Redo",
-          "accelerator": "Ctrl+Y",
-          "action": "redo"
-        },
-        {
-          "separator": true
-        },
-        {
-          "id": "cut",
-          "label": "Cut",
-          "accelerator": "Ctrl+X",
-          "action": "cut"
-        },
-        {
-          "id": "copy",
-          "label": "Copy",
-          "accelerator": "Ctrl+C",
-          "action": "copy"
-        },
-        {
-          "id": "paste",
-          "label": "Paste",
-          "accelerator": "Ctrl+V",
-          "action": "paste"
-        },
-        {
-          "separator": true
-        },
-        {
-          "id": "convert-case",
-          "label": "Convert Case",
+          "id": "convert-case", "label": "Convert Case",
           "items": [
-            {
-              "id": "case-upper",
-              "label": "UPPERCASE",
-              "action": "convert-case"
-            },
-            {
-              "id": "case-lower",
-              "label": "lowercase",
-              "action": "convert-case"
-            },
-            {
-              "id": "case-title",
-              "label": "Title Case",
-              "action": "convert-case"
-            }
+            { "id": "case-upper", "label": "UPPERCASE", "action": "convert-case" },
+            { "id": "case-lower", "label": "lowercase", "action": "convert-case" },
+            { "id": "case-title", "label": "Title Case", "action": "convert-case" }
           ]
         }
       ]
@@ -182,41 +67,15 @@
       "id": "selection",
       "label": "Selection",
       "items": [
+        { "id": "select-all", "label": "Select All", "accelerator": "Ctrl+A", "action": "select-all" },
+        { "id": "expand-selection", "label": "Expand Selection", "action": "expand-selection" },
         {
-          "id": "select-all",
-          "label": "Select All",
-          "accelerator": "Ctrl+A",
-          "action": "select-all"
-        },
-        {
-          "id": "expand-selection",
-          "label": "Expand Selection",
-          "action": "expand-selection"
-        },
-        {
-          "id": "select-scope",
-          "label": "Select Scope",
+          "id": "select-scope", "label": "Select Scope",
           "items": [
-            {
-              "id": "scope-word",
-              "label": "Word",
-              "action": "expand-selection"
-            },
-            {
-              "id": "scope-line",
-              "label": "Line",
-              "action": "expand-selection"
-            },
-            {
-              "id": "scope-fn",
-              "label": "Function",
-              "action": "expand-selection"
-            },
-            {
-              "id": "scope-class",
-              "label": "Class",
-              "action": "expand-selection"
-            }
+            { "id": "scope-word", "label": "Word", "action": "expand-selection" },
+            { "id": "scope-line", "label": "Line", "action": "expand-selection" },
+            { "id": "scope-fn", "label": "Function", "action": "expand-selection" },
+            { "id": "scope-class", "label": "Class", "action": "expand-selection" }
           ]
         }
       ]
@@ -226,96 +85,38 @@
       "label": "View",
       "items": [
         {
-          "id": "view-appearance",
-          "label": "Appearance",
-          "icon": "🎨",
+          "id": "view-appearance", "label": "Appearance", "icon": "🎨",
           "items": [
             {
-              "id": "view-layout",
-              "label": "Panel Layout",
+              "id": "view-layout", "label": "Panel Layout",
               "items": [
-                {
-                  "id": "layout-single",
-                  "label": "Single",
-                  "action": "layout-single"
-                },
-                {
-                  "id": "layout-split",
-                  "label": "Split",
-                  "action": "layout-split"
-                },
-                {
-                  "id": "layout-grid",
-                  "label": "Grid",
-                  "action": "layout-grid"
-                }
+                { "id": "layout-single", "label": "Single", "action": "layout-single" },
+                { "id": "layout-split", "label": "Split", "action": "layout-split" },
+                { "id": "layout-grid", "label": "Grid", "action": "layout-grid" }
               ]
             },
-            {
-              "separator": true
-            },
-            {
-              "id": "view-sidebar",
-              "label": "Toggle Left Panel",
-              "action": "toggle-left-panel"
-            },
-            {
-              "id": "view-statusbar",
-              "label": "Toggle Status Bar",
-              "action": "toggle-statusbar"
-            }
+            { "separator": true },
+            { "id": "view-sidebar", "label": "Toggle Left Panel", "action": "toggle-left-panel" },
+            { "id": "view-statusbar", "label": "Toggle Status Bar", "action": "toggle-statusbar" }
           ]
         },
-        {
-          "id": "toggle-terminal",
-          "label": "Toggle Terminal",
-          "action": "toggle-terminal"
-        },
-        {
-          "separator": true
-        },
-        {
-          "id": "zoom-in",
-          "label": "Zoom In",
-          "accelerator": "Ctrl+=",
-          "action": "zoom-in"
-        },
-        {
-          "id": "zoom-out",
-          "label": "Zoom Out",
-          "accelerator": "Ctrl+-",
-          "action": "zoom-out"
-        }
+        { "id": "toggle-terminal", "label": "Toggle Terminal", "action": "toggle-terminal" },
+        { "separator": true },
+        { "id": "zoom-in", "label": "Zoom In", "accelerator": "Ctrl+=", "action": "zoom-in" },
+        { "id": "zoom-out", "label": "Zoom Out", "accelerator": "Ctrl+-", "action": "zoom-out" }
       ]
     },
     {
       "id": "help",
       "label": "Help",
       "items": [
+        { "id": "about", "label": "About", "action": "about" },
         {
-          "id": "about",
-          "label": "About",
-          "action": "about"
-        },
-        {
-          "id": "docs",
-          "label": "Documentation",
+          "id": "docs", "label": "Documentation",
           "items": [
-            {
-              "id": "docs-framework",
-              "label": "Framework Guide",
-              "action": "docs"
-            },
-            {
-              "id": "docs-layout",
-              "label": "Layout JSON Schema",
-              "action": "docs"
-            },
-            {
-              "id": "docs-api",
-              "label": "API Reference",
-              "action": "docs"
-            }
+            { "id": "docs-framework", "label": "Framework Guide", "action": "docs" },
+            { "id": "docs-layout", "label": "Layout JSON Schema", "action": "docs" },
+            { "id": "docs-api", "label": "API Reference", "action": "docs" }
           ]
         }
       ]
@@ -337,25 +138,17 @@
                 "id": "open-editors",
                 "label": "Open Editors",
                 "height": "fixed",
+                "utilities": [
+                  { "id": "refresh", "icon": "↻", "tooltip": "Refresh" },
+                  { "id": "close-all", "icon": "✕", "tooltip": "Close All" }
+                ],
                 "components": [
                   {
                     "type": "list",
                     "items": [
-                      {
-                        "id": "1",
-                        "label": "main.ts",
-                        "icon": "📄"
-                      },
-                      {
-                        "id": "2",
-                        "label": "App.vue",
-                        "icon": "📄"
-                      },
-                      {
-                        "id": "3",
-                        "label": "Panel.vue",
-                        "icon": "📄"
-                      }
+                      { "id": "1", "label": "main.ts", "icon": "📄" },
+                      { "id": "2", "label": "App.vue", "icon": "📄" },
+                      { "id": "3", "label": "Panel.vue", "icon": "📄" }
                     ]
                   }
                 ]
@@ -366,122 +159,44 @@
                 "height": "variable",
                 "minHeight": 80,
                 "utilities": [
-                  {
-                    "id": "new-file",
-                    "icon": "📄",
-                    "tooltip": "New File"
-                  },
-                  {
-                    "id": "new-folder",
-                    "icon": "📁",
-                    "tooltip": "New Folder"
-                  },
-                  {
-                    "id": "refresh",
-                    "icon": "↻",
-                    "tooltip": "Refresh"
-                  },
-                  {
-                    "id": "collapse",
-                    "icon": "⤢",
-                    "tooltip": "Collapse All"
-                  }
+                  { "id": "new-file", "icon": "📄", "tooltip": "New File" },
+                  { "id": "new-folder", "icon": "📁", "tooltip": "New Folder" },
+                  { "id": "refresh", "icon": "↻", "tooltip": "Refresh" },
+                  { "id": "collapse", "icon": "⤢", "tooltip": "Collapse All" }
                 ],
                 "components": [
                   {
                     "type": "tree",
                     "nodes": [
                       {
-                        "id": "src",
-                        "label": "src",
-                        "icon": "📁",
+                        "id": "src", "label": "src", "icon": "📁",
                         "children": [
+                          { "id": "main", "label": "main.ts", "icon": "📄" },
+                          { "id": "app", "label": "App.vue", "icon": "📄" },
                           {
-                            "id": "main",
-                            "label": "main.ts",
-                            "icon": "📄"
-                          },
-                          {
-                            "id": "app",
-                            "label": "App.vue",
-                            "icon": "📄"
-                          },
-                          {
-                            "id": "comp",
-                            "label": "components",
-                            "icon": "📁",
+                            "id": "comp", "label": "components", "icon": "📁",
                             "children": [
-                              {
-                                "id": "panel",
-                                "label": "Panel.vue",
-                                "icon": "📄"
-                              },
-                              {
-                                "id": "docker",
-                                "label": "Docker.vue",
-                                "icon": "📄"
-                              },
-                              {
-                                "id": "workspace",
-                                "label": "Workspace.vue",
-                                "icon": "📄"
-                              },
-                              {
-                                "id": "menubar",
-                                "label": "MenuBar.vue",
-                                "icon": "📄"
-                              },
-                              {
-                                "id": "statusbar",
-                                "label": "StatusBar.vue",
-                                "icon": "📄"
-                              }
+                              { "id": "panel", "label": "Panel.vue", "icon": "📄" },
+                              { "id": "docker", "label": "Docker.vue", "icon": "📄" },
+                              { "id": "workspace", "label": "Workspace.vue", "icon": "📄" },
+                              { "id": "menubar", "label": "MenuBar.vue", "icon": "📄" },
+                              { "id": "statusbar", "label": "StatusBar.vue", "icon": "📄" }
                             ]
                           },
-                          {
-                            "id": "comp-sub",
-                            "label": "SubsectionBody.vue",
-                            "icon": "📄"
-                          },
-                          {
-                            "id": "comp-ss",
-                            "label": "SubSection.vue",
-                            "icon": "📄"
-                          },
-                          {
-                            "id": "comp-pc",
-                            "label": "PanelComponent.vue",
-                            "icon": "📄"
-                          }
+                          { "id": "comp-sub", "label": "SubsectionBody.vue", "icon": "📄" },
+                          { "id": "comp-ss", "label": "SubSection.vue", "icon": "📄" },
+                          { "id": "comp-pc", "label": "PanelComponent.vue", "icon": "📄" }
                         ]
                       },
                       {
-                        "id": "pub",
-                        "label": "public",
-                        "icon": "📁",
+                        "id": "pub", "label": "public", "icon": "📁",
                         "children": [
-                          {
-                            "id": "fav",
-                            "label": "favicon.ico",
-                            "icon": "📄"
-                          }
+                          { "id": "fav", "label": "favicon.ico", "icon": "📄" }
                         ]
                       },
-                      {
-                        "id": "pkg",
-                        "label": "package.json",
-                        "icon": "📄"
-                      },
-                      {
-                        "id": "ts",
-                        "label": "tsconfig.json",
-                        "icon": "📄"
-                      },
-                      {
-                        "id": "vite",
-                        "label": "vite.config.ts",
-                        "icon": "📄"
-                      }
+                      { "id": "pkg", "label": "package.json", "icon": "📄" },
+                      { "id": "ts", "label": "tsconfig.json", "icon": "📄" },
+                      { "id": "vite", "label": "vite.config.ts", "icon": "📄" }
                     ]
                   }
                 ]
@@ -491,25 +206,19 @@
                 "label": "Outline",
                 "height": "variable",
                 "minHeight": 50,
+                "utilities": [
+                  { "id": "refresh", "icon": "↻", "tooltip": "Refresh" },
+                  { "id": "collapse", "icon": "⤢", "tooltip": "Collapse All" }
+                ],
                 "components": [
                   {
                     "type": "tree",
                     "nodes": [
                       {
-                        "id": "o1",
-                        "label": "App",
-                        "icon": "☰",
+                        "id": "o1", "label": "App", "icon": "☰",
                         "children": [
-                          {
-                            "id": "o2",
-                            "label": "setup()",
-                            "icon": "ƒ"
-                          },
-                          {
-                            "id": "o3",
-                            "label": "onTagSelected()",
-                            "icon": "ƒ"
-                          }
+                          { "id": "o2", "label": "setup()", "icon": "ƒ" },
+                          { "id": "o3", "label": "onTagSelected()", "icon": "ƒ" }
                         ]
                       }
                     ]
@@ -521,22 +230,16 @@
                 "label": "Timeline",
                 "height": "variable",
                 "minHeight": 50,
+                "utilities": [
+                  { "id": "refresh", "icon": "↻", "tooltip": "Refresh" }
+                ],
                 "components": [
                   {
                     "type": "list",
                     "items": [
-                      {
-                        "id": "t1",
-                        "label": "Commit: initial scaffold"
-                      },
-                      {
-                        "id": "t2",
-                        "label": "Commit: add Panel.vue"
-                      },
-                      {
-                        "id": "t3",
-                        "label": "Commit: add SSB overflow"
-                      }
+                      { "id": "t1", "label": "Commit: initial scaffold" },
+                      { "id": "t2", "label": "Commit: add Panel.vue" },
+                      { "id": "t3", "label": "Commit: add SSB overflow" }
                     ]
                   }
                 ]
@@ -555,18 +258,9 @@
                   {
                     "type": "keyValueList",
                     "items": [
-                      {
-                        "key": "dev",
-                        "value": "vite"
-                      },
-                      {
-                        "key": "build",
-                        "value": "vite build"
-                      },
-                      {
-                        "key": "preview",
-                        "value": "vite preview"
-                      }
+                      { "key": "dev", "value": "vite" },
+                      { "key": "build", "value": "vite build" },
+                      { "key": "preview", "value": "vite preview" }
                     ]
                   }
                 ]
@@ -586,16 +280,8 @@
                   {
                     "type": "list",
                     "items": [
-                      {
-                        "id": "td1",
-                        "label": "Panel.vue: fix overflow edge case",
-                        "icon": "⚠"
-                      },
-                      {
-                        "id": "td2",
-                        "label": "SubSection: add lazy load",
-                        "icon": "⚠"
-                      }
+                      { "id": "td1", "label": "Panel.vue: fix overflow edge case", "icon": "⚠" },
+                      { "id": "td2", "label": "SubSection: add lazy load", "icon": "⚠" }
                     ]
                   }
                 ]
@@ -621,16 +307,8 @@
                 "label": "Search",
                 "height": "fixed",
                 "components": [
-                  {
-                    "type": "input",
-                    "value": "",
-                    "placeholder": "Search..."
-                  },
-                  {
-                    "type": "text",
-                    "text": "3 results in 2 files",
-                    "muted": true
-                  }
+                  { "type": "input", "value": "", "placeholder": "Search..." },
+                  { "type": "text", "text": "3 results in 2 files", "muted": true }
                 ]
               },
               {
@@ -642,18 +320,9 @@
                   {
                     "type": "list",
                     "items": [
-                      {
-                        "id": "r1",
-                        "label": "Panel.vue:12  onTagSelected"
-                      },
-                      {
-                        "id": "r2",
-                        "label": "Panel.vue:28  selectSection"
-                      },
-                      {
-                        "id": "r3",
-                        "label": "App.vue:5    activeDockerTag"
-                      }
+                      { "id": "r1", "label": "Panel.vue:12  onTagSelected" },
+                      { "id": "r2", "label": "Panel.vue:28  selectSection" },
+                      { "id": "r3", "label": "App.vue:5    activeDockerTag" }
                     ]
                   }
                 ]
@@ -681,36 +350,16 @@
                 "height": "variable",
                 "minHeight": 60,
                 "utilities": [
-                  {
-                    "id": "refresh",
-                    "icon": "↻",
-                    "tooltip": "Refresh"
-                  }
+                  { "id": "refresh", "icon": "↻", "tooltip": "Refresh" }
                 ],
                 "components": [
                   {
                     "type": "list",
                     "items": [
-                      {
-                        "id": "c1",
-                        "label": "M  App.vue",
-                        "icon": "M"
-                      },
-                      {
-                        "id": "c2",
-                        "label": "M  Panel.vue",
-                        "icon": "M"
-                      },
-                      {
-                        "id": "c3",
-                        "label": "A  SubsectionBody.vue",
-                        "icon": "A"
-                      },
-                      {
-                        "id": "c4",
-                        "label": "A  SubSection.vue",
-                        "icon": "A"
-                      }
+                      { "id": "c1", "label": "M  App.vue", "icon": "M" },
+                      { "id": "c2", "label": "M  Panel.vue", "icon": "M" },
+                      { "id": "c3", "label": "A  SubsectionBody.vue", "icon": "A" },
+                      { "id": "c4", "label": "A  SubSection.vue", "icon": "A" }
                     ]
                   }
                 ]
@@ -724,11 +373,7 @@
                   {
                     "type": "list",
                     "items": [
-                      {
-                        "id": "s1",
-                        "label": "M  main.css",
-                        "icon": "M"
-                      }
+                      { "id": "s1", "label": "M  main.css", "icon": "M" }
                     ]
                   }
                 ]
@@ -757,18 +402,9 @@
                   {
                     "type": "keyValueList",
                     "items": [
-                      {
-                        "key": "this",
-                        "value": "App {...}"
-                      },
-                      {
-                        "key": "activeTag",
-                        "value": "\"explorer\""
-                      },
-                      {
-                        "key": "panelVisible",
-                        "value": "true"
-                      }
+                      { "key": "this", "value": "App {...}" },
+                      { "key": "activeTag", "value": "\"explorer\"" },
+                      { "key": "panelVisible", "value": "true" }
                     ]
                   }
                 ]
@@ -785,11 +421,7 @@
                 "height": "variable",
                 "minHeight": 50,
                 "components": [
-                  {
-                    "type": "text",
-                    "text": "No watch expressions added",
-                    "muted": true
-                  }
+                  { "type": "text", "text": "No watch expressions added", "muted": true }
                 ]
               }
             ]
@@ -807,14 +439,8 @@
                   {
                     "type": "list",
                     "items": [
-                      {
-                        "id": "f1",
-                        "label": "onTagSelected  App.vue:12"
-                      },
-                      {
-                        "id": "f2",
-                        "label": "emit           Panel.vue:28"
-                      }
+                      { "id": "f1", "label": "onTagSelected  App.vue:12" },
+                      { "id": "f2", "label": "emit           Panel.vue:28" }
                     ]
                   }
                 ]
@@ -844,18 +470,8 @@
                   {
                     "type": "list",
                     "items": [
-                      {
-                        "id": "e1",
-                        "label": "Vue 3 Snippets",
-                        "icon": "🟢",
-                        "badge": "3.0"
-                      },
-                      {
-                        "id": "e2",
-                        "label": "TypeScript Vue Plugin",
-                        "icon": "🟢",
-                        "badge": "1.8"
-                      }
+                      { "id": "e1", "label": "Vue 3 Snippets", "icon": "🟢", "badge": "3.0" },
+                      { "id": "e2", "label": "TypeScript Vue Plugin", "icon": "🟢", "badge": "1.8" }
                     ]
                   }
                 ]
@@ -869,18 +485,8 @@
                   {
                     "type": "list",
                     "items": [
-                      {
-                        "id": "p1",
-                        "label": "Prettier",
-                        "icon": "🟦",
-                        "badge": "2.1"
-                      },
-                      {
-                        "id": "p2",
-                        "label": "ESLint",
-                        "icon": "🟦",
-                        "badge": "8.0"
-                      }
+                      { "id": "p1", "label": "Prettier", "icon": "🟦", "badge": "2.1" },
+                      { "id": "p2", "label": "ESLint", "icon": "🟦", "badge": "8.0" }
                     ]
                   }
                 ]
@@ -909,22 +515,10 @@
                   {
                     "type": "keyValueList",
                     "items": [
-                      {
-                        "key": "Font Family",
-                        "value": "Consolas"
-                      },
-                      {
-                        "key": "Font Size",
-                        "value": "13"
-                      },
-                      {
-                        "key": "Line Height",
-                        "value": "1.5"
-                      },
-                      {
-                        "key": "Tab Size",
-                        "value": "2"
-                      }
+                      { "key": "Font Family", "value": "Consolas" },
+                      { "key": "Font Size", "value": "13" },
+                      { "key": "Line Height", "value": "1.5" },
+                      { "key": "Tab Size", "value": "2" }
                     ]
                   }
                 ]
@@ -937,18 +531,9 @@
                   {
                     "type": "keyValueList",
                     "items": [
-                      {
-                        "key": "Word Wrap",
-                        "value": "on"
-                      },
-                      {
-                        "key": "Minimap",
-                        "value": "off"
-                      },
-                      {
-                        "key": "Render Whitespace",
-                        "value": "selection"
-                      }
+                      { "key": "Word Wrap", "value": "on" },
+                      { "key": "Minimap", "value": "off" },
+                      { "key": "Render Whitespace", "value": "selection" }
                     ]
                   }
                 ]
@@ -967,14 +552,8 @@
                   {
                     "type": "keyValueList",
                     "items": [
-                      {
-                        "key": "Auto Save",
-                        "value": "afterDelay"
-                      },
-                      {
-                        "key": "Files Exclude",
-                        "value": "**/node_modules"
-                      }
+                      { "key": "Auto Save", "value": "afterDelay" },
+                      { "key": "Files Exclude", "value": "**/node_modules" }
                     ]
                   }
                 ]
@@ -1000,22 +579,10 @@
               {
                 "type": "keyValueList",
                 "items": [
-                  {
-                    "key": "id",
-                    "value": "panel-1"
-                  },
-                  {
-                    "key": "class",
-                    "value": "sf-panel sf-panel--left"
-                  },
-                  {
-                    "key": "width",
-                    "value": "260px"
-                  },
-                  {
-                    "key": "visible",
-                    "value": "true"
-                  }
+                  { "key": "id", "value": "panel-1" },
+                  { "key": "class", "value": "sf-panel sf-panel--left" },
+                  { "key": "width", "value": "260px" },
+                  { "key": "visible", "value": "true" }
                 ]
               }
             ]
@@ -1028,18 +595,9 @@
               {
                 "type": "keyValueList",
                 "items": [
-                  {
-                    "key": "background",
-                    "value": "#252526"
-                  },
-                  {
-                    "key": "border-right",
-                    "value": "1px solid #3c3c3c"
-                  },
-                  {
-                    "key": "color",
-                    "value": "#cccccc"
-                  }
+                  { "key": "background", "value": "#252526" },
+                  { "key": "border-right", "value": "1px solid #3c3c3c" },
+                  { "key": "color", "value": "#cccccc" }
                 ]
               }
             ]
@@ -1050,26 +608,14 @@
             "height": "variable",
             "minHeight": 60,
             "utilities": [
-              {
-                "id": "refresh",
-                "icon": "↻",
-                "tooltip": "Refresh"
-              }
+              { "id": "refresh", "icon": "↻", "tooltip": "Refresh" }
             ],
             "components": [
               {
                 "type": "list",
                 "items": [
-                  {
-                    "id": "ev1",
-                    "label": "collapse",
-                    "icon": "⚡"
-                  },
-                  {
-                    "id": "ev2",
-                    "label": "select-section",
-                    "icon": "⚡"
-                  }
+                  { "id": "ev1", "label": "collapse", "icon": "⚡" },
+                  { "id": "ev2", "label": "select-section", "icon": "⚡" }
                 ]
               }
             ]
@@ -1082,58 +628,22 @@
     "minTileWidth": 160,
     "minTileHeight": 100,
     "tabs": [
-      {
-        "id": "welcome",
-        "label": "Welcome",
-        "icon": "🏠",
-        "content": "welcome",
-        "closeable": false
-      },
-      {
-        "id": "app-ts",
-        "label": "app.ts",
-        "icon": "📄"
-      },
-      {
-        "id": "utils-ts",
-        "label": "utils.ts",
-        "icon": "📄"
-      },
-      {
-        "id": "styles-css",
-        "label": "styles.css",
-        "icon": "🎨"
-      }
+      { "id": "welcome", "label": "Welcome", "icon": "🏠", "content": "welcome", "closeable": false },
+      { "id": "app-ts", "label": "app.ts", "icon": "📄" },
+      { "id": "utils-ts", "label": "utils.ts", "icon": "📄" },
+      { "id": "styles-css", "label": "styles.css", "icon": "🎨" }
     ]
   },
   "status": {
     "left": [
-      {
-        "id": "ln-col",
-        "label": "Ln 1, Col 1"
-      },
-      {
-        "id": "spaces",
-        "label": "Spaces: 2"
-      },
-      {
-        "id": "encoding",
-        "label": "UTF-8"
-      }
+      { "id": "ln-col", "label": "Ln 1, Col 1" },
+      { "id": "spaces", "label": "Spaces: 2" },
+      { "id": "encoding", "label": "UTF-8" }
     ],
     "right": [
-      {
-        "id": "lang",
-        "label": "TypeScript"
-      },
-      {
-        "id": "branch",
-        "label": "🟢 main"
-      },
-      {
-        "id": "errors",
-        "label": "Errors: 0 ⚠ 0"
-      }
+      { "id": "lang", "label": "TypeScript" },
+      { "id": "branch", "label": "🟢 main" },
+      { "id": "errors", "label": "Errors: 0 ⚠ 0" }
     ]
   }
 }
