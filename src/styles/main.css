@@ -1019,7 +1019,7 @@ body.sf-dragging * {
   gap: 6px;
   padding: 0 12px;
   height: 100%;
-  cursor: grab;
+  cursor: pointer;
   background: var(--sf-bg);
   border-top: 2px solid transparent;
   border-bottom: 2px solid transparent;
