@@ -1020,6 +1020,7 @@ body.sf-dragging * {
   height: 100%;
   cursor: grab;
   background: var(--sf-bg);
+  border-top: 2px solid transparent;
   border-right: 1px solid var(--sf-border);
   color: var(--sf-text-muted);
   white-space: nowrap;
@@ -1040,7 +1041,7 @@ body.sf-dragging * {
 .sf-tab.active {
   background: var(--sf-bg);
   color: var(--sf-text);
-  border-top: 2px solid var(--sf-accent);
+  border-top-color: var(--sf-accent);
 }
 
 .sf-tab-icon {
