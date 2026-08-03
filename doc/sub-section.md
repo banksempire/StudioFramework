@@ -100,7 +100,8 @@ only toggles expand/collapse and does NOT activate.
 - **Button visibility**: utility buttons are `display: none` by default (no
   layout space, label extends full width). They are shown when the
   sub-section is **active** or when the mouse hovers over **any part** of
-  it. The active sub-section's buttons are always visible regardless of
+  it — but **never** when the sub-section is collapsed. The active
+  sub-section's buttons are always visible (when expanded) regardless of
   hover. This is the only visual indicator of the active state - the
   header text color is the same regardless.
 - **Lifecycle**: the active id is cleared when the sub-section is hidden or

@@ -632,9 +632,9 @@ html, body, #app {
   gap: 2px;
 }
 
-/* Show buttons when the sub-section is active OR hovered (any part) */
-.sf-subsection--active .sf-subsection-utils,
-.sf-subsection:hover .sf-subsection-utils {
+/* Show buttons when active OR hovered (any part), but not when collapsed */
+.sf-subsection--active:not(.sf-subsection--collapsed) .sf-subsection-utils,
+.sf-subsection:not(.sf-subsection--collapsed):hover .sf-subsection-utils {
   display: flex;
 }
 

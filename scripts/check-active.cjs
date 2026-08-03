@@ -124,6 +124,27 @@ const { ensureServer, openApp, makeReporter, finish } = require('./lib/ui-test.c
     report('active utils still shown after moving away',
       (await getUtilsDisplay(projectSub)) === 'shown');
 
+    // ── Phase 3b: Collapsed sub-section never shows buttons ────────────────
+
+    // Collapse project (header click) -> still active but collapsed
+    await projectHeader.click();
+    await page.waitForTimeout(50);
+    report('project still active after collapse', await isActiveEl(projectSub));
+    report('utils hidden when active but collapsed',
+      (await getUtilsDisplay(projectSub)) === 'hidden');
+
+    // Hover collapsed project -> still hidden
+    await hoverSub(projectSub);
+    report('utils hidden when hovering collapsed sub-section',
+      (await getUtilsDisplay(projectSub)) === 'hidden');
+
+    // Expand project -> active + expanded -> buttons back
+    await projectHeader.click();
+    await page.waitForTimeout(50);
+    await moveMouseAway();
+    report('utils shown again after expanding (active)',
+      (await getUtilsDisplay(projectSub)) === 'shown');
+
     // ── Phase 4: Deactivation ──────────────────────────────────────────────
 
     const outlineBody = await outlineSub.$('.sf-subsection-body');
