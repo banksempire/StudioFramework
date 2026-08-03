@@ -54,7 +54,7 @@ function onTabDragStart(e: DragEvent, tabId: string) {
     <div class="sf-tile-content">
       <div v-if="!activeTab" class="sf-tile-empty">
         <div class="sf-tile-empty-inner">
-          <p>No editor open</p>
+          <p>No tab open</p>
           <p class="sf-tile-empty-hint">Drag a tab here, or press <kbd>+</kbd></p>
         </div>
       </div>
@@ -70,9 +70,9 @@ function onTabDragStart(e: DragEvent, tabId: string) {
           </div>
         </div>
       </div>
-      <div v-else class="sf-editor-placeholder">
-        <div class="sf-editor-lines">
-          <div v-for="n in 12" :key="n" class="sf-editor-line">
+      <div v-else class="sf-tile-placeholder">
+        <div class="sf-tile-lines">
+          <div v-for="n in 12" :key="n" class="sf-tile-line">
             <span class="sf-line-number">{{ n }}</span>
             <span class="sf-line-text">{{ n === 1 ? '// ' + activeTab.label : '' }}</span>
           </div>

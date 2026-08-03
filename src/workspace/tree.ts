@@ -5,7 +5,7 @@
  *   - SplitNode: divides its container into two children along a direction
  *     ('row' = left|right, 'column' = top|bottom). `ratio` is the fraction of
  *     the container given to children[0] (0..1).
- *   - TileNode: an editor group — an ordered list of tab ids + the active id.
+ *   - TileNode: a tile - an ordered list of tab ids + the active id.
  *
  * All functions are PURE (no Vue reactivity) so the tree logic is unit
  * testable in Node. The Vue composable (useWorkspace.ts) wraps them in a
@@ -13,10 +13,10 @@
  *
  * Sizing rules (implemented in the components via flexbox):
  *   - Each tile has a min width / min height (from the layout JSON).
- *   - Sizes stay proportional while the window resizes (ratios are fixed);
+ *   - Sizes stay proportional while the workspace resizes (ratios are fixed);
  *     the proportion is only broken when a tile reaches its min size.
  *   - A split created by drag-to-tile always gives the dragged tab 50% of
- *     the target window (ratio 0.5), clamped by min sizes at render time.
+ *     the target tile (ratio 0.5), clamped by min sizes at render time.
  */
 
 export type SplitDir = 'row' | 'column';
@@ -184,7 +184,7 @@ function nextActive(remaining: string[], idx: number, current: string): string {
 /**
  * Drag-to-tile: split the tile containing `tileId` so the dragged tab gets
  * its own new tile on the given side. The new tile takes ratio 0.5 of the
- * target window ("always try to take half").
+ * target tile ("always try to take half").
  *   side 'start' → new tile first  (left / top)
  *   side 'end'   → new tile second (right / bottom)
  */

@@ -3,7 +3,7 @@ import { computed, inject } from 'vue';
 import { subtreeMinSize, type WorkspaceNode as WorkspaceNodeType } from '../workspace/tree';
 import { kWorkspace } from '../composables/useWorkspace';
 import Sash from './Sash.vue';
-import EditorTile from './EditorTile.vue';
+import Tile from './Tile.vue';
 
 const props = defineProps<{ node: WorkspaceNodeType }>();
 const ws = inject(kWorkspace)!;
@@ -12,7 +12,7 @@ const tileNode = computed(() => (props.node.kind === 'tile' ? props.node : null)
 const splitNode = computed(() => (props.node.kind === 'split' ? props.node : null));
 
 /**
- * Flexbox sizing: the ratio is baked into flex-basis, so window resizes
+ * Flexbox sizing: the ratio is baked into flex-basis, so workspace resizes
  * keep tiles proportional automatically. Min sizes act as the floor —
  * the proportion is only broken when a min size is reached.
  */
@@ -29,7 +29,7 @@ function childStyle(i: 0 | 1) {
 </script>
 
 <template>
-  <EditorTile v-if="tileNode" :tile="tileNode" />
+  <Tile v-if="tileNode" :tile="tileNode" />
   <div v-else class="sf-split" :class="splitNode!.dir === 'row' ? 'sf-split--row' : 'sf-split--column'">
     <div class="sf-split-child" :style="childStyle(0)">
       <WorkspaceNode :node="splitNode!.children[0]" />

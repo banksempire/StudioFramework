@@ -128,7 +128,7 @@ function onDragOver(e: DragEvent) {
       dnd.indicator = null;
     }
   } else {
-    // Split zones: preview the half of the window the dragged tab will take.
+    // Split zones: preview the half of the tile the dragged tab will take.
     dnd.glow = null;
     dnd.indicator = null;
     dnd.index = 0;

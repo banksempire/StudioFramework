@@ -947,7 +947,7 @@ body.sf-dragging * {
   background: var(--sf-accent-soft);
 }
 
-/* ─── Tile (editor group) ───────────────────────────────────────────────── */
+/* ─── Tile ────────────────────────────────────────────────────────────── */
 
 .sf-tile-tabs {
   display: flex;
