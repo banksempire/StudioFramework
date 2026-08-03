@@ -74,10 +74,16 @@ src/
 │   ├── SubSection.vue         # Sub-section title bar + component body
 │   ├── PanelComponent.vue     # Renders 6 component types (text, input, button, tree, kv, list)
 │   ├── Icon.vue               # Renders IconDef (unicode char or image)
-│   ├── Workspace.vue          # Centered tabbed editor - driven by layout.workspace
+│   ├── Workspace.vue          # Workspace root: split-tree renderer + drag-to-tile zones
+│   ├── WorkspaceNode.vue       # Recursive split/tile node (sash between children)
+│   ├── EditorTile.vue          # Editor group: tab strip (drag/close/+) + content
+│   ├── Sash.vue                # Pointer resize handle with min-size clamping
 │   └── StatusBar.vue          # Bottom status bar - driven by layout.status
+├── workspace/
+│   └── tree.ts               # Pure split-tree model + ops (Node-testable)
 ├── composables/
-│   └── useResize.ts           # Resize composable for draggable panel edges
+│   ├── useResize.ts           # Resize composable for draggable panel edges
+│   └── useWorkspace.ts        # Reactive split-tree state + DnD state
 └── styles/
     └── main.css               # Global theme + layout CSS
 ```
@@ -272,14 +278,18 @@ Thin wrapper around `Panel` with `position="right"`, driven by the layout.
 The right panel definition lives in `src/layout/app.layout.json` under
 `"right"` (set to `null` to disable the panel).
 
-### Workspace
+### Workspace (multi-tab, drag-to-tile)
 
 ```vue
-<Workspace :tabs="layout.workspace.tabs" />
+<Workspace :def="layout.workspace" />
 ```
 
-Tabs come from the layout JSON; close/new operations are handled internally
-on a local copy.
+Tabs, `minTileWidth` and `minTileHeight` come from the layout JSON; the split
+tree itself is runtime state (`src/workspace/tree.ts`). Drag a tab onto a
+tile's edge to split (the dragged tab takes half the window), onto the strip
+to reorder/insert, or into the content area to move. Sizes stay proportional
+while the window resizes and only break at min sizes. See
+[`doc/workspace.md`](doc/workspace.md) for the model and zones.
 
 ### StatusBar
 

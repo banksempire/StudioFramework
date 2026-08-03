@@ -35,6 +35,9 @@
   --sf-text-bright: #e0e0e0;
   --sf-accent: #007acc;
   --sf-accent-hover: #1a8ad4;
+  --sf-accent-soft: rgba(0, 122, 204, 0.16);
+  /* how far the indication-box shading reaches from the border inward */
+  --sf-dnd-shade: 48px;
   --sf-active: #37373d;
   --sf-selection: #264f78;
   --sf-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
@@ -316,22 +319,22 @@ html, body, #app {
   display: flex;
   flex-direction: column;
   flex-shrink: 0;
-  overflow: hidden;
   position: relative;
   min-width: 100px;
 }
 
 .sf-panel--left {
-  border-right: 1px solid var(--sf-border);
+  /* Inset shadow (not border) so the resize handle at right:0 sits exactly
+     on top of this permanent separator (a border would offset it by 1px). */
+  box-shadow: inset -1px 0 0 var(--sf-border);
 }
 
 .sf-panel--right {
-  border-left: 1px solid var(--sf-border);
+  box-shadow: inset 1px 0 0 var(--sf-border);
 }
 
 .sf-panel--hidden {
   display: none !important;
-  border: none !important;
 }
 
 .sf-panel-header {
@@ -462,6 +465,8 @@ html, body, #app {
   transition: background 0.15s;
 }
 
+/* Centered on the panel edge: 2px outside, 2px inside - the blue line and
+   the hit area are the same element, exactly overlapping. */
 .sf-panel-resize-handle:hover,
 .sf-panel--dragging .sf-panel-resize-handle {
   background: var(--sf-accent);
@@ -472,11 +477,11 @@ html, body, #app {
 }
 
 .sf-panel-resize-handle--right {
-  right: 0;
+  right: -2px;
 }
 
 .sf-panel-resize-handle--left {
-  left: 0;
+  left: -2px;
 }
 
 /* ─── Collapse indicator overlay ─────────────────────────────────────────── */
@@ -864,34 +869,152 @@ body.sf-dragging * {
    ═══════════════════════════════════════════════════════════════════════════ */
 
 .sf-workspace {
+  position: relative;
   display: flex;
-  flex-direction: column;
   flex: 1;
   min-width: 0;
+  min-height: 0;
   background: var(--sf-bg);
 }
 
-/* ─── Tab Bar ────────────────────────────────────────────────────────────── */
+/* ─── Split tree ────────────────────────────────────────────────────────── */
 
-.sf-tab-bar {
+.sf-split {
+  display: flex;
+  flex: 1;
+  min-width: 0;
+  min-height: 0;
+}
+
+.sf-split--row {
+  flex-direction: row;
+}
+
+.sf-split--column {
+  flex-direction: column;
+}
+
+.sf-split-child {
+  display: flex;
+  flex: 0 1 auto;
+  min-width: 0;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.sf-sash {
+  position: relative;
+  z-index: 5;
+  flex-shrink: 0;
+  background: transparent;
+}
+
+/*
+ * The single seam line between tiles. The sash's border box overlaps the
+ * gap between the two tiles; the ::after line sits exactly on the seam so
+ * adjacent tiles share ONE border (no double lines).
+ */
+.sf-sash--row::after {
+  content: '';
+  position: absolute;
+  left: 2px;
+  top: 0;
+  bottom: 0;
+  width: 1px;
+  background: var(--sf-border);
+}
+
+.sf-sash--column::after {
+  content: '';
+  position: absolute;
+  top: 2px;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: var(--sf-border);
+}
+
+.sf-sash--row {
+  width: 5px;
+  margin: 0 -2px;
+  cursor: col-resize;
+}
+
+.sf-sash--column {
+  height: 5px;
+  margin: -2px 0;
+  cursor: row-resize;
+}
+
+.sf-sash:hover,
+.sf-sash:active {
+  background: var(--sf-accent-soft);
+}
+
+/* ─── Tile (editor group) ───────────────────────────────────────────────── */
+
+.sf-tile-tabs {
   display: flex;
   align-items: center;
   height: 30px;
   background: var(--sf-bg-light);
   flex-shrink: 0;
-  overflow: hidden;
-}
-
-.sf-tab-container {
-  display: flex;
-  flex: 1;
   overflow-x: auto;
   overflow-y: hidden;
-  height: 100%;
 }
 
-.sf-tab-container::-webkit-scrollbar { height: 3px; }
-.sf-tab-container::-webkit-scrollbar-thumb { background: var(--sf-border); }
+.sf-tile-tabs::-webkit-scrollbar { height: 3px; }
+.sf-tile-tabs::-webkit-scrollbar-thumb { background: var(--sf-border); }
+
+.sf-tile-content {
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+  position: relative;
+}
+
+/* ─── DnD layer (drag-to-tile visuals) ──────────────────────────────────── */
+
+.sf-dnd-layer {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 100;
+}
+
+/*
+ * Landing preview: a transparent CLOSED box — accent border on all four
+ * sides with shading that fades from the border toward the center (no fill;
+ * the middle stays see-through). Deliberately not the DTC open-edge glow:
+ * the panel collapse reads as "shrinking toward a side", while DTT needs a
+ * complete rectangle so the landing area is unambiguous.
+ */
+.sf-dnd-preview {
+  position: absolute;
+  border: 1px solid var(--sf-accent);
+  border-radius: 4px;
+  background:
+    linear-gradient(to bottom, var(--sf-accent-soft), transparent var(--sf-dnd-shade)),
+    linear-gradient(to top, var(--sf-accent-soft), transparent var(--sf-dnd-shade)),
+    linear-gradient(to right, var(--sf-accent-soft), transparent var(--sf-dnd-shade)),
+    linear-gradient(to left, var(--sf-accent-soft), transparent var(--sf-dnd-shade));
+  box-shadow: 0 0 14px var(--sf-accent-soft);
+}
+
+.sf-dnd-glow {
+  position: absolute;
+  border: 1px solid var(--sf-accent);
+  border-radius: 4px;
+  box-shadow: inset 0 0 0 1px var(--sf-accent-soft);
+}
+
+.sf-dnd-indicator {
+  position: absolute;
+  width: 2px;
+  background: var(--sf-accent);
+  border-radius: 1px;
+  box-shadow: 0 0 6px var(--sf-accent);
+}
 
 .sf-tab {
   display: flex;
@@ -899,7 +1022,7 @@ body.sf-dragging * {
   gap: 6px;
   padding: 0 12px;
   height: 100%;
-  cursor: pointer;
+  cursor: grab;
   background: var(--sf-bg);
   border-right: 1px solid var(--sf-border);
   color: var(--sf-text-muted);
@@ -907,6 +1030,11 @@ body.sf-dragging * {
   font-size: 13px;
   min-width: 0;
   flex-shrink: 0;
+  user-select: none;
+}
+
+.sf-tab.dragging {
+  opacity: 0.4;
 }
 
 .sf-tab:hover {
@@ -961,13 +1089,7 @@ body.sf-dragging * {
   background: var(--sf-bg-hover);
 }
 
-/* ─── Panel Container ────────────────────────────────────────────────────── */
-
-.sf-panel-container {
-  flex: 1;
-  overflow: auto;
-  position: relative;
-}
+/* ─── Panel Container (retired: content now lives in tiles) ─────────────── */
 
 /* ─── Welcome Panel ──────────────────────────────────────────────────────── */
 

@@ -614,8 +614,10 @@
     ]
   },
   "workspace": {
+    "minTileWidth": 160,
+    "minTileHeight": 100,
     "tabs": [
-      { "id": "welcome", "label": "Welcome", "icon": "🏠", "closeable": false },
+      { "id": "welcome", "label": "Welcome", "icon": "🏠", "content": "welcome", "closeable": false },
       { "id": "app-ts", "label": "app.ts", "icon": "📄" },
       { "id": "utils-ts", "label": "utils.ts", "icon": "📄" },
       { "id": "styles-css", "label": "styles.css", "icon": "🎨" }

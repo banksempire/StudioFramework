@@ -199,7 +199,14 @@ function toWorkspaceTab(v: unknown, path: string): WorkspaceTabDef {
     label: needString(r.label, path + '.label'),
     icon: toIcon(r.icon, path + '.icon'),
     closeable: r.closeable === undefined ? undefined : r.closeable === true,
+    content: optString(r.content, path + '.content'),
   };
+}
+
+function optInt(v: unknown, path: string): number | undefined {
+  if (v === undefined) return undefined;
+  if (typeof v !== 'number' || !Number.isFinite(v) || v <= 0) fail(path, 'must be a positive number');
+  return Math.round(v);
 }
 
 // ── Root ───────────────────────────────────────────────────────────────────
@@ -216,12 +223,14 @@ export function loadLayout(): LayoutDefinition {
     menu,
     docker,
     right: root.right === undefined ? null : toPanelDef(root.right, '<root>.right'),
-    workspace: {
-      tabs: needArray(
-        needRecord(root.workspace ?? {}, '<root>.workspace').tabs ?? [],
-        '<root>.workspace.tabs',
-      ).map((t, i) => toWorkspaceTab(t, `<root>.workspace.tabs[${i}]`)),
-    },
+    workspace: (() => {
+      const ws = needRecord(root.workspace ?? {}, '<root>.workspace');
+      return {
+        tabs: needArray(ws.tabs ?? [], '<root>.workspace.tabs').map((t, i) => toWorkspaceTab(t, `<root>.workspace.tabs[${i}]`)),
+        minTileWidth: optInt(ws.minTileWidth, '<root>.workspace.minTileWidth') ?? 160,
+        minTileHeight: optInt(ws.minTileHeight, '<root>.workspace.minTileHeight') ?? 100,
+      };
+    })(),
     status: {
       left: needArray(needRecord(root.status ?? {}, '<root>.status').left ?? [], '<root>.status.left')
         .map((s, i) => toStatusItem(s, `<root>.status.left[${i}]`)),

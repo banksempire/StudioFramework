@@ -40,6 +40,15 @@ export interface WorkspaceTabDef {
   label: string;
   icon?: IconDef;
   closeable?: boolean;
+  /** content renderer hint, e.g. "welcome" */
+  content?: string;
+}
+
+export interface WorkspaceDef {
+  tabs: WorkspaceTabDef[];
+  /** smallest size a tile may shrink to while resizing */
+  minTileWidth?: number;
+  minTileHeight?: number;
 }
 
 export interface StatusItemDef {
@@ -53,6 +62,6 @@ export interface LayoutDefinition {
   menu: MenuNodeDef[];      // top-level menus - same class as any submenu
   docker: DockerItemDef[];
   right: PanelDef | null;
-  workspace: { tabs: WorkspaceTabDef[] };
+  workspace: WorkspaceDef;
   status: { left: StatusItemDef[]; right: StatusItemDef[] };
 }

@@ -38,11 +38,15 @@ LayoutDefinition
 │   ├── badge                     string (optional)
 │   └── panel                     PanelDef          panel shown when active
 ├── right                         PanelDef | null   right panel (null = hidden)
-├── workspace.tabs[]              WorkspaceTabDef
-│   ├── id                        string
-│   ├── label                     string
-│   ├── icon                      IconDef (optional)
-│   └── closeable                 boolean (optional, default true)
+├── workspace                  WorkspaceDef
+│   ├── tabs[]                 WorkspaceTabDef     initial editor tabs
+│   │   ├── id                 string
+│   │   ├── label              string
+│   │   ├── icon               IconDef (optional)
+│   │   ├── closeable          boolean (optional, default true)
+│   │   └── content            string (optional)  content hint, e.g. "welcome"
+│   ├── minTileWidth           number (optional, default 160)
+│   └── minTileHeight          number (optional, default 100)
 └── status
     ├── left[]                    StatusItemDef     left-aligned items
     └── right[]                   StatusItemDef     right-aligned items
@@ -194,7 +198,7 @@ they stay generic and reusable.
 | Menus / items / accelerators | `"menu"` |
 | Docker icons, badges, panels | `"docker"` |
 | Right panel content | `"right"` |
-| Editor tabs | `"workspace"` |
+| Editor tabs | `"workspace"` (tabs, `minTileWidth`, `minTileHeight`; the split tree is runtime state — see `doc/workspace.md`) |
 | Status bar items | `"status"` |
 | Panel width / resize limits | `src/composables/useResize.ts` + `Panel.vue` constants |
 | Colors | CSS custom properties in `src/styles/main.css` `:root` |

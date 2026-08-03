@@ -1,0 +1,168 @@
+import { reactive, type InjectionKey } from 'vue';
+import type { WorkspaceDef, WorkspaceTabDef } from '../types/layout';
+import {
+  findTile,
+  nextId,
+  treeCloseTab,
+  treeMoveTab,
+  treeNewTab,
+  treeSetRatio,
+  treeSplitTile,
+  type DropZone,
+  type SplitDir,
+  type WorkspaceNode,
+} from '../workspace/tree';
+
+export interface WorkspaceOps {
+  activateTab(tileId: string, tabId: string): void;
+  closeTab(tabId: string): void;
+  newTab(tileId: string): void;
+  setRatio(splitId: string, ratio: number): void;
+  splitTile(tileId: string, dir: SplitDir, side: 'start' | 'end', tabId: string): void;
+  moveTab(tabId: string, targetTileId: string, index: number): void;
+}
+
+export interface DndRect {
+  x: number;
+  y: number;
+  w: number;
+  h: number;
+}
+
+/** Drag-to-tile runtime state (shared between the overlay and the tiles). */
+export interface DndState {
+  dragging: boolean;
+  tabId: string;
+  sourceTileId: string;
+  fromIndex: number;
+  /** currently hovered tile id, '' when over no tile */
+  tileId: string;
+  zone: DropZone;
+  /** insertion index when zone === 'center' */
+  index: number;
+  /** split preview rect (workspace-local coords) for edge zones */
+  preview: DndRect | null;
+  /** full-tile highlight rect for center (move) zones */
+  glow: DndRect | null;
+  /** reorder indicator (workspace-local coords) for center drops on a strip */
+  indicator: { x: number; y: number; h: number } | null;
+}
+
+export interface WorkspaceApi {
+  /** reactive root of the split tree */
+  root: WorkspaceNode;
+  tabDefs: Record<string, WorkspaceTabDef>;
+  minTileWidth: number;
+  minTileHeight: number;
+  ops: WorkspaceOps;
+  dnd: DndState;
+  startDrag(tabId: string, tileId: string, index: number): void;
+  endDrag(): void;
+  registerTileEl(id: string, el: HTMLElement | null): void;
+  /** live registry of tile root elements (id → el) for DnD hit-testing */
+  tileEls: Map<string, HTMLElement>;
+}
+
+/** Same shape as WorkspaceApi — the whole api is provided to descendants. */
+export type WorkspaceContext = WorkspaceApi;
+
+export const kWorkspace: InjectionKey<WorkspaceContext> = Symbol('sf.workspace');
+
+export function useWorkspace(def: WorkspaceDef): WorkspaceApi {
+  const minTileWidth = def.minTileWidth ?? 160;
+  const minTileHeight = def.minTileHeight ?? 100;
+
+  const state = reactive<{ root: WorkspaceNode }>({
+    root: {
+      kind: 'tile',
+      id: nextId('tile'),
+      tabs: def.tabs.map((t) => t.id),
+      activeId: def.tabs[0]?.id ?? '',
+    },
+  });
+
+  const tabDefs: Record<string, WorkspaceTabDef> = {};
+  for (const t of def.tabs) tabDefs[t.id] = t;
+
+  const ops: WorkspaceOps = {
+    activateTab(tileId, tabId) {
+      const tile = findTile(state.root, tileId);
+      if (tile) tile.activeId = tabId;
+    },
+    closeTab(tabId) {
+      state.root = treeCloseTab(state.root, tabId);
+    },
+    newTab(tileId) {
+      const id = `untitled-${nextId('tab')}`;
+      state.root = treeNewTab(state.root, tileId, id);
+      tabDefs[id] = { id, label: 'Untitled', icon: '📄' };
+    },
+    setRatio(splitId, ratio) {
+      state.root = treeSetRatio(state.root, splitId, ratio);
+    },
+    splitTile(tileId, dir, side, tabId) {
+      state.root = treeSplitTile(state.root, tileId, dir, side, tabId);
+    },
+    moveTab(tabId, targetTileId, index) {
+      state.root = treeMoveTab(state.root, tabId, targetTileId, index);
+    },
+  };
+
+  // ── Drag-to-tile state ───────────────────────────────────────────────────
+  const dnd = reactive<DndState>({
+    dragging: false,
+    tabId: '',
+    sourceTileId: '',
+    fromIndex: 0,
+    tileId: '',
+    zone: 'center',
+    index: 0,
+    preview: null,
+    glow: null,
+    indicator: null,
+  });
+
+  const tileEls = new Map<string, HTMLElement>();
+
+  function startDrag(tabId: string, tileId: string, index: number) {
+    dnd.dragging = true;
+    dnd.tabId = tabId;
+    dnd.sourceTileId = tileId;
+    dnd.fromIndex = index;
+    dnd.tileId = '';
+    dnd.zone = 'center';
+    dnd.index = index;
+    dnd.preview = null;
+    dnd.glow = null;
+    dnd.indicator = null;
+  }
+
+  function endDrag() {
+    dnd.dragging = false;
+    dnd.tabId = '';
+    dnd.tileId = '';
+    dnd.preview = null;
+    dnd.glow = null;
+    dnd.indicator = null;
+  }
+
+  function registerTileEl(id: string, el: HTMLElement | null) {
+    if (el) tileEls.set(id, el);
+    else tileEls.delete(id);
+  }
+
+  return {
+    get root() {
+      return state.root;
+    },
+    tabDefs,
+    minTileWidth,
+    minTileHeight,
+    ops,
+    dnd,
+    startDrag,
+    endDrag,
+    registerTileEl,
+    tileEls,
+  };
+}

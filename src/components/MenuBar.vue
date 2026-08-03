@@ -19,12 +19,14 @@ const emit = defineEmits<{
 const openMenu = ref<string | null>(null);
 useClickOutside(openMenu, '.sf-menu-bar');
 
-function onMenuClick(label: string) {
+function onMenuClick(label?: string) {
+  if (!label) return;
   openMenu.value = openMenu.value === label ? null : label;
 }
 
-function onMenuHover(label: string) {
-  if (openMenu.value) openMenu.value = label;
+function onMenuHover(label?: string) {
+  if (!label || !openMenu.value) return;
+  openMenu.value = label;
 }
 
 function onItemAction(actionId: string) {
@@ -56,7 +58,7 @@ function onItemAction(actionId: string) {
         {{ menu.label }}
         <div v-if="openMenu === menu.label" class="sf-menu-dropdown open">
           <MenuDropdown
-            :items="menu.items"
+            :items="menu.items ?? []"
             @action="onItemAction"
           />
         </div>

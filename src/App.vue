@@ -94,7 +94,7 @@ function onMenuAction(actionId: string) {
         @collapse="dockerPanelVisible = false"
       />
 
-      <Workspace :tabs="layout.workspace.tabs" />
+      <Workspace :def="layout.workspace" />
 
       <RightPanel
         v-if="layout.right"

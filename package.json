@@ -5,14 +5,17 @@
   "type": "module",
   "scripts": {
     "dev": "vite --host 0.0.0.0 --port 7492",
-    "build": "tsc && vite build",
+    "build": "vue-tsc --noEmit && vite build",
     "preview": "vite preview",
-    "check": "node scripts/check-ui.cjs"
+    "check": "node scripts/check-ui.cjs",
+    "check:dtt": "node scripts/check-dtt.cjs",
+    "typecheck": "vue-tsc --noEmit"
   },
   "devDependencies": {
     "playwright": "^1.62.1",
     "typescript": "^5.7.0",
-    "vite": "^6.0.0"
+    "vite": "^6.0.0",
+    "vue-tsc": "^3.3.9"
   },
   "dependencies": {
     "@vitejs/plugin-vue": "^6.0.8",
