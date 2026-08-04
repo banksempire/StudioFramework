@@ -183,7 +183,7 @@ function onMenuAction(actionId: string) {
     />
 
     <div class="sf-workbench">
-      <div class="sf-left-group">
+      <div class="sf-left-group" v-show="leftPanelVisible">
         <Docker
           :items="layout.docker"
           :active-tag="activeDockerTag"
