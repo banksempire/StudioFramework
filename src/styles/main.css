@@ -39,6 +39,7 @@
   --sf-accent-soft: rgba(0, 122, 204, 0.16);
   --sf-accent-dim: rgba(0, 122, 204, 0.65);
   --sf-radius: 6px;
+  --sf-gap: 2px;
   /* how far the indication-box shading reaches from the border inward */
   --sf-dnd-shade: 48px;
   --sf-active: #37373d;
@@ -76,8 +77,8 @@ html, body, #app {
   flex-direction: column;
   height: 100%;
   width: 100%;
-  gap: 2px;
-  padding: 2px;
+  gap: var(--sf-gap);
+  padding: var(--sf-gap);
   background: var(--sf-bg-dark);
 }
 
@@ -250,7 +251,7 @@ html, body, #app {
   flex: 1;
   min-height: 0;
   overflow: hidden;
-  gap: 2px;
+  gap: var(--sf-gap);
   background: var(--sf-bg-dark);
 }
 
@@ -983,13 +984,13 @@ body.sf-dragging-row * {
 
 .sf-sash--row {
   width: 4px;
-  margin: 0 -1px;
+  margin: 0 calc(var(--sf-gap) / -2);
   cursor: col-resize;
 }
 
 .sf-sash--column {
   height: 4px;
-  margin: -1px 0;
+  margin: calc(var(--sf-gap) / -2) 0;
   cursor: row-resize;
 }
 
