@@ -7,11 +7,9 @@ import type { MenuNodeDef } from '../types/layout';
 const props = defineProps<{
   menus: MenuNodeDef[];
   leftPanelVisible?: boolean;
-  rightPanelVisible?: boolean;
 }>();
 
 const emit = defineEmits<{
-  'toggle-right-panel': [];
   'toggle-left-panel': [];
   'menu-action': [actionId: string];
 }>();
@@ -63,16 +61,6 @@ function onItemAction(actionId: string) {
           />
         </div>
       </div>
-    </div>
-
-    <div class="sf-menu-actions">
-      <button
-        class="sf-menu-action-btn"
-        :title="props.rightPanelVisible ? 'Collapse Right Panel' : 'Expand Right Panel'"
-        @click="emit('toggle-right-panel')"
-      >
-        {{ props.rightPanelVisible ? '\u25E7' : '\u25EB' }}
-      </button>
     </div>
   </div>
 </template>

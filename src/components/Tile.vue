@@ -2,10 +2,11 @@
 import { computed, inject, onBeforeUnmount, onMounted, ref } from 'vue';
 import Icon from './Icon.vue';
 import type { TileNode } from '../workspace/tree';
-import { kWorkspace } from '../composables/useWorkspace';
+import { kWorkspace, kRightPanelToggle } from '../composables/useWorkspace';
 
 const props = defineProps<{ tile: TileNode }>();
 const ws = inject(kWorkspace)!;
+const rpToggle = inject(kRightPanelToggle, null);
 
 const el = ref<HTMLElement | null>(null);
 onMounted(() => ws.registerTileEl(props.tile.id, el.value));
@@ -13,6 +14,7 @@ onBeforeUnmount(() => ws.registerTileEl(props.tile.id, null));
 
 const activeTab = computed(() => (props.tile.activeId ? ws.tabDefs[props.tile.activeId] ?? null : null));
 const focused = computed(() => ws.focusedTileId === props.tile.id);
+const isTopRight = computed(() => ws.topRightTileId === props.tile.id);
 
 function onTabDragStart(e: DragEvent, tabId: string) {
   if (e.dataTransfer) {
@@ -49,6 +51,12 @@ function onTabDragStart(e: DragEvent, tabId: string) {
         >✕</span>
       </div>
       <button class="sf-tab-new" title="New file" @click="ws.ops.newTab(tile.id)">+</button>
+      <button
+        v-if="isTopRight && rpToggle"
+        class="sf-tab-panel-toggle"
+        :title="rpToggle.visible ? 'Collapse Right Panel' : 'Expand Right Panel'"
+        @click="rpToggle.toggle()"
+      >{{ rpToggle.visible ? '\u25E7' : '\u25EB' }}</button>
     </div>
 
     <!-- Content -->

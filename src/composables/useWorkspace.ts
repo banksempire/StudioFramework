@@ -55,6 +55,8 @@ export interface WorkspaceApi {
   root: WorkspaceNode;
   /** id of the currently focused tile (bright accent); others are dimmed */
   focusedTileId: string;
+  /** id of the top-right tile (where the right-panel toggle is shown) */
+  readonly topRightTileId: string;
   tabDefs: Record<string, WorkspaceTabDef>;
   minTileWidth: number;
   minTileHeight: number;
@@ -67,10 +69,24 @@ export interface WorkspaceApi {
   tileEls: Map<string, HTMLElement>;
 }
 
-/** Same shape as WorkspaceApi — the whole api is provided to descendants. */
+/** Same shape as WorkspaceApi - the whole api is provided to descendants. */
 export type WorkspaceContext = WorkspaceApi;
 
 export const kWorkspace: InjectionKey<WorkspaceContext> = Symbol('sf.workspace');
+
+/** Right-panel toggle info, provided by Workspace.vue for tiles to use. */
+export interface RightPanelToggleApi {
+  visible: boolean;
+  toggle: () => void;
+}
+
+export const kRightPanelToggle: InjectionKey<RightPanelToggleApi> = Symbol('sf.rightPanelToggle');
+
+/** Find the top-right tile id in a split tree (row -> right, column -> top). */
+function findTopRightTileId(node: WorkspaceNode): string {
+  if (node.kind === 'tile') return node.id;
+  return findTopRightTileId(node.dir === 'row' ? node.children[1] : node.children[0]);
+}
 
 export function useWorkspace(def: WorkspaceDef): WorkspaceApi {
   const minTileWidth = def.minTileWidth ?? 160;
@@ -184,6 +200,9 @@ export function useWorkspace(def: WorkspaceDef): WorkspaceApi {
     },
     get focusedTileId() {
       return state.focusedTileId;
+    },
+    get topRightTileId() {
+      return findTopRightTileId(state.root);
     },
     tabDefs,
     minTileWidth,

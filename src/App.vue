@@ -200,7 +200,11 @@ function onMenuAction(actionId: string) {
         />
       </div>
 
-      <Workspace :def="layout.workspace" />
+      <Workspace
+        :def="layout.workspace"
+        :right-panel-visible="!rightAutoHidden && rightPanelVisible"
+        @toggle-right-panel="toggleRightPanel"
+      />
 
       <RightPanel
         v-if="layout.right"

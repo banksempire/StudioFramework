@@ -118,7 +118,7 @@ const { ensureServer, openApp, makeReporter, finish } = require('./lib/ui-test.c
     await page.waitForTimeout(300);
 
     await resizeTo(1300);
-    await page.locator('.sf-menu-action-btn').last().click();
+    await page.locator('.sf-tab-panel-toggle').click();
     await page.waitForTimeout(100);
     report('right collapsed by user', (await panelDisplayed('right')) === false);
 

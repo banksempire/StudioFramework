@@ -1,13 +1,26 @@
 <script setup lang="ts">
-import { provide, ref } from 'vue';
-import { kWorkspace, useWorkspace, type DndRect } from '../composables/useWorkspace';
+import { computed, provide, reactive, ref, watch } from 'vue';
+import { kWorkspace, useWorkspace, type DndRect, kRightPanelToggle } from '../composables/useWorkspace';
 import type { WorkspaceDef } from '../types/layout';
 import { findTile, type DropZone } from '../workspace/tree';
 import WorkspaceNode from './WorkspaceNode.vue';
 
-const props = defineProps<{ def: WorkspaceDef }>();
+const props = defineProps<{
+  def: WorkspaceDef;
+  rightPanelVisible?: boolean;
+}>();
+const emit = defineEmits<{ 'toggle-right-panel': [] }>();
+
 const api = useWorkspace(props.def);
 provide(kWorkspace, api);
+
+// Provide right-panel toggle info to tiles
+const rpToggle = reactive({
+  visible: props.rightPanelVisible ?? true,
+  toggle: () => emit('toggle-right-panel'),
+});
+watch(() => props.rightPanelVisible, (v) => { rpToggle.visible = v ?? true; });
+provide(kRightPanelToggle, rpToggle);
 
 const wsEl = ref<HTMLElement | null>(null);
 
