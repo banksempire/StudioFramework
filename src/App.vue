@@ -200,17 +200,15 @@ function onMenuAction(actionId: string) {
         />
       </div>
 
-      <div class="sf-right-group">
-        <Workspace :def="layout.workspace" />
+      <Workspace :def="layout.workspace" />
 
-        <RightPanel
-          v-if="layout.right"
-          :def="layout.right"
-          :visible="effRightPanelVisible"
-          @collapse="rightPanelVisible = false"
-          @resize="onPanelResize('right', $event)"
-        />
-      </div>
+      <RightPanel
+        v-if="layout.right"
+        :def="layout.right"
+        :visible="effRightPanelVisible"
+        @collapse="rightPanelVisible = false"
+        @resize="onPanelResize('right', $event)"
+      />
     </div>
 
     <StatusBar :left="layout.status.left" :right="layout.status.right" />
