@@ -75,6 +75,9 @@ html, body, #app {
   flex-direction: column;
   height: 100%;
   width: 100%;
+  gap: 2px;
+  padding: 2px;
+  background: var(--sf-bg-dark);
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════
@@ -87,9 +90,9 @@ html, body, #app {
   justify-content: space-between;
   height: 30px;
   background: var(--sf-bg-lighter);
-  border-bottom: 1px solid var(--sf-border);
   flex-shrink: 0;
   -webkit-app-region: drag;
+  border-radius: 6px;
 }
 
 .sf-menu-items {
@@ -1209,6 +1212,7 @@ body.sf-dragging-row * {
   font-size: 12px;
   padding: 0 10px;
   flex-shrink: 0;
+  border-radius: 6px;
 }
 
 .sf-status-left,
