@@ -89,7 +89,6 @@ html, body, #app {
 .sf-menu-bar {
   display: flex;
   align-items: center;
-  justify-content: space-between;
   height: 25px;
   background: var(--sf-bg-lighter);
   flex-shrink: 0;
