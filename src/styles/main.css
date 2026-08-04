@@ -491,30 +491,39 @@ html, body, #app {
   position: absolute;
   top: 0;
   bottom: 0;
-  width: 4px;
+  width: var(--sf-gap);
   cursor: col-resize;
   z-index: 10;
+  background: transparent;
+}
+
+/* Visual line inside the gap: inset 1px from each edge (--sf-gap - 2px wide) */
+.sf-panel-resize-handle::after {
+  content: '';
+  position: absolute;
+  left: 1px;
+  right: 1px;
+  top: 0;
+  bottom: 0;
   background: transparent;
   transition: background 0.15s;
 }
 
-/* Centered on the panel edge: 2px outside, 2px inside - the blue line and
-   the hit area are the same element, exactly overlapping. */
-.sf-panel-resize-handle:hover,
-.sf-panel--dragging .sf-panel-resize-handle {
+.sf-panel-resize-handle:hover::after,
+.sf-panel--dragging .sf-panel-resize-handle::after {
   background: var(--sf-accent);
 }
 
-.sf-panel--will-collapse .sf-panel-resize-handle {
+.sf-panel--will-collapse .sf-panel-resize-handle::after {
   background: transparent !important;
 }
 
 .sf-panel-resize-handle--right {
-  right: -2px;
+  right: calc(var(--sf-gap) * -1);
 }
 
 .sf-panel-resize-handle--left {
-  left: -2px;
+  left: calc(var(--sf-gap) * -1);
 }
 
 /* ─── Collapse indicator overlay ─────────────────────────────────────────── */
@@ -958,45 +967,38 @@ body.sf-dragging-row * {
 }
 
 /*
- * The single seam line between tiles. The sash's border box overlaps the
- * gap between the two tiles; the ::after line sits exactly on the seam so
- * adjacent tiles share ONE border (no double lines).
+ * The seam line between tiles. The sash fills the gap (--sf-gap wide);
+ * the ::after is the visual line, inset 1px from each edge
+ * (--sf-gap - 2px wide), centered in the gap.
  */
 .sf-sash--row::after {
   content: '';
   position: absolute;
-  left: 2px;
+  left: 1px;
+  right: 1px;
   top: 0;
   bottom: 0;
-  width: 1px;
   background: var(--sf-border);
 }
 
 .sf-sash--column::after {
   content: '';
   position: absolute;
-  top: 2px;
+  top: 1px;
+  bottom: 1px;
   left: 0;
   right: 0;
-  height: 1px;
   background: var(--sf-border);
 }
 
 .sf-sash--row {
-  width: 4px;
-  margin: 0 calc(var(--sf-gap) / -2);
+  width: var(--sf-gap);
   cursor: col-resize;
 }
 
 .sf-sash--column {
-  height: 4px;
-  margin: calc(var(--sf-gap) / -2) 0;
+  height: var(--sf-gap);
   cursor: row-resize;
-}
-
-.sf-sash:hover,
-.sf-sash--dragging {
-  background: var(--sf-accent);
 }
 
 .sf-sash:hover::after,
