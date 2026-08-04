@@ -398,7 +398,7 @@ html, body, #app {
 }
 
 .sf-panel-tab:hover {
-  background: var(--sf-bg-hover);
+  background: var(--sf-active);
 }
 
 .sf-panel-tab--active {
