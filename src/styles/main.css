@@ -1158,7 +1158,21 @@ body.sf-dragging-row * {
   background: var(--sf-bg-hover);
 }
 
-/* Right-panel toggle button (only in the top-right tile) */
+/* Button group: wraps buttons in one rounded corner box with thin dividers */
+.sf-btn-group {
+  display: flex;
+  align-items: center;
+  height: 100%;
+  flex-shrink: 0;
+  border-radius: var(--sf-radius);
+  overflow: hidden;
+  margin-left: auto;
+}
+
+.sf-btn-group + .sf-btn-group {
+  margin-left: 4px;
+}
+
 .sf-tab-panel-toggle {
   background: none;
   border: none;
@@ -1168,7 +1182,11 @@ body.sf-dragging-row * {
   padding: 0 10px;
   height: 100%;
   flex-shrink: 0;
-  margin-left: auto;
+  border-radius: 0;
+}
+
+.sf-btn-group .sf-tab-panel-toggle:not(:last-child) {
+  border-right: 1px solid var(--sf-border);
 }
 
 .sf-tab-panel-toggle:hover {

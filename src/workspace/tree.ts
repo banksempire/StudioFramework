@@ -312,3 +312,18 @@ export function treeInsertTab(root: WorkspaceNode, tileId: string, tabId: string
   const tabs = [...tile.tabs.slice(0, idx), tabId, ...tile.tabs.slice(idx)];
   return replaceNode(root, tileId, { ...tile, tabs, activeId: tabId });
 }
+
+/** Collect all tab ids from a tree in visual order (left-to-right, top-to-bottom). */
+export function collectAllTabs(root: WorkspaceNode): string[] {
+  const tabs: string[] = [];
+  const stack: WorkspaceNode[] = [root];
+  while (stack.length) {
+    const n = stack.pop()!;
+    if (n.kind === 'tile') {
+      tabs.push(...n.tabs);
+    } else {
+      stack.push(n.children[1], n.children[0]);
+    }
+  }
+  return tabs;
+}

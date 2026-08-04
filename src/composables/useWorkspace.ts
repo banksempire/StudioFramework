@@ -11,6 +11,7 @@ import {
   treeNewTab,
   treeSetRatio,
   treeSplitTile,
+  collectAllTabs,
   type DropZone,
   type SplitDir,
   type TileNode,
@@ -37,6 +38,7 @@ export interface WorkspaceOps {
   setRatio(splitId: string, ratio: number): void;
   setRootRatio(index: number, ratio: number): void;
   evenlySpace(): void;
+  mergeAll(): void;
   splitTile(tileId: string, dir: SplitDir, side: 'start' | 'end', tabId: string): void;
   moveTab(tabId: string, targetTileId: string, index: number): void;
   focusTile(tileId: string): void;
@@ -228,6 +230,28 @@ export function useWorkspace(def: WorkspaceDef): WorkspaceApi {
       if (n === 0) return;
       const each = 1 / n;
       for (const r of state.roots) r.ratio = each;
+    },
+
+    mergeAll() {
+      // Collect all tabs from all roots in visual order
+      const allTabs: string[] = [];
+      for (const root of state.roots) allTabs.push(...collectAllTabs(root.node));
+      if (allTabs.length === 0) return;
+
+      // Try to keep the currently active tab active
+      let activeId = allTabs[0];
+      for (const root of state.roots) {
+        const tile = findTile(root.node, state.focusedTileId);
+        if (tile && tile.activeId && allTabs.includes(tile.activeId)) {
+          activeId = tile.activeId;
+          break;
+        }
+      }
+
+      const newTile: TileNode = { kind: 'tile', id: nextId('tile'), tabs: allTabs, activeId };
+      state.roots = [{ id: nextId('root'), node: newTile, ratio: 1 }];
+      state.rootDir = null;
+      state.focusedTileId = newTile.id;
     },
 
     splitTile(tileId, dir, side, tabId) {

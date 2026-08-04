@@ -55,18 +55,27 @@ function onTabDragStart(e: DragEvent, tabId: string) {
         >✕</span>
       </div>
       <button class="sf-tab-new" title="New file" @click="ws.ops.newTab(tile.id)">+</button>
-      <button
-        v-if="isTopRight && canEvenlySpace"
-        class="sf-tab-panel-toggle"
-        :title="evenlySpaceTitle"
-        @click="ws.ops.evenlySpace()"
-      >⇔</button>
-      <button
-        v-if="isTopRight && rpToggle"
-        class="sf-tab-panel-toggle"
-        :title="rpToggle.visible ? 'Collapse Right Panel' : 'Expand Right Panel'"
-        @click="rpToggle.toggle()"
-      >{{ rpToggle.visible ? '\u25E8' : '\u25EB' }}</button>
+      <template v-if="isTopRight">
+        <div v-if="canEvenlySpace" class="sf-btn-group">
+          <button
+            class="sf-tab-panel-toggle"
+            title="Merge all tiles into one"
+            @click="ws.ops.mergeAll()"
+          >□</button>
+          <button
+            class="sf-tab-panel-toggle"
+            :title="evenlySpaceTitle"
+            @click="ws.ops.evenlySpace()"
+          >⇔</button>
+        </div>
+        <div v-if="rpToggle" class="sf-btn-group">
+          <button
+            class="sf-tab-panel-toggle"
+            :title="rpToggle.visible ? 'Collapse Right Panel' : 'Expand Right Panel'"
+            @click="rpToggle.toggle()"
+          >{{ rpToggle.visible ? '\u25E8' : '\u25EB' }}</button>
+        </div>
+      </template>
     </div>
 
     <!-- Content -->
