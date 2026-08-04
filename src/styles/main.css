@@ -940,13 +940,13 @@ body.sf-dragging-row * {
 }
 
 .sf-sash--row {
-  width: 5px;
+  width: 4px;
   margin: 0 -2px;
   cursor: col-resize;
 }
 
 .sf-sash--column {
-  height: 5px;
+  height: 4px;
   margin: -2px 0;
   cursor: row-resize;
 }
