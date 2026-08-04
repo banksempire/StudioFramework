@@ -36,7 +36,7 @@
   --sf-accent: #007acc;
   --sf-accent-hover: #1a8ad4;
   --sf-accent-soft: rgba(0, 122, 204, 0.16);
-  --sf-accent-dim: rgba(0, 122, 204, 0.75);
+  --sf-accent-dim: rgba(0, 122, 204, 0.65);
   /* how far the indication-box shading reaches from the border inward */
   --sf-dnd-shade: 48px;
   --sf-active: #37373d;
