@@ -63,6 +63,8 @@ export interface DndState {
 
 export interface WorkspaceApi {
   roots: RootGroup[];
+  /** direction of root arrangement (set by first root-level split) */
+  rootDir: SplitDir | null;
   focusedTileId: string;
   readonly topRightTileId: string;
   tabDefs: Record<string, WorkspaceTabDef>;
@@ -99,7 +101,7 @@ export function useWorkspace(def: WorkspaceDef): WorkspaceApi {
   const minTileWidth = def.minTileWidth ?? 160;
   const minTileHeight = def.minTileHeight ?? 100;
 
-  const state = reactive<{ roots: RootGroup[]; focusedTileId: string }>({
+  const state = reactive<{ roots: RootGroup[]; focusedTileId: string; rootDir: SplitDir | null }>({
     roots: [{
       id: nextId('root'),
       node: {
@@ -111,6 +113,7 @@ export function useWorkspace(def: WorkspaceDef): WorkspaceApi {
       ratio: 1,
     }],
     focusedTileId: '',
+    rootDir: null,
   });
   {
     const first = state.roots[0].node;
@@ -143,6 +146,7 @@ export function useWorkspace(def: WorkspaceDef): WorkspaceApi {
     const removed = state.roots[index];
     if (!removed) return;
     state.roots.splice(index, 1);
+    if (state.roots.length <= 1) state.rootDir = null;
     if (state.roots.length === 0) return;
     const total = state.roots.reduce((s, r) => s + r.ratio, 0);
     if (total > 0) {
@@ -229,13 +233,18 @@ export function useWorkspace(def: WorkspaceDef): WorkspaceApi {
       const root = findRootByTile(tileId);
       if (!root) return;
 
-      // Row split on a root tile (root.node IS this tile) creates a new root.
-      // All other splits (column split, or row split on a nested tile) use
-      // treeSplitTile within the root's tree - so roots CAN contain row splits.
+      // A split on a root tile (root.node IS this tile) creates a new root
+      // group, IF the direction matches the root arrangement direction (or
+      // no direction is set yet - the first split sets it).
+      // Splits in the orthogonal direction, or splits on nested tiles, use
+      // treeSplitTile within the root's tree.
       const isRootTile = root.node.kind === 'tile' && root.node.id === tileId;
+      const createsNewRoot = isRootTile && (state.rootDir === null || state.rootDir === dir);
 
-      if (dir === 'row' && isRootTile) {
-        // Row split on root tile: create a new root group
+      if (createsNewRoot) {
+        // Set root direction on first split
+        if (state.rootDir === null) state.rootDir = dir;
+
         const targetRootId = root.id;
         const targetOrigIdx = state.roots.indexOf(root);
 
@@ -277,8 +286,7 @@ export function useWorkspace(def: WorkspaceDef): WorkspaceApi {
         }
         state.focusedTileId = newTile.id;
       } else {
-        // Column split, or row split on a nested tile: use tree split within the root
-        // If source tab is in a different root, remove it first
+        // Split within the root's tree (nested tile, or orthogonal direction)
         const sourceRoot = findRootByTab(tabId);
         if (sourceRoot && sourceRoot !== root) {
           sourceRoot.node = treeCloseTab(sourceRoot.node, tabId);
@@ -371,6 +379,9 @@ export function useWorkspace(def: WorkspaceDef): WorkspaceApi {
   return {
     get roots() {
       return state.roots;
+    },
+    get rootDir() {
+      return state.rootDir;
     },
     get focusedTileId() {
       return state.focusedTileId;

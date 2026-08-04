@@ -188,7 +188,7 @@ function onDragLeave(e: DragEvent) {
     @drop="onDrop"
     @dragleave="onDragLeave"
   >
-    <div class="sf-workspace-inner">
+    <div class="sf-workspace-inner" :class="api.rootDir === 'column' ? 'sf-workspace-inner--col' : ''">
       <template v-for="(root, i) in api.roots" :key="root.id">
         <div class="sf-root-group" :style="{ flexBasis: root.ratio * 100 + '%' }">
           <WorkspaceNode :node="root.node" />

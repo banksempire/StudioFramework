@@ -929,6 +929,10 @@ body.sf-dragging-row * {
   min-height: 0;
 }
 
+.sf-workspace-inner--col {
+  flex-direction: column;
+}
+
 .sf-root-group {
   display: flex;
   flex-direction: column;
