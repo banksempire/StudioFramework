@@ -26,6 +26,7 @@
 
 :root {
   --sf-bg: #1e1e1e;
+  --sf-bg-dark: #181818;
   --sf-bg-light: #252526;
   --sf-bg-lighter: #2d2d2d;
   --sf-bg-hover: #2a2d2e;
@@ -245,6 +246,9 @@ html, body, #app {
   flex: 1;
   min-height: 0;
   overflow: hidden;
+  gap: 2px;
+  padding: 2px;
+  background: var(--sf-bg-dark);
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════
@@ -323,16 +327,13 @@ html, body, #app {
   flex-shrink: 0;
   position: relative;
   min-width: 100px;
+  border-radius: 6px;
 }
 
 .sf-panel--left {
-  /* Inset shadow (not border) so the resize handle at right:0 sits exactly
-     on top of this permanent separator (a border would offset it by 1px). */
-  box-shadow: inset -1px 0 0 var(--sf-border);
 }
 
 .sf-panel--right {
-  box-shadow: inset 1px 0 0 var(--sf-border);
 }
 
 .sf-panel--hidden {
@@ -352,6 +353,7 @@ html, body, #app {
   color: var(--sf-text-muted);
   flex-shrink: 0;
   position: relative;
+  border-radius: 6px 6px 0 0;
 }
 
 .sf-panel-title {
@@ -493,6 +495,7 @@ html, body, #app {
   inset: 0;
   z-index: 100;
   pointer-events: none;
+  border-radius: 6px;
 }
 
 /* Left panel: glow on left (opposite), top, bottom. Handle is on right. */
@@ -573,6 +576,7 @@ html, body, #app {
 
 .sf-panel-empty {
   flex: 1;
+  border-radius: 0 0 6px 6px;
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════
@@ -585,6 +589,7 @@ html, body, #app {
   overflow-y: auto;
   display: flex;
   flex-direction: column;
+  border-radius: 0 0 6px 6px;
 }
 
 .sf-subsection {
@@ -879,7 +884,10 @@ body.sf-dragging-row * {
   flex: 1;
   min-width: 0;
   min-height: 0;
-  background: var(--sf-bg);
+  background: var(--sf-bg-dark);
+  border-radius: 6px;
+  overflow: hidden;
+  padding: 2px;
 }
 
 /* ─── Split tree ────────────────────────────────────────────────────────── */
@@ -941,13 +949,13 @@ body.sf-dragging-row * {
 
 .sf-sash--row {
   width: 4px;
-  margin: 0 -2px;
+  margin: 0 -1px;
   cursor: col-resize;
 }
 
 .sf-sash--column {
   height: 4px;
-  margin: -2px 0;
+  margin: -1px 0;
   cursor: row-resize;
 }
 

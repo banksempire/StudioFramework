@@ -92,6 +92,7 @@ function onTabDragStart(e: DragEvent, tabId: string) {
   min-height: 0;
   overflow: hidden;
   background: var(--sf-bg);
+  border-radius: 6px;
 }
 
 .sf-tile-empty {
