@@ -8,14 +8,14 @@ const ws = inject(kWorkspace)!;
 
 const el = ref<HTMLElement | null>(null);
 
-let dragging = false;
+const dragging = ref(false);
 let parentRect: DOMRect | null = null;
 let minA = 0;
 let maxPos = 0;
 
 function onPointerDown(e: PointerEvent) {
   e.preventDefault();
-  dragging = true;
+  dragging.value = true;
   el.value?.setPointerCapture(e.pointerId);
   const parent = el.value?.parentElement;
   if (!parent) return;
@@ -29,7 +29,7 @@ function onPointerDown(e: PointerEvent) {
 }
 
 function onPointerMove(e: PointerEvent) {
-  if (!dragging || !parentRect) return;
+  if (!dragging.value || !parentRect) return;
   const isRow = props.split.dir === 'row';
   const size = isRow ? parentRect.width : parentRect.height;
   if (size <= 0) return;
@@ -42,8 +42,8 @@ function onPointerMove(e: PointerEvent) {
 }
 
 function onPointerUp(e: PointerEvent) {
-  if (!dragging) return;
-  dragging = false;
+  if (!dragging.value) return;
+  dragging.value = false;
   el.value?.releasePointerCapture(e.pointerId);
   parentRect = null;
   document.body.classList.remove('sf-dragging-row');
@@ -55,7 +55,7 @@ function onPointerUp(e: PointerEvent) {
   <div
     ref="el"
     class="sf-sash"
-    :class="split.dir === 'row' ? 'sf-sash--row' : 'sf-sash--column'"
+    :class="[split.dir === 'row' ? 'sf-sash--row' : 'sf-sash--column', { 'sf-sash--dragging': dragging }]"
     title="Drag to resize"
     @pointerdown="onPointerDown"
     @pointermove="onPointerMove"

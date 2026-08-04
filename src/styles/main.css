@@ -951,9 +951,12 @@ body.sf-dragging-row * {
   cursor: row-resize;
 }
 
-.sf-sash:hover,
-.sf-sash:active {
+.sf-sash:hover {
   background: var(--sf-accent-soft);
+}
+
+.sf-sash--dragging {
+  background: var(--sf-accent);
 }
 
 /* ─── Tile ────────────────────────────────────────────────────────────── */
