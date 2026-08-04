@@ -46,9 +46,25 @@ function calcWorkspaceWidth(ignoreAutoHidden: boolean): number {
 // ── Trigger 1: browser window resize → hide/restore BOTH panels ───────────
 
 function onWindowResize() {
-  const tooNarrow = calcWorkspaceWidth(true) < MIN_WORKSPACE_WIDTH;
-  leftAutoHidden.value = tooNarrow;
-  if (layout.right) rightAutoHidden.value = tooNarrow;
+  const wAll = calcWorkspaceWidth(true);
+  if (wAll >= MIN_WORKSPACE_WIDTH) {
+    leftAutoHidden.value = false;
+    rightAutoHidden.value = false;
+    return;
+  }
+  // Too narrow: hide left first, then right (progressive)
+  const leftIntended = leftPanelVisible.value && dockerPanelVisible.value;
+  // Workspace width if we hide left (add back its width)
+  const wNoLeft = wAll + (leftIntended ? leftPanelWidth.value : 0);
+  if (wNoLeft >= MIN_WORKSPACE_WIDTH) {
+    // Hiding left is enough; right stays visible
+    leftAutoHidden.value = leftIntended;
+    rightAutoHidden.value = false;
+  } else {
+    // Still too narrow: hide both
+    leftAutoHidden.value = leftIntended;
+    rightAutoHidden.value = rightPanelVisible.value && !!layout.right;
+  }
 }
 
 // ── Trigger 2: panel expansion (drag wider) → hide the OTHER panel (one-time) ──

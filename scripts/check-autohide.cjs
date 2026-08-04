@@ -1,7 +1,8 @@
 /**
  * Workspace-width-based auto-hide with two triggers:
  *
- * 1. Window resize: hide BOTH panels when workspace < 640px, restore both when >= 640px.
+ * 1. Window resize: progressive auto-hide. Hide LEFT first, then RIGHT
+ *    when narrowing. Restore RIGHT first, then LEFT when widening.
  * 2. Panel expansion (drag wider): hide the OTHER panel (one-time).
  *    - Drag back narrower: REVERT the auto-hide if workspace would be >= 640px
  *      with both panels open. Does NOT expand user-collapsed panels.
@@ -56,14 +57,24 @@ const { ensureServer, openApp, makeReporter, finish } = require('./lib/ui-test.c
       await page.waitForTimeout(100);
     }
 
-    // ── Phase 1: Window resize trigger (hide/restore BOTH) ─────────────────
+    // ── Phase 1: Window resize trigger (progressive: left first, then right) ─
 
     await resizeTo(1300);
     report('both visible at 1300px', (await panelDisplayed('left')) === true && (await panelDisplayed('right')) === true);
 
-    await resizeTo(900);
-    report('both hidden at 900px (window resize)', (await panelDisplayed('left')) === false && (await panelDisplayed('right')) === false);
+    // Narrow to 1000px: ws=432 < 640 but wNoLeft=692 >= 640 -> left hidden, right visible
+    await resizeTo(1000);
+    report('left hidden at 1000px (left first)', (await panelDisplayed('left')) === false && (await panelDisplayed('right')) === true);
 
+    // Narrow to 900px: wNoLeft=592 < 640 -> both hidden
+    await resizeTo(900);
+    report('both hidden at 900px', (await panelDisplayed('left')) === false && (await panelDisplayed('right')) === false);
+
+    // Widen to 1000px: right restored first (reverse order)
+    await resizeTo(1000);
+    report('right restored at 1000px (right first)', (await panelDisplayed('left')) === false && (await panelDisplayed('right')) === true);
+
+    // Widen to 1300px: left also restored
     await resizeTo(1300);
     report('both restored at 1300px', (await panelDisplayed('left')) === true && (await panelDisplayed('right')) === true);
 
