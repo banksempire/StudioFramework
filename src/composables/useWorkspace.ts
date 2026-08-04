@@ -2,6 +2,7 @@ import { reactive, type InjectionKey } from 'vue';
 import type { WorkspaceDef, WorkspaceTabDef } from '../types/layout';
 import {
   findTile,
+  findTileByTab,
   nextId,
   treeCloseTab,
   treeMoveTab,
@@ -20,6 +21,7 @@ export interface WorkspaceOps {
   setRatio(splitId: string, ratio: number): void;
   splitTile(tileId: string, dir: SplitDir, side: 'start' | 'end', tabId: string): void;
   moveTab(tabId: string, targetTileId: string, index: number): void;
+  focusTile(tileId: string): void;
 }
 
 export interface DndRect {
@@ -51,6 +53,8 @@ export interface DndState {
 export interface WorkspaceApi {
   /** reactive root of the split tree */
   root: WorkspaceNode;
+  /** id of the currently focused tile (bright accent); others are dimmed */
+  focusedTileId: string;
   tabDefs: Record<string, WorkspaceTabDef>;
   minTileWidth: number;
   minTileHeight: number;
@@ -72,25 +76,42 @@ export function useWorkspace(def: WorkspaceDef): WorkspaceApi {
   const minTileWidth = def.minTileWidth ?? 160;
   const minTileHeight = def.minTileHeight ?? 100;
 
-  const state = reactive<{ root: WorkspaceNode }>({
+  const state = reactive<{ root: WorkspaceNode; focusedTileId: string }>({
     root: {
       kind: 'tile',
       id: nextId('tile'),
       tabs: def.tabs.map((t) => t.id),
       activeId: def.tabs[0]?.id ?? '',
     },
+    focusedTileId: '',
   });
+  state.focusedTileId = state.root.id;
 
   const tabDefs: Record<string, WorkspaceTabDef> = {};
   for (const t of def.tabs) tabDefs[t.id] = t;
 
+  /** Ensure focusedTileId points to an existing tile (after tree mutations). */
+  function ensureFocus() {
+    if (findTile(state.root, state.focusedTileId)) return;
+    const stack: WorkspaceNode[] = [state.root];
+    while (stack.length) {
+      const n = stack.pop()!;
+      if (n.kind === 'tile') { state.focusedTileId = n.id; return; }
+      stack.push(n.children[1], n.children[0]);
+    }
+  }
+
   const ops: WorkspaceOps = {
     activateTab(tileId, tabId) {
       const tile = findTile(state.root, tileId);
-      if (tile) tile.activeId = tabId;
+      if (tile) {
+        tile.activeId = tabId;
+        state.focusedTileId = tileId;
+      }
     },
     closeTab(tabId) {
       state.root = treeCloseTab(state.root, tabId);
+      ensureFocus();
     },
     newTab(tileId) {
       const id = `untitled-${nextId('tab')}`;
@@ -102,9 +123,15 @@ export function useWorkspace(def: WorkspaceDef): WorkspaceApi {
     },
     splitTile(tileId, dir, side, tabId) {
       state.root = treeSplitTile(state.root, tileId, dir, side, tabId);
+      const newTile = findTileByTab(state.root, tabId);
+      if (newTile) state.focusedTileId = newTile.id;
     },
     moveTab(tabId, targetTileId, index) {
       state.root = treeMoveTab(state.root, tabId, targetTileId, index);
+      state.focusedTileId = targetTileId;
+    },
+    focusTile(tileId) {
+      state.focusedTileId = tileId;
     },
   };
 
@@ -154,6 +181,9 @@ export function useWorkspace(def: WorkspaceDef): WorkspaceApi {
   return {
     get root() {
       return state.root;
+    },
+    get focusedTileId() {
+      return state.focusedTileId;
     },
     tabDefs,
     minTileWidth,

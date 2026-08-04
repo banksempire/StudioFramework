@@ -12,6 +12,7 @@ onMounted(() => ws.registerTileEl(props.tile.id, el.value));
 onBeforeUnmount(() => ws.registerTileEl(props.tile.id, null));
 
 const activeTab = computed(() => (props.tile.activeId ? ws.tabDefs[props.tile.activeId] ?? null : null));
+const focused = computed(() => ws.focusedTileId === props.tile.id);
 
 function onTabDragStart(e: DragEvent, tabId: string) {
   if (e.dataTransfer) {
@@ -23,7 +24,7 @@ function onTabDragStart(e: DragEvent, tabId: string) {
 </script>
 
 <template>
-  <div ref="el" class="sf-tile" :data-tile="tile.id">
+  <div ref="el" class="sf-tile" :class="{ 'sf-tile--focused': focused }" :data-tile="tile.id" @mousedown="ws.ops.focusTile(tile.id)">
     <!-- Tab strip -->
     <div class="sf-tile-tabs">
       <div
