@@ -922,7 +922,6 @@ body.sf-dragging-row * {
   display: flex;
   min-width: 0;
   min-height: 0;
-  padding: 2px;
 }
 
 /* ─── Split tree ────────────────────────────────────────────────────────── */
