@@ -251,7 +251,6 @@ html, body, #app {
   min-height: 0;
   overflow: hidden;
   gap: 2px;
-  padding: 2px;
   background: var(--sf-bg-dark);
 }
 
