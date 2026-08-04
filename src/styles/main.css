@@ -929,6 +929,14 @@ body.sf-dragging-row * {
   min-height: 0;
 }
 
+.sf-root-group {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 0;
+  flex: 0 1 auto;
+}
+
 /* ─── Split tree ────────────────────────────────────────────────────────── */
 
 .sf-split {

@@ -2,8 +2,9 @@
 import { computed, provide, reactive, ref, watch } from 'vue';
 import { kWorkspace, useWorkspace, type DndRect, kRightPanelToggle } from '../composables/useWorkspace';
 import type { WorkspaceDef } from '../types/layout';
-import { findTile, type DropZone } from '../workspace/tree';
+import { subtreeMinSize, type DropZone } from '../workspace/tree';
 import WorkspaceNode from './WorkspaceNode.vue';
+import RootSash from './RootSash.vue';
 
 const props = defineProps<{
   def: WorkspaceDef;
@@ -124,7 +125,7 @@ function onDragOver(e: DragEvent) {
     // the insertion index + a reorder indicator between tabs.
     dnd.preview = null;
     dnd.glow = rectToLocal(hit.rect, origin);
-    const tile = findTile(api.root, hit.id);
+    const tile = api.findTileGlobal(hit.id);
     const tabCount = tile ? tile.tabs.length : 0;
     if (hit.inStrip && hit.stripR) {
       let idx = 0;
@@ -188,7 +189,12 @@ function onDragLeave(e: DragEvent) {
     @dragleave="onDragLeave"
   >
     <div class="sf-workspace-inner">
-      <WorkspaceNode :node="api.root" />
+      <template v-for="(root, i) in api.roots" :key="root.id">
+        <div class="sf-root-group" :style="{ flexBasis: root.ratio * 100 + '%' }">
+          <WorkspaceNode :node="root.node" />
+        </div>
+        <RootSash v-if="i < api.roots.length - 1" :index="i" />
+      </template>
     </div>
 
     <!-- Visual-only DnD layer (pointer-events: none — events go to the root) -->

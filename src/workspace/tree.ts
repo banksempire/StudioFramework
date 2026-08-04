@@ -44,7 +44,7 @@ export interface TileNode {
 export type WorkspaceNode = SplitNode | TileNode;
 
 let seq = 0;
-export function nextId(prefix: 'tile' | 'split' | 'tab'): string {
+export function nextId(prefix: 'tile' | 'split' | 'tab' | 'root'): string {
   seq += 1;
   return `${prefix}-${Date.now().toString(36)}-${seq}-${Math.random().toString(36).slice(2, 6)}`;
 }
@@ -300,4 +300,15 @@ export function treeSetRatio(root: WorkspaceNode, splitId: string, ratio: number
   if (!split || split.kind !== 'split') return root;
   const r = Math.min(0.95, Math.max(0.05, ratio));
   return replaceNode(root, splitId, { ...split, ratio: r });
+}
+
+/** Insert a tab into a tile at a specific index (no source removal).
+ *  Used for cross-root moves where the tab is already removed from its
+ *  source root. */
+export function treeInsertTab(root: WorkspaceNode, tileId: string, tabId: string, index: number): WorkspaceNode {
+ const tile = findTile(root, tileId);
+  if (!tile) return root;
+  const idx = Math.min(Math.max(index, 0), tile.tabs.length);
+  const tabs = [...tile.tabs.slice(0, idx), tabId, ...tile.tabs.slice(idx)];
+  return replaceNode(root, tileId, { ...tile, tabs, activeId: tabId });
 }

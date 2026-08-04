@@ -15,6 +15,7 @@ onBeforeUnmount(() => ws.registerTileEl(props.tile.id, null));
 const activeTab = computed(() => (props.tile.activeId ? ws.tabDefs[props.tile.activeId] ?? null : null));
 const focused = computed(() => ws.focusedTileId === props.tile.id);
 const isTopRight = computed(() => ws.topRightTileId === props.tile.id);
+const canEvenlySpace = computed(() => ws.roots.length > 1);
 
 function onTabDragStart(e: DragEvent, tabId: string) {
   if (e.dataTransfer) {
@@ -51,6 +52,12 @@ function onTabDragStart(e: DragEvent, tabId: string) {
         >✕</span>
       </div>
       <button class="sf-tab-new" title="New file" @click="ws.ops.newTab(tile.id)">+</button>
+      <button
+        v-if="isTopRight && canEvenlySpace"
+        class="sf-tab-panel-toggle"
+        title="Evenly space columns"
+        @click="ws.ops.evenlySpace()"
+      >☰</button>
       <button
         v-if="isTopRight && rpToggle"
         class="sf-tab-panel-toggle"
