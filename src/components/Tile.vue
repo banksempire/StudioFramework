@@ -16,6 +16,9 @@ const activeTab = computed(() => (props.tile.activeId ? ws.tabDefs[props.tile.ac
 const focused = computed(() => ws.focusedTileId === props.tile.id);
 const isTopRight = computed(() => ws.topRightTileId === props.tile.id);
 const canEvenlySpace = computed(() => ws.roots.length > 1);
+const evenlySpaceTitle = computed(() =>
+  ws.rootDir === 'column' ? 'Evenly space rows' : 'Evenly space columns',
+);
 
 function onTabDragStart(e: DragEvent, tabId: string) {
   if (e.dataTransfer) {
@@ -55,7 +58,7 @@ function onTabDragStart(e: DragEvent, tabId: string) {
       <button
         v-if="isTopRight && canEvenlySpace"
         class="sf-tab-panel-toggle"
-        title="Evenly space columns"
+        :title="evenlySpaceTitle"
         @click="ws.ops.evenlySpace()"
       >☰</button>
       <button

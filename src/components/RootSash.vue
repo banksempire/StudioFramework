@@ -8,9 +8,8 @@ const ws = inject(kWorkspace)!;
 
 const el = ref<HTMLElement | null>(null);
 const dragging = ref(false);
-let parentRect: DOMRect | null = null;
-let leftStart = 0;
-let combinedSize = 0;
+let startPos = 0;       // absolute position of left root's leading edge
+let combinedSize = 0;   // total size of both adjacent roots
 let minLeft = 0;
 let maxPos = 0;
 
@@ -19,28 +18,24 @@ function onPointerDown(e: PointerEvent) {
   dragging.value = true;
   el.value?.setPointerCapture(e.pointerId);
 
-  const parent = el.value?.parentElement;
-  if (!parent) return;
-  parentRect = parent.getBoundingClientRect();
+  // Use sibling elements instead of index-based child lookup (robust to DOM changes)
+  const leftEl = el.value?.previousElementSibling as HTMLElement | null;
+  const rightEl = el.value?.nextElementSibling as HTMLElement | null;
+  if (!leftEl || !rightEl) return;
 
   const isRow = ws.rootDir === 'row';
   const left = ws.roots[props.index];
   const right = ws.roots[props.index + 1];
   if (!left || !right) return;
 
-  // Root groups and sashes are interleaved: root, sash, root, sash, root, ...
-  const leftEl = parent.children[props.index * 2] as HTMLElement;
-  const rightEl = parent.children[props.index * 2 + 2] as HTMLElement;
-  if (!leftEl || !rightEl) return;
-
   const leftRect = leftEl.getBoundingClientRect();
   const rightRect = rightEl.getBoundingClientRect();
 
   if (isRow) {
-    leftStart = leftRect.left - parentRect.left;
+    startPos = leftRect.left;
     combinedSize = rightRect.right - leftRect.left;
   } else {
-    leftStart = leftRect.top - parentRect.top;
+    startPos = leftRect.top;
     combinedSize = rightRect.bottom - leftRect.top;
   }
 
@@ -51,11 +46,9 @@ function onPointerDown(e: PointerEvent) {
 }
 
 function onPointerMove(e: PointerEvent) {
-  if (!dragging.value || !parentRect) return;
-  if (combinedSize <= 0) return;
+  if (!dragging.value || combinedSize <= 0) return;
   const isRow = ws.rootDir === 'row';
-  const parentOrigin = isRow ? parentRect.left : parentRect.top;
-  const pos = (isRow ? e.clientX : e.clientY) - parentOrigin - leftStart;
+  const pos = (isRow ? e.clientX : e.clientY) - startPos;
   const minRatio = minLeft / combinedSize;
   const maxRatio = maxPos / combinedSize;
   const ratio = maxRatio > minRatio ? Math.min(Math.max(pos / combinedSize, minRatio), maxRatio) : 0.5;
@@ -66,7 +59,6 @@ function onPointerUp(e: PointerEvent) {
   if (!dragging.value) return;
   dragging.value = false;
   el.value?.releasePointerCapture(e.pointerId);
-  parentRect = null;
   document.body.classList.remove('sf-dragging-row');
   document.body.classList.remove('sf-dragging-col');
 }

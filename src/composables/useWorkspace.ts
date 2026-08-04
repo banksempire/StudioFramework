@@ -18,9 +18,10 @@ import {
 } from '../workspace/tree';
 
 // ── Root group model ────────────────────────────────────────────────────────
-// The workspace has N root groups displayed side by side (columns).
-// Each root is an independent tree that can contain column splits (top/bottom).
-// Row splits (left/right) create new root groups.
+// The workspace has N root groups arranged in a single direction (row = side
+// by side, column = stacked). Each root is an independent tree that can
+// contain both row and column splits. Splits on a root tile in the root
+// direction create new root groups; all other splits stay within the tree.
 
 export interface RootGroup {
   id: string;

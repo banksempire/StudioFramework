@@ -306,7 +306,7 @@ export function treeSetRatio(root: WorkspaceNode, splitId: string, ratio: number
  *  Used for cross-root moves where the tab is already removed from its
  *  source root. */
 export function treeInsertTab(root: WorkspaceNode, tileId: string, tabId: string, index: number): WorkspaceNode {
- const tile = findTile(root, tileId);
+  const tile = findTile(root, tileId);
   if (!tile) return root;
   const idx = Math.min(Math.max(index, 0), tile.tabs.length);
   const tabs = [...tile.tabs.slice(0, idx), tabId, ...tile.tabs.slice(idx)];

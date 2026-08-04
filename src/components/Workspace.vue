@@ -1,8 +1,8 @@
 <script setup lang="ts">
-import { computed, provide, reactive, ref, watch } from 'vue';
+import { provide, reactive, ref, watch } from 'vue';
 import { kWorkspace, useWorkspace, type DndRect, kRightPanelToggle } from '../composables/useWorkspace';
 import type { WorkspaceDef } from '../types/layout';
-import { subtreeMinSize, type DropZone } from '../workspace/tree';
+import type { DropZone } from '../workspace/tree';
 import WorkspaceNode from './WorkspaceNode.vue';
 import RootSash from './RootSash.vue';
 
