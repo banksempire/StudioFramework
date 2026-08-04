@@ -384,6 +384,7 @@ html, body, #app {
   color: var(--sf-text-muted);
   flex-shrink: 0;
   position: relative;
+  border-bottom: 1px solid var(--sf-border);
   border-radius: var(--sf-radius) var(--sf-radius) 0 0;
 }
 
