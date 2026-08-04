@@ -387,8 +387,11 @@ export function useWorkspace(def: WorkspaceDef): WorkspaceApi {
       return state.focusedTileId;
     },
     get topRightTileId() {
-      const last = state.roots[state.roots.length - 1];
-      return last ? findTopRightTileId(last.node) : '';
+      // Row-direction: rightmost root (last). Column-direction: topmost root (first).
+      const root = state.rootDir === 'column'
+        ? state.roots[0]
+        : state.roots[state.roots.length - 1];
+      return root ? findTopRightTileId(root.node) : '';
     },
     tabDefs,
     minTileWidth,
