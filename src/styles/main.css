@@ -1031,7 +1031,7 @@ body.sf-dragging-row * {
   border-top: 2px solid transparent;
   border-bottom: 2px solid transparent;
   border-right: 1px solid var(--sf-border);
-  color: var(--sf-text-muted);
+  color: var(--sf-text);
   white-space: nowrap;
   font-size: 13px;
   min-width: 0;
