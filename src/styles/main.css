@@ -281,6 +281,7 @@ html, body, #app {
 
 .sf-docker-tag:hover {
   color: var(--sf-text);
+  background: var(--sf-active);
 }
 
 .sf-docker-tag.active {
