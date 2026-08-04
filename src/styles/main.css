@@ -384,7 +384,7 @@ html, body, #app {
   background: none;
   border: none;
   border-bottom: 2px solid transparent;
-  color: var(--sf-text-muted);
+  color: var(--sf-text);
   cursor: pointer;
   font-family: var(--sf-font);
   font-size: 11px;
@@ -398,7 +398,7 @@ html, body, #app {
 }
 
 .sf-panel-tab:hover {
-  color: var(--sf-text);
+  background: var(--sf-bg-hover);
 }
 
 .sf-panel-tab--active {
