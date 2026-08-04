@@ -174,7 +174,9 @@ function onDragLeave(e: DragEvent) {
     @drop="onDrop"
     @dragleave="onDragLeave"
   >
-    <WorkspaceNode :node="api.root" />
+    <div class="sf-workspace-inner">
+      <WorkspaceNode :node="api.root" />
+    </div>
 
     <!-- Visual-only DnD layer (pointer-events: none — events go to the root) -->
     <div v-if="api.dnd.dragging" class="sf-dnd-layer">

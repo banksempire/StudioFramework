@@ -915,6 +915,13 @@ body.sf-dragging-row * {
   background: var(--sf-bg-dark);
   border-radius: var(--sf-radius);
   overflow: hidden;
+}
+
+.sf-workspace-inner {
+  flex: 1;
+  display: flex;
+  min-width: 0;
+  min-height: 0;
   padding: 2px;
 }
 
