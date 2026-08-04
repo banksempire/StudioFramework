@@ -263,6 +263,17 @@ html, body, #app {
   flex-shrink: 0;
   padding-top: 4px;
   gap: 2px;
+  border-radius: 6px;
+}
+
+/* When the left panel is visible, Docker's right corners are square (shared box) */
+.sf-left-group:has(.sf-panel:not(.sf-panel--hidden)) .sf-docker {
+  border-radius: 6px 0 0 6px;
+}
+
+.sf-left-group {
+  display: flex;
+  flex-shrink: 0;
 }
 
 .sf-docker-handle {
@@ -331,9 +342,23 @@ html, body, #app {
 }
 
 .sf-panel--left {
+  border-radius: 0 6px 6px 0;
 }
 
-.sf-panel--right {
+.sf-panel--left .sf-panel-header {
+  border-radius: 0 6px 0 0;
+}
+
+.sf-panel--left .sf-subsection-body-container {
+  border-radius: 0 0 6px 0;
+}
+
+.sf-panel--left .sf-panel-empty {
+  border-radius: 0 0 6px 0;
+}
+
+.sf-panel--left .sf-panel-dtc-overlay {
+  border-radius: 0 6px 6px 0;
 }
 
 .sf-panel--hidden {

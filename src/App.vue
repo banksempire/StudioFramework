@@ -183,21 +183,23 @@ function onMenuAction(actionId: string) {
     />
 
     <div class="sf-workbench">
-      <Docker
-        :items="layout.docker"
-        :active-tag="activeDockerTag"
-        :visible="leftPanelVisible"
-        :panel-visible="dockerPanelVisible"
-        @tag-selected="onTagSelected"
-      />
+      <div class="sf-left-group">
+        <Docker
+          :items="layout.docker"
+          :active-tag="activeDockerTag"
+          :visible="leftPanelVisible"
+          :panel-visible="dockerPanelVisible"
+          @tag-selected="onTagSelected"
+        />
 
-      <DockerPanel
-        v-if="dockerDef"
-        :def="dockerDef"
-        :visible="effDockerPanelVisible"
-        @collapse="dockerPanelVisible = false"
-        @resize="onPanelResize('left', $event)"
-      />
+        <DockerPanel
+          v-if="dockerDef"
+          :def="dockerDef"
+          :visible="effDockerPanelVisible"
+          @collapse="dockerPanelVisible = false"
+          @resize="onPanelResize('left', $event)"
+        />
+      </div>
 
       <Workspace :def="layout.workspace" />
 
