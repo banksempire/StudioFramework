@@ -187,7 +187,6 @@ function onMenuAction(actionId: string) {
         <Docker
           :items="layout.docker"
           :active-tag="activeDockerTag"
-          :visible="leftPanelVisible"
           :panel-visible="dockerPanelVisible"
           @tag-selected="onTagSelected"
         />

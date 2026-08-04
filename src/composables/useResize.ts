@@ -73,9 +73,6 @@ export function useResize(options: ResizeOptions) {
 
     if (rawWidth <= collapseThreshold) {
       onCollapse?.();
-    } else {
-      // Clamp to valid range
-      width.value = displayWidth(rawWidth);
     }
   }
 

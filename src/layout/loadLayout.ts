@@ -231,12 +231,15 @@ export function loadLayout(): LayoutDefinition {
         minTileHeight: optInt(ws.minTileHeight, '<root>.workspace.minTileHeight') ?? 100,
       };
     })(),
-    status: {
-      left: needArray(needRecord(root.status ?? {}, '<root>.status').left ?? [], '<root>.status.left')
-        .map((s, i) => toStatusItem(s, `<root>.status.left[${i}]`)),
-      right: needArray(needRecord(root.status ?? {}, '<root>.status').right ?? [], '<root>.status.right')
-        .map((s, i) => toStatusItem(s, `<root>.status.right[${i}]`)),
-    },
+    status: (() => {
+      const st = needRecord(root.status ?? {}, '<root>.status');
+      return {
+        left: needArray(st.left ?? [], '<root>.status.left')
+          .map((s, i) => toStatusItem(s, `<root>.status.left[${i}]`)),
+        right: needArray(st.right ?? [], '<root>.status.right')
+          .map((s, i) => toStatusItem(s, `<root>.status.right[${i}]`)),
+      };
+    })(),
   };
 }
 

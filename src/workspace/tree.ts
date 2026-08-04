@@ -49,9 +49,7 @@ export function nextId(prefix: 'tile' | 'split' | 'tab'): string {
   return `${prefix}-${Date.now().toString(36)}-${seq}-${Math.random().toString(36).slice(2, 6)}`;
 }
 
-// ── Lookup ─────────────────────────────────────────────────────────────────
-
-// ── Lookup (iterative — no recursion, so tiling depth never touches the ──
+// ── Lookup (iterative - no recursion, so tiling depth never touches the ──
 //    call stack; only the Vue recursive renderer is inherently recursive)  ──
 
 /**
@@ -287,7 +285,7 @@ export function treeCloseTab(root: WorkspaceNode, tabId: string): WorkspaceNode 
     // tile is removed and the surrounding split merges away.
     return tile.id === root.id ? { ...tile, tabs: [], activeId: '' } : removeTile(root, tile.id);
   }
-  const activeId = tile.activeId === tabId ? tabs[Math.min(idx, tabs.length - 1)] ?? tabs[tabs.length - 1] : tile.activeId;
+  const activeId = tile.activeId === tabId ? tabs[Math.min(idx, tabs.length - 1)] : tile.activeId;
   return replaceNode(root, tile.id, { ...tile, tabs, activeId });
 }
 

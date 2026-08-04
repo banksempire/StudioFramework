@@ -5,7 +5,6 @@ import type { DockerItemDef } from '../types/layout';
 defineProps<{
   items: DockerItemDef[];
   activeTag: string;
-  visible?: boolean;
   panelVisible?: boolean;
 }>();
 
@@ -17,7 +16,6 @@ const emit = defineEmits<{
 <template>
   <div
     class="sf-docker"
-    :style="{ display: visible !== undefined && !visible ? 'none' : '' }"
   >
     <div class="sf-docker-handle" />
     <div
