@@ -234,12 +234,14 @@ html, body, #app {
   width: 48px;
   padding-left: 17px;
   justify-content: flex-start;
+  border-radius: var(--sf-radius) 0 0 var(--sf-radius);
 }
 
 /* Right toggle button — same fixed width */
 .sf-menu-actions:not(.sf-menu-actions--left) .sf-menu-action-btn {
   width: 48px;
   justify-content: center;
+  border-radius: 0 var(--sf-radius) var(--sf-radius) 0;
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════
