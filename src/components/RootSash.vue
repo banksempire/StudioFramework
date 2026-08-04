@@ -54,7 +54,8 @@ function onPointerMove(e: PointerEvent) {
   if (!dragging.value || !parentRect) return;
   if (combinedSize <= 0) return;
   const isRow = ws.rootDir === 'row';
-  const pos = (isRow ? e.clientX : e.clientY) - parentRect.left - leftStart;
+  const parentOrigin = isRow ? parentRect.left : parentRect.top;
+  const pos = (isRow ? e.clientX : e.clientY) - parentOrigin - leftStart;
   const minRatio = minLeft / combinedSize;
   const maxRatio = maxPos / combinedSize;
   const ratio = maxRatio > minRatio ? Math.min(Math.max(pos / combinedSize, minRatio), maxRatio) : 0.5;
