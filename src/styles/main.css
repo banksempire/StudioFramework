@@ -90,7 +90,7 @@ html, body, #app {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  height: 30px;
+  height: 25px;
   background: var(--sf-bg-lighter);
   flex-shrink: 0;
   -webkit-app-region: drag;
@@ -1215,7 +1215,7 @@ body.sf-dragging-row * {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  height: 30px;
+  height: 25px;
   background: var(--sf-accent);
   color: var(--sf-text-on-accent);
   font-size: 12px;
