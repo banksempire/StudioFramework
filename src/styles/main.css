@@ -39,7 +39,7 @@
   --sf-accent-soft: rgba(0, 122, 204, 0.16);
   --sf-accent-dim: rgba(0, 122, 204, 0.65);
   --sf-radius: 6px;
-  --sf-gap: 4px;
+  --sf-gap: 6px;
   /* how far the indication-box shading reaches from the border inward */
   --sf-dnd-shade: 48px;
   --sf-active: #37373d;
