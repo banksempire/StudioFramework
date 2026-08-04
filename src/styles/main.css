@@ -1215,7 +1215,7 @@ body.sf-dragging-row * {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  height: 24px;
+  height: 30px;
   background: var(--sf-accent);
   color: var(--sf-text-on-accent);
   font-size: 12px;
