@@ -226,12 +226,18 @@ export function useWorkspace(def: WorkspaceDef): WorkspaceApi {
     },
 
     splitTile(tileId, dir, side, tabId) {
-      if (dir === 'row') {
-        // Row split: create a new root group
-        const targetRoot = findRootByTile(tileId);
-        if (!targetRoot) return;
-        const targetRootId = targetRoot.id;
-        const targetOrigIdx = state.roots.indexOf(targetRoot);
+      const root = findRootByTile(tileId);
+      if (!root) return;
+
+      // Row split on a root tile (root.node IS this tile) creates a new root.
+      // All other splits (column split, or row split on a nested tile) use
+      // treeSplitTile within the root's tree - so roots CAN contain row splits.
+      const isRootTile = root.node.kind === 'tile' && root.node.id === tileId;
+
+      if (dir === 'row' && isRootTile) {
+        // Row split on root tile: create a new root group
+        const targetRootId = root.id;
+        const targetOrigIdx = state.roots.indexOf(root);
 
         // Remove tab from source
         removeTabFromRoots(tabId);
@@ -240,14 +246,21 @@ export function useWorkspace(def: WorkspaceDef): WorkspaceApi {
         const newTile: TileNode = { kind: 'tile', id: nextId('tile'), tabs: [tabId], activeId: tabId };
         const newRoot: RootGroup = { id: nextId('root'), node: newTile, ratio: 0 };
 
-        // Check if target root still exists (might have been removed if source === target and it became empty)
+        // Check if target root still exists
         const targetIdx = state.roots.findIndex((r) => r.id === targetRootId);
         if (targetIdx >= 0) {
           const target = state.roots[targetIdx];
-          newRoot.ratio = target.ratio / 2;
-          target.ratio /= 2;
-          const insertIdx = side === 'start' ? targetIdx : targetIdx + 1;
-          state.roots.splice(insertIdx, 0, newRoot);
+          if (isRootEmpty(target)) {
+            // Target root became empty (had only the dragged tab) - replace it
+            newRoot.ratio = target.ratio;
+            state.roots.splice(targetIdx, 1, newRoot);
+          } else {
+            // Target root still has tabs - take half its ratio
+            newRoot.ratio = target.ratio / 2;
+            target.ratio /= 2;
+            const insertIdx = side === 'start' ? targetIdx : targetIdx + 1;
+            state.roots.splice(insertIdx, 0, newRoot);
+          }
         } else {
           // Target root was removed - take half from nearest root or use full ratio
           const fallbackIdx = Math.min(targetOrigIdx, state.roots.length - 1);
@@ -264,12 +277,8 @@ export function useWorkspace(def: WorkspaceDef): WorkspaceApi {
         }
         state.focusedTileId = newTile.id;
       } else {
-        // Column split: use tree split within the root
-        const root = findRootByTile(tileId);
-        if (!root) return;
-
+        // Column split, or row split on a nested tile: use tree split within the root
         // If source tab is in a different root, remove it first
-        // (treeSplitTile only searches within a single tree)
         const sourceRoot = findRootByTab(tabId);
         if (sourceRoot && sourceRoot !== root) {
           sourceRoot.node = treeCloseTab(sourceRoot.node, tabId);
@@ -278,7 +287,7 @@ export function useWorkspace(def: WorkspaceDef): WorkspaceApi {
           }
         }
 
-        root.node = treeSplitTile(root.node, tileId, 'column', side, tabId);
+        root.node = treeSplitTile(root.node, tileId, dir, side, tabId);
         const newTile = findTileByTab(root.node, tabId);
         if (newTile) state.focusedTileId = newTile.id;
       }
