@@ -38,6 +38,7 @@
   --sf-accent-hover: #1a8ad4;
   --sf-accent-soft: rgba(0, 122, 204, 0.16);
   --sf-accent-dim: rgba(0, 122, 204, 0.65);
+  --sf-radius: 6px;
   /* how far the indication-box shading reaches from the border inward */
   --sf-dnd-shade: 48px;
   --sf-active: #37373d;
@@ -92,7 +93,7 @@ html, body, #app {
   background: var(--sf-bg-lighter);
   flex-shrink: 0;
   -webkit-app-region: drag;
-  border-radius: 6px;
+  border-radius: var(--sf-radius);
 }
 
 .sf-menu-items {
@@ -266,12 +267,12 @@ html, body, #app {
   flex-shrink: 0;
   padding-top: 4px;
   gap: 2px;
-  border-radius: 6px;
+  border-radius: var(--sf-radius);
 }
 
 /* When the left panel is visible, Docker's right corners are square (shared box) */
 .sf-left-group:has(.sf-panel:not(.sf-panel--hidden)) .sf-docker {
-  border-radius: 6px 0 0 6px;
+  border-radius: var(--sf-radius) 0 0 var(--sf-radius);
 }
 
 .sf-left-group {
@@ -341,27 +342,27 @@ html, body, #app {
   flex-shrink: 0;
   position: relative;
   min-width: 100px;
-  border-radius: 6px;
+  border-radius: var(--sf-radius);
 }
 
 .sf-panel--left {
-  border-radius: 0 6px 6px 0;
+  border-radius: 0 var(--sf-radius) var(--sf-radius) 0;
 }
 
 .sf-panel--left .sf-panel-header {
-  border-radius: 0 6px 0 0;
+  border-radius: 0 var(--sf-radius) 0 0;
 }
 
 .sf-panel--left .sf-subsection-body-container {
-  border-radius: 0 0 6px 0;
+  border-radius: 0 0 var(--sf-radius) 0;
 }
 
 .sf-panel--left .sf-panel-empty {
-  border-radius: 0 0 6px 0;
+  border-radius: 0 0 var(--sf-radius) 0;
 }
 
 .sf-panel--left .sf-panel-dtc-overlay {
-  border-radius: 0 6px 6px 0;
+  border-radius: 0 var(--sf-radius) var(--sf-radius) 0;
 }
 
 .sf-panel--hidden {
@@ -381,7 +382,7 @@ html, body, #app {
   color: var(--sf-text-muted);
   flex-shrink: 0;
   position: relative;
-  border-radius: 6px 6px 0 0;
+  border-radius: var(--sf-radius) var(--sf-radius) 0 0;
 }
 
 .sf-panel-title {
@@ -523,7 +524,7 @@ html, body, #app {
   inset: 0;
   z-index: 100;
   pointer-events: none;
-  border-radius: 6px;
+  border-radius: var(--sf-radius);
 }
 
 /* Left panel: glow on left (opposite), top, bottom. Handle is on right. */
@@ -604,7 +605,7 @@ html, body, #app {
 
 .sf-panel-empty {
   flex: 1;
-  border-radius: 0 0 6px 6px;
+  border-radius: 0 0 var(--sf-radius) var(--sf-radius);
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════
@@ -617,7 +618,7 @@ html, body, #app {
   overflow-y: auto;
   display: flex;
   flex-direction: column;
-  border-radius: 0 0 6px 6px;
+  border-radius: 0 0 var(--sf-radius) var(--sf-radius);
 }
 
 .sf-subsection {
@@ -913,7 +914,7 @@ body.sf-dragging-row * {
   min-width: 0;
   min-height: 0;
   background: var(--sf-bg-dark);
-  border-radius: 6px;
+  border-radius: var(--sf-radius);
   overflow: hidden;
   padding: 2px;
 }
@@ -1212,7 +1213,7 @@ body.sf-dragging-row * {
   font-size: 12px;
   padding: 0 10px;
   flex-shrink: 0;
-  border-radius: 6px;
+  border-radius: var(--sf-radius);
 }
 
 .sf-status-left,
