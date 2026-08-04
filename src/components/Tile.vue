@@ -60,7 +60,7 @@ function onTabDragStart(e: DragEvent, tabId: string) {
         class="sf-tab-panel-toggle"
         :title="evenlySpaceTitle"
         @click="ws.ops.evenlySpace()"
-      >☰</button>
+      >|⇔|</button>
       <button
         v-if="isTopRight && rpToggle"
         class="sf-tab-panel-toggle"
