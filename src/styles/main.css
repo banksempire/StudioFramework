@@ -40,6 +40,10 @@
   --sf-accent-dim: rgba(0, 122, 204, 0.65);
   --sf-radius: 6px;
   --sf-gap: 8px;
+  /* seam between tiles: 1px visible border line */
+  --sf-sash-size: 1px;
+  /* drag sensing area + blue hover line (centered on the border) */
+  --sf-sash-hit: 5px;
   /* how far the indication-box shading reaches from the border inward */
   --sf-dnd-shade: 48px;
   --sf-active: #37373d;
@@ -249,6 +253,17 @@ html, body, #app {
   background: var(--sf-bg-dark);
 }
 
+/* One rounded box wrapping the workspace + right panel: (tile1|tile2|panel) */
+.sf-center-group {
+  display: flex;
+  flex: 1;
+  min-width: 0;
+  min-height: 0;
+  border-radius: var(--sf-radius);
+  overflow: hidden;
+  background: var(--sf-bg-dark);
+}
+
 /* ═══════════════════════════════════════════════════════════════════════════
    Docker (left icon bar)
    ═══════════════════════════════════════════════════════════════════════════ */
@@ -341,6 +356,27 @@ html, body, #app {
 
 .sf-panel--left {
   border-radius: 0 var(--sf-radius) var(--sf-radius) 0;
+}
+
+.sf-panel--right {
+  border-radius: 0;
+  border-left: 1px solid var(--sf-border);
+}
+
+.sf-panel--right .sf-panel-header {
+  border-radius: 0;
+}
+
+.sf-panel--right .sf-subsection-body-container {
+  border-radius: 0;
+}
+
+.sf-panel--right .sf-panel-empty {
+  border-radius: 0;
+}
+
+.sf-panel--right .sf-panel-dtc-overlay {
+  border-radius: 0;
 }
 
 .sf-panel--left .sf-panel-header {
@@ -504,6 +540,13 @@ html, body, #app {
   transition: background 0.15s;
 }
 
+/* Right panel: 1px border seam; the 3px handle is the sensing area and
+   shows the 3px blue line on hover/drag */
+.sf-panel-resize-handle--left::after {
+  left: 0;
+  right: 0;
+}
+
 .sf-panel-resize-handle:hover::after,
 .sf-panel--dragging .sf-panel-resize-handle::after {
   background: var(--sf-accent);
@@ -517,8 +560,10 @@ html, body, #app {
   right: calc(var(--sf-gap) * -1);
 }
 
+/* Right panel: handle straddles the 1px border (3px sensing area) */
 .sf-panel-resize-handle--left {
-  left: calc(var(--sf-gap) * -1);
+  left: calc(var(--sf-sash-hit) * -0.5);
+  width: var(--sf-sash-hit);
 }
 
 /* ─── Collapse indicator overlay ─────────────────────────────────────────── */
@@ -918,7 +963,6 @@ body.sf-dragging-row * {
   min-width: 0;
   min-height: 0;
   background: var(--sf-bg-dark);
-  border-radius: var(--sf-radius);
   overflow: hidden;
 }
 
@@ -970,42 +1014,47 @@ body.sf-dragging-row * {
   position: relative;
   z-index: 5;
   flex-shrink: 0;
-  background: transparent;
+  background: var(--sf-border);
 }
 
-/*
- * The seam line between tiles. The sash fills the gap (--sf-gap wide);
- * the ::after is the visual line, inset 1px from each edge
- * (--sf-gap - 2px wide), centered in the gap.
- */
-.sf-sash--row::after {
-  content: '';
-  position: absolute;
-  left: 1px;
-  right: 1px;
-  top: 0;
-  bottom: 0;
-  background: transparent;
+.sf-sash {
+  position: relative;
+  z-index: 5;
+  flex-shrink: 0;
+  background: var(--sf-border);
 }
 
-.sf-sash--column::after {
-  content: '';
-  position: absolute;
-  top: 1px;
-  bottom: 1px;
-  left: 0;
-  right: 0;
-  background: transparent;
-}
-
+/* The seam line between tiles: a 1px border. The ::after overlays it with
+   the 5px sensing/blue hover area (--sf-sash-hit), centered on the border. */
 .sf-sash--row {
-  width: var(--sf-gap);
+  width: var(--sf-sash-size);
   cursor: col-resize;
 }
 
 .sf-sash--column {
-  height: var(--sf-gap);
+  height: var(--sf-sash-size);
   cursor: row-resize;
+}
+
+.sf-sash::after {
+  content: '';
+  position: absolute;
+  background: transparent;
+  transition: background 0.15s;
+}
+
+.sf-sash--row::after {
+  top: 0;
+  bottom: 0;
+  left: calc((var(--sf-sash-hit) - var(--sf-sash-size)) / -2);
+  right: calc((var(--sf-sash-hit) - var(--sf-sash-size)) / -2);
+}
+
+.sf-sash--column::after {
+  left: 0;
+  right: 0;
+  top: calc((var(--sf-sash-hit) - var(--sf-sash-size)) / -2);
+  bottom: calc((var(--sf-sash-hit) - var(--sf-sash-size)) / -2);
 }
 
 .sf-sash:hover::after,
@@ -1055,7 +1104,6 @@ body.sf-dragging-row * {
 .sf-dnd-preview {
   position: absolute;
   border: 1px solid var(--sf-accent);
-  border-radius: var(--sf-radius);
   background:
     linear-gradient(to bottom, var(--sf-accent-soft), transparent var(--sf-dnd-shade)),
     linear-gradient(to top, var(--sf-accent-soft), transparent var(--sf-dnd-shade)),
@@ -1064,27 +1112,9 @@ body.sf-dragging-row * {
   box-shadow: 0 0 14px var(--sf-accent-soft);
 }
 
-/* Half-split previews: outer corners rounded like a tile, seam side sharp */
-.sf-dnd-preview--left {
-  border-radius: var(--sf-radius) 0 0 var(--sf-radius);
-}
-
-.sf-dnd-preview--right {
-  border-radius: 0 var(--sf-radius) var(--sf-radius) 0;
-}
-
-.sf-dnd-preview--top {
-  border-radius: var(--sf-radius) var(--sf-radius) 0 0;
-}
-
-.sf-dnd-preview--bottom {
-  border-radius: 0 0 var(--sf-radius) var(--sf-radius);
-}
-
 .sf-dnd-glow {
   position: absolute;
   border: 1px solid var(--sf-accent);
-  border-radius: var(--sf-radius);
   box-shadow: inset 0 0 0 1px var(--sf-accent-soft);
 }
 

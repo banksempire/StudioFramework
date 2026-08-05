@@ -7,6 +7,11 @@
   of tiles - a split node divides its area into two child tiles.
 - **Tab**: a tile holds an ordered list of tabs; one is active at a time.
 
+Workspace and right panel share **one rounded box**:
+`(tile1|tile2|right panel)` — tiles and the right panel are separated by a
+simple 1px border (`--sf-sash-size`) with a 5px drag sensing area (`--sf-sash-hit`), no gaps. The left panel stays a
+separate box with an 8px gap.
+
 The workspace is a **binary split tree** of tiles, like VSCode's editor
 groups (which we call tiles). Users can drag tabs between tiles, split tiles by dropping on their
 edges, reorder tabs within a tile, resize tiles with sashes, and close tabs —

@@ -202,4 +202,5 @@ they stay generic and reusable.
 | Status bar items | `"status"` |
 | Panel width / resize limits | `src/composables/useResize.ts` + `Panel.vue` constants |
 | Panel auto-hide threshold | `MIN_WORKSPACE_WIDTH` constant in `src/App.vue` (default 640px - workspace width, not window width) |
+| Workspace/right-panel seam | `--sf-sash-size` (1px border) + `--sf-sash-hit` (5px sensing area); both share one rounded box |
 | Colors | CSS custom properties in `src/styles/main.css` `:root` |

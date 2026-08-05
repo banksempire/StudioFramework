@@ -25,24 +25,52 @@ provide(kRightPanelToggle, rpToggle);
 
 const wsEl = ref<HTMLElement | null>(null);
 
-/** Tile seam gap (--sf-gap); previews must account for it so the landing
- *  box matches the shape the split will actually produce. */
+/** Tile seam size (--sf-sash-size); previews must account for it so the
+ *  landing box matches the shape the split will actually produce. */
 const GAP =
-  parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--sf-gap')) || 8;
+  parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--sf-sash-size')) || 1;
 
-const px = (n: number | undefined) => (n == null ? '0px' : `${Math.round(n)}px`);
+/** Box corner radius (--sf-radius), for preview corners at the workspace edge. */
+const RADIUS =
+  parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--sf-radius')) || 6;
+
+/** Per-corner radius (tl tr br bl): only corners sitting on the workspace's
+ *  outer corners round; seams and interior edges stay sharp. When the right
+ *  panel is expanded, the workspace's right edge is a seam — never round. */
+function cornerPx(r: DOMRect, ws: DOMRect, rightSeam: boolean): [number, number, number, number] {
+  const near = (a: number, b: number) => Math.abs(a - b) < 2;
+  const top = near(r.top, ws.top);
+  const bottom = near(r.bottom, ws.bottom);
+  const left = near(r.left, ws.left);
+  const right = !rightSeam && near(r.right, ws.right);
+  const px = (b: boolean) => (b ? RADIUS : 0);
+  return [px(top && left), px(top && right), px(bottom && right), px(bottom && left)];
+}
+
+const radiusStr = (c: [number, number, number, number]) => `${c[0]}px ${c[1]}px ${c[2]}px ${c[3]}px`;
+
+/** Zero out the corners on the seam side of a half-preview. */
+function halfRadius(zone: DropZone, c: [number, number, number, number]): string {
+  if (zone === 'left') return radiusStr([c[0], 0, 0, c[3]]);
+  if (zone === 'right') return radiusStr([0, c[1], c[2], 0]);
+  if (zone === 'top') return radiusStr([c[0], c[1], 0, 0]);
+  return radiusStr([0, 0, c[2], c[3]]);
+}
+
+const px = (n: number | undefined) => (n == null ? '0px' : `${n}px`);
 
 /** Shared style builder for the DnD overlay rects (preview, glow, indicator). */
-function rectStyle(r: { x: number; y: number; w?: number; h: number } | null) {
-  return { left: px(r?.x), top: px(r?.y), width: r?.w != null ? px(r.w) : undefined, height: px(r?.h) };
+function rectStyle(r: { x: number; y: number; w?: number; h: number; radius?: string } | null) {
+  return {
+    left: px(r?.x),
+    top: px(r?.y),
+    width: r?.w != null ? px(r.w) : undefined,
+    height: px(r?.h),
+    borderRadius: r?.radius ?? undefined,
+  };
 }
 
 // ── Drag-to-tile ───────────────────────────────────────────────────────────
-
-function localOrigin() {
-  const r = wsEl.value?.getBoundingClientRect();
-  return { x: r?.left ?? 0, y: r?.top ?? 0 };
-}
 
 function rectToLocal(r: DOMRect, origin: { x: number; y: number }): DndRect {
   return { x: r.left - origin.x, y: r.top - origin.y, w: r.width, h: r.height };
@@ -88,9 +116,10 @@ function onDragOver(e: DragEvent) {
   if (!api.dnd.dragging) return;
   if (e.dataTransfer) e.dataTransfer.dropEffect = 'move';
 
-  const origin = localOrigin();
+  // One workspace rect per event; origin + corner detection share it.
+  const wsRect = wsEl.value?.getBoundingClientRect() ?? null;
+  const origin = { x: wsRect?.left ?? 0, y: wsRect?.top ?? 0 };
   const dnd = api.dnd;
-
 
   // Per-tile geometry for hit testing.
   const geoms: TileGeom[] = [];
@@ -129,7 +158,9 @@ function onDragOver(e: DragEvent) {
     // Move zone: highlight the tile, and when over its tab strip compute
     // the insertion index + a reorder indicator between tabs.
     dnd.preview = null;
-    dnd.glow = rectToLocal(hit.rect, origin);
+    const glow = rectToLocal(hit.rect, origin);
+    if (wsRect) glow.radius = radiusStr(cornerPx(hit.rect, wsRect, !!props.rightPanelVisible));
+    dnd.glow = glow;
     const tile = api.findTileGlobal(hit.id);
     const tabCount = tile ? tile.tabs.length : 0;
     if (hit.inStrip && hit.stripR) {
@@ -149,15 +180,17 @@ function onDragOver(e: DragEvent) {
   } else {
     // Split zones: preview the half of the tile the dragged tab will take.
     // The landing half is inset by half the gap on the seam side so the
-    // box matches the final tile (which is separated by an 8px sash).
+    // box matches the final tile (which is separated by a sash).
     dnd.glow = null;
     dnd.indicator = null;
     dnd.index = 0;
     const r = hit.rect;
-    if (zone === 'left') dnd.preview = { x: r.left - origin.x, y: r.top - origin.y, w: (r.width - GAP) / 2, h: r.height };
-    else if (zone === 'right') dnd.preview = { x: r.left - origin.x + (r.width + GAP) / 2, y: r.top - origin.y, w: (r.width - GAP) / 2, h: r.height };
-    else if (zone === 'top') dnd.preview = { x: r.left - origin.x, y: r.top - origin.y, w: r.width, h: (r.height - GAP) / 2 };
-    else dnd.preview = { x: r.left - origin.x, y: r.top - origin.y + (r.height + GAP) / 2, w: r.width, h: (r.height - GAP) / 2 };
+    const corners = wsRect ? cornerPx(r, wsRect, !!props.rightPanelVisible) : ([0, 0, 0, 0] as [number, number, number, number]);
+    const radius = halfRadius(zone, corners);
+    if (zone === 'left') dnd.preview = { x: r.left - origin.x, y: r.top - origin.y, w: (r.width - GAP) / 2, h: r.height, radius };
+    else if (zone === 'right') dnd.preview = { x: r.left - origin.x + (r.width + GAP) / 2, y: r.top - origin.y, w: (r.width - GAP) / 2, h: r.height, radius };
+    else if (zone === 'top') dnd.preview = { x: r.left - origin.x, y: r.top - origin.y, w: r.width, h: (r.height - GAP) / 2, radius };
+    else dnd.preview = { x: r.left - origin.x, y: r.top - origin.y + (r.height + GAP) / 2, w: r.width, h: (r.height - GAP) / 2, radius };
   }
 }
 
@@ -206,7 +239,7 @@ function onDragLeave(e: DragEvent) {
 
     <!-- Visual-only DnD layer (pointer-events: none — events go to the root) -->
     <div v-if="api.dnd.dragging" class="sf-dnd-layer">
-      <div v-if="api.dnd.preview" class="sf-dnd-preview" :class="'sf-dnd-preview--' + api.dnd.zone" :style="rectStyle(api.dnd.preview)" />
+      <div v-if="api.dnd.preview" class="sf-dnd-preview" :style="rectStyle(api.dnd.preview)" />
       <div v-if="api.dnd.glow && !api.dnd.preview" class="sf-dnd-glow" :style="rectStyle(api.dnd.glow)" />
       <div v-if="api.dnd.indicator" class="sf-dnd-indicator" :style="rectStyle(api.dnd.indicator)" />
     </div>

@@ -49,6 +49,8 @@ export interface DndRect {
   y: number;
   w: number;
   h: number;
+  /** per-corner border-radius (tl tr br bl); only workspace-edge corners round */
+  radius?: string;
 }
 
 export interface DndState {

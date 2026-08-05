@@ -216,19 +216,23 @@ function onMenuAction(actionId: string) {
         />
       </div>
 
-      <Workspace
-        :def="layout.workspace"
-        :right-panel-visible="!rightAutoHidden && rightPanelVisible"
-        @toggle-right-panel="toggleRightPanel"
-      />
+      <!-- Workspace + right panel share one rounded box, separated by a
+           thin border: (tile1|tile2|right panel) -->
+      <div class="sf-center-group">
+        <Workspace
+          :def="layout.workspace"
+          :right-panel-visible="!!layout.right && !rightAutoHidden && rightPanelVisible"
+          @toggle-right-panel="toggleRightPanel"
+        />
 
-      <RightPanel
-        v-if="layout.right"
-        :def="layout.right"
-        :visible="effRightPanelVisible"
-        @collapse="rightPanelVisible = false"
-        @resize="onPanelResize('right', $event)"
-      />
+        <RightPanel
+          v-if="layout.right"
+          :def="layout.right"
+          :visible="effRightPanelVisible"
+          @collapse="rightPanelVisible = false"
+          @resize="onPanelResize('right', $event)"
+        />
+      </div>
     </div>
 
     <StatusBar :left="layout.status.left" :right="layout.status.right" />
