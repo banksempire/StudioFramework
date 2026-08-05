@@ -209,7 +209,7 @@ html, body, #app {
 .sf-menu-action-btn {
   background: none;
   border: none;
-  color: var(--sf-text-muted);
+  color: var(--sf-text);
   cursor: pointer;
   font-size: 14px;
   padding: 0 10px;
@@ -221,7 +221,7 @@ html, body, #app {
 
 .sf-menu-action-btn:hover {
   background: var(--sf-active);
-  color: var(--sf-text);
+  color: var(--sf-text-bright);
 }
 
 /* Left toggle button — matches Docker width */
@@ -288,13 +288,13 @@ html, body, #app {
   width: 48px;
   height: 48px;
   cursor: pointer;
-  color: var(--sf-text-muted);
+  color: var(--sf-text);
   border-left: 2px solid transparent;
   transition: color 0.15s;
 }
 
 .sf-docker-tag:hover {
-  color: var(--sf-text);
+  color: var(--sf-text-bright);
   background: var(--sf-active);
 }
 
@@ -373,7 +373,7 @@ html, body, #app {
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.5px;
-  color: var(--sf-text-muted);
+  color: var(--sf-text);
   flex-shrink: 0;
   position: relative;
   border-bottom: 1px solid var(--sf-border);
@@ -552,7 +552,7 @@ html, body, #app {
 .sf-panel-header-btn {
   background: none;
   border: none;
-  color: var(--sf-text-muted);
+  color: var(--sf-text);
   cursor: pointer;
   font-size: 14px;
   padding: 0 4px;
@@ -563,7 +563,7 @@ html, body, #app {
 }
 
 .sf-panel-header-btn:hover {
-  color: var(--sf-text);
+  color: var(--sf-text-bright);
 }
 
 /* ─── Visibility dropdown ──────────────────────────────────────────────── */
@@ -652,7 +652,7 @@ html, body, #app {
   width: 16px;
   text-align: center;
   font-size: 12px;
-  color: var(--sf-text-muted);
+  color: var(--sf-text);
   transition: transform 0.1s;
 }
 
@@ -681,7 +681,7 @@ html, body, #app {
 .sf-subsection-util {
   background: none;
   border: none;
-  color: var(--sf-text-muted);
+  color: var(--sf-text);
   cursor: pointer;
   font-size: 13px;
   padding: 2px 4px;
@@ -692,7 +692,7 @@ html, body, #app {
 
 .sf-subsection-util:hover {
   background: var(--sf-active);
-  color: var(--sf-text);
+  color: var(--sf-text-bright);
 }
 
 .sf-subsection-body {
@@ -812,7 +812,7 @@ body.sf-dragging-row * {
   width: 16px;
   text-align: center;
   font-size: 10px;
-  color: var(--sf-text-muted);
+  color: var(--sf-text);
   flex-shrink: 0;
   transition: transform 0.1s;
 }
@@ -1162,7 +1162,7 @@ body.sf-dragging-row * {
 .sf-tab-new {
   background: none;
   border: none;
-  color: var(--sf-text-muted);
+  color: var(--sf-text);
   cursor: pointer;
   font-size: 18px;
   padding: 0 12px;
@@ -1171,7 +1171,7 @@ body.sf-dragging-row * {
 }
 
 .sf-tab-new:hover {
-  color: var(--sf-text);
+  color: var(--sf-text-bright);
   background: var(--sf-bg-hover);
 }
 
@@ -1199,7 +1199,7 @@ body.sf-dragging-row * {
 .sf-tab-panel-toggle {
   background: none;
   border: none;
-  color: var(--sf-text-muted);
+  color: var(--sf-text);
   cursor: pointer;
   font-size: 14px;
   padding: 0;
@@ -1217,7 +1217,7 @@ body.sf-dragging-row * {
 }
 
 .sf-tab-panel-toggle:hover {
-  color: var(--sf-text);
+  color: var(--sf-text-bright);
   background: var(--sf-bg-hover);
 }
 
