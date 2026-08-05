@@ -44,6 +44,8 @@
   --sf-sash-size: 1px;
   /* drag sensing area + blue hover line (centered on the border) */
   --sf-sash-hit: 5px;
+  /* widest a tab may grow; tabs compress (label ellipsis) when the strip is full */
+  --sf-tab-max-width: 200px;
   /* how far the indication glow reaches from an edge inward (DTC + DnD) */
   --sf-edge-glow: 6px;
   --sf-active: #37373d;
@@ -1020,13 +1022,6 @@ body.sf-dragging-row * {
   background: var(--sf-border);
 }
 
-.sf-sash {
-  position: relative;
-  z-index: 5;
-  flex-shrink: 0;
-  background: var(--sf-border);
-}
-
 /* The seam line between tiles: a 1px border. The ::after overlays it with
    the 5px sensing/blue hover area (--sf-sash-hit), centered on the border. */
 .sf-sash--row {
@@ -1073,13 +1068,11 @@ body.sf-dragging-row * {
   height: 30px;
   background: var(--sf-bg-light);
   flex-shrink: 0;
-  overflow-x: auto;
-  overflow-y: hidden;
+  /* Never scrolls: when tabs don't fit they compress (see .sf-tab), so
+     every tab stays visible and reachable. */
+  overflow: hidden;
   border-bottom: 1px solid var(--sf-border);
 }
-
-.sf-tile-tabs::-webkit-scrollbar { height: 3px; }
-.sf-tile-tabs::-webkit-scrollbar-thumb { background: var(--sf-border); }
 
 .sf-tile-content {
   flex: 1;
@@ -1138,7 +1131,10 @@ body.sf-dragging-row * {
   white-space: nowrap;
   font-size: 13px;
   min-width: 0;
-  flex-shrink: 0;
+  /* Compress (down to icon+label ellipsis) when the strip is full instead
+     of overflowing — the strip never scrolls. */
+  flex: 0 1 auto;
+  max-width: var(--sf-tab-max-width);
   user-select: none;
 }
 
@@ -1165,6 +1161,7 @@ body.sf-dragging-row * {
 }
 
 .sf-tab-label {
+  min-width: 0;
   overflow: hidden;
   text-overflow: ellipsis;
 }
@@ -1247,8 +1244,6 @@ body.sf-dragging-row * {
   color: var(--sf-text-bright);
   background: var(--sf-bg-hover);
 }
-
-/* ─── Panel Container (retired: content now lives in tiles) ─────────────── */
 
 /* ─── Welcome Panel ──────────────────────────────────────────────────────── */
 

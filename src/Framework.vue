@@ -24,9 +24,8 @@ import { loadLayout } from './layout/loadLayout';
 import type { LayoutDefinition } from './types/layout';
 import MenuBar from './components/MenuBar.vue';
 import Docker from './components/Docker.vue';
-import DockerPanel from './components/DockerPanel.vue';
+import Panel from './components/Panel.vue';
 import Workspace from './components/Workspace.vue';
-import RightPanel from './components/RightPanel.vue';
 import StatusBar from './components/StatusBar.vue';
 import { kWorkspace, useWorkspace } from './composables/useWorkspace';
 
@@ -254,10 +253,12 @@ function onPanelAction(a: PanelAction) {
           @app-selected="onAppSelected"
         />
 
-        <DockerPanel
+        <Panel
           v-if="dockerDef"
-          :def="dockerDef"
+          :title="dockerDef.title"
+          :sections="dockerDef.sections"
           :visible="effDockerPanelVisible"
+          position="left"
           @collapse="dockerPanelVisible = false"
           @resize="onPanelResize('left', $event)"
           @utility="onPanelUtility"
@@ -275,10 +276,12 @@ function onPanelAction(a: PanelAction) {
           @toggle-right-panel="toggleRightPanel"
         />
 
-        <RightPanel
+        <Panel
           v-if="L.right"
-          :def="L.right"
+          :title="L.right.title"
+          :sections="L.right.sections"
           :visible="effRightPanelVisible"
+          position="right"
           @collapse="rightPanelVisible = false"
           @resize="onPanelResize('right', $event)"
           @utility="onPanelUtility"

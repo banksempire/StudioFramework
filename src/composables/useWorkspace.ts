@@ -85,6 +85,8 @@ export interface WorkspaceApi {
   tileEls: Map<string, HTMLElement>;
   /** Find a tile across all roots. */
   findTileGlobal(tileId: string): TileNode | null;
+  /** Find the tile holding a tab across all roots. */
+  findTabGlobal(tabId: string): TileNode | null;
 }
 
 export type WorkspaceContext = WorkspaceApi;
@@ -108,24 +110,22 @@ export function useWorkspace(def: WorkspaceDef): WorkspaceApi {
   const minTileWidth = def.minTileWidth ?? 160;
   const minTileHeight = def.minTileHeight ?? 100;
 
+  const initialTileId = nextId('tile');
   const state = reactive<{ roots: RootGroup[]; focusedTileId: string; rootDir: SplitDir | null }>({
     roots: [{
       id: nextId('root'),
       node: {
         kind: 'tile',
-        id: nextId('tile'),
+        id: initialTileId,
         tabs: def.tabs.map((t) => t.id),
         activeId: def.tabs[0]?.id ?? '',
       },
       ratio: 1,
     }],
-    focusedTileId: '',
+    // The initial root is always a single tile, so it starts focused.
+    focusedTileId: initialTileId,
     rootDir: null,
   });
-  {
-    const first = state.roots[0].node;
-    state.focusedTileId = first.kind === 'tile' ? first.id : '';
-  }
 
   const tabDefs = reactive<Record<string, WorkspaceTabDef>>({});
   for (const t of def.tabs) tabDefs[t.id] = t;
@@ -413,6 +413,14 @@ export function useWorkspace(def: WorkspaceDef): WorkspaceApi {
     return null;
   }
 
+  function findTabGlobal(tabId: string): TileNode | null {
+    for (const root of state.roots) {
+      const tile = findTileByTab(root.node, tabId);
+      if (tile) return tile;
+    }
+    return null;
+  }
+
   return {
     get roots() {
       return state.roots;
@@ -440,5 +448,6 @@ export function useWorkspace(def: WorkspaceDef): WorkspaceApi {
     registerTileEl,
     tileEls,
     findTileGlobal,
+    findTabGlobal,
   };
 }
