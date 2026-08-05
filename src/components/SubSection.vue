@@ -26,7 +26,7 @@ const emit = defineEmits<{
     <!-- Title bar - click toggles expand/collapse only (does NOT activate) -->
     <div class="sf-subsection-header" @click="emit('toggle-expand')">
       <span class="sf-subsection-arrow" :class="{ 'sf-subsection-arrow--expanded': isExpanded }">❯</span>
-      <span class="sf-subsection-label">{{ subSection.label }}{{ !subSection.isHeightVariable ? ' [F]' : '' }}</span>
+      <span class="sf-subsection-label">{{ subSection.label }}</span>
       <div v-if="subSection.utilities?.length" class="sf-subsection-utils" @click.stop="emit('activate')">
         <button
           v-for="util in subSection.utilities"

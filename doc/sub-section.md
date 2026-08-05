@@ -85,8 +85,7 @@ Each sub-section has two parts:
 
 - **Expand indicator**: `❯` (U+276F) rotated 90° when expanded, pointing right
   when collapsed.
-- **Display name**: Uppercase, muted text. Fixed `[F]` suffix shown for
-  fixed-height sub-sections (debug aid).
+- **Display name**: Uppercase, muted text.
 - **Utilities**: Optional minor action buttons (e.g., refresh). Shown on hover,
   or always visible when the sub-section is **active** (see below).
 
