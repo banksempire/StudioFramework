@@ -49,9 +49,9 @@ Frontend UI should be built by the framework according only to the json (or othe
 
 The UI is now fully defined by a single JSON file:
 
-- Live definition: `src/layout/app.layout.json` (loaded + validated by
+- Live definition: `src/layout/framework.layout.json` (loaded + validated by
   `src/layout/loadLayout.ts` at startup)
-- Review copy: `doc/app.layout.json`
+- Review copy: `doc/framework.layout.json`
 - Schema reference: [layout.md](./layout.md)
 
 Differences from the sketch above, by design:
@@ -64,4 +64,4 @@ Differences from the sketch above, by design:
   `list` (the sketch's "textbox" is the `input` type).
 - Icons accept a unicode char (`"📁"`) or `{ "type": "image", "url": ... }`.
 - `menu` items support `accelerator`, `icon`, `action` ids, `separator`;
-  the host app handles action ids.
+  the framework handles action ids.

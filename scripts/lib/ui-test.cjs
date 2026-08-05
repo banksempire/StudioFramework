@@ -28,7 +28,7 @@ async function ensureServer() {
   throw new Error('dev server did not start within 20s');
 }
 
-/** Open the app in headless Chromium with error collection. */
+/** Open the framework in headless Chromium with error collection. */
 async function openApp({ viewport = { width: 1440, height: 900 } } = {}) {
   const browser = await chromium.launch();
   const page = await browser.newPage({ viewport });
@@ -37,7 +37,7 @@ async function openApp({ viewport = { width: 1440, height: 900 } } = {}) {
   page.on('console', (m) => { if (m.type() === 'error') errors.push('console: ' + m.text()); });
   page.on('requestfailed', (r) => errors.push('requestfailed: ' + r.url()));
   await page.goto(URL, { waitUntil: 'networkidle', timeout: 15000 });
-  await page.waitForFunction(() => (document.getElementById('app')?.innerHTML.length ?? 0) > 1000, { timeout: 10000 });
+  await page.waitForFunction(() => (document.getElementById('framework')?.innerHTML.length ?? 0) > 1000, { timeout: 10000 });
   return { browser, page, errors };
 }
 

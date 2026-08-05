@@ -8,7 +8,7 @@ import Workspace from './components/Workspace.vue';
 import RightPanel from './components/RightPanel.vue';
 import StatusBar from './components/StatusBar.vue';
 
-const activeDockerTag = ref(layout.docker[0]?.id ?? '');
+const activeDockerApp = ref(layout.docker[0]?.id ?? '');
 const leftPanelVisible = ref(true);
 const dockerPanelVisible = ref(true);
 const savedPanelState = ref(true);
@@ -112,7 +112,7 @@ const effRightPanelVisible = computed(() =>
 );
 
 const activeDockerItem = computed(
-  () => layout.docker.find(d => d.id === activeDockerTag.value) ?? layout.docker[0],
+  () => layout.docker.find(d => d.id === activeDockerApp.value) ?? layout.docker[0],
 );
 const dockerDef = computed(() => activeDockerItem.value?.panel ?? null);
 
@@ -127,18 +127,18 @@ function showAutoHiddenRight() {
   if (!rightPanelVisible.value) rightPanelVisible.value = true;
 }
 
-function onTagSelected(tagId: string) {
+function onAppSelected(appId: string) {
   if (leftAutoHidden.value) {
     showAutoHiddenLeft();
-    if (tagId !== activeDockerTag.value) activeDockerTag.value = tagId;
+    if (appId !== activeDockerApp.value) activeDockerApp.value = appId;
     return;
   }
   if (!leftPanelVisible.value) leftPanelVisible.value = true;
 
-  if (tagId === activeDockerTag.value) {
+  if (appId === activeDockerApp.value) {
     dockerPanelVisible.value = !dockerPanelVisible.value;
   } else {
-    activeDockerTag.value = tagId;
+    activeDockerApp.value = appId;
     dockerPanelVisible.value = true;
   }
 }
@@ -176,7 +176,7 @@ function onMenuAction(actionId: string) {
       toggleLeftPanel();
       break;
     case 'about':
-      alert(`Studio Framework v1.0 • ${layout.app.title}`);
+      alert(`Studio Framework v1.0 • ${layout.framework.title}`);
       break;
     default:
       console.log('menu action:', actionId);
@@ -197,9 +197,9 @@ function onMenuAction(actionId: string) {
       <div class="sf-left-group" v-show="leftPanelVisible">
         <Docker
           :items="layout.docker"
-          :active-tag="activeDockerTag"
+          :active-app="activeDockerApp"
           :panel-visible="dockerPanelVisible"
-          @tag-selected="onTagSelected"
+          @app-selected="onAppSelected"
         />
 
         <DockerPanel

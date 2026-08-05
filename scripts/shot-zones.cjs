@@ -7,7 +7,7 @@ const { chromium } = require('playwright');
   await page.waitForTimeout(500);
   // split first so the zone map shows per-tile zones
   const wsBox = await page.locator('.sf-workspace').boundingBox();
-  await page.locator('.sf-tab:has-text("app.ts")').dragTo(page.locator('.sf-workspace'), { targetPosition: { x: wsBox.width - 10, y: wsBox.height / 2 } });
+  await page.locator('.sf-tab:has-text("framework.ts")').dragTo(page.locator('.sf-workspace'), { targetPosition: { x: wsBox.width - 10, y: wsBox.height / 2 } });
   await page.waitForTimeout(400);
   const tb = await page.locator('.sf-tab:has-text("utils.ts")').boundingBox();
   await page.mouse.move(tb.x + tb.width / 2, tb.y + tb.height / 2);

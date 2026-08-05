@@ -1,11 +1,11 @@
-import json from './app.layout.json';
+import json from './framework.layout.json';
 import type { IconDef, PanelComponent, PanelSection, PanelSubSection, PanelUtility, TreeNode } from '../types/panel';
-import type { DockerItemDef, LayoutDefinition, MenuNodeDef, PanelDef, StatusItemDef, WorkspaceTabDef } from '../types/layout';
+import type { DockerAppDef, LayoutDefinition, MenuNodeDef, PanelDef, StatusItemDef, WorkspaceTabDef } from '../types/layout';
 
 // ── Validation helpers ─────────────────────────────────────────────────────
 
 function fail(path: string, msg: string): never {
-  throw new Error(`app.layout.json: ${path}: ${msg}`);
+  throw new Error(`framework.layout.json: ${path}: ${msg}`);
 }
 
 function isRecord(v: unknown): v is Record<string, unknown> {
@@ -172,12 +172,12 @@ function toMenuNode(v: unknown, path: string): MenuNodeDef {
   };
 }
 
-function toDockerItem(v: unknown, path: string): DockerItemDef {
+function toDockerApp(v: unknown, path: string): DockerAppDef {
   const r = needRecord(v, path);
   return {
     id: needId(r.id, path + '.id'),
     displayName: needString(r.displayName, path + '.displayName'),
-    icon: toIcon(r.icon, path + '.icon') ?? fail(path + '.icon', 'docker item requires an icon'),
+    icon: toIcon(r.icon, path + '.icon') ?? fail(path + '.icon', 'docker app requires an icon'),
     badge: optString(r.badge, path + '.badge'),
     panel: toPanelDef(r.panel, path + '.panel'),
   };
@@ -215,11 +215,11 @@ export function loadLayout(): LayoutDefinition {
   const root = needRecord(json, '<root>');
 
   const menu = needArray(root.menu ?? [], '<root>.menu').map((m, i) => toMenuNode(m, `<root>.menu[${i}]`));
-  const docker = needArray(root.docker ?? [], '<root>.docker').map((d, i) => toDockerItem(d, `<root>.docker[${i}]`));
+  const docker = needArray(root.docker ?? [], '<root>.docker').map((d, i) => toDockerApp(d, `<root>.docker[${i}]`));
   if (docker.length === 0) fail('<root>.docker', 'at least one docker item is required');
 
   return {
-    app: { title: needString((needRecord(root.app ?? {}, '<root>.app')).title ?? 'Studio Framework', '<root>.app.title') },
+    framework: { title: needString((needRecord(root.framework ?? {}, '<root>.framework')).title ?? 'Studio Framework', '<root>.framework.title') },
     menu,
     docker,
     right: root.right === undefined || root.right === null ? null : toPanelDef(root.right, '<root>.right'),
@@ -243,5 +243,5 @@ export function loadLayout(): LayoutDefinition {
   };
 }
 
-/** The single layout for the app - loaded once at startup. */
+/** The single layout for the framework - loaded once at startup. */
 export const layout: LayoutDefinition = loadLayout();

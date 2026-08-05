@@ -42,19 +42,19 @@ const WS = '.sf-workspace';
   };
   const tileBox = async (i) => page.locator('.sf-tile').nth(i).boundingBox();
 
-  // ── 1. split right: drag app.ts onto the right edge → 2 tiles, half each ─
+  // ── 1. split right: drag framework.ts onto the right edge → 2 tiles, half each ─
   report('initial: single tile, 4 tabs', (await tileCount()) === 1 && (await tileTabs(0)).length === 4);
   const tileW = wsBox.width;
-  await dropAt('app.ts', wsBox.width - 10, wsBox.height / 2);
+  await dropAt('framework.ts', wsBox.width - 10, wsBox.height / 2);
   report('split right → 2 tiles', (await tileCount()) === 2);
   const w1 = await tileBox(1);
   report('dragged tab takes ~half the window', Math.abs(w1.width - tileW / 2) < 30, `${w1.width}px vs half=${(tileW / 2).toFixed(0)}px`);
-  report('right tile holds app.ts', JSON.stringify(await tileTabs(1)) === JSON.stringify(['app.ts']));
+  report('right tile holds framework.ts', JSON.stringify(await tileTabs(1)) === JSON.stringify(['framework.ts']));
   report('left tile keeps the rest', (await tileTabs(0)).length === 3);
 
   // ── 2. move: drag utils.ts onto the right tile's tab strip → inserted ───
   await dropAt('utils.ts', w1.x - wsBox.x + w1.width / 2, 15);
-  report('move into right tile', JSON.stringify(await tileTabs(1)) === JSON.stringify(['app.ts', 'utils.ts']));
+  report('move into right tile', JSON.stringify(await tileTabs(1)) === JSON.stringify(['framework.ts', 'utils.ts']));
   report('source tile keeps remaining', (await tileTabs(0)).length === 2);
 
   // ── 3. split bottom: drag styles.css onto the bottom edge of right tile ─
@@ -63,18 +63,18 @@ const WS = '.sf-workspace';
   report('cross-tile split removes from source', JSON.stringify(await tileTabs(0)) === JSON.stringify(['Welcome']));
   report('bottom tile holds styles.css', JSON.stringify(await tileTabs(2)) === JSON.stringify(['styles.css']));
 
-  // ── 4. split top: drag app.ts onto the top band of the bottom tile ──────
+  // ── 4. split top: drag framework.ts onto the top band of the bottom tile ──────
   const t2 = await tileBox(2);
   const t2BandH = Math.min(Math.max(t2.height * 0.25, 28), 56);
-  await dropAt('app.ts', t2.x - wsBox.x + t2.width / 2, t2.y - wsBox.y + 30 + 6 + t2BandH / 2);
+  await dropAt('framework.ts', t2.x - wsBox.x + t2.width / 2, t2.y - wsBox.y + 30 + 6 + t2BandH / 2);
   report('split top → 4 tiles', (await tileCount()) === 4);
-  report('top tile holds dragged tab', JSON.stringify(await tileTabs(2)) === JSON.stringify(['app.ts']));
+  report('top tile holds dragged tab', JSON.stringify(await tileTabs(2)) === JSON.stringify(['framework.ts']));
   report('target tile keeps its tab', JSON.stringify(await tileTabs(3)) === JSON.stringify(['styles.css']));
   report('source tile keeps remaining', JSON.stringify(await tileTabs(1)) === JSON.stringify(['utils.ts']));
 
   // ── 5. close the last tab of the top-right tile → merges back to 2 ──────
-  await tab('app.ts').hover();
-  await tab('app.ts').locator('.sf-tab-close').click();
+  await tab('framework.ts').hover();
+  await tab('framework.ts').locator('.sf-tab-close').click();
   await page.waitForTimeout(250);
   await tab('utils.ts').hover();
   await tab('utils.ts').locator('.sf-tab-close').click();

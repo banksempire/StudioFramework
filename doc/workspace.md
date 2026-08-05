@@ -132,7 +132,7 @@ the root tile of the first root group, which stays as an empty tile
   - ⇔ — "evenly space": equalize all root group ratios (`ops.evenlySpace()`),
     shown when there is more than one root group.
 
-## Ops API (for host apps)
+## Ops API (for host frameworks)
 
 `useWorkspace(def)` returns a reactive `WorkspaceApi`, provided to the tree
 via the `kWorkspace` injection key:

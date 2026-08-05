@@ -58,7 +58,7 @@ interface PanelSubSection {
 - **Name**: Display name of the panel, left-aligned.
 - **⋯ button**: Opens a dropdown toggle list of all sub-sections in the active
   section. Each item shows a ✓ when visible, blank when hidden. Visibility
-  state is persisted per panel (Docker tag) + section combination.
+  state is persisted per panel (docker app) + section combination.
 
 ### SectionSelectionBar (SSB)
 
@@ -92,8 +92,8 @@ Each sub-section has two parts:
 - **Display name**: Uppercase, muted text.
 - **Utilities**: Optional minor action buttons (e.g., refresh). Shown on hover,
   or always visible when the sub-section is **active** (see below). Clicking a
-  utility emits `utility` (subId, utilityId) — the demo host app does not
-  handle it yet; wire your own host-app handler to act on it.
+  utility emits `utility` (subId, utilityId) — the demo framework does not
+  handle it yet; wire your own handler in `Framework.vue` to act on it.
 
 ### Active sub-section
 

@@ -19,7 +19,7 @@
   vertical-align: middle;
 }
 
-.sf-docker-tag-icon.sf-icon--img {
+.sf-docker-app-icon.sf-icon--img {
   width: 24px;
   height: 24px;
 }
@@ -61,7 +61,7 @@
   box-sizing: border-box;
 }
 
-html, body, #app {
+html, body, #framework {
   height: 100%;
   width: 100%;
   overflow: hidden;
@@ -295,7 +295,7 @@ html, body, #app {
   flex-shrink: 0;
 }
 
-.sf-docker-tag {
+.sf-docker-app {
   position: relative;
   display: flex;
   align-items: center;
@@ -308,22 +308,22 @@ html, body, #app {
   transition: color 0.15s;
 }
 
-.sf-docker-tag:hover {
+.sf-docker-app:hover {
   color: var(--sf-text-bright);
   background: var(--sf-active);
 }
 
-.sf-docker-tag.active {
+.sf-docker-app.active {
   color: var(--sf-text-bright);
   border-left-color: var(--sf-accent);
 }
 
-.sf-docker-tag-icon {
+.sf-docker-app-icon {
   font-size: 24px;
   line-height: 1;
 }
 
-.sf-docker-tag-badge {
+.sf-docker-app-badge {
   position: absolute;
   top: 4px;
   right: 6px;

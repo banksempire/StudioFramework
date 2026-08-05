@@ -1,21 +1,21 @@
 # Layout Definition (single JSON)
 
 The entire UI is defined by one JSON file:
-`src/layout/app.layout.json`.
+`src/layout/framework.layout.json`.
 
 The framework components are dumb renderers — they consume the typed layout
-and build the UI. To create a new app: **keep the TS framework, swap the JSON
+and build the UI. To create a new framework: **keep the TS code, swap the JSON
 file**.
 
 ```
-src/layout/app.layout.json  ← edit this to reshape the app
-doc/app.layout.json        ← static review copy (does NOT affect the app)
+src/layout/framework.layout.json  ← edit this to reshape the framework
+doc/framework.layout.json        ← static review copy (does NOT affect the framework)
 src/layout/loadLayout.ts    ← parses + validates the JSON → typed LayoutDefinition
 src/types/layout.ts         ← types mirroring the JSON schema
 ```
 
 The loader validates the file at startup and throws a descriptive error
-(`app.layout.json: <path>: <message>`) on any mismatch — wrong types, unknown
+(`framework.layout.json: <path>: <message>`) on any mismatch — wrong types, unknown
 component types, missing ids, etc.
 
 Validation notes:
@@ -24,24 +24,24 @@ Validation notes:
 - `right` may be `null` (or omitted) to hide the right panel entirely.
 - `minTileWidth` / `minTileHeight` must be positive numbers; they are rounded
   and default to `160` / `100`.
-- `app` is optional (defaults to `{ "title": "Studio Framework" }`).
+- `framework` is optional (defaults to `{ "title": "Studio Framework" }`).
 - Unknown/extra keys (e.g. `$comment`) are ignored.
 
 ## Schema
 
 ```
 LayoutDefinition
-├── app.title                     string            app name (used in About)
+├── framework.title               string            framework name (used in About)
 ├── menu[]                        MenuNodeDef        top bar menus - same class as submenus
 │   ├── id                        string (optional)
 │   ├── label                     string (separators omit it)
 │   ├── icon                      IconDef (optional)
 │   ├── accelerator               string (optional) e.g. "Ctrl+S"
-│   ├── action                    string (optional) leaf: action id handled by host app
+│   ├── action                    string (optional) leaf: action id handled by the framework
 │   ├── items                     MenuNodeDef[] (optional) children - recursive, any depth
 │   └── separator                 true              renders a divider (at any level)
-├── docker[]                      DockerItemDef     activity bar icons
-│   ├── id                        string            tag id (also the active key)
+├── docker[]                      DockerAppDef      activity bar apps
+│   ├── id                        string            app id (also the active key)
 │   ├── displayName               string            tooltip
 │   ├── icon                      IconDef
 │   ├── badge                     string (optional)
@@ -131,7 +131,7 @@ Tree nodes: `{ id, label, icon?, badge?, children? }` — children are recursive
 ## Menu actions
 
 Menu leaves carry an `action` id (nodes with `items` act as grouping
-parents and open on hover). The host app (`App.vue`) decides what each id
+parents and open on hover). The framework root (`Framework.vue`) decides what each id
 does:
 
 ```ts
@@ -157,8 +157,8 @@ The panel components are **render-only** in the current implementation:
 
 - `button` clicks emit `action` (`PanelComponent`) and sub-section utility
   buttons emit `utility` (`SubsectionBody`) — nothing in the demo host
-  (`App.vue`) listens to them yet. Wire your host app's own handlers to act
-  on them.
+  (`Framework.vue`) listens to them yet. Wire your own handlers in `Framework.vue`
+  to act on them.
 - `input` values are static (no `v-model` binding).
 - Tree nodes expand/collapse on click; leaf nodes have no selection state.
 - Menu `accelerator`s are display-only labels — the framework does not bind
@@ -166,13 +166,13 @@ The panel components are **render-only** in the current implementation:
 
 ## Review copy
 
-A snapshot of the live layout is kept at `doc/app.layout.json` for easy
-review. It is **not** loaded by the app — the loader reads
-`src/layout/app.layout.json`. To keep the two in sync after editing the live
+A snapshot of the live layout is kept at `doc/framework.layout.json` for easy
+review. It is **not** loaded by the framework — the loader reads
+`src/layout/framework.layout.json`. To keep the two in sync after editing the live
 file, re-copy it:
 
 ```bash
-cp src/layout/app.layout.json doc/app.layout.json
+cp src/layout/framework.layout.json doc/framework.layout.json
 ```
 
 Alternatively, point the loader at the doc copy to make it the single source
@@ -229,11 +229,11 @@ they stay generic and reusable.
 | To change | Edit |
 |:---|:---|
 | Menus / items / accelerators | `"menu"` |
-| Docker icons, badges, panels | `"docker"` |
+| Docker apps, badges, panels | `"docker"` |
 | Right panel content | `"right"` |
 | Workspace tabs | `"workspace"` (tabs, `minTileWidth`, `minTileHeight`; the split tree is runtime state - see `doc/workspace.md`) |
 | Status bar items | `"status"` |
 | Panel width / resize limits | `src/composables/useResize.ts` + `Panel.vue` constants |
-| Panel auto-hide threshold | `MIN_WORKSPACE_WIDTH` constant in `src/App.vue` (default 640px - workspace width, not window width) |
+| Panel auto-hide threshold | `MIN_WORKSPACE_WIDTH` constant in `src/Framework.vue` (default 640px - workspace width, not window width) |
 | Workspace/right-panel seam | `--sf-sash-size` (1px border) + `--sf-sash-hit` (5px sensing area); both share one rounded box |
 | Colors | CSS custom properties in `src/styles/main.css` `:root` |

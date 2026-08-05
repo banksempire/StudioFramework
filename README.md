@@ -3,13 +3,13 @@
 A VSCode-like UI framework built with **Vue 3** + **TypeScript**. Provides a
 fully functional IDE shell layout with panels, tabs, menus, and a
 data-driven sub-section system — **all defined by a single JSON file**
-([`src/layout/app.layout.json`](src/layout/app.layout.json)).
+([`src/layout/framework.layout.json`](src/layout/framework.layout.json)).
 
 ## Features
 
-- **JSON-defined layout** - the entire UI (menu, docker, panels, workspace, status) comes from one file; swap it to build a new app
+- **JSON-defined layout** - the entire UI (menu, docker, panels, workspace, status) comes from one file; swap it to build a new framework
 - **Menu Bar** - multi-level dropdown menus with accelerators, hover-to-open behavior
-- **Docker (Activity Bar)** - left icon bar with badges, active indicators, single-click toggle
+- **Docker (Activity Bar)** - left app bar (each icon is an `app`) with badges, active indicators, single-click toggle
 - **Docker Panel** - data-driven panel with sections, sub-sections, and 6 component types
 - **Workspace** - tabbed tiles with drag-to-split, merge / evenly-space controls, and welcome screen
 - **Right Panel** - right panel with data-driven sub-sections
@@ -56,11 +56,11 @@ data-driven sub-section system — **all defined by a single JSON file**
 ```
 src/
 ├── main.ts                    # createApp entry point
-├── App.vue                    # Root layout, event wiring, state
+├── Framework.vue                # Root layout, event wiring, state
 ├── vue-shims.d.ts             # TypeScript declaration for .vue imports
 ├── vite-env.d.ts              # Vite client types
 ├── layout/
-│   ├── app.layout.json        # ★ THE layout definition - edit this to reshape the app
+│   ├── framework.layout.json  # ★ THE layout definition - edit this to reshape the framework
 │   └── loadLayout.ts          # Parses + validates the JSON → typed LayoutDefinition
 ├── types/
 │   ├── panel.ts               # PanelSection, PanelSubSection, PanelComponent types
@@ -102,10 +102,10 @@ scripts/                      # Test suites + helpers (headless Chromium / Node)
 └── shot-zones.cjs            # Mid-drag DnD zone screenshot helper
 ```
 
-## Define your own app
+## Define your own framework
 
-The whole UI is defined by one file: [`src/layout/app.layout.json`](src/layout/app.layout.json).
-Menu, docker icons + panels, right panel, workspace tabs, and status bar are
+The whole UI is defined by one file: [`src/layout/framework.layout.json`](src/layout/framework.layout.json).
+Menu, docker apps + panels, right panel, workspace tabs, and status bar are
 all data in that file. The Vue components are generic renderers.
 
 ```json
@@ -127,10 +127,10 @@ all data in that file. The Vue components are generic renderers.
 ```
 
 - Icons: unicode char (`"📁"`) or image (`{ "type": "image", "url": "/x.svg" }`)
-- Invalid layout → clear error at startup: `app.layout.json: <path>: <message>`
+- Invalid layout → clear error at startup: `framework.layout.json: <path>: <message>`
 - Full schema: [doc/layout.md](doc/layout.md)
-- Review copy: [`doc/app.layout.json`](doc/app.layout.json) — a static snapshot
-  of the live layout for reference. The app loads `src/layout/app.layout.json`;
+- Review copy: [`doc/framework.layout.json`](doc/framework.layout.json) — a static snapshot
+  of the live layout for reference. The framework loads `src/layout/framework.layout.json`;
   edits to the doc copy do **not** affect the running UI.
 
 ## Getting Started
@@ -185,7 +185,7 @@ top-right workspace tile's tab strip (see Workspace).
 | Event | Payload | Description |
 |:---|:---|:---|
 | `toggle-left-panel` | – | ☰ button clicked - toggle the left panel group |
-| `menu-action` | `actionId: string` | Menu item clicked - the host app handles the id |
+| `menu-action` | `actionId: string` | Menu item clicked - the framework handles the id |
 
 Menus are defined in the layout JSON (`"menu"`). Each item can carry an
 `action` id, `accelerator`, `icon`, or be a `separator`. Accelerators are
@@ -196,31 +196,31 @@ display-only labels - the framework does not bind global keyboard shortcuts.
 ```vue
 <Docker
   :items="layout.docker"
-  :active-tag="activeTag"
+  :active-app="activeApp"
   :panel-visible="dockerPanelVisible"
-  @tag-selected="onTagSelected"
+  @app-selected="onAppSelected"
 />
 ```
 
 | Prop | Type | Description |
 |:---|:---|:---|
-| `items` | `DockerItemDef[]` | Docker tags from the layout JSON |
-| `active-tag` | `string` | Currently active tag id |
+| `items` | `DockerAppDef[]` | Docker apps from the layout JSON |
+| `active-app` | `string` | Currently active app id |
 | `panel-visible` | `boolean` | When `false`, hides active indicator |
 
 | Event | Payload | Description |
 |:---|:---|:---|
-| `tag-selected` | `tagId: string` | Single click - switches panel, toggles if same icon |
+| `app-selected` | `appId: string` | Single click - switches panel, toggles if same app |
 
 Single-click behavior (no double-click):
 
 | Click | Panel state | Result |
 |:---|:---|:---|
-| Same icon | Open | Close panel |
-| Same icon | Closed | Open panel |
-| Different icon | Any | Switch and open |
+| Same app | Open | Close panel |
+| Same app | Closed | Open panel |
+| Different app | Any | Switch and open |
 
-The Docker bar has no `visible` prop - `App.vue` hides it together with the
+The Docker bar has no `visible` prop - `Framework.vue` hides it together with the
 left panel via `v-show` on the wrapping `.sf-left-group`.
 
 ### Panel (base)
@@ -278,8 +278,8 @@ Thin wrapper around `Panel` with `position="left"`, driven by the layout.
 | `collapse` | – | Emitted when resize drag crosses the collapse threshold |
 | `resize` | `width: number` | Emitted live during resize drag (re-emitted from Panel) |
 
-The six panel definitions live in `src/layout/app.layout.json` under
-`"docker"`. `App.vue` resolves the active tag → `def` and passes it down.
+The six panel definitions live in `src/layout/framework.layout.json` under
+`"docker"`. `Framework.vue` resolves the active app → `def` and passes it down.
 
 ### RightPanel
 
@@ -303,7 +303,7 @@ Thin wrapper around `Panel` with `position="right"`, driven by the layout.
 | `collapse` | – | Emitted when resize drag crosses the collapse threshold |
 | `resize` | `width: number` | Emitted live during resize drag (re-emitted from Panel) |
 
-The right panel definition lives in `src/layout/app.layout.json` under
+The right panel definition lives in `src/layout/framework.layout.json` under
 `"right"` (set to `null` or omit the key to disable the panel).
 
 ### Workspace (multi-tab, drag-to-tile)
@@ -417,8 +417,8 @@ create a new theme, override these variables:
 
 ## Documentation
 
-- [doc/layout.md](doc/layout.md) - JSON layout schema: define the whole app from one file
-- [doc/app.layout.json](doc/app.layout.json) - review copy of the current layout definition
+- [doc/layout.md](doc/layout.md) - JSON layout schema: define the whole framework from one file
+- [doc/framework.layout.json](doc/framework.layout.json) - review copy of the current layout definition
 - [doc/Panel.md](doc/Panel.md) - Panel component: props, SSB, DTC, resize
 - [doc/sub-section.md](doc/sub-section.md) - Sub-sections: height model, drag, components
 - [doc/workspace.md](doc/workspace.md) - Multi-tab workspace: multi-root split-tree model, DnD zones, ops API

@@ -1,7 +1,7 @@
 import type { IconDef, PanelSection } from './panel';
 
 // ── Layout definition ──────────────────────────────────────────────────────
-// Mirrors the shape of src/layout/app.layout.json. The entire UI is built
+// Mirrors the shape of src/layout/framework.layout.json. The entire UI is built
 // from a single JSON file; these types describe its schema.
 
 /**
@@ -17,7 +17,7 @@ export interface MenuNodeDef {
   label?: string;
   icon?: IconDef;
   accelerator?: string;
-  action?: string;          // leaf: action id handled by the host app
+  action?: string;          // leaf: action id handled by the framework
   separator?: boolean;
   items?: MenuNodeDef[];    // children (submenu) - same class, one level down
 }
@@ -27,12 +27,12 @@ export interface PanelDef {
   sections: PanelSection[];
 }
 
-export interface DockerItemDef {
+export interface DockerAppDef {
   id: string;
   displayName: string;
   icon: IconDef;
   badge?: string;
-  panel: PanelDef;    // panel shown when this tag is active
+  panel: PanelDef;    // panel shown when this app is active
 }
 
 export interface WorkspaceTabDef {
@@ -58,9 +58,9 @@ export interface StatusItemDef {
 }
 
 export interface LayoutDefinition {
-  app: { title: string };
+  framework: { title: string };
   menu: MenuNodeDef[];      // top-level menus - same class as any submenu
-  docker: DockerItemDef[];
+  docker: DockerAppDef[];
   right: PanelDef | null;
   workspace: WorkspaceDef;
   status: { left: StatusItemDef[]; right: StatusItemDef[] };

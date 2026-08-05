@@ -22,7 +22,7 @@ const ARTIFACT_DIR = path.join(__dirname, 'artifacts');
   const visible = (sel) => page.isVisible(sel);
 
   // ── Load ────────────────────────────────────────────────────────────────
-  report('app renders (menu bar, docker, panels)', true);
+  report('framework renders (menu bar, docker, panels)', true);
 
   // ── Menu & submenu ──────────────────────────────────────────────────────
   await page.click('text=File');
@@ -38,11 +38,11 @@ const ARTIFACT_DIR = path.join(__dirname, 'artifacts');
   report('menu closes on leaf click', !(await visible('.sf-menu-dropdown.open')));
 
   // ── Docker panel switching ──────────────────────────────────────────────
-  await page.click('.sf-docker-tag:has-text("🐛")');
+  await page.click('.sf-docker-app:has-text("🐛")');
   await page.waitForTimeout(300);
-  report('docker tag switches panel', await visible('text=VARIABLES'));
+  report('docker app switches panel', await visible('text=VARIABLES'));
 
-  await page.click('.sf-docker-tag:has-text("📁")');
+  await page.click('.sf-docker-app:has-text("📁")');
   await page.waitForTimeout(300);
 
   // ── Sub-section collapse/expand height preservation ─────────────────────

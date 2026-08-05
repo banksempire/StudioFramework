@@ -1,6 +1,6 @@
 {
-  "$comment": "Single layout definition. The whole UI is built from this file. Edit it to reshape the app.",
-  "app": {
+  "$comment": "Single layout definition. The whole UI is built from this file. Edit it to reshape the framework.",
+  "framework": {
     "title": "Studio Framework"
   },
   "menu": [
@@ -147,7 +147,7 @@
                     "type": "list",
                     "items": [
                       { "id": "1", "label": "main.ts", "icon": "📄" },
-                      { "id": "2", "label": "App.vue", "icon": "📄" },
+                      { "id": "2", "label": "Framework.vue", "icon": "📄" },
                       { "id": "3", "label": "Panel.vue", "icon": "📄" }
                     ]
                   }
@@ -172,7 +172,7 @@
                         "id": "src", "label": "src", "icon": "📁",
                         "children": [
                           { "id": "main", "label": "main.ts", "icon": "📄" },
-                          { "id": "app", "label": "App.vue", "icon": "📄" },
+                          { "id": "framework", "label": "Framework.vue", "icon": "📄" },
                           {
                             "id": "comp", "label": "components", "icon": "📁",
                             "children": [
@@ -215,10 +215,10 @@
                     "type": "tree",
                     "nodes": [
                       {
-                        "id": "o1", "label": "App", "icon": "☰",
+                        "id": "o1", "label": "Framework", "icon": "☰",
                         "children": [
                           { "id": "o2", "label": "setup()", "icon": "ƒ" },
-                          { "id": "o3", "label": "onTagSelected()", "icon": "ƒ" }
+                          { "id": "o3", "label": "onAppSelected()", "icon": "ƒ" }
                         ]
                       }
                     ]
@@ -320,9 +320,9 @@
                   {
                     "type": "list",
                     "items": [
-                      { "id": "r1", "label": "Panel.vue:12  onTagSelected" },
+                      { "id": "r1", "label": "Panel.vue:12  onAppSelected" },
                       { "id": "r2", "label": "Panel.vue:28  selectSection" },
-                      { "id": "r3", "label": "App.vue:5    activeDockerTag" }
+                      { "id": "r3", "label": "Framework.vue:5    activeDockerApp" }
                     ]
                   }
                 ]
@@ -356,7 +356,7 @@
                   {
                     "type": "list",
                     "items": [
-                      { "id": "c1", "label": "M  App.vue", "icon": "M" },
+                      { "id": "c1", "label": "M  Framework.vue", "icon": "M" },
                       { "id": "c2", "label": "M  Panel.vue", "icon": "M" },
                       { "id": "c3", "label": "A  SubsectionBody.vue", "icon": "A" },
                       { "id": "c4", "label": "A  SubSection.vue", "icon": "A" }
@@ -402,8 +402,8 @@
                   {
                     "type": "keyValueList",
                     "items": [
-                      { "key": "this", "value": "App {...}" },
-                      { "key": "activeTag", "value": "\"explorer\"" },
+                      { "key": "this", "value": "Framework {...}" },
+                      { "key": "activeApp", "value": "\"explorer\"" },
                       { "key": "panelVisible", "value": "true" }
                     ]
                   }
@@ -439,7 +439,7 @@
                   {
                     "type": "list",
                     "items": [
-                      { "id": "f1", "label": "onTagSelected  App.vue:12" },
+                      { "id": "f1", "label": "onAppSelected  Framework.vue:12" },
                       { "id": "f2", "label": "emit           Panel.vue:28" }
                     ]
                   }
@@ -629,7 +629,7 @@
     "minTileHeight": 100,
     "tabs": [
       { "id": "welcome", "label": "Welcome", "icon": "🏠", "content": "welcome", "closeable": false },
-      { "id": "app-ts", "label": "app.ts", "icon": "📄" },
+      { "id": "framework-ts", "label": "framework.ts", "icon": "📄" },
       { "id": "utils-ts", "label": "utils.ts", "icon": "📄" },
       { "id": "styles-css", "label": "styles.css", "icon": "🎨" }
     ]

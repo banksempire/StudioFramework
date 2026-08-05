@@ -34,7 +34,7 @@ See [sub-section.md](./sub-section.md) for `PanelSubSection` and component types
 |:---|:---|:---|
 | `collapse` | - | Emitted when drag-to-collapse triggers |
 | `select-section` | `sectionId: string` | Emitted when a section tab is clicked |
-| `resize` | `width: number` | Emitted live during resize drag (drives the panel auto-hide logic in `App.vue`) |
+| `resize` | `width: number` | Emitted live during resize drag (drives the panel auto-hide logic in `Framework.vue`) |
 
 ## Layout
 
@@ -114,7 +114,7 @@ dropdown menu.
 #### Section vs panel switching
 
 Clicking a section tab emits `select-section` with the section ID but does
-**not** change the panel. Panel switching is handled by the Docker icon bar
+**not** change the panel. Panel switching is handled by the Docker app bar
 outside the Panel component.
 
 The selected section index is persisted per panel instance via a
@@ -148,15 +148,16 @@ distribution, drag handles, expand/collapse, and component types.
   the panel.
 - On release above 100px, the panel snaps back to the 150px minimum.
 
-## Docker icon bar
+## Docker app bar
 
-Managed by `App.vue`, not `Panel.vue`. Single-click behavior:
+Managed by `Framework.vue`, not `Panel.vue`. Each icon on the docker bar is an
+**app** (one per `docker[]` entry). Single-click behavior:
 
 | Click | Panel state | Result |
 |:---|:---|:---|
-| Same icon | Open | Close panel |
-| Same icon | Closed | Open panel |
-| Different icon | Any | Switch and open |
+| Same app | Open | Close panel |
+| Same app | Closed | Open panel |
+| Different app | Any | Switch and open |
 
 No double-click - single click toggles.
 
