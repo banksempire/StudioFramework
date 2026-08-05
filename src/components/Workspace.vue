@@ -25,6 +25,11 @@ provide(kRightPanelToggle, rpToggle);
 
 const wsEl = ref<HTMLElement | null>(null);
 
+/** Tile seam gap (--sf-gap); previews must account for it so the landing
+ *  box matches the shape the split will actually produce. */
+const GAP =
+  parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--sf-gap')) || 8;
+
 const px = (n: number | undefined) => (n == null ? '0px' : `${Math.round(n)}px`);
 
 /** Shared style builder for the DnD overlay rects (preview, glow, indicator). */
@@ -143,14 +148,16 @@ function onDragOver(e: DragEvent) {
     }
   } else {
     // Split zones: preview the half of the tile the dragged tab will take.
+    // The landing half is inset by half the gap on the seam side so the
+    // box matches the final tile (which is separated by an 8px sash).
     dnd.glow = null;
     dnd.indicator = null;
     dnd.index = 0;
     const r = hit.rect;
-    if (zone === 'left') dnd.preview = { x: r.left - origin.x, y: r.top - origin.y, w: r.width / 2, h: r.height };
-    else if (zone === 'right') dnd.preview = { x: r.left - origin.x + r.width / 2, y: r.top - origin.y, w: r.width / 2, h: r.height };
-    else if (zone === 'top') dnd.preview = { x: r.left - origin.x, y: r.top - origin.y, w: r.width, h: r.height / 2 };
-    else dnd.preview = { x: r.left - origin.x, y: r.top - origin.y + r.height / 2, w: r.width, h: r.height / 2 };
+    if (zone === 'left') dnd.preview = { x: r.left - origin.x, y: r.top - origin.y, w: (r.width - GAP) / 2, h: r.height };
+    else if (zone === 'right') dnd.preview = { x: r.left - origin.x + (r.width + GAP) / 2, y: r.top - origin.y, w: (r.width - GAP) / 2, h: r.height };
+    else if (zone === 'top') dnd.preview = { x: r.left - origin.x, y: r.top - origin.y, w: r.width, h: (r.height - GAP) / 2 };
+    else dnd.preview = { x: r.left - origin.x, y: r.top - origin.y + (r.height + GAP) / 2, w: r.width, h: (r.height - GAP) / 2 };
   }
 }
 
@@ -199,7 +206,7 @@ function onDragLeave(e: DragEvent) {
 
     <!-- Visual-only DnD layer (pointer-events: none — events go to the root) -->
     <div v-if="api.dnd.dragging" class="sf-dnd-layer">
-      <div v-if="api.dnd.preview" class="sf-dnd-preview" :style="rectStyle(api.dnd.preview)" />
+      <div v-if="api.dnd.preview" class="sf-dnd-preview" :class="'sf-dnd-preview--' + api.dnd.zone" :style="rectStyle(api.dnd.preview)" />
       <div v-if="api.dnd.glow && !api.dnd.preview" class="sf-dnd-glow" :style="rectStyle(api.dnd.glow)" />
       <div v-if="api.dnd.indicator" class="sf-dnd-indicator" :style="rectStyle(api.dnd.indicator)" />
     </div>
