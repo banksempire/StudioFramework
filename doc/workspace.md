@@ -69,12 +69,11 @@ Edge bands: `clamp(25% of the side, 36px, 72px)`.
 ### Landing preview
 
 While a tab is being dragged, the hovered drop zone is shown by a single
-visual: a **transparent closed accent box** over the half-tile the tab
-will take — full border on all four sides with shading fading from the
-border toward the center (`--sf-dnd-shade`), no fill. Deliberately **not**
-the side-panel drag-to-collapse open-edge glow, so the landing rectangle is
-unambiguous. `scripts/shot-zones.cjs` captures a mid-drag screenshot
-(`node scripts/shot-zones.cjs` → `/tmp/sf-zones.png`).
+visual: the **edge glow** over the half-tile the tab will take — the same
+accent-fading-inward gradient as the side-panel drag-to-collapse indicator
+(`--sf-edge-glow`), but with **all four edges lit** since tiling lands inside a
+closed rectangle (DTC opens the edge facing the panel). `scripts/shot-zones.cjs`
+captures a mid-drag screenshot (`node scripts/shot-zones.cjs` → `/tmp/sf-zones.png`).
 
 The dragged tab is **moved**, not copied: dropping on another tile (center or
 edge) removes it from its source tile. If the source tile becomes empty it is

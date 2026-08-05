@@ -119,6 +119,7 @@ function onDragOver(e: DragEvent) {
   // One workspace rect per event; origin + corner detection share it.
   const wsRect = wsEl.value?.getBoundingClientRect() ?? null;
   const origin = { x: wsRect?.left ?? 0, y: wsRect?.top ?? 0 };
+  const rightSeam = !!props.rightPanelVisible;
   const dnd = api.dnd;
 
   // Per-tile geometry for hit testing.
@@ -159,7 +160,7 @@ function onDragOver(e: DragEvent) {
     // the insertion index + a reorder indicator between tabs.
     dnd.preview = null;
     const glow = rectToLocal(hit.rect, origin);
-    if (wsRect) glow.radius = radiusStr(cornerPx(hit.rect, wsRect, !!props.rightPanelVisible));
+    if (wsRect) glow.radius = radiusStr(cornerPx(hit.rect, wsRect, rightSeam));
     dnd.glow = glow;
     const tile = api.findTileGlobal(hit.id);
     const tabCount = tile ? tile.tabs.length : 0;
@@ -185,12 +186,19 @@ function onDragOver(e: DragEvent) {
     dnd.indicator = null;
     dnd.index = 0;
     const r = hit.rect;
-    const corners = wsRect ? cornerPx(r, wsRect, !!props.rightPanelVisible) : ([0, 0, 0, 0] as [number, number, number, number]);
+    const corners = wsRect ? cornerPx(r, wsRect, rightSeam) : ([0, 0, 0, 0] as [number, number, number, number]);
     const radius = halfRadius(zone, corners);
-    if (zone === 'left') dnd.preview = { x: r.left - origin.x, y: r.top - origin.y, w: (r.width - GAP) / 2, h: r.height, radius };
-    else if (zone === 'right') dnd.preview = { x: r.left - origin.x + (r.width + GAP) / 2, y: r.top - origin.y, w: (r.width - GAP) / 2, h: r.height, radius };
-    else if (zone === 'top') dnd.preview = { x: r.left - origin.x, y: r.top - origin.y, w: r.width, h: (r.height - GAP) / 2, radius };
-    else dnd.preview = { x: r.left - origin.x, y: r.top - origin.y + (r.height + GAP) / 2, w: r.width, h: (r.height - GAP) / 2, radius };
+    const isRow = zone === 'left' || zone === 'right';
+    const isStart = zone === 'left' || zone === 'top';
+    const dim = isRow ? r.width : r.height;
+    const offset = isStart ? 0 : (dim + GAP) / 2;
+    dnd.preview = {
+      x: r.left - origin.x + (isRow ? offset : 0),
+      y: r.top - origin.y + (isRow ? 0 : offset),
+      w: isRow ? (dim - GAP) / 2 : r.width,
+      h: isRow ? r.height : (dim - GAP) / 2,
+      radius,
+    };
   }
 }
 

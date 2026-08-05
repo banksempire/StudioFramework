@@ -44,8 +44,8 @@
   --sf-sash-size: 1px;
   /* drag sensing area + blue hover line (centered on the border) */
   --sf-sash-hit: 5px;
-  /* how far the indication-box shading reaches from the border inward */
-  --sf-dnd-shade: 48px;
+  /* how far the indication glow reaches from an edge inward (DTC + DnD) */
+  --sf-edge-glow: 6px;
   --sf-active: #37373d;
   --sf-selection: #264f78;
   --sf-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
@@ -579,17 +579,17 @@ html, body, #app {
 /* Left panel: glow on left (opposite), top, bottom. Handle is on right. */
 .sf-panel-dtc-overlay--left {
   background:
-    linear-gradient(to right, var(--sf-accent), transparent 6px),
-    linear-gradient(to bottom, var(--sf-accent), transparent 6px),
-    linear-gradient(to top, var(--sf-accent), transparent 6px);
+    linear-gradient(to right, var(--sf-accent), transparent var(--sf-edge-glow)),
+    linear-gradient(to bottom, var(--sf-accent), transparent var(--sf-edge-glow)),
+    linear-gradient(to top, var(--sf-accent), transparent var(--sf-edge-glow));
 }
 
 /* Right panel: glow on right (opposite), top, bottom. Handle is on left. */
 .sf-panel-dtc-overlay--right {
   background:
-    linear-gradient(to left, var(--sf-accent), transparent 6px),
-    linear-gradient(to bottom, var(--sf-accent), transparent 6px),
-    linear-gradient(to top, var(--sf-accent), transparent 6px);
+    linear-gradient(to left, var(--sf-accent), transparent var(--sf-edge-glow)),
+    linear-gradient(to bottom, var(--sf-accent), transparent var(--sf-edge-glow)),
+    linear-gradient(to top, var(--sf-accent), transparent var(--sf-edge-glow));
 }
 
 /* ─── Panel header button (⋯ visibility toggle) ─────────────────────────── */
@@ -1095,27 +1095,21 @@ body.sf-dragging-row * {
 }
 
 /*
- * Landing preview: a transparent CLOSED box — accent border on all four
- * sides with shading that fades from the border toward the center (no fill;
- * the middle stays see-through). Deliberately not the DTC open-edge glow:
- * the panel collapse reads as "shrinking toward a side", while DTT needs a
- * complete rectangle so the landing area is unambiguous.
+ * Landing feedback: same edge-glow as the panel's drag-to-collapse overlay,
+ * but with all four edges lit — the split lands inside a closed rectangle,
+ * whereas DTC opens the edge facing the panel (3 edges). Both the half-tile
+ * preview and the whole-tile move glow use it. The per-corner border radius
+ * is set inline so seams stay sharp and only the workspace's outer corners
+ * round.
  */
-.sf-dnd-preview {
-  position: absolute;
-  border: 1px solid var(--sf-accent);
-  background:
-    linear-gradient(to bottom, var(--sf-accent-soft), transparent var(--sf-dnd-shade)),
-    linear-gradient(to top, var(--sf-accent-soft), transparent var(--sf-dnd-shade)),
-    linear-gradient(to right, var(--sf-accent-soft), transparent var(--sf-dnd-shade)),
-    linear-gradient(to left, var(--sf-accent-soft), transparent var(--sf-dnd-shade));
-  box-shadow: 0 0 14px var(--sf-accent-soft);
-}
-
+.sf-dnd-preview,
 .sf-dnd-glow {
   position: absolute;
-  border: 1px solid var(--sf-accent);
-  box-shadow: inset 0 0 0 1px var(--sf-accent-soft);
+  background:
+    linear-gradient(to bottom, var(--sf-accent), transparent var(--sf-edge-glow)),
+    linear-gradient(to top, var(--sf-accent), transparent var(--sf-edge-glow)),
+    linear-gradient(to right, var(--sf-accent), transparent var(--sf-edge-glow)),
+    linear-gradient(to left, var(--sf-accent), transparent var(--sf-edge-glow));
 }
 
 .sf-dnd-indicator {
