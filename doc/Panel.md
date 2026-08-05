@@ -34,6 +34,7 @@ See [sub-section.md](./sub-section.md) for `PanelSubSection` and component types
 |:---|:---|:---|
 | `collapse` | - | Emitted when drag-to-collapse triggers |
 | `select-section` | `sectionId: string` | Emitted when a section tab is clicked |
+| `resize` | `width: number` | Emitted live during resize drag (drives the panel auto-hide logic in `App.vue`) |
 
 ## Layout
 
@@ -81,8 +82,9 @@ true })`) fires `recompute()` throttled through `requestAnimationFrame`.
    renders at its natural content width. `offsetWidth` is read for every tab.
 2. **Compute fit** - cumulative widths are summed left-to-right. At each
    position, the algorithm checks whether the cumulative width + 28px
-   (reserved for the `☰` button) fits in the container's `clientWidth`.
-   The first position that doesn't fit becomes the split point.
+   (reserved for the `☰` button, which only appears while more tabs follow)
+   fits in the container's `clientWidth`. The first position that doesn't
+   fit becomes the split point; at least one tab is always kept visible.
 3. **Apply** - tabs beyond the split point receive `display: none`.
    Flex styles are restored to `flex: 1 1 0%` on visible tabs so they fill
    the remaining space equally.
@@ -115,9 +117,10 @@ Clicking a section tab emits `select-section` with the section ID but does
 **not** change the panel. Panel switching is handled by the Docker icon bar
 outside the Panel component.
 
-The selected section index is persisted per panel via a `Map<string, number>`
-keyed by section IDs. Switching panels and back restores the last-selected
-section.
+The selected section index is persisted per panel instance via a
+`Map<string, number>` keyed by the panel's joined section IDs. Switching
+panels and back restores the last-selected section (two panels with
+identical section id lists would share the saved index).
 
 ### SubsectionBody
 
@@ -168,8 +171,18 @@ const { width, dragging, willCollapse, onMouseDown } = useResize({
   direction: 'right',    // 'left' | 'right' - which edge the handle is on
   collapseThreshold: 100,// Width below which DTC triggers on mouseup
   onCollapse: () => { … },
+  onResize: (w) => { … }, // Optional: live width updates during drag
 });
 ```
+
+| Option | Type | Default | Description |
+|:---|:---|:---|:---|
+| `min` | `number` | `180` | Minimum visible width (px) |
+| `max` | `number` | `500` | Maximum width (px) |
+| `direction` | `'left' \| 'right'` | `'right'` | Which edge the handle is on |
+| `collapseThreshold` | `number` | `min * 0.45` | Width below which DTC triggers on mouseup |
+| `onCollapse` | `() => void` | - | Called on mouseup when width falls below the threshold |
+| `onResize` | `(width: number) => void` | - | Called live during drag (Panel uses it to emit `resize`) |
 
 | Return | Type | Description |
 |:---|:---|:---|

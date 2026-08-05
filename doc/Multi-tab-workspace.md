@@ -1,5 +1,10 @@
 # Multi-tab workspace
 
+> **Status: superseded draft.** The idea was implemented and extended — the
+> workspace is now a multi-root split-tree model with merge / evenly-space
+> operations and root-group sashes. See [workspace.md](./workspace.md) for
+> the current design. Kept for design history.
+
 ## Drag to tile
 
 I want the tab in workspace can be drag to tile (DTT). Just like on vscode. 

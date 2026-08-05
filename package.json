@@ -11,16 +11,17 @@
     "check:dtt": "node scripts/check-dtt.cjs",
     "check:active": "node scripts/check-active.cjs",
     "check:autohide": "node scripts/check-autohide.cjs",
+    "check:tree": "node scripts/check-tree.ts",
     "typecheck": "vue-tsc --noEmit"
   },
   "devDependencies": {
+    "@vitejs/plugin-vue": "^6.0.8",
     "playwright": "^1.62.1",
     "typescript": "^5.7.0",
     "vite": "^6.0.0",
     "vue-tsc": "^3.3.9"
   },
   "dependencies": {
-    "@vitejs/plugin-vue": "^6.0.8",
     "vue": "^3.5.40"
   }
 }

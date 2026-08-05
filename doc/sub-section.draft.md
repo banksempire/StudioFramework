@@ -1,5 +1,8 @@
 # Sub sections
 
+> **Status: draft.** Superseded by [sub-section.md](./sub-section.md), which
+> documents the implemented behavior. Kept for design history.
+
 Sub section is a group of content under section.
 
 Level showed below

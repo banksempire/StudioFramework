@@ -11,12 +11,12 @@ data-driven sub-section system — **all defined by a single JSON file**
 - **Menu Bar** - multi-level dropdown menus with accelerators, hover-to-open behavior
 - **Docker (Activity Bar)** - left icon bar with badges, active indicators, single-click toggle
 - **Docker Panel** - data-driven panel with sections, sub-sections, and 6 component types
-- **Workspace** - tabbed tiles with drag-to-split and welcome screen
+- **Workspace** - tabbed tiles with drag-to-split, merge / evenly-space controls, and welcome screen
 - **Right Panel** - right panel with data-driven sub-sections
 - **Status Bar** - bottom bar with left/right-aligned items
-- **Panel Toggle** - ☰ button to hide/restore left panel, ◫ button for right panel
+- **Panel Toggle** - ☰ button in the menu bar hides/restores the left panel (Docker + panel); ◫ button in the top-right workspace tile toggles the right panel
 - **Resizable Panels** - drag panel edges to resize (150–500px). Dragging past 100px collapses the panel with a gradient glow on three edges
-- **Auto-hide on narrow workspace** - two triggers: (1) browser window resize hides both panels when workspace < 640px and restores both when it grows back; (2) expanding a panel (drag wider) that pushes workspace below 640px auto-hides the other panel as a one-time event (user can re-open it without re-triggering). If one panel is already collapsed, the would-be workspace width is calculated without it
+- **Auto-hide on narrow workspace** - two triggers: (1) browser window resize: when the workspace drops below 640px the left panel hides first, then the right if still too narrow, and both restore when it grows back; (2) expanding a panel (drag wider) that pushes workspace below 640px auto-hides the other panel as a one-time event (user can re-open it without re-triggering). If one panel is already collapsed, the would-be workspace width is calculated without it
 - **Sub-sections** - collapsible groups with variable/fixed height modes, drag-to-redistribute space, ⋯ visibility toggle
 - **VSCode Dark Theme** - all colors via CSS custom properties for easy re-theming
 
@@ -24,9 +24,9 @@ data-driven sub-section system — **all defined by a single JSON file**
 
 ```
 ┌────────────────── Menu Bar ──────────────────────────────────┐
-│ ☰  File  Edit  Selection  View  Help               ◫        │
+│ ☰  File  Edit  Selection  View  Help                        │
 ├──────┬───────────────┬──────────────────┬────────────────────┤
-│      │ TitleBar  ⋯   │                  │ TitleBar  ⋯       │
+│      │ TitleBar  ⋯   │  tab tab tab  ◫  │ TitleBar  ⋯       │
 │ Dock ├───────────────┤    Workspace     ├────────────────────┤
 │  er  │ SSB  tab tab  │   (Tabbed)       │ Sub-sections       │
 │      ├───────────────┤                  │                    │
@@ -36,10 +36,10 @@ data-driven sub-section system — **all defined by a single JSON file**
 └────────────── Status Bar ────────────────────────────────────┘
 ```
 
-| UI Element | Description |
-|:---|:---|
-| ☰ (48px) | `◫` / `◨` - Toggle left panel. Icon reflects panel state |
-| ◫ (48px) | `◫` / `◧` - Toggle right panel. Icon reflects panel state |
+| UI Element | Location | Description |
+|:---|:---|:---|
+| ☰ (48px) | Menu bar, far left | `◫` / `◨` - Toggle left panel (Docker + panel). Icon reflects panel state |
+| ◫ (28px) | Top-right tile, tab strip | `◫` / `◨` - Toggle right panel. Icon reflects panel state |
 
 ## Tech Stack
 
@@ -49,7 +49,7 @@ data-driven sub-section system — **all defined by a single JSON file**
 | Language | TypeScript |
 | Build | Vite |
 | Styling | CSS custom properties (VSCode-dark theme) |
-| Dependencies | `vue` only |
+| Runtime deps | `vue` only (build tooling in `devDependencies`) |
 
 ## Project Structure
 
@@ -67,6 +67,7 @@ src/
 │   └── layout.ts              # LayoutDefinition types (mirror the JSON schema)
 ├── components/
 │   ├── MenuBar.vue            # Top bar - driven by layout.menu
+│   ├── MenuDropdown.vue       # Recursive dropdown/submenu renderer (any depth)
 │   ├── Docker.vue             # Left icon bar - driven by layout.docker
 │   ├── Panel.vue              # Shared panel base (resize + header + SSB + sub-sections)
 │   ├── DockerPanel.vue        # Thin wrapper: Panel + layout panel def (position left)
@@ -75,18 +76,30 @@ src/
 │   ├── SubSection.vue         # Sub-section title bar + component body
 │   ├── PanelComponent.vue     # Renders 6 component types (text, input, button, tree, kv, list)
 │   ├── Icon.vue               # Renders IconDef (unicode char or image)
-│   ├── Workspace.vue          # Workspace root: split-tree renderer + drag-to-tile zones
-│   ├── WorkspaceNode.vue       # Recursive split/tile node (sash between children)
-│   ├── Tile.vue               # Tile: tab strip (drag/close/+) + content
-│   ├── Sash.vue                # Pointer resize handle with min-size clamping
+│   ├── Workspace.vue          # Workspace root: multi-root split-tree renderer + DnD zones
+│   ├── WorkspaceNode.vue      # Recursive split/tile node (sash between children)
+│   ├── RootSash.vue           # Sash between root groups (multi-root workspace model)
+│   ├── Tile.vue               # Tile: tab strip (drag/close/+ / merge / evenly / toggle) + content
+│   ├── Sash.vue               # Pointer resize handle with min-size clamping
 │   └── StatusBar.vue          # Bottom status bar - driven by layout.status
 ├── workspace/
-│   └── tree.ts               # Pure split-tree model + ops (Node-testable)
+│   └── tree.ts                # Pure split-tree model + ops (Node unit-tested)
 ├── composables/
 │   ├── useResize.ts           # Resize composable for draggable panel edges
-│   └── useWorkspace.ts        # Reactive split-tree state + DnD state
+│   ├── useWorkspace.ts        # Reactive multi-root workspace state + DnD state
+│   └── useClickOutside.ts     # Click-outside-to-close helper (menus, dropdowns)
 └── styles/
     └── main.css               # Global theme + layout CSS
+```
+
+```
+scripts/                      # Test suites + helpers (headless Chromium / Node)
+├── check-ui.cjs              # UI smoke: menu, docker, sub-sections, panels (11 assertions)
+├── check-dtt.cjs             # Drag-to-tile workspace interactions (23 assertions)
+├── check-active.cjs          # Active sub-section + hover behaviors (22 assertions)
+├── check-autohide.cjs        # Workspace-width auto-hide triggers (20 assertions)
+├── check-tree.ts             # Node unit tests for workspace/tree.ts (44 assertions)
+└── shot-zones.cjs            # Mid-drag DnD zone screenshot helper
 ```
 
 ## Define your own app
@@ -132,20 +145,30 @@ npm run dev
 # Opens at http://localhost:7492
 ```
 
+## Testing
+
+| Command | Suite | Assertions |
+|:---|:---|:---|
+| `npm run check` | Headless UI smoke: menu, docker switching, sub-section collapse/expand, panels | 11 |
+| `npm run check:dtt` | Drag-to-tile workspace interactions (splits, moves, sash, proportional resize) | 23 |
+| `npm run check:active` | Active sub-section + hover utility-button behaviors | 22 |
+| `npm run check:autohide` | Workspace-width auto-hide (window-resize + panel-expansion triggers) | 20 |
+| `npm run check:tree` | Node unit tests for `src/workspace/tree.ts` (pure, no browser) | 44 |
+| `npm run typecheck` | `vue-tsc --noEmit` | – |
+
 ## Component Reference
 
 ### MenuBar
 
-Top bar with dropdown menus, a left toggle button (48px wide, matching
-Docker), and a right panel toggle.
+Top bar with dropdown menus and a left toggle button (48px wide, matching
+Docker). The right-panel toggle is **not** in the menu bar - it lives in the
+top-right workspace tile's tab strip (see Workspace).
 
 ```vue
 <MenuBar
   :menus="layout.menu"
   :left-panel-visible="leftPanelVisible"
-  :right-panel-visible="rightPanelVisible"
   @toggle-left-panel="…"
-  @toggle-right-panel="…"
   @menu-action="onMenuAction"
 />
 ```
@@ -153,20 +176,20 @@ Docker), and a right panel toggle.
 | Button | Position | Width | Icon (collapsed -> expanded) | Action |
 |:---|:---|:---|:---|:---|
 | ☰ | Far left | 48px | ◫ -> ◨ | Toggle Docker + DockerPanel |
-| ◫ | Far right | 48px | ◫ -> ◧ | Toggle Right Panel |
 
 | Prop | Type | Description |
 |:---|:---|:---|
 | `menus` | `MenuDef[]` | Menus from the layout JSON |
 | `left-panel-visible` | `boolean` | Current left panel state (drives icon) |
-| `right-panel-visible` | `boolean` | Current right panel state (drives icon) |
 
 | Event | Payload | Description |
 |:---|:---|:---|
+| `toggle-left-panel` | – | ☰ button clicked - toggle the left panel group |
 | `menu-action` | `actionId: string` | Menu item clicked - the host app handles the id |
 
 Menus are defined in the layout JSON (`"menu"`). Each item can carry an
-`action` id, `accelerator`, `icon`, or be a `separator`.
+`action` id, `accelerator`, `icon`, or be a `separator`. Accelerators are
+display-only labels - the framework does not bind global keyboard shortcuts.
 
 ### Docker
 
@@ -174,7 +197,6 @@ Menus are defined in the layout JSON (`"menu"`). Each item can carry an
 <Docker
   :items="layout.docker"
   :active-tag="activeTag"
-  :visible="leftPanelVisible"
   :panel-visible="dockerPanelVisible"
   @tag-selected="onTagSelected"
 />
@@ -184,7 +206,6 @@ Menus are defined in the layout JSON (`"menu"`). Each item can carry an
 |:---|:---|:---|
 | `items` | `DockerItemDef[]` | Docker tags from the layout JSON |
 | `active-tag` | `string` | Currently active tag id |
-| `visible` | `boolean` | Show/hide the entire Docker bar |
 | `panel-visible` | `boolean` | When `false`, hides active indicator |
 
 | Event | Payload | Description |
@@ -198,6 +219,9 @@ Single-click behavior (no double-click):
 | Same icon | Open | Close panel |
 | Same icon | Closed | Open panel |
 | Different icon | Any | Switch and open |
+
+The Docker bar has no `visible` prop - `App.vue` hides it together with the
+left panel via `v-show` on the wrapping `.sf-left-group`.
 
 ### Panel (base)
 
@@ -226,6 +250,7 @@ to this same component.
 |:---|:---|:---|
 | `collapse` | – | Emitted when horizontal panel-edge drag crosses collapse threshold |
 | `select-section` | `sectionId: string` | Emitted when a section tab is clicked |
+| `resize` | `width: number` | Emitted live during resize drag (drives the panel auto-hide logic) |
 
 See [doc/Panel.md](doc/Panel.md) for SSB overflow, DTC glow, and resize details.
 See [doc/sub-section.md](doc/sub-section.md) for sub-section height model, drag
@@ -251,6 +276,7 @@ Thin wrapper around `Panel` with `position="left"`, driven by the layout.
 | Event | Payload | Description |
 |:---|:---|:---|
 | `collapse` | – | Emitted when resize drag crosses the collapse threshold |
+| `resize` | `width: number` | Emitted live during resize drag (re-emitted from Panel) |
 
 The six panel definitions live in `src/layout/app.layout.json` under
 `"docker"`. `App.vue` resolves the active tag → `def` and passes it down.
@@ -275,21 +301,36 @@ Thin wrapper around `Panel` with `position="right"`, driven by the layout.
 | Event | Payload | Description |
 |:---|:---|:---|
 | `collapse` | – | Emitted when resize drag crosses the collapse threshold |
+| `resize` | `width: number` | Emitted live during resize drag (re-emitted from Panel) |
 
 The right panel definition lives in `src/layout/app.layout.json` under
-`"right"` (set to `null` to disable the panel).
+`"right"` (set to `null` or omit the key to disable the panel).
 
 ### Workspace (multi-tab, drag-to-tile)
 
 ```vue
-<Workspace :def="layout.workspace" />
+<Workspace
+  :def="layout.workspace"
+  :right-panel-visible="rightPanelVisible"
+  @toggle-right-panel="…"
+/>
 ```
 
-Tabs, `minTileWidth` and `minTileHeight` come from the layout JSON; the split
-tree itself is runtime state (`src/workspace/tree.ts`). Drag a tab onto a
-tile's edge to split (the dragged tab takes half the tile), onto the strip
-to reorder/insert, or into the content area to move. Sizes stay proportional
-while the workspace resizes and only break at min sizes. See
+| Prop | Type | Description |
+|:---|:---|:---|
+| `def` | `WorkspaceDef` | Tabs + `minTileWidth`/`minTileHeight` from the layout JSON |
+| `right-panel-visible` | `boolean` | Right panel state - drives the ◫ toggle icon |
+
+| Event | Payload | Description |
+|:---|:---|:---|
+| `toggle-right-panel` | – | ◫ button clicked in the top-right tile's tab strip |
+
+The split tree itself is runtime state (`src/workspace/tree.ts`). Drag a tab
+onto a tile's edge to split (the dragged tab takes half the tile), onto the
+strip to reorder/insert, or into the content area to move. Sizes stay
+proportional while the workspace resizes and only break at min sizes. The
+top-right tile's tab strip also hosts □ "merge all tiles" and ⇔ "evenly
+space" buttons (shown when there are multiple root groups). See
 [`doc/workspace.md`](doc/workspace.md) for the model and zones.
 
 ### StatusBar
@@ -298,7 +339,8 @@ while the workspace resizes and only break at min sizes. See
 <StatusBar :left="layout.status.left" :right="layout.status.right" />
 ```
 
-Items come from the layout JSON.
+Items come from the layout JSON. Each item may carry an optional `icon`
+(rendered before the label).
 
 ## Composable
 
@@ -315,8 +357,18 @@ const { width, dragging, willCollapse, onMouseDown } = useResize({
   direction: 'right',    // 'left' | 'right' - which edge the handle is on
   collapseThreshold: 100,// Width below which collapse triggers on mouseup
   onCollapse: () => { … },
+  onResize: (w) => { … }, // Optional: live width updates during drag
 });
 ```
+
+| Option | Type | Default | Description |
+|:---|:---|:---|:---|
+| `min` | `number` | `180` | Minimum visible width (px) |
+| `max` | `number` | `500` | Maximum width (px) |
+| `direction` | `'left' \| 'right'` | `'right'` | Which edge the handle is on |
+| `collapseThreshold` | `number` | `min * 0.45` | Width below which collapse triggers on mouseup |
+| `onCollapse` | `() => void` | – | Called on mouseup when width is below the threshold |
+| `onResize` | `(width: number) => void` | – | Called live during drag (Panel uses it to emit `resize`) |
 
 | Return | Type | Description |
 |:---|:---|:---|
@@ -324,6 +376,9 @@ const { width, dragging, willCollapse, onMouseDown } = useResize({
 | `dragging` | `Ref<boolean>` | `true` while the user is dragging |
 | `willCollapse` | `Ref<boolean>` | `true` when drag crosses collapse threshold (activates glow) |
 | `onMouseDown` | `(e: MouseEvent) => void` | Bind to the resize handle's `@mousedown` |
+
+`Panel.vue` overrides the defaults with `min: 150`, `max: 500` and
+`collapseThreshold: 100` (2/3 of the minimum).
 
 ## Theme
 
@@ -333,6 +388,7 @@ create a new theme, override these variables:
 ```css
 :root {
   --sf-bg: #1e1e1e;
+  --sf-bg-dark: #181818;
   --sf-bg-light: #252526;
   --sf-bg-lighter: #2d2d2d;
   --sf-bg-hover: #2a2d2e;
@@ -342,6 +398,13 @@ create a new theme, override these variables:
   --sf-text-bright: #e0e0e0;
   --sf-accent: #007acc;
   --sf-accent-hover: #1a8ad4;
+  --sf-accent-soft: rgba(0, 122, 204, 0.16);
+  --sf-accent-dim: rgba(0, 122, 204, 0.65);
+  --sf-radius: 6px;
+  --sf-gap: 8px;
+  --sf-sash-size: 1px;
+  --sf-sash-hit: 5px;
+  --sf-edge-glow: 6px;
   --sf-active: #37373d;
   --sf-selection: #264f78;
   --sf-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
@@ -358,3 +421,4 @@ create a new theme, override these variables:
 - [doc/app.layout.json](doc/app.layout.json) - review copy of the current layout definition
 - [doc/Panel.md](doc/Panel.md) - Panel component: props, SSB, DTC, resize
 - [doc/sub-section.md](doc/sub-section.md) - Sub-sections: height model, drag, components
+- [doc/workspace.md](doc/workspace.md) - Multi-tab workspace: multi-root split-tree model, DnD zones, ops API

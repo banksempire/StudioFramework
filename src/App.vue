@@ -175,9 +175,6 @@ function onMenuAction(actionId: string) {
     case 'toggle-left-panel':
       toggleLeftPanel();
       break;
-    case 'toggle-right-panel':
-      toggleRightPanel();
-      break;
     case 'about':
       alert(`Studio Framework v1.0 • ${layout.app.title}`);
       break;
@@ -192,9 +189,7 @@ function onMenuAction(actionId: string) {
     <MenuBar
       :menus="layout.menu"
       :left-panel-visible="!leftAutoHidden && leftPanelVisible"
-      :right-panel-visible="!rightAutoHidden && rightPanelVisible"
       @toggle-left-panel="toggleLeftPanel"
-      @toggle-right-panel="toggleRightPanel"
       @menu-action="onMenuAction"
     />
 

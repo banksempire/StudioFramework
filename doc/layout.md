@@ -18,6 +18,15 @@ The loader validates the file at startup and throws a descriptive error
 (`app.layout.json: <path>: <message>`) on any mismatch — wrong types, unknown
 component types, missing ids, etc.
 
+Validation notes:
+
+- `docker` must contain **at least one** item.
+- `right` may be `null` (or omitted) to hide the right panel entirely.
+- `minTileWidth` / `minTileHeight` must be positive numbers; they are rounded
+  and default to `160` / `100`.
+- `app` is optional (defaults to `{ "title": "Studio Framework" }`).
+- Unknown/extra keys (e.g. `$comment`) are ignored.
+
 ## Schema
 
 ```
@@ -52,6 +61,15 @@ LayoutDefinition
     └── right[]                   StatusItemDef     right-aligned items
 ```
 
+### StatusItemDef
+
+```json
+{ "id": "ln-col", "label": "Ln 1, Col 1", "icon": "📄" }
+```
+
+- `id` (optional), `label` (required), `icon` (optional — rendered before
+the label).
+
 ### IconDef
 
 Icons accept two forms everywhere (menu, docker, tree nodes, list items,
@@ -81,7 +99,7 @@ utilities):
   "id": "project",
   "label": "Project",
   "height": "variable",            // "fixed" (default) | "variable"
-  "minHeight": 80,                 // required for "variable"
+  "minHeight": 80,                 // optional; clamp floor for "variable" (defaults to 0)
   "utilities": [
     { "id": "new-file", "icon": "📄", "tooltip": "New File" }
   ],
@@ -128,8 +146,23 @@ function onMenuAction(actionId: string) {
 
 Known ids in the demo layout: `new-file`, `open-folder`, `save`, `save-as`,
 `exit`, `undo`, `redo`, `cut`, `copy`, `paste`, `select-all`,
-`expand-selection`, `toggle-left-panel`, `toggle-right-panel`, `zoom-in`,
-`zoom-out`, `about`, `docs`.
+`expand-selection`, `toggle-left-panel`, `zoom-in`, `zoom-out`, `about`,
+`docs`, `settings`, `theme-dark`, `theme-light`, `theme-hc`, `keybindings`,
+`convert-case`, `layout-single`, `layout-split`, `layout-grid`,
+`toggle-statusbar`, `toggle-terminal`.
+
+## Component events
+
+The panel components are **render-only** in the current implementation:
+
+- `button` clicks emit `action` (`PanelComponent`) and sub-section utility
+  buttons emit `utility` (`SubsectionBody`) — nothing in the demo host
+  (`App.vue`) listens to them yet. Wire your host app's own handlers to act
+  on them.
+- `input` values are static (no `v-model` binding).
+- Tree nodes expand/collapse on click; leaf nodes have no selection state.
+- Menu `accelerator`s are display-only labels — the framework does not bind
+  global keyboard shortcuts.
 
 ## Review copy
 

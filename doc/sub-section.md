@@ -29,6 +29,10 @@ interface PanelSubSection {
 }
 ```
 
+> JSON spelling: in the layout file this field is written as
+> `"height": "fixed" | "variable"` (see [layout.md](./layout.md)); the
+> loader converts it to the `isHeightVariable` boolean.
+
 ## Panel layout
 
 ```
@@ -87,7 +91,9 @@ Each sub-section has two parts:
   when collapsed.
 - **Display name**: Uppercase, muted text.
 - **Utilities**: Optional minor action buttons (e.g., refresh). Shown on hover,
-  or always visible when the sub-section is **active** (see below).
+  or always visible when the sub-section is **active** (see below). Clicking a
+  utility emits `utility` (subId, utilityId) — the demo host app does not
+  handle it yet; wire your own host-app handler to act on it.
 
 ### Active sub-section
 

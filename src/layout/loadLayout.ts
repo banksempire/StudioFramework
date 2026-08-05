@@ -222,7 +222,7 @@ export function loadLayout(): LayoutDefinition {
     app: { title: needString((needRecord(root.app ?? {}, '<root>.app')).title ?? 'Studio Framework', '<root>.app.title') },
     menu,
     docker,
-    right: root.right === undefined ? null : toPanelDef(root.right, '<root>.right'),
+    right: root.right === undefined || root.right === null ? null : toPanelDef(root.right, '<root>.right'),
     workspace: (() => {
       const ws = needRecord(root.workspace ?? {}, '<root>.workspace');
       return {
