@@ -3,7 +3,7 @@
  *
  * Usage:  npm run check
  *
- * - Auto-starts the dev server on port 7492 if it isn't running
+ * - Auto-starts the dev server (port from SF_TEST_PORT, default 7492) if it isn't running
  * - Loads the page in headless Chromium and asserts core interactions
  * - Exits non-zero on any failure; saves a screenshot to scripts/artifacts/
  */

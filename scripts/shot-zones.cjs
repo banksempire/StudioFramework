@@ -1,8 +1,9 @@
 const { chromium } = require('playwright');
+const PORT = process.env.SF_TEST_PORT || '7492';
 (async () => {
   const browser = await chromium.launch();
   const page = await browser.newPage({ viewport: { width: 1440, height: 900 } });
-  await page.goto('http://localhost:7492/', { waitUntil: 'networkidle' });
+  await page.goto(`http://localhost:${PORT}/`, { waitUntil: 'networkidle' });
   await page.reload({ waitUntil: 'networkidle' });
   await page.waitForTimeout(500);
   // split first so the zone map shows per-tile zones

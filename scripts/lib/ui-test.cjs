@@ -6,7 +6,13 @@ const { spawn } = require('child_process');
 const http = require('http');
 const path = require('path');
 
-const URL = 'http://localhost:7492/';
+/**
+ * Port the checks run against. Defaults to 7492 (legacy). Set SF_TEST_PORT
+ * to point them at a test server on a different port — port 7492 is
+ * reserved for the product dev server (pi-agent-studio).
+ */
+const PORT = process.env.SF_TEST_PORT || '7492';
+const URL = `http://localhost:${PORT}/`;
 
 function serverUp() {
   return new Promise((resolve) => {
@@ -19,13 +25,13 @@ function serverUp() {
 /** Start the dev server if it isn't running. Returns null when it already was. */
 async function ensureServer() {
   if (await serverUp()) return null;
-  console.log('dev server not running — starting it…');
-  const proc = spawn('npm', ['run', 'dev'], { cwd: path.join(__dirname, '..', '..'), detached: true, stdio: 'ignore' });
+  console.log(`dev server not running on port ${PORT} — starting it…`);
+  const proc = spawn('npm', ['run', 'dev', '--', '--port', PORT, '--strictPort'], { cwd: path.join(__dirname, '..', '..'), detached: true, stdio: 'ignore' });
   for (let i = 0; i < 40; i++) {
     await new Promise((r) => setTimeout(r, 500));
     if (await serverUp()) return proc;
   }
-  throw new Error('dev server did not start within 20s');
+  throw new Error(`dev server did not start on port ${PORT} within 20s`);
 }
 
 /** Open the framework in headless Chromium with error collection. */
