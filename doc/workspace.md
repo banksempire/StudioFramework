@@ -121,7 +121,9 @@ the root tile of the first root group, which stays as an empty tile
 - **✕** → close; the tab next to the closed one becomes active. Closing the
   last tab of a non-root tile removes the tile and merges the split; closing
   the last tab of a non-first root group removes the group.
-- **+** → new "Untitled" tab in that tile (id `untitled-N`).
+- **+** → new "Untitled" tab in that tile (id `untitled-N`) — unless the
+  host app overrode it via `setNewTabHandler` (see Ops API), in which case
+  the app's handler decides what "+" creates.
 - **Drag** a tab → move / split / reorder as above. Dropping it back where it
   came from is a no-op.
 - **Top-right tile buttons**: the tile at the workspace's top-right corner
@@ -147,7 +149,7 @@ via the `kWorkspace` injection key:
 | `minTileWidth` / `minTileHeight` | `number` | Min sizes from the layout |
 | `ops.activateTab(tileId, tabId)` | | Activate a tab and focus its tile |
 | `ops.closeTab(tabId)` | | Close a tab anywhere in the workspace |
-| `ops.newTab(tileId)` | | Append an "Untitled" tab |
+| `ops.newTab(tileId)` | | Append an "Untitled" tab (or run the app's `setNewTabHandler` override) |
 | `ops.splitTile(tileId, dir, side, tabId)` | | DnD split (root-group or nested) |
 | `ops.moveTab(tabId, targetTileId, index)` | | Move a tab across/within roots |
 | `ops.setRatio(splitId, ratio)` | | Set a tree split's ratio (clamped) |
@@ -156,6 +158,8 @@ via the `kWorkspace` injection key:
 | `ops.focusTile(tileId)` | | Focus a tile |
 | `dnd` | `DndState` | Drag state: `dragging`, `tabId`, `sourceTileId`, `fromIndex`, `tileId`, `zone`, `index`, `preview`, `glow`, `indicator` |
 | `registerTileEl(id, el)` / `tileEls` | | Tile element registry for hit testing |
+| `newTabTitle` | `string` | Tooltip of the tile-strip "+" button (default "New file") |
+| `setNewTabHandler(handler, title?)` | | Override the tile-strip "+": the handler (tile id) runs instead of creating an "Untitled" tab; `null` restores the default |
 | `findTileGlobal(tileId)` | | Find a tile across all roots |
 
 `Tile.vue` also consumes `kRightPanelToggle` (`{ visible, toggle }`), provided

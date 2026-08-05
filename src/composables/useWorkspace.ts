@@ -82,6 +82,15 @@ export interface WorkspaceApi {
   startDrag(tabId: string, tileId: string, index: number): void;
   endDrag(): void;
   registerTileEl(id: string, el: HTMLElement | null): void;
+  /** Tooltip of the tile strip "+" button (default "New file"). */
+  readonly newTabTitle: string;
+  /**
+   * Override the tile strip "+" button. When a handler is set, clicking "+"
+   * calls it (with the tile id) instead of creating the generic "Untitled"
+   * tab — host apps decide what a new workspace item means (e.g. "New Chat").
+   * Pass `null` to restore the default behavior/title.
+   */
+  setNewTabHandler(handler: ((tileId: string) => void) | null, title?: string): void;
   tileEls: Map<string, HTMLElement>;
   /** Find a tile across all roots. */
   findTileGlobal(tileId: string): TileNode | null;
@@ -111,7 +120,7 @@ export function useWorkspace(def: WorkspaceDef): WorkspaceApi {
   const minTileHeight = def.minTileHeight ?? 100;
 
   const initialTileId = nextId('tile');
-  const state = reactive<{ roots: RootGroup[]; focusedTileId: string; rootDir: SplitDir | null }>({
+  const state = reactive<{ roots: RootGroup[]; focusedTileId: string; rootDir: SplitDir | null; newTabTitle: string }>({
     roots: [{
       id: nextId('root'),
       node: {
@@ -125,7 +134,20 @@ export function useWorkspace(def: WorkspaceDef): WorkspaceApi {
     // The initial root is always a single tile, so it starts focused.
     focusedTileId: initialTileId,
     rootDir: null,
+    newTabTitle: 'New file',
   });
+
+  // ── Tile strip "+" extension point ─────────────────────────────────────
+  // By default "+" appends a generic "Untitled" tab (editor-like default).
+  // Host apps can replace the whole behavior via setNewTabHandler so what a
+  // new workspace item means is decided by the app, not the framework.
+  let newTabHandler: ((tileId: string) => void) | null = null;
+
+  function setNewTabHandler(handler: ((tileId: string) => void) | null, title?: string) {
+    newTabHandler = handler;
+    if (title !== undefined) state.newTabTitle = title;
+    else if (!handler) state.newTabTitle = 'New file';
+  }
 
   const tabDefs = reactive<Record<string, WorkspaceTabDef>>({});
   for (const t of def.tabs) tabDefs[t.id] = t;
@@ -206,6 +228,8 @@ export function useWorkspace(def: WorkspaceDef): WorkspaceApi {
     },
 
     newTab(tileId) {
+      // Host-app override: the app decides what "+" creates (if anything).
+      if (newTabHandler) { newTabHandler(tileId); return; }
       const root = findRootByTile(tileId);
       if (!root) return;
       const id = `untitled-${nextId('tab')}`;
@@ -447,6 +471,10 @@ export function useWorkspace(def: WorkspaceDef): WorkspaceApi {
     endDrag,
     registerTileEl,
     tileEls,
+    get newTabTitle() {
+      return state.newTabTitle;
+    },
+    setNewTabHandler,
     findTileGlobal,
     findTabGlobal,
   };

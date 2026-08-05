@@ -59,7 +59,7 @@ function onTabDragStart(e: DragEvent, tabId: string) {
           @click.stop="ws.ops.closeTab(tabId)"
         >✕</span>
       </div>
-      <button class="sf-tab-new" title="New file" @click="ws.ops.newTab(tile.id)">+</button>
+      <button class="sf-tab-new" :title="ws.newTabTitle" @click="ws.ops.newTab(tile.id)">+</button>
       <template v-if="isTopRight">
         <div v-if="canEvenlySpace" class="sf-btn-group">
           <button

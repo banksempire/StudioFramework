@@ -64,9 +64,10 @@
 }
 
 /* The mount element must fill the viewport for .sf-root's height:100% to
-   work. Host apps mount under their own id (framework demo: #framework,
-   pi-agent-studio: #app). */
-html, body, #framework, #app {
+   work. The framework styles html/body; each host app styles its own mount
+   element (the framework demo mounts under #framework, pi-agent-studio
+   declares #app in its app.css). */
+html, body, #framework {
   height: 100%;
   width: 100%;
   overflow: hidden;
