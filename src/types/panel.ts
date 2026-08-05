@@ -19,6 +19,8 @@ export interface TreeNode {
   icon?: IconDef;
   children?: TreeNode[];
   badge?: string;
+  /** action id emitted when a leaf node is clicked */
+  action?: string;
 }
 
 export interface KeyValueItem {
@@ -31,15 +33,31 @@ export interface ListItem {
   label: string;
   icon?: IconDef;
   badge?: string;
+  /** action id emitted when the item is clicked */
+  action?: string;
 }
 
 export type PanelComponent =
   | { type: 'text'; text: string; muted?: boolean }
   | { type: 'input'; value: string; placeholder?: string }
-  | { type: 'button'; label: string; icon?: IconDef }
+  | { type: 'button'; label: string; icon?: IconDef; action?: string }
   | { type: 'tree'; nodes: TreeNode[] }
   | { type: 'keyValueList'; items: KeyValueItem[] }
-  | { type: 'list'; items: ListItem[] };
+  | { type: 'list'; items: ListItem[] }
+  /** app-registered component, rendered by key (see registry.ts) */
+  | { type: 'component'; key: string; props?: Record<string, unknown> };
+
+/**
+ * Action produced by a panel component (button / list item / tree node /
+ * custom component). Bubbles up through the panel chain to the framework
+ * root, which forwards it to the host app.
+ */
+export interface PanelAction {
+  /** emitting component: built-in type ("button" | "list" | "tree") or custom key */
+  source: string;
+  action?: string;
+  payload?: unknown;
+}
 
 // ── Sub-section ────────────────────────────────────────────────────────────
 
@@ -51,6 +69,7 @@ export interface PanelSubSection {
   utilities?: PanelUtility[];
   components: PanelComponent[];
 }
+
 
 // ── Section ────────────────────────────────────────────────────────────────
 

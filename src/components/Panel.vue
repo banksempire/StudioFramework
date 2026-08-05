@@ -2,7 +2,7 @@
 import { computed, ref, watch, onUnmounted, nextTick } from 'vue';
 import { useResize } from '../composables/useResize';
 import { useClickOutside } from '../composables/useClickOutside';
-import type { PanelSection } from '../types/panel';
+import type { PanelAction, PanelSection } from '../types/panel';
 import SubsectionBody from './SubsectionBody.vue';
 
 const props = withDefaults(defineProps<{
@@ -19,6 +19,8 @@ const emit = defineEmits<{
   collapse: [];
   'select-section': [sectionId: string];
   resize: [width: number];
+  utility: [subId: string, utilityId: string];
+  'component-action': [action: PanelAction];
 }>();
 
 // ── Resize ────────────────────────────────────────────────────────────────
@@ -263,6 +265,8 @@ onUnmounted(() => observer?.disconnect());
       :key="activeSectionId"
       :sub-sections="activeSubSections"
       :hidden-ids="activeHiddenIds"
+      @utility="(subId, utilityId) => emit('utility', subId, utilityId)"
+      @component-action="(a) => emit('component-action', a)"
     />
     <div v-else class="sf-panel-empty" />
 

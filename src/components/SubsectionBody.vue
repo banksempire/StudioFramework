@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ref, reactive, computed, watch, onMounted, onUnmounted, nextTick } from 'vue';
-import type { PanelSubSection } from '../types/panel';
+import type { PanelAction, PanelSubSection } from '../types/panel';
 import SubSection from './SubSection.vue';
 
 const props = defineProps<{
@@ -10,6 +10,7 @@ const props = defineProps<{
 
 const emit = defineEmits<{
   utility: [subId: string, utilityId: string];
+  'component-action': [action: PanelAction];
 }>();
 
 const TITLE_BAR_H = 24;
@@ -326,6 +327,7 @@ onUnmounted(() => {
         @activate="activate(sub.id)"
         @utility="emit('utility', sub.id, $event)"
         @content-changed="refresh(true)"
+        @component-action="(a) => emit('component-action', a)"
       />
       <div
         v-if="i < visibleSubSections.length - 1 && handleFlags[i]"

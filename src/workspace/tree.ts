@@ -107,6 +107,17 @@ export function findTile(root: WorkspaceNode, tileId: string): TileNode | null {
   return n && n.kind === 'tile' ? n : null;
 }
 
+/** First tile in visual order (left-to-right, top-to-bottom). */
+export function firstTile(root: WorkspaceNode): TileNode | null {
+  const stack: WorkspaceNode[] = [root];
+  while (stack.length) {
+    const n = stack.pop()!;
+    if (n.kind === 'tile') return n;
+    stack.push(n.children[1], n.children[0]);
+  }
+  return null;
+}
+
 /** Replace the node with the given id (the node itself may be the root). */
 export function replaceNode(root: WorkspaceNode, id: string, newNode: WorkspaceNode): WorkspaceNode {
   const path = findPath(root, id);

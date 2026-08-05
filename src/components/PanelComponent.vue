@@ -1,16 +1,36 @@
 <script setup lang="ts">
-import { reactive, computed } from 'vue';
+import { computed, provide, reactive } from 'vue';
 import Icon from './Icon.vue';
-import type { PanelComponent, TreeNode } from '../types/panel';
+import { getPanelComponent } from '../registry';
+import { kPanelAction } from '../composables/usePanelAction';
+import type { PanelAction, PanelComponent, TreeNode } from '../types/panel';
 
 const props = defineProps<{
   component: PanelComponent;
 }>();
 
 const emit = defineEmits<{
-  action: [];
+  action: [action: PanelAction];
   'content-changed': [];
 }>();
+
+/**
+ * Custom components (type: 'component') dispatch actions upward through
+ * this injection. The source is set to the component's layout key so the
+ * host app can tell which component produced the action.
+ */
+provide(kPanelAction, (action: Omit<PanelAction, 'source'>) => {
+  if (props.component.type !== 'component') return;
+  emit('action', { source: props.component.key, action: action.action, payload: action.payload });
+});
+
+const customComp = computed(() =>
+  props.component.type === 'component' ? getPanelComponent(props.component.key) ?? null : null,
+);
+
+function emitAction(action?: string, payload?: unknown) {
+  emit('action', { source: props.component.type, action, payload });
+}
 
 // ── Tree state ─────────────────────────────────────────────────────────────
 
@@ -48,7 +68,11 @@ function toggleNode(id: string) {
 }
 
 function onNodeClick(node: TreeNode) {
-  if (hasChildren(node)) toggleNode(node.id);
+  if (hasChildren(node)) {
+    toggleNode(node.id);
+  } else if (node.action) {
+    emitAction(node.action, node);
+  }
 }
 </script>
 
@@ -74,7 +98,7 @@ function onNodeClick(node: TreeNode) {
     <button
       v-else-if="component.type === 'button'"
       class="sf-pc-btn"
-      @click="emit('action')"
+      @click="emitAction(component.action)"
     >
       <Icon v-if="component.icon" :icon="component.icon" />
       {{ component.label }}
@@ -112,11 +136,23 @@ function onNodeClick(node: TreeNode) {
 
     <!-- List -->
     <div v-else-if="component.type === 'list'" class="sf-pc-list">
-      <div v-for="item in component.items" :key="item.id" class="sf-pc-list-item">
+      <div
+        v-for="item in component.items"
+        :key="item.id"
+        class="sf-pc-list-item"
+        @click="emitAction(item.action, item)"
+      >
         <Icon v-if="item.icon" class="sf-pc-list-icon" :icon="item.icon" />
         <span class="sf-pc-list-label">{{ item.label }}</span>
         <span v-if="item.badge" class="sf-pc-list-badge">{{ item.badge }}</span>
       </div>
     </div>
+
+    <!-- Custom (app-registered) component -->
+    <component
+      v-else-if="customComp"
+      :is="customComp"
+      v-bind="component.type === 'component' ? (component.props ?? {}) : {}"
+    />
   </div>
 </template>

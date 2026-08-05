@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import type { PanelSubSection } from '../types/panel';
+import type { PanelAction } from '../types/panel';
 import PanelComponent from './PanelComponent.vue';
 
 defineProps<{
@@ -15,6 +16,7 @@ const emit = defineEmits<{
   activate: [];
   utility: [utilityId: string];
   'content-changed': [];
+  'component-action': [action: PanelAction];
 }>();
 </script>
 
@@ -51,6 +53,7 @@ const emit = defineEmits<{
         :key="i"
         :component="comp"
         @content-changed="emit('content-changed')"
+        @action="(a) => emit('component-action', a)"
       />
     </div>
   </div>

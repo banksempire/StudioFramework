@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed, inject, onBeforeUnmount, onMounted, ref } from 'vue';
 import Icon from './Icon.vue';
+import { getTabContent } from '../registry';
 import type { TileNode } from '../workspace/tree';
 import { kWorkspace, kRightPanelToggle } from '../composables/useWorkspace';
 
@@ -13,6 +14,10 @@ onMounted(() => ws.registerTileEl(props.tile.id, el.value));
 onBeforeUnmount(() => ws.registerTileEl(props.tile.id, null));
 
 const activeTab = computed(() => (props.tile.activeId ? ws.tabDefs[props.tile.activeId] ?? null : null));
+const contentComp = computed(() => {
+  const content = activeTab.value?.content;
+  return content ? getTabContent(content) ?? null : null;
+});
 const focused = computed(() => ws.focusedTileId === props.tile.id);
 const isTopRight = computed(() => ws.topRightTileId === props.tile.id);
 const canEvenlySpace = computed(() => ws.roots.length > 1);
@@ -86,17 +91,8 @@ function onTabDragStart(e: DragEvent, tabId: string) {
           <p class="sf-tile-empty-hint">Drag a tab here, or press <kbd>+</kbd></p>
         </div>
       </div>
-      <div v-else-if="activeTab.content === 'welcome'" class="sf-welcome">
-        <div class="sf-welcome-content">
-          <h1>Studio Framework</h1>
-          <p>A VSCode-like UI framework built with Vue 3 + TypeScript</p>
-          <div class="sf-welcome-shortcuts">
-            <div class="sf-shortcut"><kbd>Ctrl+N</kbd> New File</div>
-            <div class="sf-shortcut"><kbd>Ctrl+O</kbd> Open Folder</div>
-            <div class="sf-shortcut"><kbd>Ctrl+S</kbd> Save</div>
-            <div class="sf-shortcut"><kbd>Ctrl+P</kbd> Quick Open</div>
-          </div>
-        </div>
+      <div v-else-if="contentComp" class="sf-tile-custom">
+        <component :is="contentComp" v-bind="activeTab.props ?? {}" />
       </div>
       <div v-else class="sf-tile-placeholder">
         <div class="sf-tile-lines">
@@ -149,5 +145,13 @@ function onTabDragStart(e: DragEvent, tabId: string) {
   border: 1px solid var(--sf-border);
   border-radius: 3px;
   padding: 1px 5px;
+}
+
+/* Custom content fills the whole tile body; it manages its own layout/scroll */
+.sf-tile-custom {
+  height: 100%;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
 }
 </style>

@@ -1,11 +1,13 @@
-import json from './framework.layout.json';
-import type { IconDef, PanelComponent, PanelSection, PanelSubSection, PanelUtility, TreeNode } from '../types/panel';
+import frameworkJson from './framework.layout.json';
+import type { IconDef, PanelAction, PanelComponent, PanelSection, PanelSubSection, PanelUtility, TreeNode } from '../types/panel';
 import type { DockerAppDef, LayoutDefinition, MenuNodeDef, PanelDef, StatusItemDef, WorkspaceTabDef } from '../types/layout';
 
 // ── Validation helpers ─────────────────────────────────────────────────────
 
+let sourceLabel = 'framework.layout.json';
+
 function fail(path: string, msg: string): never {
-  throw new Error(`framework.layout.json: ${path}: ${msg}`);
+  throw new Error(`${sourceLabel}: ${path}: ${msg}`);
 }
 
 function isRecord(v: unknown): v is Record<string, unknown> {
@@ -51,7 +53,7 @@ function toIcon(v: unknown, path: string): IconDef | undefined {
 
 // ── Components / sub-sections / sections ───────────────────────────────────
 
-const COMPONENT_TYPES = ['text', 'input', 'button', 'tree', 'keyValueList', 'list'] as const;
+const COMPONENT_TYPES = ['text', 'input', 'button', 'tree', 'keyValueList', 'list', 'component'] as const;
 
 function toTreeNode(v: unknown, path: string): TreeNode {
   const r = needRecord(v, path);
@@ -60,6 +62,7 @@ function toTreeNode(v: unknown, path: string): TreeNode {
     label: needString(r.label, path + '.label'),
     icon: toIcon(r.icon, path + '.icon'),
     badge: optString(r.badge, path + '.badge'),
+    action: optString(r.action, path + '.action'),
     children: r.children === undefined
       ? undefined
       : needArray(r.children, path + '.children').map((c, i) => toTreeNode(c, `${path}.children[${i}]`)),
@@ -78,7 +81,15 @@ function toComponent(v: unknown, path: string): PanelComponent {
     case 'input':
       return { type, value: needString(r.value ?? '', path + '.value'), placeholder: optString(r.placeholder, path + '.placeholder') };
     case 'button':
-      return { type, label: needString(r.label, path + '.label'), icon: toIcon(r.icon, path + '.icon') };
+      return { type, label: needString(r.label, path + '.label'), icon: toIcon(r.icon, path + '.icon'), action: optString(r.action, path + '.action') };
+    case 'component':
+      return {
+        type,
+        key: needString(r.key, path + '.key'),
+        props: r.props === undefined
+          ? undefined
+          : needRecord(r.props, path + '.props'),
+      };
     case 'tree':
       return { type, nodes: needArray(r.nodes, path + '.nodes').map((n, i) => toTreeNode(n, `${path}.nodes[${i}]`)) };
     case 'keyValueList':
@@ -99,6 +110,7 @@ function toComponent(v: unknown, path: string): PanelComponent {
             label: needString(ir.label, `${path}.items[${i}].label`),
             icon: toIcon(ir.icon, `${path}.items[${i}].icon`),
             badge: optString(ir.badge, `${path}.items[${i}].badge`),
+            action: optString(ir.action, `${path}.items[${i}].action`),
           };
         }),
       };
@@ -200,6 +212,9 @@ function toWorkspaceTab(v: unknown, path: string): WorkspaceTabDef {
     icon: toIcon(r.icon, path + '.icon'),
     closeable: r.closeable === undefined ? undefined : r.closeable === true,
     content: optString(r.content, path + '.content'),
+    props: r.props === undefined
+      ? undefined
+      : needRecord(r.props, path + '.props'),
   };
 }
 
@@ -211,7 +226,13 @@ function optInt(v: unknown, path: string): number | undefined {
 
 // ── Root ───────────────────────────────────────────────────────────────────
 
-export function loadLayout(): LayoutDefinition {
+/**
+ * Validate a layout definition object and normalize it into the typed
+ * LayoutDefinition. `label` is used in error messages only.
+ * No argument = the framework's bundled demo layout.
+ */
+export function loadLayout(json: unknown = frameworkJson, label = 'framework.layout.json'): LayoutDefinition {
+  sourceLabel = label;
   const root = needRecord(json, '<root>');
 
   const menu = needArray(root.menu ?? [], '<root>.menu').map((m, i) => toMenuNode(m, `<root>.menu[${i}]`));

@@ -1,18 +1,24 @@
 <script setup lang="ts">
 import { provide, reactive, ref, watch } from 'vue';
-import { kWorkspace, useWorkspace, type DndRect, kRightPanelToggle } from '../composables/useWorkspace';
+import { kWorkspace, useWorkspace, type WorkspaceApi, type DndRect, kRightPanelToggle } from '../composables/useWorkspace';
 import type { WorkspaceDef } from '../types/layout';
 import type { DropZone } from '../workspace/tree';
 import WorkspaceNode from './WorkspaceNode.vue';
 import RootSash from './RootSash.vue';
 
-const props = defineProps<{
+const props = withDefaults(defineProps<{
   def: WorkspaceDef;
   rightPanelVisible?: boolean;
-}>();
+  /** shared workspace api (created by the framework root when provided) */
+  api?: WorkspaceApi;
+}>(), {
+  rightPanelVisible: true,
+});
 const emit = defineEmits<{ 'toggle-right-panel': [] }>();
 
-const api = useWorkspace(props.def);
+// Use the shared api when given (single source of truth across panels +
+// tiles); otherwise create a local one (standalone usage).
+const api = props.api ?? useWorkspace(props.def);
 provide(kWorkspace, api);
 
 // Provide right-panel toggle info to tiles

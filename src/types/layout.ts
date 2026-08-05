@@ -40,8 +40,10 @@ export interface WorkspaceTabDef {
   label: string;
   icon?: IconDef;
   closeable?: boolean;
-  /** content renderer hint, e.g. "welcome" */
+  /** content renderer hint, e.g. "welcome" — resolved via the tab-content registry */
   content?: string;
+  /** props passed to the content renderer component */
+  props?: Record<string, unknown>;
 }
 
 export interface WorkspaceDef {

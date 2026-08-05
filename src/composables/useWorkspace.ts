@@ -35,6 +35,8 @@ export interface WorkspaceOps {
   activateTab(tileId: string, tabId: string): void;
   closeTab(tabId: string): void;
   newTab(tileId: string): void;
+  /** Insert a runtime-defined tab (definition registered in tabDefs). */
+  openTab(tileId: string, tab: WorkspaceTabDef): void;
   setRatio(splitId: string, ratio: number): void;
   setRootRatio(index: number, ratio: number): void;
   evenlySpace(): void;
@@ -125,7 +127,7 @@ export function useWorkspace(def: WorkspaceDef): WorkspaceApi {
     state.focusedTileId = first.kind === 'tile' ? first.id : '';
   }
 
-  const tabDefs: Record<string, WorkspaceTabDef> = {};
+  const tabDefs = reactive<Record<string, WorkspaceTabDef>>({});
   for (const t of def.tabs) tabDefs[t.id] = t;
 
   // ── Helpers ─────────────────────────────────────────────────────────────
@@ -209,6 +211,14 @@ export function useWorkspace(def: WorkspaceDef): WorkspaceApi {
       const id = `untitled-${nextId('tab')}`;
       root.node = treeNewTab(root.node, tileId, id);
       tabDefs[id] = { id, label: 'Untitled', icon: '📄' };
+    },
+
+    openTab(tileId, tab) {
+      const root = findRootByTile(tileId);
+      if (!root) return;
+      tabDefs[tab.id] = tab;
+      root.node = treeNewTab(root.node, tileId, tab.id);
+      state.focusedTileId = tileId;
     },
 
     setRatio(splitId, ratio) {

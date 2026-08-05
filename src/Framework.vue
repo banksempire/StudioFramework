@@ -1,14 +1,54 @@
+<script lang="ts">
+import type { PanelAction } from './types/panel';
+import type { WorkspaceApi } from './composables/useWorkspace';
+
+/**
+ * An action bubbling up from the layout to the host app:
+ * - menu:    a menu leaf was clicked (action id from the layout)
+ * - utility: a sub-section utility button was clicked (subId + utility id)
+ * - panel:   a panel component produced an action (button/list/tree/custom)
+ */
+export interface FrameworkAction {
+  source: 'menu' | 'utility' | 'panel';
+  action?: string;
+  subId?: string;
+  /** emitting panel component: built-in type or custom layout key */
+  component?: string;
+  payload?: unknown;
+}
+</script>
+
 <script setup lang="ts">
-import { computed, onMounted, onUnmounted, ref } from 'vue';
-import { layout } from './layout/loadLayout';
+import { computed, onMounted, onUnmounted, provide, ref } from 'vue';
+import { loadLayout } from './layout/loadLayout';
+import type { LayoutDefinition } from './types/layout';
 import MenuBar from './components/MenuBar.vue';
 import Docker from './components/Docker.vue';
 import DockerPanel from './components/DockerPanel.vue';
 import Workspace from './components/Workspace.vue';
 import RightPanel from './components/RightPanel.vue';
 import StatusBar from './components/StatusBar.vue';
+import { kWorkspace, useWorkspace } from './composables/useWorkspace';
 
-const activeDockerApp = ref(layout.docker[0]?.id ?? '');
+const props = withDefaults(defineProps<{
+  layout?: LayoutDefinition;
+}>(), {
+  layout: () => loadLayout(),
+});
+const L = props.layout;
+
+const emit = defineEmits<{
+  action: [payload: FrameworkAction];
+  'workspace-ready': [api: WorkspaceApi];
+}>();
+
+// ── Workspace API (root-level provide: available to panels AND tiles) ──────
+
+const api = useWorkspace(L.workspace);
+provide(kWorkspace, api);
+onMounted(() => emit('workspace-ready', api));
+
+const activeDockerApp = ref(L.docker[0]?.id ?? '');
 const leftPanelVisible = ref(true);
 const dockerPanelVisible = ref(true);
 const savedPanelState = ref(true);
@@ -63,7 +103,7 @@ function onWindowResize() {
   } else {
     // Still too narrow: hide both
     leftAutoHidden.value = leftIntended;
-    rightAutoHidden.value = rightPanelVisible.value && !!layout.right;
+    rightAutoHidden.value = rightPanelVisible.value && !!L.right;
   }
 }
 
@@ -78,7 +118,7 @@ function onPanelResize(side: 'left' | 'right', newWidth: number) {
     // Panel getting wider: check actual workspace width
     if (calcWorkspaceWidth(false) < MIN_WORKSPACE_WIDTH) {
       // Auto-hide the OTHER panel (one-time)
-      if (side === 'left' && layout.right) rightAutoHidden.value = true;
+      if (side === 'left' && L.right) rightAutoHidden.value = true;
       else leftAutoHidden.value = true;
       panelResizeTriggered = true;
     }
@@ -112,7 +152,7 @@ const effRightPanelVisible = computed(() =>
 );
 
 const activeDockerItem = computed(
-  () => layout.docker.find(d => d.id === activeDockerApp.value) ?? layout.docker[0],
+  () => L.docker.find(d => d.id === activeDockerApp.value) ?? L.docker[0],
 );
 const dockerDef = computed(() => activeDockerItem.value?.panel ?? null);
 
@@ -168,26 +208,38 @@ function toggleRightPanel() {
   rightPanelVisible.value = !rightPanelVisible.value;
 }
 
-// ── Menu actions: defined in the layout JSON, handled here ────────────────
+// ── Menu actions: framework-internal ones handled here, the rest are ──────
+//    forwarded to the host app so it can react to its own layout. ──────────
 
 function onMenuAction(actionId: string) {
   switch (actionId) {
     case 'toggle-left-panel':
       toggleLeftPanel();
       break;
+    case 'toggle-right-panel':
+      toggleRightPanel();
+      break;
     case 'about':
-      alert(`Studio Framework v1.0 • ${layout.framework.title}`);
+      alert(L.framework.title);
       break;
     default:
-      console.log('menu action:', actionId);
+      emit('action', { source: 'menu', action: actionId });
   }
+}
+
+function onPanelUtility(subId: string, utilityId: string) {
+  emit('action', { source: 'utility', subId, action: utilityId });
+}
+
+function onPanelAction(a: PanelAction) {
+  emit('action', { source: 'panel', component: a.source, action: a.action, payload: a.payload });
 }
 </script>
 
 <template>
   <div class="sf-root">
     <MenuBar
-      :menus="layout.menu"
+      :menus="L.menu"
       :left-panel-visible="!leftAutoHidden && leftPanelVisible"
       @toggle-left-panel="toggleLeftPanel"
       @menu-action="onMenuAction"
@@ -196,7 +248,7 @@ function onMenuAction(actionId: string) {
     <div class="sf-workbench">
       <div class="sf-left-group" v-show="leftPanelVisible">
         <Docker
-          :items="layout.docker"
+          :items="L.docker"
           :active-app="activeDockerApp"
           :panel-visible="dockerPanelVisible"
           @app-selected="onAppSelected"
@@ -208,6 +260,8 @@ function onMenuAction(actionId: string) {
           :visible="effDockerPanelVisible"
           @collapse="dockerPanelVisible = false"
           @resize="onPanelResize('left', $event)"
+          @utility="onPanelUtility"
+          @component-action="onPanelAction"
         />
       </div>
 
@@ -215,21 +269,24 @@ function onMenuAction(actionId: string) {
            thin border: (tile1|tile2|right panel) -->
       <div class="sf-center-group">
         <Workspace
-          :def="layout.workspace"
-          :right-panel-visible="!!layout.right && !rightAutoHidden && rightPanelVisible"
+          :def="L.workspace"
+          :api="api"
+          :right-panel-visible="!!L.right && !rightAutoHidden && rightPanelVisible"
           @toggle-right-panel="toggleRightPanel"
         />
 
         <RightPanel
-          v-if="layout.right"
-          :def="layout.right"
+          v-if="L.right"
+          :def="L.right"
           :visible="effRightPanelVisible"
           @collapse="rightPanelVisible = false"
           @resize="onPanelResize('right', $event)"
+          @utility="onPanelUtility"
+          @component-action="onPanelAction"
         />
       </div>
     </div>
 
-    <StatusBar :left="layout.status.left" :right="layout.status.right" />
+    <StatusBar :left="L.status.left" :right="L.status.right" />
   </div>
 </template>
