@@ -107,8 +107,13 @@ function distributeHeight() {
   const resizeable = visible.filter(s => isResizeable(s));
 
   if (unallocated > 0 && resizeable.length > 0) {
-    // Give all surplus to the first resizeable sub-section
-    states[resizeable[0].id].height += unallocated;
+    // Give all surplus to the first resizeable sub-section. The fill is
+    // based on the RENDERED body height (getBodyHeight never dips below the
+    // minHeight floor): a freshly-expanded sub-section can start below its
+    // min (expand sets height = squeeze result), and adding raw surplus to
+    // that would double-count the floor and leave a gap at the panel bottom.
+    const first = resizeable[0];
+    states[first.id].height = getBodyHeight(first) + unallocated;
   } else if (unallocated < 0) {
     // Squeeze resizeable sub-sections top-to-bottom
     squeezeToMin(resizeable.map(s => s.id), -unallocated);
