@@ -1162,15 +1162,21 @@ body.sf-dragging-row * {
 .sf-btn-group {
   display: flex;
   align-items: center;
-  height: 100%;
+  height: calc(100% - 8px);
   flex-shrink: 0;
   border-radius: var(--sf-radius);
   overflow: hidden;
+  background: var(--sf-bg);
   margin-left: auto;
 }
 
 .sf-btn-group + .sf-btn-group {
   margin-left: 4px;
+}
+
+/* Breathing room at the right edge of the tab strip (after the last group) */
+.sf-btn-group:last-child {
+  margin-right: var(--sf-gap);
 }
 
 .sf-tab-panel-toggle {
@@ -1179,10 +1185,14 @@ body.sf-dragging-row * {
   color: var(--sf-text-muted);
   cursor: pointer;
   font-size: 14px;
-  padding: 0 10px;
+  padding: 0;
+  width: 28px;
   height: 100%;
   flex-shrink: 0;
   border-radius: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .sf-btn-group .sf-tab-panel-toggle:not(:last-child) {
