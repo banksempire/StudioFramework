@@ -18,6 +18,10 @@ const TITLE_BAR_H = 24;
 // ── State ──────────────────────────────────────────────────────────────────
 
 const bodyEl = ref<HTMLElement | null>(null);
+/** Height of the sub-section container, FRACTIONAL-exact (getBoundingClientRect,
+ *  not clientHeight which rounds). At non-100% browser/display zoom the layout
+ *  viewport is fractional; distributing to a rounded height makes the panel's
+ *  scroll container overflow by <1px and show a spurious scrollbar. */
 const bodyHeight = ref(0);
 const ready = ref(false);
 
@@ -139,7 +143,7 @@ function measureAndObserve() {
     const el = body.querySelector(`[data-sub-body="${sub.id}"]`) as HTMLElement | null;
     if (!el) continue;
 
-    st.measuredHeight = el.offsetHeight;
+    st.measuredHeight = el.getBoundingClientRect().height;
 
     const obs = new ResizeObserver(() => {
       const s = states[sub.id];
@@ -199,9 +203,9 @@ let bodyObserver: ResizeObserver | null = null;
 onMounted(() => {
   const el = bodyEl.value;
   if (!el) return;
-  bodyHeight.value = el.clientHeight;  // triggers watch -> refresh(false)
+  bodyHeight.value = el.getBoundingClientRect().height;  // triggers watch -> refresh(false)
   bodyObserver = new ResizeObserver(() => {
-    bodyHeight.value = el.clientHeight;
+    bodyHeight.value = el.getBoundingClientRect().height;
   });
   bodyObserver.observe(el);
   requestAnimationFrame(() => refresh(false));  // safety net
