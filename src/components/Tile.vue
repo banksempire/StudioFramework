@@ -32,6 +32,15 @@ function onTabDragStart(e: DragEvent, tabId: string) {
   }
   ws.startDrag(tabId, props.tile.id, props.tile.tabs.indexOf(tabId));
 }
+
+/** Middle-click a tab to close it (VSCode behavior). Closes on mousedown so
+ *  the tab is gone before the click event would activate it. */
+function onTabMousedown(e: MouseEvent, tabId: string) {
+  if (e.button !== 1) return;
+  e.preventDefault();  // suppress middle-click autoscroll
+  if (ws.tabDefs[tabId]?.closeable === false) return;
+  ws.ops.closeTab(tabId);
+}
 </script>
 
 <template>
@@ -48,6 +57,7 @@ function onTabDragStart(e: DragEvent, tabId: string) {
         }"
         draggable="true"
         @click="ws.ops.activateTab(tile.id, tabId)"
+        @mousedown="onTabMousedown($event, tabId)"
         @dragstart="onTabDragStart($event, tabId)"
         @dragend="ws.endDrag"
       >

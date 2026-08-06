@@ -121,6 +121,8 @@ the root tile of the first root group, which stays as an empty tile
 - **✕** → close; the tab next to the closed one becomes active. Closing the
   last tab of a non-root tile removes the tile and merges the split; closing
   the last tab of a non-first root group removes the group.
+- **Middle-click** a tab → close it (same rules as ✕; non-closeable tabs are
+  ignored).
 - **+** → new "Untitled" tab in that tile (id `untitled-N`) — unless the
   host app overrode it via `setNewTabHandler` (see Ops API), in which case
   the app's handler decides what "+" creates.
