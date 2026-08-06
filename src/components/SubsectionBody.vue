@@ -124,31 +124,45 @@ function distributeHeight() {
   }
 }
 
-// ── Measure fixed sub-sections + set up observers (single pass) ────────────
+// ── Measure fixed sub-sections + set up observers (incremental) ────────────
+// Fixed sub-section bodies are keyed stably by id, so their observers are
+// created once and only dropped when the sub-section leaves the observed
+// set — no disconnect/re-create churn on every refresh.
 
 const fixedObservers = new Map<string, ResizeObserver>();
 
 function measureAndObserve() {
-  fixedObservers.forEach(o => o.disconnect());
-  fixedObservers.clear();
-
   const body = bodyEl.value;
   if (!body) return;
 
+  // The set of fixed sub-sections that should be observed right now.
+  const wanted = new Set(
+    props.subSections
+      .filter(s => !s.isHeightVariable && !props.hiddenIds.has(s.id) && states[s.id]?.isExpanded)
+      .map(s => s.id),
+  );
+
+  // Drop observers for sub-sections no longer in the set.
+  for (const [id, obs] of fixedObservers) {
+    if (!wanted.has(id)) {
+      obs.disconnect();
+      fixedObservers.delete(id);
+    }
+  }
+
+  // Refresh measurements; create observers only for missing sub-sections.
   for (const sub of props.subSections) {
-    if (sub.isHeightVariable) continue;
-    if (props.hiddenIds.has(sub.id)) continue;
-    const st = states[sub.id];
-    if (!st?.isExpanded) continue;
+    if (!wanted.has(sub.id)) continue;
     const el = body.querySelector(`[data-sub-body="${sub.id}"]`) as HTMLElement | null;
     if (!el) continue;
-
+    const st = states[sub.id];
     st.measuredHeight = el.getBoundingClientRect().height;
+    if (fixedObservers.has(sub.id)) continue;
 
     const obs = new ResizeObserver(() => {
       const s = states[sub.id];
       if (s && s.isExpanded && el.isConnected) {
-        s.measuredHeight = el.offsetHeight;
+        s.measuredHeight = el.getBoundingClientRect().height;
         distributeHeight();
       }
     });
