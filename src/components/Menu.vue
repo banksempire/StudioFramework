@@ -14,7 +14,9 @@
  * shape: rounded corners, border, shadow — same as every framework box),
  * computed from trigger/item rects and flipping LEFT when there is no room
  * on the right, so no ancestor overflow can clip them. The whole flyout
- * lives in one region; mouseleave, click-away, or Escape closes it.
+ * lives in one region. A click-opened menu stays open until a leaf is
+ * selected, the user clicks away, or Escape is pressed — moving the mouse
+ * away never closes it (same behavior as the menu bar's menus).
  *
  * The component is recursive: each level renders its own box plus the next
  * level as a fixed-positioned sibling. Root mode owns the anchor + trigger
@@ -32,8 +34,6 @@ const props = withDefaults(
     open?: boolean;
     /** Close after a leaf select (root only). */
     closeOnSelect?: boolean;
-    /** Close when the mouse leaves the whole flyout (root only). */
-    closeOnLeave?: boolean;
     /** Embedded (deeper) level: renders only its box, positioned by boxStyle. */
     embedded?: boolean;
     /** Depth of this level (root = 0). */
@@ -50,7 +50,6 @@ const props = withDefaults(
   {
     open: false,
     closeOnSelect: true,
-    closeOnLeave: true,
     embedded: false,
     depth: 0,
     hoverPath: () => ref<MenuNodeDef[]>([]),
@@ -196,10 +195,6 @@ function onEmbeddedSelect(item: MenuNodeDef) {
   emit('select', item);
 }
 
-function onRegionLeave() {
-  if (props.closeOnLeave) close();
-}
-
 function onDocDown(e: MouseEvent) {
   if (!props.open) return;
   const t = e.target as Node;
@@ -225,7 +220,7 @@ if (!props.embedded && typeof window !== 'undefined') {
       <slot name="trigger" :toggle="() => emit('update:open', !open)" :open="open" />
     </span>
 
-    <div v-if="open" ref="regionEl" class="sf-menu-region" @mouseleave="onRegionLeave">
+    <div v-if="open" ref="regionEl" class="sf-menu-region">
       <div ref="popEl" class="sf-menu-pop" :style="popStyle">
         <div class="sf-menu-scroll">
           <template v-for="(item, i) in items" :key="item.id ?? `sep-${i}`">

@@ -182,7 +182,6 @@ function onItemAction(item: MenuNodeDef) {
         :key="menu.id"
         :items="menu.items ?? []"
         :open="openMenu === menu.label"
-        :close-on-leave="false"
         @update:open="(v) => setOpen(menu.label, v)"
         @select="onItemAction"
       >
