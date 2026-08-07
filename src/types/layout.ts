@@ -20,6 +20,15 @@ export interface MenuNodeDef {
   action?: string;          // leaf: action id handled by the framework
   separator?: boolean;
   items?: MenuNodeDef[];    // children (submenu) - same class, one level down
+  /** Icon column mode: dot = single-select, check = multi-select. */
+  iconKind?: 'dot' | 'check';
+  /** Whether the selection indicator (dot/check) is marked. */
+  selected?: boolean;
+  /** Right-aligned hint text (e.g. "thinking", "~8k tokens"). */
+  detail?: string;
+  disabled?: boolean;
+  /** Opaque payload for app-specific leaf actions. */
+  data?: unknown;
 }
 
 export interface PanelDef {

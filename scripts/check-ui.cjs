@@ -27,7 +27,7 @@ const ARTIFACT_DIR = path.join(__dirname, 'artifacts');
   // ── Menu & submenu ──────────────────────────────────────────────────────
   await page.click('text=File');
   await page.waitForTimeout(200);
-  report('File menu opens', await visible('.sf-menu-dropdown.open'));
+  report('File menu opens', await visible('.sf-menu-pop'));
 
   await page.hover('text=New File');
   await page.waitForTimeout(200);
@@ -35,7 +35,7 @@ const ARTIFACT_DIR = path.join(__dirname, 'artifacts');
 
   await page.click('text=Text File');
   await page.waitForTimeout(200);
-  report('menu closes on leaf click', !(await visible('.sf-menu-dropdown.open')));
+  report('menu closes on leaf click', !(await visible('.sf-menu-pop')));
 
   // ── Docker panel switching ──────────────────────────────────────────────
   await page.click('.sf-docker-app:has-text("🐛")');

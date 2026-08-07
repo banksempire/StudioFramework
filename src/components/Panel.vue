@@ -1,9 +1,10 @@
 <script setup lang="ts">
 import { computed, ref, watch, onUnmounted, nextTick } from 'vue';
 import { useResize } from '../composables/useResize';
-import { useClickOutside } from '../composables/useClickOutside';
 import type { PanelAction, PanelSection } from '../types/panel';
 import SubsectionBody from './SubsectionBody.vue';
+import Menu from './Menu.vue';
+import type { MenuNodeDef } from '../types/layout';
 
 const props = withDefaults(defineProps<{
   title: string;
@@ -42,7 +43,6 @@ const { width, dragging, willCollapse, onMouseDown } = useResize({
 
 const activeIndex = ref(0);
 const overflowOpen = ref(false);
-useClickOutside(overflowOpen, '.sf-panel-tabs-wrapper');
 const tabsRow = ref<HTMLElement | null>(null);
 
 const visibleCount = ref(100);
@@ -155,7 +155,6 @@ watch(tabsRow, (el) => {
 // ── Sub-section visibility ─────────────────────────────────────────────────
 
 const visibilityMenuOpen = ref(false);
-useClickOutside(visibilityMenuOpen, ['.sf-panel-header-btn', '.sf-panel-visibility-dropdown']);
 const hiddenSubSections = ref<Map<string, Set<string>>>(new Map());
 
 const activeSection = computed(() =>
@@ -180,6 +179,30 @@ function toggleSubVisible(subId: string) {
   else hidden.add(subId);
   hiddenSubSections.value.set(key, hidden);
   hiddenSubSections.value = new Map(hiddenSubSections.value);
+}
+
+// Unified-menu item lists: the visibility ⋯ menu (multi-select checks) and
+// the section-tabs overflow menu (single-select dots).
+const visibilityItems = computed<MenuNodeDef[]>(() =>
+  activeSubSections.value.map((sub) => ({
+    id: sub.id,
+    label: sub.label,
+    iconKind: 'check' as const,
+    selected: !activeHiddenIds.value.has(sub.id),
+  })),
+);
+
+const overflowItems = computed<MenuNodeDef[]>(() =>
+  overflowTabs.value.map((sec) => ({
+    id: sec.id,
+    label: sec.label,
+    iconKind: 'dot' as const,
+    selected: sectionsIndexOf(sec) === activeIndex.value,
+  })),
+);
+
+function sectionsIndexOf(sec: PanelSection) {
+  return props.sections.indexOf(sec);
 }
 
 // ── Cleanup ────────────────────────────────────────────────────────────────
@@ -209,24 +232,21 @@ onUnmounted(() => observer?.disconnect());
     <!-- Title bar -->
     <div class="sf-panel-header">
       <span class="sf-panel-title">{{ title }}</span>
-      <button
-        v-if="hasSubSections"
-        class="sf-panel-header-btn"
-        @click.stop="visibilityMenuOpen = !visibilityMenuOpen"
-      >⋯</button>
-
-      <!-- Visibility dropdown -->
-      <div v-if="visibilityMenuOpen && hasSubSections" class="sf-panel-visibility-dropdown">
-        <button
-          v-for="sub in activeSubSections"
-          :key="sub.id"
-          class="sf-panel-visibility-item"
-          @click="toggleSubVisible(sub.id)"
-        >
-          <span class="sf-panel-visibility-check">{{ activeHiddenIds.has(sub.id) ? '' : '✓' }}</span>
-          {{ sub.label }}
-        </button>
-      </div>
+      <Menu
+        :items="visibilityItems"
+        :open="visibilityMenuOpen"
+        :close-on-select="false"
+        @update:open="(v) => (visibilityMenuOpen = v)"
+        @select="(item) => item.id && toggleSubVisible(item.id)"
+      >
+        <template #trigger="{ toggle }">
+          <button
+            v-if="hasSubSections"
+            class="sf-panel-header-btn"
+            @click.stop="toggle"
+          >⋯</button>
+        </template>
+      </Menu>
     </div>
 
     <!-- Section tab bar - only when multiple sections -->
@@ -240,22 +260,21 @@ onUnmounted(() => observer?.disconnect());
           @click="selectSection(i)"
         >{{ sec.label }}</button>
 
-        <button
-          v-if="hasOverflow"
-          class="sf-panel-tab sf-panel-tab--overflow"
-          :class="{ 'sf-panel-tab--active': activeIndex >= visibleCount }"
-          @click.stop="overflowOpen = !overflowOpen"
-        >☰</button>
-      </div>
-
-      <div v-if="overflowOpen && hasOverflow" class="sf-panel-tabs-dropdown">
-        <button
-          v-for="sec in overflowTabs"
-          :key="sec.id"
-          class="sf-panel-tabs-dropdown-item"
-          :class="{ 'sf-panel-tabs-dropdown-item--active': sections.indexOf(sec) === activeIndex }"
-          @click="selectOverflowSection(sec.id)"
-        >{{ sec.label }}</button>
+        <Menu
+          :items="overflowItems"
+          :open="overflowOpen"
+          @update:open="(v) => (overflowOpen = v)"
+          @select="(item) => item.id && selectOverflowSection(item.id)"
+        >
+          <template #trigger="{ toggle }">
+            <button
+              v-if="hasOverflow"
+              class="sf-panel-tab sf-panel-tab--overflow"
+              :class="{ 'sf-panel-tab--active': activeIndex >= visibleCount }"
+              @click.stop="toggle"
+            >☰</button>
+          </template>
+        </Menu>
       </div>
     </div>
 

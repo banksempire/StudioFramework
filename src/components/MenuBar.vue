@@ -1,7 +1,6 @@
 <script setup lang="ts">
 import { onMounted, onUnmounted, ref } from 'vue';
-import MenuDropdown from './MenuDropdown.vue';
-import { useClickOutside } from '../composables/useClickOutside';
+import Menu from './Menu.vue';
 import type { MenuNodeDef } from '../types/layout';
 
 // ── Keyboard accelerators ─────────────────────────────────────────────────
@@ -149,11 +148,9 @@ const emit = defineEmits<{
 }>();
 
 const openMenu = ref<string | null>(null);
-useClickOutside(openMenu, '.sf-menu-bar');
 
-function onMenuClick(label?: string) {
-  if (!label) return;
-  openMenu.value = openMenu.value === label ? null : label;
+function setOpen(label: string | undefined, open: boolean) {
+  openMenu.value = open && label ? label : null;
 }
 
 function onMenuHover(label?: string) {
@@ -161,9 +158,9 @@ function onMenuHover(label?: string) {
   openMenu.value = label;
 }
 
-function onItemAction(actionId: string) {
+function onItemAction(item: MenuNodeDef) {
   openMenu.value = null;
-  emit('menu-action', actionId);
+  if (item.action) emit('menu-action', item.action);
 }
 </script>
 
@@ -180,21 +177,26 @@ function onItemAction(actionId: string) {
     </div>
 
     <div class="sf-menu-items">
-      <div
+      <Menu
         v-for="menu in menus"
         :key="menu.id"
-        class="sf-menu-item"
-        @click="onMenuClick(menu.label)"
-        @mouseenter="onMenuHover(menu.label)"
+        :items="menu.items ?? []"
+        :open="openMenu === menu.label"
+        :close-on-leave="false"
+        @update:open="(v) => setOpen(menu.label, v)"
+        @select="onItemAction"
       >
-        {{ menu.label }}
-        <div v-if="openMenu === menu.label" class="sf-menu-dropdown open">
-          <MenuDropdown
-            :items="menu.items ?? []"
-            @action="onItemAction"
-          />
-        </div>
-      </div>
+        <template #trigger="{ toggle, open }">
+          <div
+            class="sf-menu-item"
+            :class="{ 'sf-menu-item--open': open }"
+            @click="toggle"
+            @mouseenter="onMenuHover(menu.label)"
+          >
+            {{ menu.label }}
+          </div>
+        </template>
+      </Menu>
     </div>
   </div>
 </template>

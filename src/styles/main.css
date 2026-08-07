@@ -124,86 +124,116 @@ html, body, #framework {
   white-space: nowrap;
 }
 
-.sf-menu-item:hover {
+.sf-menu-item:hover,
+.sf-menu-item--open {
   background: var(--sf-active);
 }
 
-.sf-menu-dropdown {
-  display: none;
-  position: absolute;
-  top: 100%;
-  left: 0;
+/* ─── Unified menu (sf-menu: multi-level flyout, menu-bar style) ────────── */
+
+/* Anchor around the trigger slot: takes no layout space, but its rect
+   positions the popup. */
+.sf-menu-anchor {
+  display: contents;
+}
+
+/* The flyout region: the popup + every submenu are fixed-positioned
+   siblings inside it, so mouseleave covers the whole open menu. */
+.sf-menu-region {
+  position: static;
+}
+
+/* One menu box at any level — same theme shape as every framework box. */
+.sf-menu-pop {
+  position: fixed;
+  z-index: 1000;
   min-width: 200px;
+  max-width: 340px;
   background: var(--sf-bg-lighter);
   border: 1px solid var(--sf-border);
-  border-top: none;
-  z-index: 1000;
-  padding: 4px 0;
+  border-radius: var(--sf-radius);
   box-shadow: var(--sf-shadow);
-}
-
-.sf-menu-dropdown.open {
-  display: block;
-}
-
-.sf-menu-dropdown-item {
-  padding: 5px 20px;
-  cursor: pointer;
-  color: var(--sf-text);
+  padding: 4px;
   font-size: 13px;
+  -webkit-app-region: no-drag;
+}
+
+.sf-menu-scroll {
+  max-height: 60vh;
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+
+/* One item row: [ icon | label | hint | arrow ] */
+.sf-menu-row {
   display: flex;
   align-items: center;
   gap: 6px;
-  position: relative;   /* anchor for nested submenu */
+  padding: 4px 8px;
+  border-radius: 3px;
+  cursor: pointer;
+  white-space: nowrap;
+  color: var(--sf-text);
 }
-
-.sf-menu-dropdown-item:hover {
+.sf-menu-row:hover,
+.sf-menu-row--open {
   background: var(--sf-accent);
   color: var(--sf-text-on-accent);
 }
+.sf-menu-row--disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+.sf-menu-row--disabled:hover {
+  background: none;
+  color: var(--sf-text);
+}
 
-.sf-menu-dropdown-caret {
+/* Icon column: always reserved so rows align; shows icon / check / dot. */
+.sf-menu-cell {
+  flex-shrink: 0;
+}
+.sf-menu-cell--icon {
+  width: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.sf-menu-mark {
+  font-size: 11px;
+  line-height: 1;
+}
+.sf-menu-cell--label {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.sf-menu-cell--hint {
+  color: var(--sf-text-muted);
+  font-size: 12px;
+  margin-left: 18px;
+  max-width: 140px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.sf-menu-row:hover .sf-menu-cell--hint {
+  color: var(--sf-text-on-accent);
+}
+.sf-menu-cell--arrow {
   font-size: 9px;
   margin-left: 8px;
   color: var(--sf-text-muted);
-  flex-shrink: 0;
 }
-
-.sf-menu-dropdown-item:hover .sf-menu-dropdown-caret {
+.sf-menu-row:hover .sf-menu-cell--arrow {
   color: var(--sf-text-on-accent);
 }
 
-.sf-menu-submenu {
-  display: block;
-  position: absolute;
-  left: 100%;
-  top: -4px;
-  min-width: 200px;
-  background: var(--sf-bg-lighter);
-  border: 1px solid var(--sf-border);
-  z-index: 1001;
-  padding: 4px 0;
-  box-shadow: var(--sf-shadow);
-}
-
-.sf-menu-dropdown-item:hover .sf-menu-dropdown-acc {
-  color: var(--sf-text-on-accent);
-}
-
-.sf-menu-dropdown-label {
-  flex: 1;
-}
-
-.sf-menu-dropdown-acc {
-  color: var(--sf-text-muted);
-  font-size: 12px;
-  margin-left: 24px;
-}
-
+/* Segregation line between items. */
 .sf-menu-separator {
   height: 1px;
   background: var(--sf-border);
-  margin: 4px 10px;
+  margin: 4px 8px;
 }
 
 /* ─── Menu Actions (panel toggle buttons) ─────────────────────────────── */
@@ -483,45 +513,6 @@ html, body, #framework {
   text-align: center;
 }
 
-/* ─── Tabs overflow dropdown ───────────────────────────────────────────── */
-
-.sf-panel-tabs-dropdown {
-  position: absolute;
-  top: 100%;
-  right: 0;
-  z-index: 50;
-  min-width: 140px;
-  background: var(--sf-bg-lighter);
-  border: 1px solid var(--sf-border);
-  border-radius: 4px;
-  box-shadow: var(--sf-shadow);
-  padding: 4px 0;
-}
-
-.sf-panel-tabs-dropdown-item {
-  display: block;
-  width: 100%;
-  padding: 4px 12px;
-  background: none;
-  border: none;
-  color: var(--sf-text);
-  cursor: pointer;
-  font-family: var(--sf-font);
-  font-size: 12px;
-  text-align: left;
-  white-space: nowrap;
-}
-
-.sf-panel-tabs-dropdown-item:hover {
-  background: var(--sf-bg-hover);
-}
-
-.sf-panel-tabs-dropdown-item--active {
-  color: var(--sf-text-bright);
-  border-left: 3px solid var(--sf-accent);
-  padding-left: 9px;
-}
-
 /* ─── Resize Handles ────────────────────────────────────────────────────── */
 
 .sf-panel-resize-handle {
@@ -615,47 +606,6 @@ html, body, #framework {
 
 .sf-panel-header-btn:hover {
   color: var(--sf-text-bright);
-}
-
-/* ─── Visibility dropdown ──────────────────────────────────────────────── */
-
-.sf-panel-visibility-dropdown {
-  position: absolute;
-  top: 100%;
-  right: 0;
-  z-index: 50;
-  min-width: 160px;
-  background: var(--sf-bg-lighter);
-  border: 1px solid var(--sf-border);
-  border-radius: 4px;
-  box-shadow: var(--sf-shadow);
-  padding: 4px 0;
-}
-
-.sf-panel-visibility-item {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  width: 100%;
-  padding: 4px 12px;
-  background: none;
-  border: none;
-  color: var(--sf-text);
-  cursor: pointer;
-  font-family: var(--sf-font);
-  font-size: 12px;
-  text-align: left;
-  white-space: nowrap;
-}
-
-.sf-panel-visibility-item:hover {
-  background: var(--sf-bg-hover);
-}
-
-.sf-panel-visibility-check {
-  width: 14px;
-  text-align: center;
-  color: var(--sf-accent);
 }
 
 .sf-panel-empty {
