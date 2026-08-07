@@ -845,28 +845,73 @@ body.sf-dragging-row * {
   padding: 0 4px;
 }
 
-/* ─── Key-Value List ─────────────────────────────────────────────────────── */
+/* ─── KeyValueList (unified key-value rows) ──────────────────────────────── */
 
-.sf-pc-kv-row {
+.kv-list {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+
+.kv-row {
   display: flex;
   justify-content: space-between;
   align-items: center;
+  gap: 12px;
   padding: 2px 0;
   font-size: 12px;
 }
 
-.sf-pc-kv-key {
+.kv-key {
   color: var(--sf-text-muted);
+  flex-shrink: 0;
 }
 
-.sf-pc-kv-val {
+.kv-value {
   color: var(--sf-text);
   text-align: right;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
   max-width: 60%;
+  font-family: var(--sf-mono);
+  font-size: 11px;
 }
+
+/* Pill (badge) value + generic tones; apps may add their own kv-pill--* tones. */
+.kv-pill {
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+  padding: 1px 7px;
+  border-radius: 8px;
+  flex-shrink: 0;
+  max-width: 60%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.kv-pill--accent {
+  background: var(--sf-accent-soft, rgba(79, 156, 247, 0.18));
+  color: var(--sf-accent-dim, var(--sf-accent));
+}
+.kv-pill--muted {
+  background: var(--sf-bg-lighter);
+  color: var(--sf-text-muted);
+}
+.kv-pill--ok {
+  background: rgba(78, 201, 176, 0.18);
+  color: #4ec9b0;
+}
+.kv-pill--warn {
+  background: rgba(215, 186, 125, 0.14);
+  color: #d7ba7d;
+}
+.kv-pill--err {
+  background: rgba(229, 72, 77, 0.15);
+  color: #e5484d;
+}
+
 
 /* ─── List ───────────────────────────────────────────────────────────────── */
 

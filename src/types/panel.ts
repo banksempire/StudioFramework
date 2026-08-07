@@ -25,7 +25,11 @@ export interface TreeNode {
 
 export interface KeyValueItem {
   key: string;
-  value: string;
+  value?: string | number;
+  /** Render the value as a pill (badge) instead of plain text. */
+  pill?: boolean;
+  /** Pill tone → kv-pill--<tone>; defaults to the value itself. */
+  tone?: string;
 }
 
 export interface ListItem {

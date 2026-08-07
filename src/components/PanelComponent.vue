@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed, provide, reactive } from 'vue';
 import Icon from './Icon.vue';
+import KeyValueList from './KeyValueList.vue';
 import { getPanelComponent } from '../registry';
 import { kPanelAction } from '../composables/usePanelAction';
 import type { PanelAction, PanelComponent, TreeNode } from '../types/panel';
@@ -126,13 +127,8 @@ function onNodeClick(node: TreeNode) {
       </div>
     </div>
 
-    <!-- Key-Value List -->
-    <div v-else-if="component.type === 'keyValueList'" class="sf-pc-kv">
-      <div v-for="item in component.items" :key="item.key" class="sf-pc-kv-row">
-        <span class="sf-pc-kv-key">{{ item.key }}</span>
-        <span class="sf-pc-kv-val">{{ item.value }}</span>
-      </div>
-    </div>
+    <!-- Key-Value List (unified KeyValueList component) -->
+    <KeyValueList v-else-if="component.type === 'keyValueList'" :items="component.items" />
 
     <!-- List -->
     <div v-else-if="component.type === 'list'" class="sf-pc-list">
