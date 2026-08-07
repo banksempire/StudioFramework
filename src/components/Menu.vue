@@ -21,7 +21,7 @@
  * slot + open wiring; deeper levels run in `embedded` mode (box only) and
  * share the hover state through props (root-owned refs passed down).
  */
-import { computed, nextTick, ref, watch, type Ref } from 'vue';
+import { computed, nextTick, onMounted, ref, watch, type Ref } from 'vue';
 import Icon from './Icon.vue';
 import type { MenuNodeDef } from '../types/layout';
 
@@ -39,11 +39,11 @@ const props = withDefaults(
     /** Depth of this level (root = 0). */
     depth?: number;
     /** Fixed position for this level's box (embedded only). */
-    boxStyle?: { left: string; top: string };
+    boxStyle?: { left: string; top: string; parentLeft?: number };
     /** Shared hover path (root-owned ref, passed down). */
     hoverPath?: Ref<MenuNodeDef[]>;
     /** Shared submenu positions per depth (root-owned ref, passed down). */
-    subPos?: Ref<Record<number, { left: string; top: string }>>;
+    subPos?: Ref<Record<number, { left: string; top: string; parentLeft?: number }>>;
     /** Root's hover handler (passed down to embedded levels). */
     hoverItem?: (item: MenuNodeDef, rect: DOMRect, depth: number) => void;
   }>(),
@@ -54,7 +54,7 @@ const props = withDefaults(
     embedded: false,
     depth: 0,
     hoverPath: () => ref<MenuNodeDef[]>([]),
-    subPos: () => ref<Record<number, { left: string; top: string }>>({}),
+    subPos: () => ref<Record<number, { left: string; top: string; parentLeft?: number }>>({}),
     hoverItem: () => {},
   },
 );
@@ -69,18 +69,18 @@ const emit = defineEmits<{
 // props (Refs) so every recursive level shares one reactive state.
 
 const rootHoverPath = ref<MenuNodeDef[]>([]);
-const rootSubPos = ref<Record<number, { left: string; top: string }>>({});
+const rootSubPos = ref<Record<number, { left: string; top: string; parentLeft?: number }>>({});
 // Nested in an object so template bindings pass the REF (not the unwrapped
 // value) down to recursive levels.
 const menuState = { hoverPath: rootHoverPath, subPos: rootSubPos };
 
 /** Position a submenu box from the hovered item's rect (flip left when tight). */
-function positionFor(rect: DOMRect): { left: string; top: string } {
+function positionFor(rect: DOMRect): { left: string; top: string; parentLeft: number } {
   const W = 224;
   let left = rect.right + 2;
   if (left + W > window.innerWidth - 4) left = rect.left - W - 2;
   const top = Math.max(4, Math.min(rect.top - 4, window.innerHeight - 240));
-  return { left: `${left}px`, top: `${top}px` };
+  return { left: `${left}px`, top: `${top}px`, parentLeft: rect.left };
 }
 
 function handleHover(item: MenuNodeDef, rect: DOMRect, depth: number) {
@@ -142,6 +142,40 @@ watch(
     }
   },
 );
+
+/**
+ * Embedded levels: after the box mounts (or its position prop changes),
+ * measure the REAL width — it can exceed the flip estimate (long labels)
+ * and overlap the parent box — and pull it fully left of the parent item.
+ */
+const boxEl = ref<HTMLElement | null>(null);
+const adjustedLeft = ref<string | null>(null);
+async function adjustBox() {
+  await nextTick();
+  const bs = props.boxStyle;
+  const el = boxEl.value;
+  if (!bs || !el || bs.parentLeft === undefined) return;
+  const w = el.offsetWidth;
+  const left = parseFloat(bs.left) || 0;
+  const right = left + w;
+  // Only correct boxes that could actually overlap something:
+  //  - flipped LEFT of the parent (left < parentLeft): must not cover the
+  //    parent item — the flip estimate (224px) can be smaller than the real
+  //    width, so pull fully left of the item.
+  //  - right of the parent but the real width overflows the viewport: pull
+  //    fully left of the parent instead.
+  if (left < bs.parentLeft && right > bs.parentLeft - 2) {
+    adjustedLeft.value = `${Math.max(4, bs.parentLeft - w - 2)}px`;
+  } else if (left >= bs.parentLeft && right > window.innerWidth - 4) {
+    adjustedLeft.value = `${Math.max(4, bs.parentLeft - w - 2)}px`;
+  } else {
+    adjustedLeft.value = null;
+  }
+}
+if (props.embedded) {
+  onMounted(() => void adjustBox());
+  watch(() => props.boxStyle, () => void adjustBox());
+}
 
 function onEnter(e: MouseEvent, item: MenuNodeDef, depth: number) {
   if (item.disabled) return;
@@ -238,7 +272,11 @@ if (!props.embedded && typeof window !== 'undefined') {
 
   <!-- Embedded level: its box plus the next level, as siblings. -->
   <template v-else>
-    <div class="sf-menu-pop" :style="boxStyle">
+    <div
+      ref="boxEl"
+      class="sf-menu-pop"
+      :style="[boxStyle, adjustedLeft ? { left: adjustedLeft } : {}]"
+    >
       <div class="sf-menu-scroll">
         <template v-for="(item, i) in items" :key="item.id ?? `sep-${i}`">
           <div v-if="item.separator" class="sf-menu-separator" />
