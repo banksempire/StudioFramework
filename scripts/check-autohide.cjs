@@ -35,6 +35,15 @@ const { ensureServer, openApp, makeReporter, finish } = require('./lib/ui-test.c
       }, side);
     }
 
+    /** The whole left group (docker bar + panel) actually on screen. */
+    async function leftGroupDisplayed() {
+      return page.evaluate(() => {
+        const el = document.querySelector('.sf-left-group');
+        if (!el) return null;
+        return getComputedStyle(el).display !== 'none';
+      });
+    }
+
     async function resizeTo(w) {
       await page.setViewportSize({ width: w, height: 900 });
       await page.waitForTimeout(100);
@@ -100,7 +109,7 @@ const { ensureServer, openApp, makeReporter, finish } = require('./lib/ui-test.c
     // Click left toggle -> collapses the whole group (docker bar included)
     await page.locator('.sf-menu-action-btn').first().click();
     await page.waitForTimeout(100);
-    report('left group collapsed by toggle while auto-hidden', (await panelDisplayed('left')) === false);
+    report('left group collapsed by toggle while auto-hidden', (await leftGroupDisplayed()) === false);
 
     // Click again -> restores the group (user override, stays open)
     await page.locator('.sf-menu-action-btn').first().click();
