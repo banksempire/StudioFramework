@@ -6,7 +6,8 @@
  * 2. Panel expansion (drag wider): hide the OTHER panel (one-time).
  *    - Drag back narrower: REVERT the auto-hide if workspace would be >= 640px
  *      with both panels open. Does NOT expand user-collapsed panels.
- *    - User can re-open the auto-hidden panel without re-triggering.
+ *    - The left toggle still collapses the docker while auto-hidden;
+ *      clicking again re-opens the group (user override, no re-trigger).
  *
  * Also: if one panel is already user-collapsed, the would-be workspace width
  * is calculated without it, so auto-hide only triggers if still too narrow.
@@ -96,7 +97,12 @@ const { ensureServer, openApp, makeReporter, finish } = require('./lib/ui-test.c
     await dragPanel('right', 160);
     report('left auto-hidden again (new trigger)', (await panelDisplayed('left')) === false);
 
-    // Click left toggle -> left re-opened (one-time, no re-trigger)
+    // Click left toggle -> collapses the whole group (docker bar included)
+    await page.locator('.sf-menu-action-btn').first().click();
+    await page.waitForTimeout(100);
+    report('left group collapsed by toggle while auto-hidden', (await panelDisplayed('left')) === false);
+
+    // Click again -> restores the group (user override, stays open)
     await page.locator('.sf-menu-action-btn').first().click();
     await page.waitForTimeout(100);
     report('left re-opened by user (stays open)', (await panelDisplayed('left')) === true);
@@ -111,7 +117,10 @@ const { ensureServer, openApp, makeReporter, finish } = require('./lib/ui-test.c
 
     // ── Phase 4: Don't expand user-collapsed panel on revert ──────────────
 
-    // Open left (clears auto-hidden), then collapse it (user intent)
+    // Collapse the group (auto-hidden), re-open it (clears auto-hide), then
+    // collapse again (user intent)
+    await page.locator('.sf-menu-action-btn').first().click();
+    await page.waitForTimeout(100);
     await page.locator('.sf-menu-action-btn').first().click();
     await page.waitForTimeout(100);
     await page.locator('.sf-menu-action-btn').first().click();

@@ -184,7 +184,19 @@ function onAppSelected(appId: string) {
 
 function toggleLeftPanel() {
   if (leftAutoHidden.value) {
-    showAutoHiddenLeft();
+    // Auto-hidden (width guard): the PANEL is off but the docker bar is
+    // still visible — the toggle keeps its normal job and collapses the
+    // whole group. The next click restores it and clears the auto-hide
+    // (user override), exactly like the reveal-from-collapsed path below.
+    if (leftPanelVisible.value) {
+      savedPanelState.value = dockerPanelVisible.value;
+      dockerPanelVisible.value = false;
+      leftPanelVisible.value = false;
+    } else {
+      leftPanelVisible.value = true;
+      dockerPanelVisible.value = savedPanelState.value;
+      leftAutoHidden.value = false;
+    }
     return;
   }
   if (leftPanelVisible.value) {
@@ -239,7 +251,7 @@ function onPanelAction(a: PanelAction) {
   <div class="sf-root">
     <MenuBar
       :menus="L.menu"
-      :left-panel-visible="!leftAutoHidden && leftPanelVisible"
+      :left-panel-visible="leftPanelVisible"
       @toggle-left-panel="toggleLeftPanel"
       @menu-action="onMenuAction"
     />
