@@ -656,6 +656,12 @@ html, body, #framework {
   user-select: none;
 }
 
+/* The whole title bar is the expand/collapse toggle — hover highlights it
+   like every other clickable control (added layer, never a bg replace). */
+.sf-subsection-header:hover {
+  box-shadow: inset 0 0 0 999px var(--sf-hover-overlay);
+}
+
 .sf-subsection-arrow {
   width: 16px;
   text-align: center;
