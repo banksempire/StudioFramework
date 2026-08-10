@@ -778,6 +778,20 @@ body.sf-dragging-row * {
   border-color: var(--sf-accent);
 }
 
+/* Mobile input zoom — universal guard: iOS (and iPadOS) auto-zooms into a
+   focused text field whose font-size is under 16px. That is the only
+   mobile platform with this behavior (Android never zooms on focus), so
+   the rule targets touch-primary devices only: any text entry on a phone
+   or tablet is at least 16px, desktop keeps its compact inputs. This also
+   covers widgets added in the future — new inputs can never regress. */
+@media (pointer: coarse) {
+  input,
+  textarea,
+  select {
+    font-size: 16px;
+  }
+}
+
 .sf-pc-btn {
   display: inline-flex;
   align-items: center;
