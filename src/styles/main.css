@@ -52,7 +52,6 @@
   --sf-selection: #264f78;
   --sf-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
   --sf-text-on-accent: #fff;
-  --sf-close-hover: rgba(255, 255, 255, 0.15);
   --sf-font: 'Segoe UI', -apple-system, BlinkMacSystemFont, sans-serif;
   --sf-mono: 'Consolas', 'Fira Code', 'JetBrains Mono', monospace;
 }
@@ -124,7 +123,9 @@ html, body, #framework {
   white-space: nowrap;
 }
 
-.sf-menu-item:hover,
+.sf-menu-item:hover {
+  background: var(--sf-bg-hover);
+}
 .sf-menu-item--open {
   background: var(--sf-active);
 }
@@ -175,7 +176,9 @@ html, body, #framework {
   white-space: nowrap;
   color: var(--sf-text);
 }
-.sf-menu-row:hover,
+.sf-menu-row:hover {
+  background: var(--sf-bg-hover);
+}
 .sf-menu-row--open {
   background: var(--sf-accent);
   color: var(--sf-text-on-accent);
@@ -260,7 +263,7 @@ html, body, #framework {
 }
 
 .sf-menu-action-btn:hover {
-  background: var(--sf-active);
+  background: var(--sf-bg-hover);
   color: var(--sf-text-bright);
 }
 
@@ -346,7 +349,7 @@ html, body, #framework {
 
 .sf-docker-app:hover {
   color: var(--sf-text-bright);
-  background: var(--sf-active);
+  background: var(--sf-bg-hover);
 }
 
 .sf-docker-app.active {
@@ -497,7 +500,7 @@ html, body, #framework {
 }
 
 .sf-panel-tab:hover {
-  background: var(--sf-active);
+  background: var(--sf-bg-hover);
 }
 
 .sf-panel-tab--active {
@@ -604,6 +607,7 @@ html, body, #framework {
 }
 
 .sf-panel-header-btn:hover {
+  background: var(--sf-bg-hover);
   color: var(--sf-text-bright);
 }
 
@@ -690,7 +694,7 @@ html, body, #framework {
 }
 
 .sf-subsection-util:hover {
-  background: var(--sf-active);
+  background: var(--sf-bg-hover);
   color: var(--sf-text-bright);
 }
 
@@ -1173,7 +1177,7 @@ body.sf-dragging-row * {
 }
 
 .sf-tab-close:hover {
-  background: var(--sf-close-hover);
+  background: var(--sf-bg-hover);
   color: var(--sf-text-bright);
 }
 
@@ -1324,7 +1328,7 @@ body.sf-dragging-row * {
 }
 
 .sf-status-item:hover {
-  opacity: 0.8;
+  background: var(--sf-bg-hover);
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════
