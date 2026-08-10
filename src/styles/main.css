@@ -29,13 +29,15 @@
   --sf-bg-dark: #181818;
   --sf-bg-light: #252526;
   --sf-bg-lighter: #2d2d2d;
-  --sf-bg-hover: #2a2d2e;
+  /* Hover highlight is a TRANSLUCENT layer added on top of the element's
+     own background (selected theme-blue items keep their color) — painted
+     via an inset box-shadow overlay in every :hover rule. */
+  --sf-hover-overlay: rgba(255, 255, 255, 0.06);
   --sf-border: #3c3c3c;
   --sf-text: #cccccc;
   --sf-text-muted: #858585;
   --sf-text-bright: #e0e0e0;
   --sf-accent: #007acc;
-  --sf-accent-hover: #1a8ad4;
   --sf-accent-soft: rgba(0, 122, 204, 0.16);
   --sf-accent-dim: rgba(0, 122, 204, 0.65);
   --sf-radius: 6px;
@@ -124,7 +126,7 @@ html, body, #framework {
 }
 
 .sf-menu-item:hover {
-  background: var(--sf-bg-hover);
+  box-shadow: inset 0 0 0 999px var(--sf-hover-overlay);
 }
 .sf-menu-item--open {
   background: var(--sf-active);
@@ -177,7 +179,7 @@ html, body, #framework {
   color: var(--sf-text);
 }
 .sf-menu-row:hover {
-  background: var(--sf-bg-hover);
+  box-shadow: inset 0 0 0 999px var(--sf-hover-overlay);
 }
 .sf-menu-row--open {
   background: var(--sf-accent);
@@ -188,7 +190,7 @@ html, body, #framework {
   cursor: default;
 }
 .sf-menu-row--disabled:hover {
-  background: none;
+  box-shadow: none;
   color: var(--sf-text);
 }
 
@@ -263,7 +265,7 @@ html, body, #framework {
 }
 
 .sf-menu-action-btn:hover {
-  background: var(--sf-bg-hover);
+  box-shadow: inset 0 0 0 999px var(--sf-hover-overlay);
   color: var(--sf-text-bright);
 }
 
@@ -349,7 +351,7 @@ html, body, #framework {
 
 .sf-docker-app:hover {
   color: var(--sf-text-bright);
-  background: var(--sf-bg-hover);
+  box-shadow: inset 0 0 0 999px var(--sf-hover-overlay);
 }
 
 .sf-docker-app.active {
@@ -500,7 +502,7 @@ html, body, #framework {
 }
 
 .sf-panel-tab:hover {
-  background: var(--sf-bg-hover);
+  box-shadow: inset 0 0 0 999px var(--sf-hover-overlay);
 }
 
 .sf-panel-tab--active {
@@ -607,7 +609,7 @@ html, body, #framework {
 }
 
 .sf-panel-header-btn:hover {
-  background: var(--sf-bg-hover);
+  box-shadow: inset 0 0 0 999px var(--sf-hover-overlay);
   color: var(--sf-text-bright);
 }
 
@@ -694,7 +696,7 @@ html, body, #framework {
 }
 
 .sf-subsection-util:hover {
-  background: var(--sf-bg-hover);
+  box-shadow: inset 0 0 0 999px var(--sf-hover-overlay);
   color: var(--sf-text-bright);
 }
 
@@ -788,7 +790,7 @@ body.sf-dragging-row * {
 }
 
 .sf-pc-btn:hover {
-  background: var(--sf-accent-hover);
+  box-shadow: inset 0 0 0 999px var(--sf-hover-overlay);
 }
 
 /* ─── Tree ──────────────────────────────────────────────────────────────── */
@@ -808,7 +810,7 @@ body.sf-dragging-row * {
 }
 
 .sf-pc-tree-node:hover {
-  background: var(--sf-bg-hover);
+  box-shadow: inset 0 0 0 999px var(--sf-hover-overlay);
 }
 
 .sf-pc-tree-arrow {
@@ -929,7 +931,7 @@ body.sf-dragging-row * {
 }
 
 .sf-pc-list-item:hover {
-  background: var(--sf-bg-hover);
+  box-shadow: inset 0 0 0 999px var(--sf-hover-overlay);
 }
 
 .sf-pc-list-icon {
@@ -1141,7 +1143,7 @@ body.sf-dragging-row * {
 }
 
 .sf-tab:hover {
-  background: var(--sf-bg-hover);
+  box-shadow: inset 0 0 0 999px var(--sf-hover-overlay);
 }
 
 .sf-tab.active {
@@ -1177,7 +1179,7 @@ body.sf-dragging-row * {
 }
 
 .sf-tab-close:hover {
-  background: var(--sf-bg-hover);
+  box-shadow: inset 0 0 0 999px var(--sf-hover-overlay);
   color: var(--sf-text-bright);
 }
 
@@ -1194,7 +1196,7 @@ body.sf-dragging-row * {
 
 .sf-tab-new:hover {
   color: var(--sf-text-bright);
-  background: var(--sf-bg-hover);
+  box-shadow: inset 0 0 0 999px var(--sf-hover-overlay);
 }
 
 /* Button group: wraps buttons in one rounded corner box with thin dividers */
@@ -1240,7 +1242,7 @@ body.sf-dragging-row * {
 
 .sf-tab-panel-toggle:hover {
   color: var(--sf-text-bright);
-  background: var(--sf-bg-hover);
+  box-shadow: inset 0 0 0 999px var(--sf-hover-overlay);
 }
 
 /* ─── Welcome Panel ──────────────────────────────────────────────────────── */
@@ -1328,7 +1330,7 @@ body.sf-dragging-row * {
 }
 
 .sf-status-item:hover {
-  background: var(--sf-bg-hover);
+  box-shadow: inset 0 0 0 999px var(--sf-hover-overlay);
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════
