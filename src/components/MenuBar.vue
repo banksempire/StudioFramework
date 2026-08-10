@@ -172,7 +172,7 @@ function onItemAction(item: MenuNodeDef) {
         :title="props.leftPanelVisible ? 'Collapse Left Panel' : 'Expand Left Panel'"
         @click="emit('toggle-left-panel')"
       >
-        {{ props.leftPanelVisible ? '\u25EB' : '\u25A1' }}
+        {{ props.leftPanelVisible ? '\u25E8' : '\u25EB' }}
       </button>
     </div>
 
