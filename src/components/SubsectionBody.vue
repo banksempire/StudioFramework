@@ -13,7 +13,7 @@ const emit = defineEmits<{
   'component-action': [action: PanelAction];
 }>();
 
-const TITLE_BAR_H = 24;
+const TITLE_BAR_H = 30;  // must match .sf-subsection-header height in main.css
 
 // ── State ──────────────────────────────────────────────────────────────────
 

@@ -646,7 +646,7 @@ html, body, #framework {
 .sf-subsection-header {
   display: flex;
   align-items: center;
-  height: 24px;
+  height: 30px;
   padding: 0 8px;
   cursor: pointer;
   color: var(--sf-text);
