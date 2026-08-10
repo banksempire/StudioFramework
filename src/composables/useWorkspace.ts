@@ -37,6 +37,10 @@ export interface WorkspaceOps {
   newTab(tileId: string): void;
   /** Insert a runtime-defined tab (definition registered in tabDefs). */
   openTab(tileId: string, tab: WorkspaceTabDef): void;
+  /** Insert a runtime-defined tab at a specific position in a tile. */
+  insertTab(tileId: string, index: number, tab: WorkspaceTabDef): void;
+  /** Split a tile and open a runtime-defined tab in the new half. */
+  splitOpen(tileId: string, dir: SplitDir, side: 'start' | 'end', tab: WorkspaceTabDef): void;
   setRatio(splitId: string, ratio: number): void;
   setRootRatio(index: number, ratio: number): void;
   evenlySpace(): void;
@@ -57,6 +61,8 @@ export interface DndRect {
 
 export interface DndState {
   dragging: boolean;
+  /** True while an EXTERNAL drag (non-tab, e.g. a panel item) hovers the workspace. */
+  externalDrop: boolean;
   tabId: string;
   sourceTileId: string;
   fromIndex: number;
@@ -66,6 +72,14 @@ export interface DndState {
   preview: DndRect | null;
   glow: DndRect | null;
   indicator: { x: number; y: number; h: number } | null;
+}
+
+/** Drop target for external drags: the tile, its drop zone, and the tab index. */
+export interface ExternalDropTarget {
+  tileId: string;
+  zone: DropZone;
+  /** tab insertion index for zone 'center' (tab-strip hover) */
+  index: number;
 }
 
 export interface WorkspaceApi {
@@ -98,6 +112,21 @@ export interface WorkspaceApi {
   findTileGlobal(tileId: string): TileNode | null;
   /** Find the tile holding a tab across all roots. */
   findTabGlobal(tabId: string): TileNode | null;
+  /**
+   * External drop support: host apps register a predicate over the
+   * dataTransfer types (their own drag payload) and a handler that receives
+   * the drop event + target. The framework stays payload-agnostic — it only
+   * shows the same hover zones/previews as tab drags and forwards the drop.
+   * Pass `null`/`null` to disable.
+   */
+  setExternalDropHandler(
+    accepts: ((types: string[]) => boolean) | null,
+    handler: ((e: DragEvent, target: ExternalDropTarget) => void) | null,
+  ): void;
+  /** Does the registered predicate accept this dataTransfer's types? */
+  acceptsExternal(types: string[]): boolean;
+  /** Forward a drop to the registered handler (no-op if none). */
+  deliverExternalDrop(e: DragEvent, target: ExternalDropTarget): void;
 }
 
 export type WorkspaceContext = WorkspaceApi;
@@ -149,6 +178,28 @@ export function useWorkspace(def: WorkspaceDef): WorkspaceApi {
     newTabHandler = handler;
     if (title !== undefined) state.newTabTitle = title;
     else if (!handler) state.newTabTitle = 'New file';
+  }
+
+  // ── External drop support ──────────────────────────────────────────────
+  // Host apps register a payload predicate + drop handler; the framework
+  // only renders the hover zones and forwards the drop (payload-agnostic).
+  let extAccepts: ((types: string[]) => boolean) | null = null;
+  let extHandler: ((e: DragEvent, target: ExternalDropTarget) => void) | null = null;
+
+  function setExternalDropHandler(
+    accepts: ((types: string[]) => boolean) | null,
+    handler: ((e: DragEvent, target: ExternalDropTarget) => void) | null,
+  ) {
+    extAccepts = accepts;
+    extHandler = handler;
+  }
+
+  function acceptsExternal(types: string[]): boolean {
+    return !!extAccepts && extAccepts(types);
+  }
+
+  function deliverExternalDrop(e: DragEvent, target: ExternalDropTarget) {
+    extHandler?.(e, target);
   }
 
   const tabDefs = reactive<Record<string, WorkspaceTabDef>>({});
@@ -245,6 +296,46 @@ export function useWorkspace(def: WorkspaceDef): WorkspaceApi {
       tabDefs[tab.id] = tab;
       root.node = treeNewTab(root.node, tileId, tab.id);
       state.focusedTileId = tileId;
+    },
+
+    insertTab(tileId, index, tab) {
+      const root = findRootByTile(tileId);
+      if (!root) return;
+      tabDefs[tab.id] = tab;
+      const tile = findTile(root.node, tileId);
+      const tabCount = tile ? tile.tabs.length : 0;
+      root.node = treeInsertTab(root.node, tileId, tab.id, Math.max(0, Math.min(index, tabCount)));
+      state.focusedTileId = tileId;
+    },
+
+    splitOpen(tileId, dir, side, tab) {
+      const root = findRootByTile(tileId);
+      if (!root) return;
+      tabDefs[tab.id] = tab;
+
+      // A split on a root tile (in the root arrangement direction) creates a
+      // new root group; the new tab gets the new half. Mirrors splitTile,
+      // minus the source-tab removal (the tab never existed before).
+      const isRootTile = root.node.kind === 'tile' && root.node.id === tileId;
+      const createsNewRoot = isRootTile && (state.rootDir === null || state.rootDir === dir);
+
+      if (createsNewRoot) {
+        if (state.rootDir === null) state.rootDir = dir;
+        const targetIdx = state.roots.indexOf(root);
+        const target = state.roots[targetIdx];
+        const newTile: TileNode = { kind: 'tile', id: nextId('tile'), tabs: [tab.id], activeId: tab.id };
+        const newRoot: RootGroup = { id: nextId('root'), node: newTile, ratio: target.ratio / 2 };
+        target.ratio /= 2;
+        state.roots.splice(side === 'start' ? targetIdx : targetIdx + 1, 0, newRoot);
+        state.focusedTileId = newTile.id;
+      } else {
+        // Insert-then-split: append the tab to the target tile, then split
+        // it — treeSplitTile moves the tab into the new half.
+        root.node = treeNewTab(root.node, tileId, tab.id);
+        root.node = treeSplitTile(root.node, tileId, dir, side, tab.id);
+        const newTile = findTileByTab(root.node, tab.id);
+        if (newTile) state.focusedTileId = newTile.id;
+      }
     },
 
     setRatio(splitId, ratio) {
@@ -391,6 +482,7 @@ export function useWorkspace(def: WorkspaceDef): WorkspaceApi {
 
   const dnd = reactive<DndState>({
     dragging: false,
+    externalDrop: false,
     tabId: '',
     sourceTileId: '',
     fromIndex: 0,
@@ -406,6 +498,7 @@ export function useWorkspace(def: WorkspaceDef): WorkspaceApi {
 
   function startDrag(tabId: string, tileId: string, index: number) {
     dnd.dragging = true;
+    dnd.externalDrop = false;
     dnd.tabId = tabId;
     dnd.sourceTileId = tileId;
     dnd.fromIndex = index;
@@ -419,6 +512,7 @@ export function useWorkspace(def: WorkspaceDef): WorkspaceApi {
 
   function endDrag() {
     dnd.dragging = false;
+    dnd.externalDrop = false;
     dnd.tabId = '';
     dnd.tileId = '';
     dnd.preview = null;
@@ -474,6 +568,9 @@ export function useWorkspace(def: WorkspaceDef): WorkspaceApi {
     endDrag,
     registerTileEl,
     tileEls,
+    setExternalDropHandler,
+    acceptsExternal,
+    deliverExternalDrop,
     get newTabTitle() {
       return state.newTabTitle;
     },

@@ -3,6 +3,7 @@ import { provide, reactive, ref, watch } from 'vue';
 import { kWorkspace, useWorkspace, type WorkspaceApi, type DndRect, kRightPanelToggle } from '../composables/useWorkspace';
 import type { WorkspaceDef } from '../types/layout';
 import type { DropZone } from '../workspace/tree';
+import type { ExternalDropTarget } from '../composables/useWorkspace';
 import WorkspaceNode from './WorkspaceNode.vue';
 import RootSash from './RootSash.vue';
 
@@ -119,8 +120,12 @@ function onDragOver(e: DragEvent) {
   // Always prevent default: keeps drop allowed and stops the browser from
   // navigating when an OS file is dropped onto the workspace.
   e.preventDefault();
-  if (!api.dnd.dragging) return;
-  if (e.dataTransfer) e.dataTransfer.dropEffect = 'move';
+  // External drags (host-app payload, e.g. a panel item) reuse the same
+  // hover zones as tab drags; the app decides what the drop means.
+  const external = !api.dnd.dragging && api.acceptsExternal(Array.from(e.dataTransfer?.types ?? []));
+  if (!api.dnd.dragging && !external) return;
+  if (e.dataTransfer) e.dataTransfer.dropEffect = external ? 'copy' : 'move';
+  api.dnd.externalDrop = external;
 
   // One workspace rect per event; origin + corner detection share it.
   const wsRect = wsEl.value?.getBoundingClientRect() ?? null;
@@ -210,6 +215,13 @@ function onDragOver(e: DragEvent) {
 
 function onDrop(e: DragEvent) {
   e.preventDefault();
+  if (api.dnd.externalDrop) {
+    const target: ExternalDropTarget = { tileId: api.dnd.tileId, zone: api.dnd.zone, index: api.dnd.index };
+    api.endDrag();
+    if (!target.tileId) return;
+    api.deliverExternalDrop(e, target);
+    return;
+  }
   if (!api.dnd.dragging) return;
 
   const { tabId, sourceTileId, tileId, zone, index, fromIndex } = api.dnd;
@@ -252,7 +264,7 @@ function onDragLeave(e: DragEvent) {
     </div>
 
     <!-- Visual-only DnD layer (pointer-events: none — events go to the root) -->
-    <div v-if="api.dnd.dragging" class="sf-dnd-layer">
+    <div v-if="api.dnd.dragging || api.dnd.externalDrop" class="sf-dnd-layer">
       <div v-if="api.dnd.preview" class="sf-dnd-preview" :style="rectStyle(api.dnd.preview)" />
       <div v-if="api.dnd.glow && !api.dnd.preview" class="sf-dnd-glow" :style="rectStyle(api.dnd.glow)" />
       <div v-if="api.dnd.indicator" class="sf-dnd-indicator" :style="rectStyle(api.dnd.indicator)" />
