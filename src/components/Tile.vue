@@ -90,7 +90,7 @@ function onTabMousedown(e: MouseEvent, tabId: string) {
             class="sf-tab-panel-toggle"
             :title="rpToggle.visible ? 'Collapse Right Panel' : 'Expand Right Panel'"
             @click="rpToggle.toggle()"
-          >{{ rpToggle.visible ? '\u25E8' : '\u25EB' }}</button>
+          >{{ rpToggle.visible ? '\u25EB' : '\u25A1' }}</button>
         </div>
       </template>
     </div>
