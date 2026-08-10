@@ -62,7 +62,7 @@ function onTabMousedown(e: MouseEvent, tabId: string) {
         :key="tabId"
         class="sf-tab"
         :class="[
-          ws.tabDefs[tabId]?.tabClass ?? '',
+          ws.tabDefs[tabId]?.tabClass,
           {
             active: tabId === tile.activeId,
             dragging: ws.dnd.dragging && ws.dnd.tabId === tabId,
