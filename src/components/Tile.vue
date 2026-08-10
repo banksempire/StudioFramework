@@ -35,6 +35,14 @@ function onTabDragStart(e: DragEvent, tabId: string) {
   ws.startDrag(tabId, props.tile.id, props.tile.tabs.indexOf(tabId));
 }
 
+/** Clicking a tab notifies host apps (review/preview semantics) and
+ *  activates it. The notification fires only for REAL clicks — programmatic
+ *  activation via ops.activateTab is silent. */
+function onTabClick(tabId: string) {
+  ws.notifyTabClick(tabId);
+  ws.ops.activateTab(props.tile.id, tabId);
+}
+
 /** Middle-click a tab to close it (VSCode behavior). Closes on mousedown so
  *  the tab is gone before the click event would activate it. */
 function onTabMousedown(e: MouseEvent, tabId: string) {
@@ -53,12 +61,15 @@ function onTabMousedown(e: MouseEvent, tabId: string) {
         v-for="tabId in tile.tabs"
         :key="tabId"
         class="sf-tab"
-        :class="{
-          active: tabId === tile.activeId,
-          dragging: ws.dnd.dragging && ws.dnd.tabId === tabId,
-        }"
+        :class="[
+          ws.tabDefs[tabId]?.tabClass ?? '',
+          {
+            active: tabId === tile.activeId,
+            dragging: ws.dnd.dragging && ws.dnd.tabId === tabId,
+          },
+        ]"
         draggable="true"
-        @click="ws.ops.activateTab(tile.id, tabId)"
+        @click="onTabClick(tabId)"
         @mousedown="onTabMousedown($event, tabId)"
         @dragstart="onTabDragStart($event, tabId)"
         @dragend="ws.endDrag"

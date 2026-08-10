@@ -113,6 +113,14 @@ export interface WorkspaceApi {
   /** Find the tile holding a tab across all roots. */
   findTabGlobal(tabId: string): TileNode | null;
   /**
+   * Tab-click notification: called whenever the user clicks a tab element
+   * (host apps can distinguish real clicks from programmatic activation,
+   * e.g. for preview/review semantics). Pass `null` to disable.
+   */
+  setTabClickHandler(handler: ((tabId: string) => void) | null): void;
+  /** Internal: fire the registered tab-click handler (called by tiles). */
+  notifyTabClick(tabId: string): void;
+  /**
    * External drop support: host apps register a predicate over the
    * dataTransfer types (their own drag payload) and a handler that receives
    * the drop event + target. The framework stays payload-agnostic — it only
@@ -200,6 +208,19 @@ export function useWorkspace(def: WorkspaceDef): WorkspaceApi {
 
   function deliverExternalDrop(e: DragEvent, target: ExternalDropTarget) {
     extHandler?.(e, target);
+  }
+
+  // ── Tab-click hook ──────────────────────────────────────────────────────
+  // Real user clicks on a tab element (distinct from programmatic
+  // activation via ops). Host apps decide what a click means.
+  let tabClickHandler: ((tabId: string) => void) | null = null;
+
+  function setTabClickHandler(handler: ((tabId: string) => void) | null) {
+    tabClickHandler = handler;
+  }
+
+  function notifyTabClick(tabId: string) {
+    tabClickHandler?.(tabId);
   }
 
   const tabDefs = reactive<Record<string, WorkspaceTabDef>>({});
@@ -571,6 +592,8 @@ export function useWorkspace(def: WorkspaceDef): WorkspaceApi {
     setExternalDropHandler,
     acceptsExternal,
     deliverExternalDrop,
+    setTabClickHandler,
+    notifyTabClick,
     get newTabTitle() {
       return state.newTabTitle;
     },
