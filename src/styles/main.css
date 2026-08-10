@@ -141,9 +141,12 @@ html, body, #framework {
 }
 
 /* The flyout region: the popup + every submenu are fixed-positioned
-   siblings inside it, so mouseleave covers the whole open menu. */
+   siblings inside it, so outside-click detection (region.contains) covers
+   the whole open menu. Absolutely positioned: it is 0×0 and must not
+   participate in layout — inside a flex row its presence would add a gap
+   slot and shift the trigger. */
 .sf-menu-region {
-  position: static;
+  position: absolute;
 }
 
 /* One menu box at any level — same theme shape as every framework box. */
