@@ -61,7 +61,22 @@ const ARTIFACT_DIR = path.join(__dirname, 'artifacts');
 
   // ── Bars & workspace ────────────────────────────────────────────────────
   report('status bar renders', await visible('.sf-status-bar'));
-  report('workspace tabs render', await visible('.sf-tab:has-text("Welcome")'));
+  report('workspace tabs render', await visible('.sf-tab:has-text("layout.json")'));
+
+  // The welcome page is NOT a tab anymore: it fills the workspace only when
+  // no tab is open (emptyContent). Close every tab and it must appear.
+  const closedAll = await page.evaluate(async () => {
+    for (let i = 0; i < 8; i++) {
+      const btn = document.querySelector('.sf-tab .sf-tab-close');
+      if (!btn) return true;
+      btn.click();
+      await new Promise((r) => setTimeout(r, 250));
+    }
+    return false;
+  });
+  report('no tabs after closing all', closedAll === true);
+  report('welcome fills the empty workspace', await visible('.sf-welcome'));
+
   report('right panel renders', await visible('.sf-panel--right'));
 
   // ── Errors ──────────────────────────────────────────────────────────────

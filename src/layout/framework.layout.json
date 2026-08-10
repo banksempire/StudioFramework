@@ -628,11 +628,12 @@
     "minTileWidth": 160,
     "minTileHeight": 100,
     "tabs": [
-      { "id": "welcome", "label": "Welcome", "icon": "🏠", "content": "welcome", "closeable": false },
       { "id": "framework-ts", "label": "framework.ts", "icon": "📄" },
       { "id": "utils-ts", "label": "utils.ts", "icon": "📄" },
-      { "id": "styles-css", "label": "styles.css", "icon": "🎨" }
-    ]
+      { "id": "styles-css", "label": "styles.css", "icon": "🎨" },
+      { "id": "layout-json", "label": "layout.json", "icon": "📄" }
+    ],
+    "emptyContent": "welcome"
   },
   "status": {
     "left": [

@@ -60,7 +60,7 @@ const WS = '.sf-workspace';
   // ── 3. split bottom: drag styles.css onto the bottom edge of right tile ─
   await dropAt('styles.css', w1.x - wsBox.x + w1.width / 2, w1.height - 2);
   report('split bottom → 3 tiles', (await tileCount()) === 3);
-  report('cross-tile split removes from source', JSON.stringify(await tileTabs(0)) === JSON.stringify(['Welcome']));
+  report('cross-tile split removes from source', JSON.stringify(await tileTabs(0)) === JSON.stringify(['layout.json']));
   report('bottom tile holds styles.css', JSON.stringify(await tileTabs(2)) === JSON.stringify(['styles.css']));
 
   // ── 4. split top: drag framework.ts onto the top band of the bottom tile ──────
@@ -112,8 +112,8 @@ const WS = '.sf-workspace';
 
   // ── 9. reorder + empty-source merge: styles.css to tile 0 strip start ────
   const leftBox = await tileBox(0);
-  await dropAt('styles.css', leftBox.x - wsBox.x + 20, 15); // strip, before Welcome
-  report('reorder into strip start', JSON.stringify(await tileTabs(0)) === JSON.stringify(['styles.css', 'Welcome']));
+  await dropAt('styles.css', leftBox.x - wsBox.x + 20, 15); // strip, before layout.json
+  report('reorder into strip start', JSON.stringify(await tileTabs(0)) === JSON.stringify(['styles.css', 'layout.json']));
   report('emptied source tile merges away', (await tileCount()) === 1);
 
   report('no console/page errors', errors.length === 0, errors.slice(0, 3).join(' | '));
