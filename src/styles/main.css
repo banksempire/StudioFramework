@@ -260,7 +260,7 @@ html, body, #framework {
   color: var(--sf-text);
   cursor: pointer;
   font-size: 16px;
-  padding: 0 10px 2px;  /* glyph ink rides low in its em box — nudge it up 1px */
+  padding: 0 10px 0.125em;  /* glyph ink rides low in its em box — nudge it up 1px (scales with font-size) */
   height: 100%;
   display: flex;
   align-items: center;
@@ -1243,7 +1243,7 @@ body.sf-dragging-row * {
   color: var(--sf-text);
   cursor: pointer;
   font-size: 16px;
-  padding: 0 0 2px;   /* glyph ink rides low in its em box — nudge it up 1px */
+  padding: 0 0 0.125em;   /* glyph ink rides low in its em box — nudge it up 1px (scales with font-size) */
   width: 28px;
   height: 100%;
   flex-shrink: 0;
