@@ -138,7 +138,7 @@ function onTabMousedown(e: MouseEvent, tabId: string) {
   align-items: center;
   justify-content: center;
   color: var(--sf-text-muted);
-  font-size: 14px;
+  font-size: 16px;
 }
 
 .sf-tile-empty-inner {
@@ -150,12 +150,12 @@ function onTabMousedown(e: MouseEvent, tabId: string) {
 }
 
 .sf-tile-empty-hint {
-  font-size: 12px;
+  font-size: 16px;
 }
 
 .sf-tile-empty kbd {
   font-family: var(--sf-mono);
-  font-size: 11px;
+  font-size: 16px;
   background: var(--sf-bg-light);
   border: 1px solid var(--sf-border);
   border-radius: 3px;
