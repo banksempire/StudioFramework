@@ -250,6 +250,7 @@ export function loadLayout(json: unknown = frameworkJson, label = 'framework.lay
         tabs: needArray(ws.tabs ?? [], '<root>.workspace.tabs').map((t, i) => toWorkspaceTab(t, `<root>.workspace.tabs[${i}]`)),
         minTileWidth: optInt(ws.minTileWidth, '<root>.workspace.minTileWidth') ?? 160,
         minTileHeight: optInt(ws.minTileHeight, '<root>.workspace.minTileHeight') ?? 100,
+        emptyContent: optString(ws.emptyContent, '<root>.workspace.emptyContent'),
       };
     })(),
     status: (() => {

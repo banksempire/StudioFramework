@@ -18,6 +18,8 @@ const contentComp = computed(() => {
   const content = activeTab.value?.content;
   return content ? getTabContent(content) ?? null : null;
 });
+/** Registered component for the layout's emptyContent key (if any). */
+const emptyComp = computed(() => (ws.emptyContent ? getTabContent(ws.emptyContent) ?? null : null));
 const focused = computed(() => ws.focusedTileId === props.tile.id);
 const isTopRight = computed(() => ws.topRightTileId === props.tile.id);
 const canEvenlySpace = computed(() => ws.roots.length > 1);
@@ -96,7 +98,10 @@ function onTabMousedown(e: MouseEvent, tabId: string) {
     <!-- Content -->
     <div class="sf-tile-content">
       <div v-if="!activeTab" class="sf-tile-empty">
-        <div class="sf-tile-empty-inner">
+        <!-- Host-app empty content (e.g. a welcome page) when the layout
+             declares emptyContent; generic hint otherwise. -->
+        <component v-if="emptyComp" :is="emptyComp" />
+        <div v-else class="sf-tile-empty-inner">
           <p>No tab open</p>
           <p class="sf-tile-empty-hint">Drag a tab here, or press <kbd>+</kbd></p>
         </div>

@@ -57,6 +57,9 @@ export interface WorkspaceTabDef {
 
 export interface WorkspaceDef {
   tabs: WorkspaceTabDef[];
+  /** tab-content key rendered inside a tile that has no tabs open (e.g. a
+   *  welcome page) instead of the generic empty hint */
+  emptyContent?: string;
   /** smallest size a tile may shrink to while resizing */
   minTileWidth?: number;
   minTileHeight?: number;

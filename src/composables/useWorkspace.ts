@@ -75,6 +75,8 @@ export interface WorkspaceApi {
   focusedTileId: string;
   readonly topRightTileId: string;
   tabDefs: Record<string, WorkspaceTabDef>;
+  /** tab-content key rendered inside an empty tile (no tabs open), if any */
+  readonly emptyContent: string;
   minTileWidth: number;
   minTileHeight: number;
   ops: WorkspaceOps;
@@ -463,6 +465,7 @@ export function useWorkspace(def: WorkspaceDef): WorkspaceApi {
       return root ? findTopRightTileId(root.node) : '';
     },
     tabDefs,
+    emptyContent: def.emptyContent ?? '',
     minTileWidth,
     minTileHeight,
     ops,
