@@ -887,6 +887,19 @@ body.sf-dragging-row * {
   gap: 12px;
   padding: 2px 0;
   font-size: 16px;
+  /* click-to-copy affordance */
+  cursor: pointer;
+  border-radius: 3px;
+}
+
+.kv-row:hover {
+  box-shadow: inset 0 0 0 999px var(--sf-hover-overlay);
+}
+
+/* transient "Copied" feedback after a row click */
+.kv-row--copied .kv-value,
+.kv-row--copied .kv-pill {
+  color: var(--sf-accent);
 }
 
 .kv-key {
