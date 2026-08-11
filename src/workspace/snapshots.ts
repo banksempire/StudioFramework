@@ -37,11 +37,23 @@ export interface RootSnapshot {
   node: NodeSnapshot;
 }
 
+/** Side-panel visibility at capture time (user intent, not auto-hide). */
+export interface SnapshotPanels {
+  /** left group (docker bar + its panel) */
+  left: boolean;
+  /** the active docker app's panel */
+  docker: boolean;
+  /** right panel */
+  right: boolean;
+}
+
 export interface WorkspaceSnapshot {
   version: 1;
   /** root arrangement direction (null = single root) */
   rootDir: SplitDir | null;
   roots: RootSnapshot[];
+  /** side-panel visibility — applied on restore (absent = don't touch). */
+  panels?: SnapshotPanels;
 }
 
 /**
@@ -89,6 +101,7 @@ export function captureSnapshot(
   roots: Array<{ node: WorkspaceNode; ratio: number }>,
   rootDir: SplitDir | null,
   skipTab?: (tabId: string) => boolean,
+  panels?: SnapshotPanels,
 ): WorkspaceSnapshot {
   const kept: RootSnapshot[] = [];
   for (const r of roots) {
@@ -105,7 +118,9 @@ export function captureSnapshot(
     if (total > 0) for (const r of kept) r.ratio /= total;
     else for (const r of kept) r.ratio = 1 / kept.length;
   }
-  return { version: 1, rootDir, roots: kept };
+  const snap: WorkspaceSnapshot = { version: 1, rootDir, roots: kept };
+  if (panels) snap.panels = { ...panels };
+  return snap;
 }
 
 /** Rebuild roots (fresh ids) from a snapshot, preserving structure + spacing. */

@@ -205,6 +205,16 @@ function allTabs(node: WorkspaceNode): string[] {
   report('no-transient capture keeps ratios', root.node.kind === 'split' && root.node.ratio === 0.28);
 }
 
+{
+  // Side-panel visibility is captured with the layout and round-trips.
+  const tree = tile(['a']);
+  const panels = { left: false, docker: false, right: true };
+  const snap = captureSnapshot([{ node: tree, ratio: 1 }], null, undefined, panels);
+  report('capture stores panel visibility', JSON.stringify(snap.panels) === JSON.stringify(panels));
+  const snap2 = captureSnapshot([{ node: tree, ratio: 1 }], null);
+  report('no panels arg → no panels field', snap2.panels === undefined);
+}
+
 // ── nodeToSnapshot / nodeFromSnapshot symmetry ─────────────────────────────
 
 {

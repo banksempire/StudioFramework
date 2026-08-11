@@ -20,6 +20,7 @@ import {
 import {
   captureSnapshot,
   restoreSnapshot,
+  type SnapshotPanels,
   type WorkspaceSnapshot,
 } from '../workspace/snapshots';
 
@@ -94,6 +95,17 @@ export interface ExternalDropTarget {
   index: number;
 }
 
+/**
+ * Side-panel visibility hook. The framework root owns the panel refs, the
+ * workspace API owns the snapshots — the root registers a provider so
+ * capture() stores the panels' expand/collapse state and apply() restores
+ * it. Pass `null` to detach (snapshots then carry no panel state).
+ */
+export interface PanelStateProvider {
+  read: () => SnapshotPanels | null;
+  apply: (panels: SnapshotPanels) => void;
+}
+
 export interface WorkspaceApi {
   roots: RootGroup[];
   /** direction of root arrangement (set by first root-level split) */
@@ -150,15 +162,19 @@ export interface WorkspaceApi {
   /**
    * Capture the current workspace (tile structure + spacing) as a plain
    * JSON snapshot. Node ids are stripped — a snapshot can be stored and
-   * applied onto any live workspace.
+   * applied onto any live workspace. Includes the side panels' visibility
+   * when a panel-state provider is registered.
    */
   capture(): WorkspaceSnapshot;
   /**
    * Replace the whole workspace with a snapshot (structure + spacing
-   * restored exactly). Tab ids without a registered definition become
-   * ghost windows rendered as the built-in blank page; returns their ids.
+   * restored exactly, side-panel visibility restored via the registered
+   * provider). Tab ids without a registered definition become ghost
+   * windows rendered as the built-in blank page; returns their ids.
    */
   apply(snapshot: WorkspaceSnapshot): string[];
+  /** Register the side-panel visibility provider (see PanelStateProvider). */
+  setPanelStateProvider(provider: PanelStateProvider | null): void;
 }
 
 export type WorkspaceContext = WorkspaceApi;
@@ -333,7 +349,7 @@ export function useWorkspace(def: WorkspaceDef): WorkspaceApi {
     try {
       // Same transient-tab exclusion as the public capture(): host previews
       // (review windows) must not persist into the auto-saved layout.
-      const json = JSON.stringify(captureSnapshot(state.roots, state.rootDir, (id) => !!tabDefs[id]?.transient));
+      const json = JSON.stringify(captureSnapshot(state.roots, state.rootDir, (id) => !!tabDefs[id]?.transient, panelProvider?.read() ?? undefined));
       // Idempotence guard: loading a workspace applies the same layout the
       // auto-save already holds — skip the redundant write (and the whole
       // capture/stringify) when nothing changed since the last save.
@@ -351,6 +367,12 @@ export function useWorkspace(def: WorkspaceDef): WorkspaceApi {
   function ghostDef(id: string): WorkspaceTabDef {
     return { id, label: id, content: BLANK_CONTENT, tabClass: 'sf-tab--ghost' };
   }
+
+  /** Side-panel visibility: captured with the layout, applied on restore. */
+  let panelProvider: PanelStateProvider | null = null;
+  /** Panels from a snapshot applied before a provider was registered (the
+   *  boot auto-restore runs before the framework root wires its refs). */
+  let pendingPanels: SnapshotPanels | null = null;
 
   function applySnapshot(snap: WorkspaceSnapshot): string[] {
     const restored = restoreSnapshot(snap);
@@ -387,6 +409,10 @@ export function useWorkspace(def: WorkspaceDef): WorkspaceApi {
     state.roots = restored;
     state.rootDir = snap.rootDir ?? null;
     ensureFocus();
+    if (snap.panels) {
+      if (panelProvider) panelProvider.apply(snap.panels);
+      else pendingPanels = snap.panels;
+    }
     return ghosts;
   }
 
@@ -724,8 +750,15 @@ export function useWorkspace(def: WorkspaceDef): WorkspaceApi {
     setNewTabHandler,
     findTileGlobal,
     findTabGlobal,
-    capture: () => captureSnapshot(state.roots, state.rootDir, (id) => !!tabDefs[id]?.transient),
+    capture: () => captureSnapshot(state.roots, state.rootDir, (id) => !!tabDefs[id]?.transient, panelProvider?.read() ?? undefined),
     apply: applySnapshot,
+    setPanelStateProvider(provider: PanelStateProvider | null) {
+      panelProvider = provider;
+      if (provider && pendingPanels) {
+        provider.apply(pendingPanels);
+        pendingPanels = null;
+      }
+    },
   };
 }
 

@@ -179,6 +179,49 @@ const PANEL = '.sf-ws-panel';
   report('saved workspaces survive reload', (await page.locator('.sf-ws-item').count()) === 1
     && (await page.locator('.sf-ws-item .sf-ws-name').first().textContent()) === 'Renamed Layout');
 
+  // ── Side-panel visibility is part of a workspace ────────────────────────
+  const rightPanel = page.locator('.sf-panel--right');
+  const rpBtn = (title) => page.locator(`.sf-tab-panel-toggle[title="${title}"]`);
+  report('right panel starts visible', await rightPanel.isVisible());
+
+  // Named workspace: collapse the right panel, save, expand, load back.
+  await rpBtn('Collapse Right Panel').click();
+  await page.waitForTimeout(400);
+  report('right panel collapses', !(await rightPanel.isVisible()));
+  await page.fill('.sf-ws-save .sf-ws-input', 'Panels Off');
+  await page.click('.sf-ws-save .sf-ws-btn--primary');
+  await page.waitForTimeout(300);
+  await rpBtn('Expand Right Panel').click();
+  await page.waitForTimeout(400);
+  report('right panel expands again', await rightPanel.isVisible());
+  await wsItem('Panels Off').locator('.sf-ws-btn[title="Load this workspace"]').click();
+  await page.waitForTimeout(500);
+  report('loading a workspace restores the collapsed right panel', !(await rightPanel.isVisible()));
+  await rpBtn('Expand Right Panel').click();
+  await page.waitForTimeout(400);
+
+  // Auto-saved layout: collapse the left panel (menu), let the debounced
+  // auto-save fire, reload — the left panel must come back collapsed.
+  await page.click('text=View');
+  await page.waitForTimeout(200);
+  await page.hover('text=Appearance');
+  await page.waitForTimeout(200);
+  await page.click('text="Toggle Left Panel"');
+  await page.waitForTimeout(400);
+  report('left panel collapses via the menu', !(await page.locator('.sf-left-group').isVisible()));
+  await page.waitForTimeout(800); // debounced auto-save
+  await page.reload({ waitUntil: 'networkidle' });
+  await page.waitForTimeout(1000);
+  report('reload restores the collapsed left panel', !(await page.locator('.sf-left-group').isVisible())
+    && (await page.locator('.sf-panel--right').isVisible()));
+  await page.click('text=View');
+  await page.waitForTimeout(200);
+  await page.hover('text=Appearance');
+  await page.waitForTimeout(200);
+  await page.click('text="Toggle Left Panel"');
+  await page.waitForTimeout(300);
+  report('left panel reopens', await page.locator('.sf-left-group').isVisible());
+
   report('no page errors during the whole check', errors.length === 0, errors.join('; ').slice(0, 300));
 
   await finish(browser, serverProc, isFailed(), 'WORKSPACE-APP CHECKS');

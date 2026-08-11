@@ -53,6 +53,23 @@ const dockerPanelVisible = ref(true);
 const savedPanelState = ref(true);
 const rightPanelVisible = ref(true);
 
+// ── Panel visibility ↔ workspace snapshots ────────────────────────────────
+// Snapshots (auto-saved layout + saved workspaces) carry the side panels'
+// expand/collapse state, so loading a workspace restores it too. The
+// auto-hidden flags are width-guard transients and stay out of it.
+api.setPanelStateProvider({
+  read: () => ({
+    left: leftPanelVisible.value,
+    docker: dockerPanelVisible.value,
+    right: rightPanelVisible.value,
+  }),
+  apply: (panels) => {
+    leftPanelVisible.value = panels.left;
+    dockerPanelVisible.value = panels.docker;
+    rightPanelVisible.value = panels.right;
+  },
+});
+
 // ── Auto-hide panels based on workspace width ─────────────────────────────
 
 /** Minimum workspace width (px) before panels auto-hide. */
