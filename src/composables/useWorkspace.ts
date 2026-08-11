@@ -345,11 +345,19 @@ export function useWorkspace(def: WorkspaceDef): WorkspaceApi {
   }
 
   let lastAutoJson: string | null = null;
+  /** The current layout as a snapshot: transient tabs (host previews) are
+   *  excluded, side-panel visibility included when a provider is set. */
+  function currentSnapshot(): WorkspaceSnapshot {
+    return captureSnapshot(
+      state.roots,
+      state.rootDir,
+      (id) => !!tabDefs[id]?.transient,
+      panelProvider?.read() ?? undefined,
+    );
+  }
   function saveAutoSnapshot() {
     try {
-      // Same transient-tab exclusion as the public capture(): host previews
-      // (review windows) must not persist into the auto-saved layout.
-      const json = JSON.stringify(captureSnapshot(state.roots, state.rootDir, (id) => !!tabDefs[id]?.transient, panelProvider?.read() ?? undefined));
+      const json = JSON.stringify(currentSnapshot());
       // Idempotence guard: loading a workspace applies the same layout the
       // auto-save already holds — skip the redundant write (and the whole
       // capture/stringify) when nothing changed since the last save.
@@ -750,7 +758,7 @@ export function useWorkspace(def: WorkspaceDef): WorkspaceApi {
     setNewTabHandler,
     findTileGlobal,
     findTabGlobal,
-    capture: () => captureSnapshot(state.roots, state.rootDir, (id) => !!tabDefs[id]?.transient, panelProvider?.read() ?? undefined),
+    capture: () => currentSnapshot(),
     apply: applySnapshot,
     setPanelStateProvider(provider: PanelStateProvider | null) {
       panelProvider = provider;

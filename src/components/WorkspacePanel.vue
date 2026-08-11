@@ -73,6 +73,8 @@ function fmtTime(item: SavedWorkspace): string {
 
 const nameInput = ref('');
 const saveError = ref('');
+/** load failures (corrupt stored snapshots) — shown near the list */
+const loadError = ref('');
 
 function autoName(): string {
   let max = 0;
@@ -111,7 +113,12 @@ const filtered = computed(() => {
 const lastGhostCount = ref(0);
 
 function loadWorkspace(item: SavedWorkspace) {
-  lastGhostCount.value = ws.apply(item.snapshot).length;
+  try {
+    lastGhostCount.value = ws.apply(item.snapshot).length;
+  } catch {
+    // A hand-edited/corrupt stored snapshot must not take the panel down.
+    loadError.value = `Could not load "${item.name}" (corrupt snapshot)`;
+  }
 }
 
 const editingId = ref<string | null>(null);
@@ -169,6 +176,7 @@ function moveItem(id: string, dir: -1 | 1) {
 
     <!-- Search -->
     <input v-model="query" class="sf-ws-input sf-ws-search" placeholder="Search workspaces…" />
+    <div v-if="loadError" class="sf-ws-error">{{ loadError }}</div>
 
     <!-- Saved list -->
     <div v-if="saved.length === 0" class="sf-ws-empty">
