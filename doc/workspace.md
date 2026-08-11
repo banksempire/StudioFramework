@@ -163,6 +163,38 @@ via the `kWorkspace` injection key:
 | `newTabTitle` | `string` | Tooltip of the tile-strip "+" button (default "New file") |
 | `setNewTabHandler(handler, title?)` | | Override the tile-strip "+": the handler (tile id) runs instead of creating an "Untitled" tab; `null` restores the default |
 | `findTileGlobal(tileId)` | | Find a tile across all roots |
+| `capture()` | `WorkspaceSnapshot` | Capture structure + spacing (split + root ratios) as a plain JSON object (no node ids) |
+| `apply(snapshot)` | `string[]` | Replace the whole workspace with a snapshot; returns the ids of tabs that had no definition (now blank ghost windows) |
+
+## Snapshots & persistence
+
+`capture()` / `apply()` (pure logic in `src/workspace/snapshots.ts`, Node
+unit-tested via `npm run check:snap`):
+
+- **Structure AND spacing** are restored: split-tree shape, split ratios,
+  root ratios, tab order and the active tab of every tile.
+- **Ids are regenerated** on restore (a snapshot carries none), so it can be
+  applied onto a live workspace without colliding with the current tree.
+- **Tabs keep their ids** — a tab id identifies the content (a chat session,
+  a file…). A restored tab whose id has no registered definition (e.g. the
+  session was deleted) keeps its slot as a **ghost window**: a dimmed,
+  italic tab rendered as the built-in blank page (`'sf-blank'` content, see
+  `BlankTab.vue`) until the host re-registers the definition.
+- **Reload survival**: the workspace auto-snapshots to
+  `localStorage['sf.workspace.layout']` (debounced 400ms, plus on
+  `beforeunload`) and restores it on startup — an unsaved layout survives a
+  page refresh for free. `apply()` also triggers this, so a loaded saved
+  workspace becomes the layout that survives the next reload.
+
+## Workspace app (saved workspaces)
+
+Framework-generic app (docker item `workspace`, panel component
+`WorkspacePanel.vue` registered as `'workspace-panel'`): save the current
+workspace under a name, then load / rename / delete / search / reorder the
+saved list — all in `localStorage['sf.workspaces']`, no backend. Loading
+restores structure + spacing exactly; unavailable windows render as blank
+ghost pages and the panel notes how many. Hosts can reconcile ghosts (e.g.
+swap a ghost chat tab back to its live session definition once loaded).
 
 `Tile.vue` also consumes `kRightPanelToggle` (`{ visible, toggle }`), provided
 by `Workspace.vue`, for the ◫ right-panel button.
@@ -172,6 +204,9 @@ by `Workspace.vue`, for the ◫ right-panel button.
 | File | Role |
 |:-----|:-----|
 | `src/workspace/tree.ts` | pure split-tree types + operations (Node unit-tested) |
+| `src/workspace/snapshots.ts` | pure snapshot capture/restore (Node unit-tested) |
+| `src/components/BlankTab.vue` | built-in blank page for ghost (missing) windows |
+| `src/components/WorkspacePanel.vue` | Workspace app panel: save / load / rename / delete / search / reorder |
 | `src/composables/useWorkspace.ts` | reactive multi-root state, ops, DnD state, tile element registry |
 | `src/components/Workspace.vue` | root: root-group renderer + drop-zone hit testing + visual layer |
 | `src/components/WorkspaceNode.vue` | recursive: split → sash + children; tile → `Tile` |
@@ -190,3 +225,9 @@ by `Workspace.vue`, for the ◫ right-panel button.
   + drag cancel, split half-size (right/bottom/top), cross-tile move and
   split, close-merge, sash resize, proportional workspace resize, min-width
   floor, strip reorder, empty-source merge, no console errors.
+- Snapshots (pure, Node): `npm run check:snap` — 22 assertions: structure
+  + spacing round-trips, fresh-id regeneration, multi-root + rootDir,
+  idempotent re-capture, empty/bad-input edge cases.
+- Workspace app (Playwright): `npm run check:ws` — 27 assertions: save,
+  load restores structure + spacing (sash ratios), ghost windows → blank
+  page + note, rename, search, reorder, delete, reload survival.

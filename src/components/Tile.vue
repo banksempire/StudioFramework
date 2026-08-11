@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed, inject, onBeforeUnmount, onMounted, ref } from 'vue';
 import Icon from './Icon.vue';
+import BlankTab from './BlankTab.vue';
 import { getTabContent } from '../registry';
 import type { TileNode } from '../workspace/tree';
 import { kWorkspace, kRightPanelToggle } from '../composables/useWorkspace';
@@ -16,7 +17,11 @@ onBeforeUnmount(() => ws.registerTileEl(props.tile.id, null));
 const activeTab = computed(() => (props.tile.activeId ? ws.tabDefs[props.tile.activeId] ?? null : null));
 const contentComp = computed(() => {
   const content = activeTab.value?.content;
-  return content ? getTabContent(content) ?? null : null;
+  if (!content) return null;
+  // Ghost tabs (missing windows restored from a workspace snapshot) render
+  // the framework's built-in blank page — no host registration needed.
+  if (content === 'sf-blank') return BlankTab;
+  return getTabContent(content) ?? null;
 });
 /** Registered component for the layout's emptyContent key (if any). */
 const emptyComp = computed(() => (ws.emptyContent ? getTabContent(ws.emptyContent) ?? null : null));
@@ -171,6 +176,13 @@ function onTabMousedown(e: MouseEvent, tabId: string) {
   border: 1px solid var(--sf-border);
   border-radius: 3px;
   padding: 1px 5px;
+}
+
+/* Ghost tabs (workspace-snapshot windows whose content no longer exists)
+   look dimmed/italic so they read as placeholders, not real windows. */
+.sf-tab--ghost .sf-tab-label {
+  font-style: italic;
+  opacity: 0.6;
 }
 
 /* Custom content fills the whole tile body; it manages its own layout/scroll */

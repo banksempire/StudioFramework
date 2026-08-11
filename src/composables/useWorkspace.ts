@@ -1,4 +1,4 @@
-import { reactive, type InjectionKey } from 'vue';
+import { reactive, watch, type InjectionKey } from 'vue';
 import type { WorkspaceDef, WorkspaceTabDef } from '../types/layout';
 import {
   findNode,
@@ -17,6 +17,11 @@ import {
   type TileNode,
   type WorkspaceNode,
 } from '../workspace/tree';
+import {
+  captureSnapshot,
+  restoreSnapshot,
+  type WorkspaceSnapshot,
+} from '../workspace/snapshots';
 
 // ── Root group model ────────────────────────────────────────────────────────
 // The workspace has N root groups arranged in a single direction (row = side
@@ -49,6 +54,13 @@ export interface WorkspaceOps {
   moveTab(tabId: string, targetTileId: string, index: number): void;
   focusTile(tileId: string): void;
 }
+
+/**
+ * Content key of the framework's built-in blank page. Ghost tabs (windows
+ * restored from a snapshot whose definition no longer exists) render this
+ * instead of a host component.
+ */
+export const BLANK_CONTENT = 'sf-blank';
 
 export interface DndRect {
   x: number;
@@ -135,6 +147,18 @@ export interface WorkspaceApi {
   acceptsExternal(types: string[]): boolean;
   /** Forward a drop to the registered handler (no-op if none). */
   deliverExternalDrop(e: DragEvent, target: ExternalDropTarget): void;
+  /**
+   * Capture the current workspace (tile structure + spacing) as a plain
+   * JSON snapshot. Node ids are stripped — a snapshot can be stored and
+   * applied onto any live workspace.
+   */
+  capture(): WorkspaceSnapshot;
+  /**
+   * Replace the whole workspace with a snapshot (structure + spacing
+   * restored exactly). Tab ids without a registered definition become
+   * ghost windows rendered as the built-in blank page; returns their ids.
+   */
+  apply(snapshot: WorkspaceSnapshot): string[];
 }
 
 export type WorkspaceContext = WorkspaceApi;
@@ -281,6 +305,69 @@ export function useWorkspace(def: WorkspaceDef): WorkspaceApi {
       if (n.kind === 'tile') { state.focusedTileId = n.id; return; }
       stack.push(n.children[1], n.children[0]);
     }
+  }
+
+  // ── Snapshots & persistence ────────────────────────────────────────────
+  // The current (unsaved) layout survives page reloads: every change to
+  // the tile structure or spacing is snapshotted into localStorage
+  // (debounced) and restored on the next startup. Missing windows — tab
+  // ids whose definition the host no longer provides (e.g. a deleted chat
+  // session) — keep their slot in the tree and render the built-in blank
+  // page until the host re-registers them.
+
+  const AUTO_KEY = 'sf.workspace.layout';
+
+  function loadAutoSnapshot(): WorkspaceSnapshot | null {
+    try {
+      const raw = localStorage.getItem(AUTO_KEY);
+      if (!raw) return null;
+      const snap = JSON.parse(raw);
+      return snap && snap.version === 1 && Array.isArray(snap.roots) ? snap : null;
+    } catch {
+      return null; // storage unavailable / corrupt — start fresh
+    }
+  }
+
+  function saveAutoSnapshot() {
+    try {
+      localStorage.setItem(AUTO_KEY, JSON.stringify(captureSnapshot(state.roots, state.rootDir)));
+    } catch {
+      /* storage unavailable */
+    }
+  }
+
+  /** Ghost window: a tab id with no definition (deleted session, closed
+   *  view…) — the tile keeps its slot, the content is a blank page. */
+  function ghostDef(id: string): WorkspaceTabDef {
+    return { id, label: id, content: BLANK_CONTENT, tabClass: 'sf-tab--ghost' };
+  }
+
+  function applySnapshot(snap: WorkspaceSnapshot): string[] {
+    const restored = restoreSnapshot(snap);
+    // Never leave the workspace rootless: an empty snapshot (or one with
+    // zero roots) falls back to a single empty tile.
+    if (restored.length === 0) {
+      restored.push({ id: nextId('root'), node: { kind: 'tile', id: nextId('tile'), tabs: [], activeId: '' }, ratio: 1 });
+    }
+    const ghosts: string[] = [];
+    const walk = (node: WorkspaceNode) => {
+      if (node.kind === 'tile') {
+        for (const t of node.tabs) {
+          if (!tabDefs[t]) {
+            tabDefs[t] = ghostDef(t);
+            ghosts.push(t);
+          }
+        }
+      } else {
+        walk(node.children[0]);
+        walk(node.children[1]);
+      }
+    };
+    for (const r of restored) walk(r.node);
+    state.roots = restored;
+    state.rootDir = snap.rootDir ?? null;
+    ensureFocus();
+    return ghosts;
   }
 
   // ── Operations ──────────────────────────────────────────────────────────
@@ -562,6 +649,23 @@ export function useWorkspace(def: WorkspaceDef): WorkspaceApi {
     return null;
   }
 
+  // ── Auto-persist: the current (unsaved) layout survives reloads ──────
+  // Every change to the tile structure or spacing is snapshotted into
+  // localStorage (debounced — sash drags emit setRatio per pixel), and the
+  // last layout is restored on startup. Missing windows (tab ids whose
+  // definition the host no longer provides) keep their slot as blank
+  // ghost pages until the host re-registers them.
+  let saveTimer: ReturnType<typeof setTimeout> | undefined;
+  const scheduleAutoSave = () => {
+    if (saveTimer) clearTimeout(saveTimer);
+    saveTimer = setTimeout(saveAutoSnapshot, 400);
+  };
+  watch(() => state.roots, scheduleAutoSave, { deep: true });
+  window.addEventListener('beforeunload', saveAutoSnapshot);
+
+  const auto = loadAutoSnapshot();
+  if (auto) applySnapshot(auto);
+
   return {
     get roots() {
       return state.roots;
@@ -600,5 +704,8 @@ export function useWorkspace(def: WorkspaceDef): WorkspaceApi {
     setNewTabHandler,
     findTileGlobal,
     findTabGlobal,
+    capture: () => captureSnapshot(state.roots, state.rootDir),
+    apply: applySnapshot,
   };
 }
+
