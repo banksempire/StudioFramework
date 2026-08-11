@@ -222,6 +222,33 @@ const PANEL = '.sf-ws-panel';
   await page.waitForTimeout(300);
   report('left panel reopens', await page.locator('.sf-left-group').isVisible());
 
+  // ── Auto-hide is re-enforced after restoring a workspace ────────────────
+  const panelDisplayed = (side) => page.evaluate((s) => {
+    const el = document.querySelector('.sf-panel--' + s);
+    return el ? getComputedStyle(el).display !== 'none' : null;
+  }, side);
+  await page.setViewportSize({ width: 900, height: 800 });
+  await page.waitForTimeout(400);
+  report('narrow window auto-hides both panels', (await panelDisplayed('left')) === false && (await panelDisplayed('right')) === false);
+  // User override: a docker click opens the left panel on the narrow window.
+  await page.locator('.sf-docker-app[title="Explorer"]').click();
+  await page.waitForTimeout(400);
+  report('docker click overrides auto-hide (left opens)', (await panelDisplayed('left')) === true);
+  // Save (intent = panels visible), then load: the panels must NOT pop open
+  // on a window too narrow for them.
+  await page.locator('.sf-docker-app[title="Workspace"]').click();
+  await page.waitForTimeout(400);
+  await page.fill('.sf-ws-save .sf-ws-input', 'AH');
+  await page.click('.sf-ws-save .sf-ws-btn--primary');
+  await page.waitForTimeout(300);
+  await wsItem('AH').locator('.sf-ws-btn[title="Load this workspace"]').click();
+  await page.waitForTimeout(600);
+  report('loading a workspace re-enforces auto-hide', (await panelDisplayed('left')) === false && (await panelDisplayed('right')) === false);
+  // Back to a wide window: the panels come back (and stay).
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await page.waitForTimeout(500);
+  report('wide window restores both panels', (await panelDisplayed('left')) === true && (await panelDisplayed('right')) === true);
+
   report('no page errors during the whole check', errors.length === 0, errors.join('; ').slice(0, 300));
 
   await finish(browser, serverProc, isFailed(), 'WORKSPACE-APP CHECKS');

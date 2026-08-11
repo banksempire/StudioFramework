@@ -19,7 +19,7 @@ export interface FrameworkAction {
 </script>
 
 <script setup lang="ts">
-import { computed, onMounted, onUnmounted, provide, ref } from 'vue';
+import { computed, nextTick, onMounted, onUnmounted, provide, ref } from 'vue';
 import { loadLayout } from './layout/loadLayout';
 import type { LayoutDefinition } from './types/layout';
 import MenuBar from './components/MenuBar.vue';
@@ -67,6 +67,12 @@ api.setPanelStateProvider({
     leftPanelVisible.value = panels.left;
     dockerPanelVisible.value = panels.docker;
     rightPanelVisible.value = panels.right;
+    // A restored workspace must respect the CURRENT window width: re-run
+    // the auto-hide check, or the panels pop open on a window too narrow
+    // for them (e.g. an auto-hide override + workspace load). Deferred —
+    // the boot restore applies panels before the auto-hide state refs
+    // exist (setup order).
+    void nextTick(() => onWindowResize());
   },
 });
 

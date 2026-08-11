@@ -147,6 +147,11 @@ const { ensureServer, openApp, makeReporter, finish } = require('./lib/ui-test.c
     await page.waitForTimeout(300);
 
     await resizeTo(1300);
+    // The reload restores the persisted panel state (phase 4 ended with the
+    // left group user-collapsed) — reopen the left group first.
+    await page.locator('.sf-menu-action-btn').first().click();
+    await page.waitForTimeout(100);
+    report('left group reopened after reload', (await panelDisplayed('left')) === true);
     await page.locator('.sf-tab-panel-toggle').click();
     await page.waitForTimeout(100);
     report('right collapsed by user', (await panelDisplayed('right')) === false);
