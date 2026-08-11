@@ -331,7 +331,9 @@ export function useWorkspace(def: WorkspaceDef): WorkspaceApi {
   let lastAutoJson: string | null = null;
   function saveAutoSnapshot() {
     try {
-      const json = JSON.stringify(captureSnapshot(state.roots, state.rootDir));
+      // Same transient-tab exclusion as the public capture(): host previews
+      // (review windows) must not persist into the auto-saved layout.
+      const json = JSON.stringify(captureSnapshot(state.roots, state.rootDir, (id) => !!tabDefs[id]?.transient));
       // Idempotence guard: loading a workspace applies the same layout the
       // auto-save already holds — skip the redundant write (and the whole
       // capture/stringify) when nothing changed since the last save.
@@ -722,7 +724,7 @@ export function useWorkspace(def: WorkspaceDef): WorkspaceApi {
     setNewTabHandler,
     findTileGlobal,
     findTabGlobal,
-    capture: () => captureSnapshot(state.roots, state.rootDir),
+    capture: () => captureSnapshot(state.roots, state.rootDir, (id) => !!tabDefs[id]?.transient),
     apply: applySnapshot,
   };
 }

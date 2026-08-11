@@ -59,6 +59,13 @@ export interface WorkspaceTabDef {
    * applies the string, it never styles it.
    */
   tabClass?: string;
+  /**
+   * Transient tabs (host-app previews, e.g. a review window) are excluded
+   * from workspace snapshots — they never persist into the auto-saved
+   * layout or a saved workspace, and their tile collapses away if nothing
+   * else is left in it.
+   */
+  transient?: boolean;
 }
 
 export interface WorkspaceDef {

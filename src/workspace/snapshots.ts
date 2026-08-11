@@ -44,17 +44,25 @@ export interface WorkspaceSnapshot {
   roots: RootSnapshot[];
 }
 
-/** Serialize a live tree node into its snapshot form (ids stripped). */
-export function nodeToSnapshot(node: WorkspaceNode): NodeSnapshot {
+/**
+ * Serialize a live tree node into its snapshot form (ids stripped).
+ * `skipTab` excludes tabs from the snapshot (host-app transient windows);
+ * a tile left with no tabs collapses away — its split merges, and an
+ * empty root group is dropped (remaining root ratios renormalized).
+ * Returns null when nothing of this subtree should persist.
+ */
+export function nodeToSnapshot(node: WorkspaceNode, skipTab?: (tabId: string) => boolean): NodeSnapshot | null {
   if (node.kind === 'tile') {
-    return { kind: 'tile', tabs: [...node.tabs], activeId: node.activeId };
+    const tabs = skipTab ? node.tabs.filter((t) => !skipTab(t)) : [...node.tabs];
+    if (tabs.length === 0) return null;
+    const activeId = tabs.includes(node.activeId) ? node.activeId : tabs[0];
+    return { kind: 'tile', tabs, activeId };
   }
-  return {
-    kind: 'split',
-    dir: node.dir,
-    ratio: node.ratio,
-    children: [nodeToSnapshot(node.children[0]), nodeToSnapshot(node.children[1])],
-  };
+  const a = nodeToSnapshot(node.children[0], skipTab);
+  const b = nodeToSnapshot(node.children[1], skipTab);
+  if (!a) return b; // the split collapses to its surviving child
+  if (!b) return a;
+  return { kind: 'split', dir: node.dir, ratio: node.ratio, children: [a, b] };
 }
 
 /** Rebuild a live tree node from a snapshot, with fresh ids. */
@@ -71,12 +79,33 @@ export function nodeFromSnapshot(snap: NodeSnapshot): WorkspaceNode {
   };
 }
 
-/** Capture the current layout (structure + spacing) as a plain object. */
+/**
+ * Capture the current layout (structure + spacing) as a plain object.
+ * `skipTab` (host-app transient windows) removes tabs from the snapshot;
+ * tiles/splits/roots left empty collapse away and the surviving root
+ * ratios are renormalized so the restored layout fills the workspace.
+ */
 export function captureSnapshot(
   roots: Array<{ node: WorkspaceNode; ratio: number }>,
   rootDir: SplitDir | null,
+  skipTab?: (tabId: string) => boolean,
 ): WorkspaceSnapshot {
-  return { version: 1, rootDir, roots: roots.map((r) => ({ ratio: r.ratio, node: nodeToSnapshot(r.node) })) };
+  const kept: RootSnapshot[] = [];
+  for (const r of roots) {
+    const node = nodeToSnapshot(r.node, skipTab);
+    if (node) kept.push({ ratio: r.ratio, node });
+  }
+  if (kept.length === 0 && roots.length > 0) {
+    // Everything collapsed (all tabs transient/closed): persist a single
+    // empty root so the layout survives as an empty workspace.
+    kept.push({ ratio: 1, node: { kind: 'tile', tabs: [], activeId: '' } });
+  } else if (kept.length > 0 && kept.length !== roots.length) {
+    // Dropped roots: renormalize the survivors so they fill the workspace.
+    const total = kept.reduce((s, r) => s + r.ratio, 0);
+    if (total > 0) for (const r of kept) r.ratio /= total;
+    else for (const r of kept) r.ratio = 1 / kept.length;
+  }
+  return { version: 1, rootDir, roots: kept };
 }
 
 /** Rebuild roots (fresh ids) from a snapshot, preserving structure + spacing. */

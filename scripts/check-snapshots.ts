@@ -155,6 +155,56 @@ function allTabs(node: WorkspaceNode): string[] {
   report('unsupported version throws', threw);
 }
 
+// ── Transient tabs: excluded from snapshots, tiles collapse ───────────────
+
+{
+  // A transient tab is skipped; the tile keeps the rest and the active id
+  // moves to the first remaining tab when the active one was transient.
+  const tree = tile(['a', 'b'], 'a');
+  const snap = captureSnapshot([{ node: tree, ratio: 1 }], null, (id) => id === 'a');
+  const node = snap.roots[0].node;
+  report('transient tab excluded from the snapshot', node.kind === 'tile'
+    && JSON.stringify(node.tabs) === JSON.stringify(['b']), JSON.stringify(node));
+  report('active id moves to the first remaining tab', node.kind === 'tile' && node.activeId === 'b');
+}
+
+{
+  // A tile left with no tabs collapses away — the surrounding split merges
+  // to the surviving child (with its internal ratios intact).
+  const left = split('row', 0.4, tile(['x']), tile(['y']));
+  const tree = split('column', 0.25, tile(['gone']), left);
+  const snap = captureSnapshot([{ node: tree, ratio: 1 }], null, (id) => id === 'gone');
+  const node = snap.roots[0].node;
+  report('empty tile collapses the split to the survivor', node.kind === 'split' && node.dir === 'row' && node.ratio === 0.4);
+}
+
+{
+  // A root left empty is dropped and the surviving roots' ratios are
+  // renormalized so the restored layout fills the workspace.
+  const r1 = { node: tile(['gone']), ratio: 0.6 };
+  const r2 = { node: tile(['keep']), ratio: 0.4 };
+  const snap = captureSnapshot([r1, r2], 'row', (id) => id === 'gone');
+  report('empty root dropped', snap.roots.length === 1 && snap.roots[0].node.kind === 'tile'
+    && JSON.stringify(snap.roots[0].node.tabs) === JSON.stringify(['keep']));
+  report('surviving root renormalized to fill the workspace', snap.roots[0].ratio === 1, String(snap.roots[0].ratio));
+}
+
+{
+  // Everything transient → a single empty root persists (the layout
+  // survives as an empty workspace instead of vanishing).
+  const snap = captureSnapshot([{ node: tile(['a', 'b']), ratio: 1 }], null, () => true);
+  report('all-transient collapses to one empty root', snap.roots.length === 1
+    && snap.roots[0].node.kind === 'tile' && snap.roots[0].node.tabs.length === 0 && snap.roots[0].ratio === 1);
+}
+
+{
+  // No transients → behavior unchanged (structure + spacing preserved).
+  const tree = split('row', 0.28, tile(['a', 'b'], 'b'), split('column', 0.62, tile(['c'], 'c'), tile(['d', 'e'], 'e')));
+  const snap = captureSnapshot([{ node: tree, ratio: 1 }], null, () => false);
+  const root = snap.roots[0];
+  report('no-transient capture keeps ratios', root.node.kind === 'split' && root.node.ratio === 0.28);
+}
+
 // ── nodeToSnapshot / nodeFromSnapshot symmetry ─────────────────────────────
 
 {
