@@ -328,9 +328,17 @@ export function useWorkspace(def: WorkspaceDef): WorkspaceApi {
     }
   }
 
+  let lastAutoJson: string | null = null;
   function saveAutoSnapshot() {
     try {
-      localStorage.setItem(AUTO_KEY, JSON.stringify(captureSnapshot(state.roots, state.rootDir)));
+      const json = JSON.stringify(captureSnapshot(state.roots, state.rootDir));
+      // Idempotence guard: loading a workspace applies the same layout the
+      // auto-save already holds — skip the redundant write (and the whole
+      // capture/stringify) when nothing changed since the last save.
+      if (json === lastAutoJson) return;
+      localStorage.setItem(AUTO_KEY, json);
+      lastAutoJson = json; // only after a successful write (quota errors
+                           // must not suppress future saves)
     } catch {
       /* storage unavailable */
     }
@@ -349,10 +357,14 @@ export function useWorkspace(def: WorkspaceDef): WorkspaceApi {
     if (restored.length === 0) {
       restored.push({ id: nextId('root'), node: { kind: 'tile', id: nextId('tile'), tabs: [], activeId: '' }, ratio: 1 });
     }
+    // One pass over the new tree: collect every tab id, and turn ids
+    // without a definition into ghost (blank) windows.
+    const live = new Set<string>();
     const ghosts: string[] = [];
     const walk = (node: WorkspaceNode) => {
       if (node.kind === 'tile') {
         for (const t of node.tabs) {
+          live.add(t);
           if (!tabDefs[t]) {
             tabDefs[t] = ghostDef(t);
             ghosts.push(t);
@@ -364,6 +376,12 @@ export function useWorkspace(def: WorkspaceDef): WorkspaceApi {
       }
     };
     for (const r of restored) walk(r.node);
+    // Prune ghost defs no longer referenced: loading different workspaces
+    // must not grow tabDefs without bound. Host-reconciled ghosts (their
+    // content swapped for a real component) are never pruned.
+    for (const id of Object.keys(tabDefs)) {
+      if (tabDefs[id].content === BLANK_CONTENT && !live.has(id)) delete tabDefs[id];
+    }
     state.roots = restored;
     state.rootDir = snap.rootDir ?? null;
     ensureFocus();

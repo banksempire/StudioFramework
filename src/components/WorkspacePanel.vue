@@ -52,12 +52,21 @@ function newId(): string {
   return `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`;
 }
 
-function fmtTime(t: number): string {
-  try {
-    return new Date(t).toLocaleString();
-  } catch {
-    return '';
+// Formatted timestamps are cached per item: the list re-renders on every
+// search keystroke, and toLocaleString is far from free.
+const timeCache = new Map<string, string>();
+
+function fmtTime(item: SavedWorkspace): string {
+  let s = timeCache.get(item.id);
+  if (s === undefined) {
+    try {
+      s = new Date(item.savedAt).toLocaleString();
+    } catch {
+      s = '';
+    }
+    timeCache.set(item.id, s);
   }
+  return s;
 }
 
 // ── Save current workspace ────────────────────────────────────────────────
@@ -127,6 +136,7 @@ function commitRename() {
 
 function removeItem(id: string) {
   saved.value = saved.value.filter((s) => s.id !== id);
+  timeCache.delete(id);
   persist();
 }
 
@@ -187,7 +197,7 @@ function moveItem(id: string, dir: -1 | 1) {
         <template v-else>
           <div class="sf-ws-item-main">
             <span class="sf-ws-name">{{ item.name }}</span>
-            <span class="sf-ws-time">{{ fmtTime(item.savedAt) }}</span>
+            <span class="sf-ws-time">{{ fmtTime(item) }}</span>
           </div>
           <div class="sf-ws-actions">
             <button class="sf-ws-btn" title="Load this workspace" @click="loadWorkspace(item)">▶</button>

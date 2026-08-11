@@ -118,6 +118,23 @@ const PANEL = '.sf-ws-panel';
   report('panel notes the unavailable window', (await page.locator('.sf-ws-ghosts').textContent()).includes('1 unavailable window'));
   report('existing window keeps its content', (await tileTabs(0))[0] === 'framework.ts');
 
+  // ── Ghost pruning: loading a workspace without the missing window must ──
+  //    drop the stale ghost def (tabDefs never grows without bound), and
+  //    loading it back recreates the blank window. ──
+  const ghostDefGone = () => page.evaluate(() => {
+    const el = document.querySelector('.sf-workspace');
+    let inst = el.__vueParentComponent;
+    while (inst && !inst.setupState?.api) inst = inst.parent;
+    return !('ghost-session-42' in (inst?.setupState?.api?.tabDefs ?? {}));
+  });
+  await wsItem('My Layout').locator('.sf-ws-btn[title="Load this workspace"]').click();
+  await page.waitForTimeout(400);
+  report('loading without the ghost drops its def', (await ghostDefGone()) && (await page.locator('.sf-tab--ghost').count()) === 0);
+  await wsItem('With Ghost').locator('.sf-ws-btn[title="Load this workspace"]').click();
+  await page.waitForTimeout(400);
+  report('loading the ghost workspace recreates the blank window',
+    (await page.locator('.sf-blank-tab').count()) === 1 && (await page.locator('.sf-tab--ghost').count()) === 1);
+
   // ── Manage: rename, search, reorder, delete ─────────────────────────────
   await wsItem('My Layout').locator('.sf-ws-btn[title="Rename"]').click();
   await page.fill('.sf-ws-rename', 'Renamed Layout');
