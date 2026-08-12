@@ -133,6 +133,26 @@ const WS = '.sf-workspace';
   );
   report('⋯ no active tab at the root level', (await page.locator('.sf-menu-crumb--active').count()) === 0);
   report('⋯ no back button at the root level', (await page.locator('.sf-menu-sheet-back').count()) === 0);
+  // Simulated iPhone notch: the sheet covers the top safe-area zone with
+  // its own background and the bar stays below the inset.
+  await page.evaluate(() => {
+    const root = document.querySelector('.sf-root--mobile');
+    root.style.setProperty('--sf-safe-top', '44px');
+    root.style.setProperty('--sf-safe-bottom', '34px');
+  });
+  await page.waitForTimeout(200);
+  const safeSheet = await page.locator('.sf-menu-sheet').boundingBox();
+  const safeBar = await page.locator('.sf-menu-sheet-bar').boundingBox();
+  report(
+    '⋯ safe-area: sheet covers the notch zone, bar below it',
+    Math.round(safeSheet.y) === 0 && Math.round(safeBar.y) === 44,
+  );
+  await page.evaluate(() => {
+    const root = document.querySelector('.sf-root--mobile');
+    root.style.removeProperty('--sf-safe-top');
+    root.style.removeProperty('--sf-safe-bottom');
+  });
+  await page.waitForTimeout(200);
   report('⋯ ✕ close button present', (await page.locator('.sf-menu-sheet-close').count()) === 1);
   await page.locator('.sf-menu-sheet .sf-menu-row', { hasText: 'File' }).click();
   await page.waitForTimeout(200);
@@ -236,6 +256,31 @@ const WS = '.sf-workspace';
     'fullscreen panel shows the app content (Files)',
     (await page.locator('.sf-mobile-panel .sf-panel-title').textContent()) === 'Files',
   );
+  // Simulated notch: the panel overlay covers the top safe-area zone with
+  // the SAME color as the menu sheet (bg-light) and its header stays below.
+  await page.evaluate(() => {
+    const root = document.querySelector('.sf-root--mobile');
+    root.style.setProperty('--sf-safe-top', '44px');
+    root.style.setProperty('--sf-safe-bottom', '34px');
+  });
+  await page.waitForTimeout(200);
+  const safePanel = await page.locator('.sf-mobile-panel').boundingBox();
+  const safePanelHeader = await page.locator('.sf-panel--mobile .sf-panel-header').boundingBox();
+  const safePanelBg = await page.evaluate(
+    () => getComputedStyle(document.querySelector('.sf-mobile-panel')).backgroundColor,
+  );
+  report(
+    'panel safe-area: covers the notch zone, header below it, same bg as the sheet',
+    Math.round(safePanel.y) === 0 &&
+      Math.round(safePanelHeader.y) === 44 &&
+      safePanelBg === 'rgb(37, 37, 38)',
+  );
+  await page.evaluate(() => {
+    const root = document.querySelector('.sf-root--mobile');
+    root.style.removeProperty('--sf-safe-top');
+    root.style.removeProperty('--sf-safe-bottom');
+  });
+  await page.waitForTimeout(200);
   await explorer.click();
   await page.waitForTimeout(300);
   report('tapping the open app again closes it', (await page.locator('.sf-mobile-panel').count()) === 0);

@@ -1433,9 +1433,15 @@ body.sf-dragging-row * {
    Mobile mode (window width < 500px)
    ═══════════════════════════════════════════════════════════════════════════ */
 
-/* Full-bleed root; the bottom dock replaces the left icon rail. */
+/* Full-bleed root; the bottom dock replaces the left icon rail. The
+   safe-area insets (iPhone notch / home indicator) are exposed as CSS
+   variables so the overlays can reuse them; the root pads its content
+   inside the safe areas while the fullscreen overlays extend into them
+   with their own background. */
 .sf-root--mobile {
-  padding: 0;
+  --sf-safe-top: env(safe-area-inset-top, 0px);
+  --sf-safe-bottom: env(safe-area-inset-bottom, 0px);
+  padding: var(--sf-safe-top) 0 var(--sf-safe-bottom);
   gap: 0;
   position: relative;
 }
@@ -1562,12 +1568,16 @@ body.sf-dragging-row * {
   top: 0;
   left: 0;
   right: 0;
-  /* dock (60px) + status bar (25px) stay visible below, like the panels */
-  bottom: 85px;
+  /* dock (60px) + status bar (25px) + bottom safe area stay visible,
+     like the panels */
+  bottom: calc(85px + var(--sf-safe-bottom, 0px));
   z-index: 40;
   display: flex;
   flex-direction: column;
   background: var(--sf-bg-light);
+  /* The sheet covers the top safe-area zone (notch) with its own
+     background — identical to the panels — while the bar stays below. */
+  padding-top: var(--sf-safe-top, 0px);
 }
 
 .sf-menu-sheet-bar {
@@ -1717,11 +1727,15 @@ body.sf-dragging-row * {
   top: 0;
   left: 0;
   right: 0;
-  /* dock (60px) + status bar (25px) stay visible below the overlay */
-  bottom: 85px;
+  /* dock (60px) + status bar (25px) + bottom safe area stay visible */
+  bottom: calc(85px + var(--sf-safe-bottom, 0px));
   display: flex;
   flex-direction: column;
-  background: var(--sf-bg);
+  /* The overlay covers the top safe-area zone (notch); the panel body
+     fills it, so use the panel color — identical to the menu sheet. */
+  background: var(--sf-bg-light);
+  /* Keep the panel header below the notch */
+  padding-top: var(--sf-safe-top, 0px);
   z-index: 20;
 }
 
