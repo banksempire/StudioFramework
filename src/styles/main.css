@@ -1434,9 +1434,17 @@ body.sf-dragging-row * {
   border-radius: 0;
 }
 
-/* Taller tab strip in mobile: the flat tile's title bar is the main
-   navigation surface (thumb-friendly). */
-.sf-root--mobile .sf-tile-tabs {
+/* All title bars share ONE height in mobile: the workspace bar, the
+   fullscreen panel overlay bars, and the panels' own header + section
+   tabs all use 60px (thumb-friendly, visually consistent). */
+.sf-mobile-panel-bar {
+  padding: 0 10px;
+}
+
+.sf-root--mobile .sf-tile-tabs,
+.sf-root--mobile .sf-panel-header,
+.sf-root--mobile .sf-panel-tabs,
+.sf-root--mobile .sf-mobile-panel-bar {
   height: 60px;
 }
 
