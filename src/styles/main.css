@@ -1467,9 +1467,31 @@ body.sf-dragging-row * {
   flex-shrink: 0;
 }
 
+/* Title-bar buttons are SQUARE, full bar height, thin borders between:
+   ☰ / ✕ / right-panel on the workspace bar, ✕ on the fullscreen overlay
+   bars, ⋯ on the panel header. */
+.sf-root--mobile .sf-tile-tabs .sf-mobile-tab-selector,
+.sf-root--mobile .sf-tile-tabs .sf-mobile-tab-close,
+.sf-root--mobile .sf-tile-tabs .sf-mobile-rp-btn,
+.sf-root--mobile .sf-mobile-panel-close,
+.sf-root--mobile .sf-panel-header-btn {
+  width: 60px;
+  height: 60px;
+  margin: 0;
+  border: 1px solid var(--sf-border);
+  border-radius: 0;
+  background: transparent;
+  color: var(--sf-text);
+  font-size: 16px;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
 .sf-root--mobile .sf-tile-tabs .sf-mobile-tab-selector:hover,
 .sf-root--mobile .sf-tile-tabs .sf-mobile-tab-close:hover:not(:disabled),
-.sf-root--mobile .sf-tile-tabs .sf-mobile-rp-btn:hover {
+.sf-root--mobile .sf-tile-tabs .sf-mobile-rp-btn:hover,
+.sf-root--mobile .sf-mobile-panel-close:hover,
+.sf-root--mobile .sf-panel-header-btn:hover {
   background: var(--sf-hover-overlay);
 }
 
@@ -1549,22 +1571,6 @@ body.sf-dragging-row * {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-}
-
-.sf-mobile-panel-close {
-  width: 28px;
-  height: 28px;
-  border: none;
-  background: transparent;
-  color: var(--sf-text);
-  font-size: 16px;
-  cursor: pointer;
-  border-radius: var(--sf-radius-sm);
-  flex-shrink: 0;
-}
-
-.sf-mobile-panel-close:hover {
-  background: var(--sf-hover-overlay);
 }
 
 .sf-panel--mobile {
