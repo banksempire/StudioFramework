@@ -24,6 +24,7 @@ import { loadLayout } from './layout/loadLayout';
 import type { LayoutDefinition } from './types/layout';
 import MenuBar from './components/MenuBar.vue';
 import Docker from './components/Docker.vue';
+import Icon from './components/Icon.vue';
 import Panel from './components/Panel.vue';
 import Workspace from './components/Workspace.vue';
 import StatusBar from './components/StatusBar.vue';
@@ -52,6 +53,19 @@ const leftPanelVisible = ref(true);
 const dockerPanelVisible = ref(true);
 const savedPanelState = ref(true);
 const rightPanelVisible = ref(true);
+
+// ── Mobile mode ──────────────────────────────────────────────────────────
+// Below 500px the layout switches to a phone-style chrome: menu bar and
+// status bar are hidden, both side panels are replaced by a bottom dock,
+// and tapping a dock app opens its panel fullscreen. The workspace keeps
+// its real tile tree untouched — it is only PRESENTED as a single flat
+// tile with all tabs while mobile (see Workspace.vue); the structure
+// resumes exactly when the window widens again.
+
+const MOBILE_BREAKPOINT = 500;
+const isMobile = ref(window.innerWidth < MOBILE_BREAKPOINT);
+/** Fullscreen app panel opened from the bottom dock (mobile only). */
+const mobilePanelOpen = ref(false);
 
 // ── Panel visibility ↔ workspace snapshots ────────────────────────────────
 // Snapshots (auto-saved layout + saved workspaces) carry the side panels'
@@ -116,6 +130,9 @@ function calcWorkspaceWidth(ignoreAutoHidden: boolean): number {
 let autoHideDecidedAt: number | null = null;
 
 function onWindowResize(force = false) {
+  // Mobile layout replaces the side panels entirely (bottom dock) — the
+  // width guard is a desktop concern.
+  if (isMobile.value) return;
   const w = window.innerWidth;
   const wAll = calcWorkspaceWidth(true);
   if (wAll >= MIN_WORKSPACE_WIDTH) {
@@ -179,7 +196,10 @@ function onPanelResize(side: 'left' | 'right', newWidth: number) {
   }
 }
 
-const onResize = () => onWindowResize();
+const onResize = () => {
+  isMobile.value = window.innerWidth < MOBILE_BREAKPOINT;
+  onWindowResize();
+};
 onMounted(() => {
   onWindowResize();
   window.addEventListener('resize', onResize);
@@ -211,6 +231,17 @@ function showAutoHiddenRight() {
 }
 
 function onAppSelected(appId: string) {
+  if (isMobile.value) {
+    // Bottom dock: tapping an app opens its panel fullscreen; tapping the
+    // open app again closes it.
+    if (appId === activeDockerApp.value && mobilePanelOpen.value) {
+      mobilePanelOpen.value = false;
+    } else {
+      activeDockerApp.value = appId;
+      mobilePanelOpen.value = true;
+    }
+    return;
+  }
   if (leftAutoHidden.value) {
     showAutoHiddenLeft();
     if (appId !== activeDockerApp.value) activeDockerApp.value = appId;
@@ -292,8 +323,9 @@ function onPanelAction(a: PanelAction) {
 </script>
 
 <template>
-  <div class="sf-root">
+  <div class="sf-root" :class="{ 'sf-root--mobile': isMobile }">
     <MenuBar
+      v-if="!isMobile"
       :menus="L.menu"
       :left-panel-visible="leftPanelVisible"
       @toggle-left-panel="toggleLeftPanel"
@@ -301,7 +333,7 @@ function onPanelAction(a: PanelAction) {
     />
 
     <div class="sf-workbench">
-      <div class="sf-left-group" v-show="leftPanelVisible">
+      <div v-if="!isMobile" class="sf-left-group" v-show="leftPanelVisible">
         <Docker
           :items="L.docker"
           :active-app="activeDockerApp"
@@ -328,12 +360,13 @@ function onPanelAction(a: PanelAction) {
         <Workspace
           :def="L.workspace"
           :api="api"
-          :right-panel-visible="!!L.right && !rightAutoHidden && rightPanelVisible"
+          :mobile="isMobile"
+          :right-panel-visible="!isMobile && !!L.right && !rightAutoHidden && rightPanelVisible"
           @toggle-right-panel="toggleRightPanel"
         />
 
         <Panel
-          v-if="L.right"
+          v-if="L.right && !isMobile"
           :title="L.right.title"
           :sections="L.right.sections"
           :visible="effRightPanelVisible"
@@ -346,6 +379,33 @@ function onPanelAction(a: PanelAction) {
       </div>
     </div>
 
-    <StatusBar :left="L.status.left" :right="L.status.right" />
+    <!-- Mobile: bottom dock + fullscreen app panels (menu/status bars
+         hidden; the workspace shows one flat tile with all tabs). -->
+    <template v-if="isMobile">
+      <Docker
+        position="bottom"
+        :items="L.docker"
+        :active-app="activeDockerApp"
+        :panel-visible="mobilePanelOpen"
+        @app-selected="onAppSelected"
+      />
+      <div v-if="mobilePanelOpen && dockerDef" class="sf-mobile-panel">
+        <div class="sf-mobile-panel-bar">
+          <Icon v-if="activeDockerItem" class="sf-mobile-panel-icon" :icon="activeDockerItem.icon" />
+          <span class="sf-mobile-panel-title">{{ activeDockerItem?.displayName ?? dockerDef.title }}</span>
+          <button class="sf-mobile-panel-close" title="Close panel" @click="mobilePanelOpen = false">✕</button>
+        </div>
+        <Panel
+          :title="dockerDef.title"
+          :sections="dockerDef.sections"
+          :visible="true"
+          position="mobile"
+          @utility="onPanelUtility"
+          @component-action="onPanelAction"
+        />
+      </div>
+    </template>
+
+    <StatusBar v-if="!isMobile" :left="L.status.left" :right="L.status.right" />
   </div>
 </template>

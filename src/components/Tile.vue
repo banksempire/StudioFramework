@@ -11,8 +11,29 @@ const ws = useWorkspaceContext();
 const rpToggle = inject(kRightPanelToggle, null);
 
 const el = ref<HTMLElement | null>(null);
-onMounted(() => ws.registerTileEl(props.tile.id, el.value));
-onBeforeUnmount(() => ws.registerTileEl(props.tile.id, null));
+
+/** True for the synthetic mobile flat tile (see Workspace.vue): a view over
+ *  the real tree whose id is not backed by a real tile. Actions route to
+ *  the real tile holding the tab; DnD is disabled (no drag-to-tile on
+ *  mobile) and the element never registers as a drop target. */
+const synthetic = computed(() => ws.findTileGlobal(props.tile.id) === null);
+
+/** Resolve the real tile behind an action on the synthetic flat tile. */
+function resolveTileId(tabId?: string): string {
+  if (!synthetic.value) return props.tile.id;
+  const byTab = tabId ? ws.findTabGlobal(tabId) : null;
+  const focused = ws.findTileGlobal(ws.focusedTileId);
+  return (byTab ?? focused ?? ws.findTileGlobal(ws.topRightTileId))?.id ?? props.tile.id;
+}
+
+onMounted(() => {
+  if (synthetic.value) return;
+  ws.registerTileEl(props.tile.id, el.value);
+});
+onBeforeUnmount(() => {
+  if (synthetic.value) return;
+  ws.registerTileEl(props.tile.id, null);
+});
 
 const activeTab = computed(() => (props.tile.activeId ? (ws.tabDefs[props.tile.activeId] ?? null) : null));
 const contentComp = computed(() => {
@@ -33,6 +54,7 @@ const evenlySpaceTitle = computed(() =>
 );
 
 function onTabDragStart(e: DragEvent, tabId: string) {
+  if (synthetic.value) return;
   if (e.dataTransfer) {
     e.dataTransfer.effectAllowed = 'move';
     e.dataTransfer.setData('text/plain', tabId);
@@ -42,10 +64,11 @@ function onTabDragStart(e: DragEvent, tabId: string) {
 
 /** Clicking a tab notifies host apps (review/preview semantics) and
  *  activates it. The notification fires only for REAL clicks — programmatic
- *  activation via ops.activateTab is silent. */
+ *  activation via ops.activateTab is silent. On the synthetic flat tile the
+ *  activation lands on the real tile behind the tab. */
 function onTabClick(tabId: string) {
   ws.notifyTabClick(tabId);
-  ws.ops.activateTab(props.tile.id, tabId);
+  ws.ops.activateTab(resolveTileId(tabId), tabId);
 }
 
 /** Middle-click a tab to close it (VSCode behavior). Closes on mousedown so
@@ -56,10 +79,15 @@ function onTabMousedown(e: MouseEvent, tabId: string) {
   if (ws.tabDefs[tabId]?.closeable === false) return;
   ws.ops.closeTab(tabId);
 }
+
+function onTileMousedown() {
+  if (synthetic.value) return;
+  ws.ops.focusTile(props.tile.id);
+}
 </script>
 
 <template>
-  <div ref="el" class="sf-tile" :class="{ 'sf-tile--focused': focused }" :data-tile="tile.id" @mousedown="ws.ops.focusTile(tile.id)">
+  <div ref="el" class="sf-tile" :class="{ 'sf-tile--focused': focused }" :data-tile="tile.id" @mousedown="onTileMousedown">
     <!-- Tab strip -->
     <div class="sf-tile-tabs">
       <div
@@ -73,7 +101,7 @@ function onTabMousedown(e: MouseEvent, tabId: string) {
             dragging: ws.dnd.dragging && ws.dnd.tabId === tabId,
           },
         ]"
-        draggable="true"
+        :draggable="!synthetic"
         @click="onTabClick(tabId)"
         @mousedown="onTabMousedown($event, tabId)"
         @dragstart="onTabDragStart($event, tabId)"
@@ -87,7 +115,7 @@ function onTabMousedown(e: MouseEvent, tabId: string) {
           @click.stop="ws.ops.closeTab(tabId)"
         >✕</span>
       </div>
-      <button class="sf-tab-new" :title="ws.newTabTitle" @click="ws.ops.newTab(tile.id)">+</button>
+      <button class="sf-tab-new" :title="ws.newTabTitle" @click="ws.ops.newTab(resolveTileId())">+</button>
       <template v-if="isTopRight">
         <div v-if="canEvenlySpace" class="sf-btn-group">
           <button

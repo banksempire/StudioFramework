@@ -10,7 +10,7 @@ const props = withDefaults(
   defineProps<{
     title: string;
     visible: boolean;
-    position: 'left' | 'right';
+    position: 'left' | 'right' | 'mobile';
     sections?: PanelSection[];
   }>(),
   {
@@ -27,8 +27,9 @@ const emit = defineEmits<{
   'component-action': [action: PanelAction];
 }>();
 
-// ── Resize ────────────────────────────────────────────────────────────────
+// ── Resize (desktop only — mobile panels are fullscreen) ─────────────────
 
+const resizable = computed(() => props.position !== 'mobile');
 const resizeDir = computed(() => (props.position === 'left' ? 'right' : 'left'));
 const oppositeEdge = computed(() => (props.position === 'left' ? 'left' : 'right'));
 
@@ -229,9 +230,10 @@ onUnmounted(() => observer?.disconnect());
         'sf-panel--hidden': !visible,
       },
     ]"
-    :style="{ width: width + 'px' }"
+    :style="resizable ? { width: width + 'px' } : undefined"
   >
     <div
+      v-if="resizable"
       class="sf-panel-resize-handle"
       :class="'sf-panel-resize-handle--' + resizeDir"
       @mousedown="onMouseDown"

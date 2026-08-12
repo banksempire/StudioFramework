@@ -2,11 +2,19 @@
 import type { DockerAppDef } from '../types/layout';
 import Icon from './Icon.vue';
 
-defineProps<{
-  items: DockerAppDef[];
-  activeApp: string;
-  panelVisible?: boolean;
-}>();
+withDefaults(
+  defineProps<{
+    items: DockerAppDef[];
+    activeApp: string;
+    panelVisible?: boolean;
+    /** 'left' = the desktop icon rail; 'bottom' = the mobile dock. */
+    position?: 'left' | 'bottom';
+  }>(),
+  {
+    panelVisible: true,
+    position: 'left',
+  },
+);
 
 const emit = defineEmits<{
   'app-selected': [appId: string];
@@ -16,8 +24,9 @@ const emit = defineEmits<{
 <template>
   <div
     class="sf-docker"
+    :class="{ 'sf-docker--bottom': position === 'bottom' }"
   >
-    <div class="sf-docker-handle" />
+    <div v-if="position === 'left'" class="sf-docker-handle" />
     <div
       v-for="app in items"
       :key="app.id"

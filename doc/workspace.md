@@ -242,3 +242,22 @@ by `Workspace.vue`, for the ◫ right-panel button.
 - Workspace app (Playwright): `npm run check:ws` — 27 assertions: save,
   load restores structure + spacing (sash ratios), ghost windows → blank
   page + note, rename, search, reorder, delete, reload survival.
+
+## Mobile mode
+
+Below 500px window width the framework switches to a phone-style chrome
+(`Framework.vue`, breakpoint `MOBILE_BREAKPOINT`):
+
+- Menu bar and status bar are hidden.
+- Both side panels are hidden; the docker becomes a bottom dock
+  (`position="bottom"` on `Docker.vue`).
+- Tapping a dock app opens its panel fullscreen (`.sf-mobile-panel`,
+  covering everything except the dock); tapping the open app again or the
+  ✕ button closes it.
+- The workspace IGNORES the tile tree while mobile: it presents one
+  synthetic flat tile (`sf-mobile-flat`) holding every tab in visual
+  order. The real tree is never mutated — `Tile.vue` detects the
+  synthetic tile (`findTileGlobal` misses) and routes tab activation /
+  `+` / focus back to the real tiles, so the structure resumes exactly
+  when the window widens again. DnD is disabled on the flat tile (no
+  drag-to-tile on mobile).

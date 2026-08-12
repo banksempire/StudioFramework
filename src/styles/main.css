@@ -1418,3 +1418,98 @@ body.sf-dragging-row * {
 ::selection {
   background: var(--sf-selection);
 }
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   Mobile mode (window width < 500px)
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/* Full-bleed root; the bottom dock replaces the left icon rail. */
+.sf-root--mobile {
+  padding: 0;
+  gap: 0;
+  position: relative;
+}
+
+.sf-root--mobile .sf-center-group {
+  border-radius: 0;
+}
+
+/* Bottom dock: one horizontal row of app icons. */
+.sf-docker--bottom {
+  flex-direction: row;
+  width: 100%;
+  height: 48px;
+  flex-shrink: 0;
+  align-items: center;
+  padding-top: 0;
+  padding-left: 4px;
+  gap: 2px;
+  border-radius: 0;
+  border-top: 1px solid var(--sf-border);
+  background: var(--sf-bg-lighter);
+}
+
+.sf-docker--bottom .sf-docker-app {
+  border-left: none;
+  border-top: 2px solid transparent;
+}
+
+.sf-docker--bottom .sf-docker-app.active {
+  border-top-color: var(--sf-accent);
+}
+
+/* Fullscreen app panel opened from the dock: covers everything except the
+   dock itself, so the user can switch apps or tap the active icon to close. */
+.sf-mobile-panel {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 48px;
+  display: flex;
+  flex-direction: column;
+  background: var(--sf-bg);
+  z-index: 20;
+}
+
+.sf-mobile-panel-bar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 10px;
+  background: var(--sf-bg-lighter);
+  border-bottom: 1px solid var(--sf-border);
+  flex-shrink: 0;
+}
+
+.sf-mobile-panel-title {
+  flex: 1;
+  font-size: 16px;
+  color: var(--sf-text);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.sf-mobile-panel-close {
+  width: 28px;
+  height: 28px;
+  border: none;
+  background: transparent;
+  color: var(--sf-text);
+  font-size: 16px;
+  cursor: pointer;
+  border-radius: var(--sf-radius-sm);
+  flex-shrink: 0;
+}
+
+.sf-mobile-panel-close:hover {
+  background: var(--sf-hover-overlay);
+}
+
+.sf-panel--mobile {
+  width: 100%;
+  flex: 1;
+  min-height: 0;
+  border-radius: 0;
+}

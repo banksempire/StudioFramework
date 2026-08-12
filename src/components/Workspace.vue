@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { provide, reactive, ref, watch } from 'vue';
+import { computed, provide, reactive, ref, watch } from 'vue';
 import type { ExternalDropTarget } from '../composables/useWorkspace';
 import {
   type DndRect,
@@ -9,7 +9,7 @@ import {
   type WorkspaceApi,
 } from '../composables/useWorkspace';
 import type { WorkspaceDef } from '../types/layout';
-import type { DropZone } from '../workspace/tree';
+import { collectAllTabs, type DropZone, type TileNode } from '../workspace/tree';
 import RootSash from './RootSash.vue';
 import WorkspaceNode from './WorkspaceNode.vue';
 
@@ -19,9 +19,14 @@ const props = withDefaults(
     rightPanelVisible?: boolean;
     /** shared workspace api (created by the framework root when provided) */
     api?: WorkspaceApi;
+    /** Mobile layout: the tile TREE is hidden and the workspace presents a
+     *  single flat tile holding every tab (the tree itself is untouched and
+     *  resumes exactly when mobile ends). */
+    mobile?: boolean;
   }>(),
   {
     rightPanelVisible: true,
+    mobile: false,
   },
 );
 const emit = defineEmits<{ 'toggle-right-panel': [] }>();
@@ -45,6 +50,24 @@ watch(
 provide(kRightPanelToggle, rpToggle);
 
 const wsEl = ref<HTMLElement | null>(null);
+
+// ── Mobile flat tile ──────────────────────────────────────────────────────
+// One synthetic tile over the real tree: every tab from every root in
+// visual order, active = the focused tile's active tab. Actions on it are
+// routed back to the real tiles (Tile.vue detects the synthetic id), so
+// switching back to desktop resumes the exact structure. The id can never
+// collide with a real tile (real ids are generated as 'tile-N').
+
+const MOBILE_FLAT_TILE_ID = 'sf-mobile-flat';
+
+const flatNode = computed<TileNode>(() => {
+  const tabs: string[] = [];
+  for (const root of api.roots) tabs.push(...collectAllTabs(root.node));
+  let activeId = tabs[0] ?? '';
+  const focused = api.findTileGlobal(api.focusedTileId);
+  if (focused?.activeId && tabs.includes(focused.activeId)) activeId = focused.activeId;
+  return { kind: 'tile', id: MOBILE_FLAT_TILE_ID, tabs, activeId };
+});
 
 /** Tile seam size (--sf-sash-size); previews must account for it so the
  *  landing box matches the shape the split will actually produce. */
@@ -273,16 +296,23 @@ function onDragLeave(e: DragEvent) {
     @dragleave="onDragLeave"
   >
     <div class="sf-workspace-inner" :class="api.rootDir === 'column' ? 'sf-workspace-inner--col' : ''">
-      <template v-for="(root, i) in api.roots" :key="root.id">
-        <div class="sf-root-group" :style="{ flexBasis: root.ratio * 100 + '%' }">
-          <WorkspaceNode :node="root.node" />
-        </div>
-        <RootSash v-if="i < api.roots.length - 1" :index="i" />
+      <template v-if="mobile">
+        <!-- Mobile: the whole tree collapses into one flat tile (the real
+             tree stays untouched and resumes when mobile ends). -->
+        <WorkspaceNode :node="flatNode" />
+      </template>
+      <template v-else>
+        <template v-for="(root, i) in api.roots" :key="root.id">
+          <div class="sf-root-group" :style="{ flexBasis: root.ratio * 100 + '%' }">
+            <WorkspaceNode :node="root.node" />
+          </div>
+          <RootSash v-if="i < api.roots.length - 1" :index="i" />
+        </template>
       </template>
     </div>
 
     <!-- Visual-only DnD layer (pointer-events: none — events go to the root) -->
-    <div v-if="api.dnd.dragging || api.dnd.externalDrop" class="sf-dnd-layer">
+    <div v-if="!mobile && (api.dnd.dragging || api.dnd.externalDrop)" class="sf-dnd-layer">
       <div v-if="api.dnd.preview" class="sf-dnd-preview" :style="rectStyle(api.dnd.preview)" />
       <div v-if="api.dnd.glow && !api.dnd.preview" class="sf-dnd-glow" :style="rectStyle(api.dnd.glow)" />
       <div v-if="api.dnd.indicator" class="sf-dnd-indicator" :style="rectStyle(api.dnd.indicator)" />
