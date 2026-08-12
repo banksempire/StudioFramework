@@ -243,7 +243,7 @@ function moveItem(id: string, dir: -1 | 1) {
   background: var(--sf-bg);
   color: var(--sf-text);
   border: 1px solid var(--sf-border);
-  border-radius: 3px;
+  border-radius: var(--sf-radius-sm);
   padding: 3px 6px;
   font-size: 16px;
   font-family: var(--sf-font);
@@ -262,7 +262,7 @@ function moveItem(id: string, dir: -1 | 1) {
   background: var(--sf-bg-light);
   color: var(--sf-text);
   border: 1px solid var(--sf-border);
-  border-radius: 3px;
+  border-radius: var(--sf-radius-sm);
   padding: 2px 7px;
   font-size: 16px;
   cursor: pointer;
@@ -289,7 +289,7 @@ function moveItem(id: string, dir: -1 | 1) {
 }
 
 .sf-ws-error {
-  color: #f48771;
+  color: var(--sf-danger);
   font-size: 16px;
 }
 
@@ -311,7 +311,7 @@ function moveItem(id: string, dir: -1 | 1) {
   gap: 4px;
   padding: 4px 6px;
   border: 1px solid transparent;
-  border-radius: 3px;
+  border-radius: var(--sf-radius-sm);
   cursor: pointer;
 }
 

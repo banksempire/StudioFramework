@@ -174,7 +174,7 @@ function onTabMousedown(e: MouseEvent, tabId: string) {
   font-size: 16px;
   background: var(--sf-bg-light);
   border: 1px solid var(--sf-border);
-  border-radius: 3px;
+  border-radius: var(--sf-radius-sm);
   padding: 1px 5px;
 }
 

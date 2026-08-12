@@ -54,6 +54,15 @@
   --sf-selection: #264f78;
   --sf-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
   --sf-text-on-accent: #fff;
+  /* Semantic colors — theme overrides replace these, everything else
+     derives from them (translucent variants use color-mix). */
+  --sf-danger: #f48771;      /* error / destructive text */
+  --sf-status-ok: #4ec9b0;   /* success / running */
+  --sf-status-warn: #d7ba7d; /* warning / stopped */
+  --sf-status-err: #e5484d;  /* error badges */
+  --sf-link: #4fc1ff;        /* hyperlinks */
+  --sf-backdrop: rgba(0, 0, 0, 0.45); /* modal scrims */
+  --sf-radius-sm: 3px;
   --sf-font: 'Segoe UI', -apple-system, BlinkMacSystemFont, sans-serif;
   --sf-mono: 'Consolas', 'Fira Code', 'JetBrains Mono', monospace;
 }
@@ -940,16 +949,16 @@ body.sf-dragging-row * {
   color: var(--sf-text-muted);
 }
 .kv-pill--ok {
-  background: rgba(78, 201, 176, 0.18);
-  color: #4ec9b0;
+  background: color-mix(in srgb, var(--sf-status-ok) 18%, transparent);
+  color: var(--sf-status-ok);
 }
 .kv-pill--warn {
-  background: rgba(215, 186, 125, 0.14);
-  color: #d7ba7d;
+  background: color-mix(in srgb, var(--sf-status-warn) 14%, transparent);
+  color: var(--sf-status-warn);
 }
 .kv-pill--err {
-  background: rgba(229, 72, 77, 0.15);
-  color: #e5484d;
+  background: color-mix(in srgb, var(--sf-status-err) 15%, transparent);
+  color: var(--sf-status-err);
 }
 
 
