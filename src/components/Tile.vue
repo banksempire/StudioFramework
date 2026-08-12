@@ -155,7 +155,16 @@ function onTileMousedown() {
             :class="{ active: rpToggle.visible }"
             :title="rpToggle.visible ? 'Collapse Right Panel' : 'Expand Right Panel'"
             @click="rpToggle.toggle()"
-          >{{ rpToggle.visible ? '\u25EA' : '\u25E9' }}</button>
+          >
+            <!-- Square with right half filled (expand) / left half filled
+                 (collapse) — drawn as SVG so every font renders it the
+                 same (Unicode ◩/◪ glyphs vary by device font). -->
+            <svg class="sf-mobile-rp-icon" viewBox="0 0 16 16" aria-hidden="true">
+              <rect x="1" y="1" width="14" height="14" fill="none" stroke="currentColor" />
+              <rect v-if="rpToggle.visible" x="1" y="1" width="7" height="14" fill="currentColor" />
+              <rect v-else x="8" y="1" width="7" height="14" fill="currentColor" />
+            </svg>
+          </button>
         </div>
       </template>
       <template v-else>

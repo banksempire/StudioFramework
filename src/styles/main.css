@@ -1524,6 +1524,13 @@ body.sf-dragging-row * {
   color: var(--sf-accent);
 }
 
+.sf-root--mobile .sf-mobile-rp-icon {
+  width: 16px;
+  height: 16px;
+  display: block;
+  margin: auto;
+}
+
 /* Bottom dock: one horizontal row of app icons. */
 .sf-docker--bottom {
   flex-direction: row;
