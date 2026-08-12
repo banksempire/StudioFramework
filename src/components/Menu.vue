@@ -26,6 +26,7 @@
 import { computed, nextTick, onMounted, type Ref, ref, watch } from 'vue';
 import type { MenuNodeDef } from '../types/layout';
 import Icon from './Icon.vue';
+import SvgIcon from './SvgIcon.vue';
 
 const props = withDefaults(
   defineProps<{
@@ -241,14 +242,14 @@ if (!props.embedded && typeof window !== 'undefined') {
             >
               <span class="sf-menu-cell sf-menu-cell--icon">
                 <Icon v-if="item.icon" :icon="item.icon" />
-                <span v-else-if="item.iconKind === 'check'" class="sf-menu-mark">{{ item.selected ? '✓' : '' }}</span>
-                <span v-else-if="item.iconKind === 'dot'" class="sf-menu-mark">{{ item.selected ? '●' : '' }}</span>
+                <span v-else-if="item.iconKind === 'check'" class="sf-menu-mark"><SvgIcon v-if="item.selected" name="✓" /></span>
+                <span v-else-if="item.iconKind === 'dot'" class="sf-menu-mark"><SvgIcon v-if="item.selected" name="●" /></span>
               </span>
               <span class="sf-menu-cell sf-menu-cell--label">{{ item.label }}</span>
               <span v-if="item.detail || item.accelerator" class="sf-menu-cell sf-menu-cell--hint">
                 {{ item.detail ?? item.accelerator }}
               </span>
-              <span v-if="item.items?.length" class="sf-menu-cell sf-menu-cell--arrow">▶</span>
+              <span v-if="item.items?.length" class="sf-menu-cell sf-menu-cell--arrow"><SvgIcon name="▶" /></span>
             </div>
           </template>
         </div>
@@ -291,14 +292,14 @@ if (!props.embedded && typeof window !== 'undefined') {
           >
             <span class="sf-menu-cell sf-menu-cell--icon">
               <Icon v-if="item.icon" :icon="item.icon" />
-              <span v-else-if="item.iconKind === 'check'" class="sf-menu-mark">{{ item.selected ? '✓' : '' }}</span>
-              <span v-else-if="item.iconKind === 'dot'" class="sf-menu-mark">{{ item.selected ? '●' : '' }}</span>
+              <span v-else-if="item.iconKind === 'check'" class="sf-menu-mark"><SvgIcon v-if="item.selected" name="✓" /></span>
+              <span v-else-if="item.iconKind === 'dot'" class="sf-menu-mark"><SvgIcon v-if="item.selected" name="●" /></span>
             </span>
             <span class="sf-menu-cell sf-menu-cell--label">{{ item.label }}</span>
             <span v-if="item.detail || item.accelerator" class="sf-menu-cell sf-menu-cell--hint">
               {{ item.detail ?? item.accelerator }}
             </span>
-            <span v-if="item.items?.length" class="sf-menu-cell sf-menu-cell--arrow">▶</span>
+            <span v-if="item.items?.length" class="sf-menu-cell sf-menu-cell--arrow"><SvgIcon name="▶" /></span>
           </div>
         </template>
       </div>

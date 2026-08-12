@@ -1,8 +1,9 @@
 <script setup lang="ts">
 import type { IconDef } from '../types/panel';
+import SvgIcon from './SvgIcon.vue';
 
 defineProps<{
-  /** string = unicode char, object = image */
+  /** string = unicode char (rendered as SVG when registered, else text), object = image */
   icon?: IconDef;
 }>();
 </script>
@@ -14,5 +15,5 @@ defineProps<{
     :src="icon.url"
     alt=""
   />
-  <span v-else-if="icon" class="sf-icon">{{ icon }}</span>
+  <SvgIcon v-else-if="icon" :name="icon" />
 </template>

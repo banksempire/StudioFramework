@@ -19,6 +19,13 @@
   vertical-align: middle;
 }
 
+/* Vector icons inherit the surrounding font size (16px buttons, 12px
+   tab strips, ...) so they match the text glyphs they replace. */
+.sf-icon--svg {
+  width: 1em;
+  height: 1em;
+}
+
 .sf-docker-app-icon.sf-icon--img {
   width: 24px;
   height: 24px;

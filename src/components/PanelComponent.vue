@@ -5,6 +5,7 @@ import { getPanelComponent } from '../registry';
 import type { PanelAction, PanelComponent, TreeNode } from '../types/panel';
 import Icon from './Icon.vue';
 import KeyValueList from './KeyValueList.vue';
+import SvgIcon from './SvgIcon.vue';
 
 const props = defineProps<{
   component: PanelComponent;
@@ -120,7 +121,7 @@ function onNodeClick(node: TreeNode) {
             'sf-pc-tree-arrow--expanded': expandedNodes.has(item.node.id),
             'sf-pc-tree-arrow--leaf': !hasChildren(item.node),
           }"
-        >{{ hasChildren(item.node) ? '▸' : '' }}</span>
+        ><SvgIcon v-if="hasChildren(item.node)" name="▸" /></span>
         <Icon v-if="item.node.icon" class="sf-pc-tree-icon" :icon="item.node.icon" />
         <span class="sf-pc-tree-label">{{ item.node.label }}</span>
         <span v-if="item.node.badge" class="sf-pc-tree-badge">{{ item.node.badge }}</span>

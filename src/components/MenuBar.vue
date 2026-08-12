@@ -2,6 +2,7 @@
 import { onMounted, onUnmounted, ref } from 'vue';
 import type { MenuNodeDef } from '../types/layout';
 import Menu from './Menu.vue';
+import SvgIcon from './SvgIcon.vue';
 
 // ── Keyboard accelerators ─────────────────────────────────────────────────
 // Menu items can declare `accelerator` in the layout JSON ("Ctrl+N",
@@ -181,7 +182,7 @@ function onItemAction(item: MenuNodeDef) {
         :title="props.leftPanelVisible ? 'Collapse Left Panel' : 'Expand Left Panel'"
         @click="emit('toggle-left-panel')"
       >
-        {{ props.leftPanelVisible ? '\u25E8' : '\u25EB' }}
+        <SvgIcon :name="props.leftPanelVisible ? '\u25E8' : '\u25EB'" />
       </button>
     </div>
 

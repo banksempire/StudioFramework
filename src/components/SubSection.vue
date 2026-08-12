@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import type { PanelAction, PanelSubSection } from '../types/panel';
 import PanelComponent from './PanelComponent.vue';
+import SvgIcon from './SvgIcon.vue';
 
 defineProps<{
   subSection: PanelSubSection;
@@ -26,7 +27,7 @@ const emit = defineEmits<{
   >
     <!-- Title bar - click toggles expand/collapse only (does NOT activate) -->
     <div class="sf-subsection-header" @click="emit('toggle-expand')">
-      <span class="sf-subsection-arrow" :class="{ 'sf-subsection-arrow--expanded': isExpanded }">❯</span>
+      <span class="sf-subsection-arrow" :class="{ 'sf-subsection-arrow--expanded': isExpanded }"><SvgIcon name="❯" /></span>
       <span class="sf-subsection-label">{{ subSection.label }}</span>
       <div v-if="subSection.utilities?.length" class="sf-subsection-utils" @click.stop="emit('activate')">
         <button

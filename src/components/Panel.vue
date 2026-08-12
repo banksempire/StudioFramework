@@ -5,6 +5,7 @@ import type { MenuNodeDef } from '../types/layout';
 import type { PanelAction, PanelSection } from '../types/panel';
 import Menu from './Menu.vue';
 import SubsectionBody from './SubsectionBody.vue';
+import SvgIcon from './SvgIcon.vue';
 
 const props = withDefaults(
   defineProps<{
@@ -258,7 +259,7 @@ onUnmounted(() => observer?.disconnect());
             v-if="hasSubSections"
             class="sf-panel-header-btn"
             @click.stop="toggle"
-          >⋯</button>
+          ><SvgIcon name="⋯" /></button>
         </template>
       </Menu>
       <button
@@ -266,7 +267,7 @@ onUnmounted(() => observer?.disconnect());
         class="sf-panel-close-btn"
         title="Close panel"
         @click="emit('close')"
-      >✕</button>
+      ><SvgIcon name="✕" /></button>
     </div>
 
     <!-- Section tab bar - only when multiple sections -->
@@ -292,7 +293,7 @@ onUnmounted(() => observer?.disconnect());
               class="sf-panel-tab sf-panel-tab--overflow"
               :class="{ 'sf-panel-tab--active': activeIndex >= visibleCount }"
               @click.stop="toggle"
-            >☰</button>
+            ><SvgIcon name="☰" /></button>
           </template>
         </Menu>
       </div>

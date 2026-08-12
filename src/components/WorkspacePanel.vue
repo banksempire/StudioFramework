@@ -2,6 +2,7 @@
 import { computed, ref } from 'vue';
 import { useWorkspaceContext } from '../composables/useWorkspace';
 import type { WorkspaceSnapshot } from '../workspace/snapshots';
+import SvgIcon from './SvgIcon.vue';
 
 /**
  * Workspace app panel — save / switch / manage named workspaces.
@@ -208,11 +209,11 @@ function moveItem(id: string, dir: -1 | 1) {
             <span class="sf-ws-time">{{ fmtTime(item) }}</span>
           </div>
           <div class="sf-ws-actions">
-            <button class="sf-ws-btn" title="Load this workspace" @click="loadWorkspace(item)">▶</button>
-            <button class="sf-ws-btn" title="Rename" @click="startRename(item)">✎</button>
-            <button class="sf-ws-btn" title="Move up" :disabled="i === 0" @click="moveItem(item.id, -1)">↑</button>
-            <button class="sf-ws-btn" title="Move down" :disabled="i === filtered.length - 1" @click="moveItem(item.id, 1)">↓</button>
-            <button class="sf-ws-btn" title="Delete" @click="removeItem(item.id)">🗑</button>
+            <button class="sf-ws-btn" title="Load this workspace" @click="loadWorkspace(item)"><SvgIcon name="▶" /></button>
+            <button class="sf-ws-btn" title="Rename" @click="startRename(item)"><SvgIcon name="✎" /></button>
+            <button class="sf-ws-btn" title="Move up" :disabled="i === 0" @click="moveItem(item.id, -1)"><SvgIcon name="↑" /></button>
+            <button class="sf-ws-btn" title="Move down" :disabled="i === filtered.length - 1" @click="moveItem(item.id, 1)"><SvgIcon name="↓" /></button>
+            <button class="sf-ws-btn" title="Delete" @click="removeItem(item.id)"><SvgIcon name="🗑" /></button>
           </div>
         </template>
       </div>

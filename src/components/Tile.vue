@@ -7,6 +7,7 @@ import type { TileNode } from '../workspace/tree';
 import BlankTab from './BlankTab.vue';
 import Icon from './Icon.vue';
 import Menu from './Menu.vue';
+import SvgIcon from './SvgIcon.vue';
 
 const props = defineProps<{ tile: TileNode }>();
 const ws = useWorkspaceContext();
@@ -139,7 +140,7 @@ function onTileMousedown() {
               class="sf-mobile-tab-selector"
               title="Tabs"
               @click.stop="toggle"
-            >☰</button>
+            ><SvgIcon name="☰" /></button>
           </template>
         </Menu>
         <span class="sf-mobile-tab-label">{{ activeTabLabel || 'No tab open' }}</span>
@@ -148,7 +149,7 @@ function onTileMousedown() {
           title="Close tab"
           :disabled="!activeTabCloseable"
           @click="onCloseActive"
-        >✕</button>
+        ><SvgIcon name="✕" /></button>
         <div v-if="rpToggle" class="sf-mobile-rp-wrap">
           <button
             class="sf-mobile-rp-btn"
@@ -191,7 +192,7 @@ function onTileMousedown() {
             v-if="ws.tabDefs[tabId]?.closeable !== false"
             class="sf-tab-close"
             @click.stop="ws.ops.closeTab(tabId)"
-          >✕</span>
+          ><SvgIcon name="✕" /></span>
         </div>
         <button class="sf-tab-new" :title="ws.newTabTitle" @click="ws.ops.newTab(resolveTileId())">+</button>
         <template v-if="isTopRight">
@@ -200,19 +201,19 @@ function onTileMousedown() {
               class="sf-tab-panel-toggle"
               title="Merge all tiles into one"
               @click="ws.ops.mergeAll()"
-            >□</button>
+            ><SvgIcon name="□" /></button>
             <button
               class="sf-tab-panel-toggle"
               :title="evenlySpaceTitle"
               @click="ws.ops.evenlySpace()"
-            >⇔</button>
+            ><SvgIcon name="⇔" /></button>
           </div>
           <div v-if="rpToggle" class="sf-btn-group">
             <button
               class="sf-tab-panel-toggle"
               :title="rpToggle.visible ? 'Collapse Right Panel' : 'Expand Right Panel'"
               @click="rpToggle.toggle()"
-            >{{ rpToggle.visible ? '\u25E8' : '\u25EB' }}</button>
+            ><SvgIcon :name="rpToggle.visible ? '\u25E8' : '\u25EB'" /></button>
           </div>
         </template>
       </template>
