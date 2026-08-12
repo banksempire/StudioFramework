@@ -97,13 +97,47 @@ const WS = '.sf-workspace';
   report('mobile: right panel hidden', (await page.locator('.sf-panel--right').count()) === 0);
   report('mobile: ONE tile', (await tileCount()) === 1);
   report(
-    'mobile bar: [selector | active tab | close | right panel]',
-    (await page.locator('.sf-mobile-tab-selector').count()) === 1 &&
+    'mobile bar: [⋯ menu | selector | active tab | close | right panel]',
+    (await page.locator('.sf-mobile-menu-btn').count()) === 1 &&
+      (await page.locator('.sf-mobile-tab-selector').count()) === 1 &&
       (await page.locator('.sf-mobile-tab-label').count()) === 1 &&
       (await page.locator('.sf-mobile-tab-close').count()) === 1 &&
       (await page.locator('.sf-mobile-rp-btn').count()) === 1,
   );
   report("mobile bar: shows the focused tile's active tab", allTabs.includes(await mobileBarLabel()));
+
+  // ⋯ button: opens the layout's menu tree (the desktop MenuBar's menus),
+  // submenus open on hover, selecting a leaf closes the menu.
+  await page.locator('.sf-mobile-menu-btn').click();
+  await page.waitForTimeout(200);
+  const menuRows = await page.locator('.sf-menu-row .sf-menu-cell--label').allTextContents();
+  report(
+    '⋯ opens the layout menu tree',
+    JSON.stringify(menuRows) === JSON.stringify(['File', 'Edit', 'Selection', 'View', 'Help']),
+  );
+  // Raw mouse move: once the submenu opens it overlays the parent row (the
+  // 390px screen has no room beside it), so locator.hover would retry forever.
+  const fileRow = page.locator('.sf-menu-row', { hasText: 'File' });
+  const fr = await fileRow.boundingBox();
+  await page.mouse.move(fr.x + fr.width / 2, fr.y + fr.height / 2);
+  await page.waitForTimeout(250);
+  const allRows = await page.locator('.sf-menu-row .sf-menu-cell--label').allTextContents();
+  report(
+    '⋯ submenu opens on hover (File items visible)',
+    allRows.includes('New File') && allRows.includes('Open Folder...'),
+  );
+  // The deepest visible leaf (File > New File > Text File) sits on top of
+  // every other pop, so its click is never intercepted.
+  const textFile = page.locator('.sf-menu-row', { hasText: 'Text File' });
+  report('⋯ submenu stays inside the viewport', (await textFile.boundingBox()).x >= 0);
+  await textFile.click();
+  await page.waitForTimeout(200);
+  report('⋯ selecting a leaf closes the menu', (await page.locator('.sf-menu-row').count()) === 0);
+  await page.locator('.sf-mobile-menu-btn').click();
+  await page.waitForTimeout(200);
+  await page.locator('.sf-mobile-tab-label').click({ position: { x: 5, y: 5 } });
+  await page.waitForTimeout(200);
+  report('⋯ click-away closes the menu', (await page.locator('.sf-menu-row').count()) === 0);
 
   // Tab selector: lists ALL tabs in visual order; selecting routes to the
   // REAL tile behind the tab (survives the switch back to desktop).

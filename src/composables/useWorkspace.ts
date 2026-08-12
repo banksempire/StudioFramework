@@ -1,5 +1,5 @@
 import { type InjectionKey, inject, reactive, watch } from 'vue';
-import type { WorkspaceDef, WorkspaceTabDef } from '../types/layout';
+import type { MenuNodeDef, WorkspaceDef, WorkspaceTabDef } from '../types/layout';
 import {
   captureSnapshot,
   restoreSnapshot,
@@ -212,6 +212,18 @@ export interface RightPanelToggleApi {
 }
 
 export const kRightPanelToggle: InjectionKey<RightPanelToggleApi> = Symbol('sf.rightPanelToggle');
+
+/**
+ * Title-bar menu access: the mobile workspace bar renders a … button that
+ * opens the layout's menu tree (the same menus the desktop MenuBar shows).
+ * Provided by the Framework root; absent in host apps that skip it.
+ */
+export interface TitleBarMenusApi {
+  menus: MenuNodeDef[];
+  onAction: (actionId: string) => void;
+}
+
+export const kTitleBarMenus: InjectionKey<TitleBarMenusApi> = Symbol('sf.titleBarMenus');
 
 /**
  * Framework context accessor for components: the workspace context is

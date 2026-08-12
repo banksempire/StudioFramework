@@ -1476,6 +1476,7 @@ body.sf-dragging-row * {
    the workspace bar, ⋯ / ◨ on the panel header. Vertical side lines only
    (left + right) — no top/bottom borders, so each button reads as a
    vertical segment and adjacent buttons share a boundary line. */
+.sf-root--mobile .sf-tile-tabs .sf-mobile-menu-btn,
 .sf-root--mobile .sf-tile-tabs .sf-mobile-tab-selector,
 .sf-root--mobile .sf-tile-tabs .sf-mobile-tab-close,
 .sf-root--mobile .sf-tile-tabs .sf-mobile-rp-btn,
@@ -1514,6 +1515,7 @@ body.sf-dragging-row * {
   margin-right: 0;
 }
 
+.sf-root--mobile .sf-tile-tabs .sf-mobile-menu-btn:hover,
 .sf-root--mobile .sf-tile-tabs .sf-mobile-tab-selector:hover,
 .sf-root--mobile .sf-tile-tabs .sf-mobile-tab-close:hover:not(:disabled),
 .sf-root--mobile .sf-tile-tabs .sf-mobile-rp-btn:hover,

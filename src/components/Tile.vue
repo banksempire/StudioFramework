@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed, inject, onBeforeUnmount, onMounted, ref } from 'vue';
-import { kRightPanelToggle, useWorkspaceContext } from '../composables/useWorkspace';
+import { kRightPanelToggle, kTitleBarMenus, useWorkspaceContext } from '../composables/useWorkspace';
 import { getTabContent } from '../registry';
 import type { MenuNodeDef } from '../types/layout';
 import type { TileNode } from '../workspace/tree';
@@ -12,6 +12,14 @@ import SvgIcon from './SvgIcon.vue';
 const props = defineProps<{ tile: TileNode }>();
 const ws = useWorkspaceContext();
 const rpToggle = inject(kRightPanelToggle, null);
+const titleBarMenus = inject(kTitleBarMenus, null);
+const menuOpen = ref(false);
+
+/** The mobile … button shows the layout's menu tree (desktop MenuBar). */
+function onMobileMenuSelect(item: MenuNodeDef) {
+  menuOpen.value = false;
+  if (item.action && titleBarMenus) titleBarMenus.onAction(item.action);
+}
 
 const el = ref<HTMLElement | null>(null);
 
@@ -128,7 +136,25 @@ function onTileMousedown() {
     <!-- Tab strip (desktop) / compact bar (mobile flat tile) -->
     <div class="sf-tile-tabs">
       <template v-if="synthetic">
-        <!-- Mobile: [tab selector | active tab | close | right panel] -->
+        <!-- Mobile: [⋯ menu | tab selector | active tab | close | right
+             panel] — the ⋯ button opens the layout's menu tree (the same
+             menus the desktop MenuBar shows), dispatching the same
+             actions. -->
+        <Menu
+          v-if="titleBarMenus"
+          :items="titleBarMenus.menus"
+          :open="menuOpen"
+          @update:open="(v) => (menuOpen = v)"
+          @select="onMobileMenuSelect"
+        >
+          <template #trigger="{ toggle }">
+            <button
+              class="sf-mobile-menu-btn"
+              title="Menu"
+              @click.stop="toggle"
+            ><SvgIcon name="⋯" /></button>
+          </template>
+        </Menu>
         <Menu
           :items="tabSelectorItems"
           :open="tabMenuOpen"

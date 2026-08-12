@@ -27,7 +27,7 @@ import Docker from './components/Docker.vue';
 import Panel from './components/Panel.vue';
 import Workspace from './components/Workspace.vue';
 import StatusBar from './components/StatusBar.vue';
-import { kWorkspace, useWorkspace } from './composables/useWorkspace';
+import { kTitleBarMenus, kWorkspace, useWorkspace } from './composables/useWorkspace';
 
 const props = withDefaults(defineProps<{
   layout?: LayoutDefinition;
@@ -45,6 +45,9 @@ const emit = defineEmits<{
 
 const api = useWorkspace(L.workspace);
 provide(kWorkspace, api);
+// Mobile title bar: the … button opens the same menu tree as the desktop
+// MenuBar (hidden in mobile) and dispatches the same actions.
+provide(kTitleBarMenus, { menus: L.menu, onAction: onMenuAction });
 onMounted(() => emit('workspace-ready', api));
 
 const activeDockerApp = ref(L.docker[0]?.id ?? '');

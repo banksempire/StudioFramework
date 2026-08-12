@@ -79,6 +79,10 @@ function positionFor(rect: DOMRect): { left: string; top: string; parentLeft: nu
   const W = 224;
   let left = rect.right + 2;
   if (left + W > window.innerWidth - 4) left = rect.left - W - 2;
+  // Mobile: a flip can still land off-screen LEFT when the menu sits at
+  // the screen edge — clamp so the submenu stays reachable (it overlaps
+  // the parent, the standard hamburger-menu pattern).
+  if (left < 4) left = 4;
   const top = Math.max(4, Math.min(rect.top - 4, window.innerHeight - 240));
   return { left: `${left}px`, top: `${top}px`, parentLeft: rect.left };
 }
