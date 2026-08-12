@@ -1437,14 +1437,17 @@ body.sf-dragging-row * {
 /* Bottom dock: one horizontal row of app icons. */
 .sf-docker--bottom {
   flex-direction: row;
-  width: 100%;
-  height: 48px;
+  width: auto;
+  height: 60px;
   flex-shrink: 0;
   align-items: center;
+  /* Inset the dock from the screen edges so iPhone-style rounded corners
+     don't clip the bar's ends. */
+  margin: 0 10px;
   padding-top: 0;
   padding-left: 4px;
   gap: 2px;
-  border-radius: 0;
+  border-radius: var(--sf-radius);
   border-top: 1px solid var(--sf-border);
   background: var(--sf-bg-lighter);
 }
@@ -1465,7 +1468,7 @@ body.sf-dragging-row * {
   top: 0;
   left: 0;
   right: 0;
-  bottom: 48px;
+  bottom: 60px;
   display: flex;
   flex-direction: column;
   background: var(--sf-bg);
