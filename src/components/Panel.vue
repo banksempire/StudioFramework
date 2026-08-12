@@ -242,9 +242,8 @@ onUnmounted(() => observer?.disconnect());
       @mousedown="onMouseDown"
     />
 
-    <!-- Title bar: [title | ⋯ | ◨] — the ⋯ visibility menu and the mobile
-         close button sit right-aligned, flush to the bar's edge. ✕ closes
-         the panel. -->
+    <!-- Title bar: [title | ⋯ | ◨] on desktop; on mobile the ⋯ moves to
+         the LEFT edge and the ✕ stays right: [⋯ | title | ✕]. -->
     <div
       class="sf-panel-header"
       :class="{ 'sf-panel-header--no-sub': !hasSubSections }"

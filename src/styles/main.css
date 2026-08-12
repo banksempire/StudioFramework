@@ -1528,15 +1528,9 @@ body.sf-dragging-row * {
   margin-right: 0;
 }
 
-/* The ⋯ is the first flex item (the title is out of flow) — its auto
-   margin pins the whole [⋯ ✕] group to the right edge. */
-.sf-root--mobile .sf-panel-header-btn {
-  margin-left: auto;
-}
-
-/* A panel WITHOUT sub-sections has no ⋯ button, so the ✕ is the first
-   flex item and pins itself right. */
-.sf-root--mobile .sf-panel-header--no-sub .sf-panel-close-btn {
+/* The ⋯ is the first flex item and stays flush LEFT; the ✕ (last flex
+   item) pins itself right with its auto margin. */
+.sf-root--mobile .sf-panel-close-btn {
   margin-left: auto;
 }
 
@@ -1719,8 +1713,10 @@ body.sf-dragging-row * {
   border-radius: 0;
 }
 
-/* The header's [⋯ | ◨] group sits flush against the screen edge. */
+/* The header's [⋯ | ✕] buttons sit flush against BOTH screen edges (⋯
+   left, ✕ right — the title centers between them). */
 .sf-panel--mobile .sf-panel-header {
+  padding-left: 0;
   padding-right: 0;
 }
 

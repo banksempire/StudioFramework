@@ -285,15 +285,16 @@ const WS = '.sf-workspace';
       barCenter: Math.round(hr.x + hr.width / 2),
       closeRight: Math.round(cr.x + cr.width),
       barRight: Math.round(hr.x + hr.width),
-      // The ⋯ sits flush against the ✕ (60px wide each, 1px overlap).
-      ellipsisRightBeforeClose: Math.abs(Math.round(dr.x + dr.width) - Math.round(cr.x)) <= 1,
+      // The ⋯ sits flush against the bar's LEFT edge (60px wide, 1px
+      // overlap margin); the ✕ stays pinned right.
+      ellipsisLeft: Math.abs(Math.round(dr.x) - Math.round(hr.x)) <= 1,
     };
   });
   report(
-    '⋯ panel title centered, ⋯ then ✕ pinned right',
+    '⋯ panel title centered, ⋯ pinned left, ✕ pinned right',
     panelTitle.center === panelTitle.barCenter &&
       panelTitle.closeRight === panelTitle.barRight &&
-      panelTitle.ellipsisRightBeforeClose,
+      panelTitle.ellipsisLeft,
   );
   // Simulated notch: the panel overlay covers the top safe-area zone with
   // the SAME color as the menu sheet (bg-light) and its header stays below.
