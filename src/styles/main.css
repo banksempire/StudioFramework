@@ -1575,5 +1575,5 @@ body.sf-dragging-row * {
    rounded corner eats into the right side — pad it so the last item stays
    clear of the curvature. */
 .sf-root--mobile .sf-status-bar {
-  padding-right: 30px;
+  padding-right: 40px;
 }
