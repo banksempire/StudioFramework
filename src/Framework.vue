@@ -71,8 +71,9 @@ api.setPanelStateProvider({
     // the auto-hide check, or the panels pop open on a window too narrow
     // for them (e.g. an auto-hide override + workspace load). Deferred —
     // the boot restore applies panels before the auto-hide state refs
-    // exist (setup order).
-    void nextTick(() => onWindowResize());
+    // exist (setup order). Forced: a load re-enforces even when the width
+    // did not change.
+    void nextTick(() => onWindowResize(true));
   },
 });
 
@@ -107,13 +108,32 @@ function calcWorkspaceWidth(ignoreAutoHidden: boolean): number {
 
 // ── Trigger 1: browser window resize → hide/restore BOTH panels ───────────
 
-function onWindowResize() {
+/** Window width (px) at which the current auto-hide state was decided.
+ *  The guard re-enforces only when the window gets NARROWER than this —
+ *  height-only resizes and widening-while-still-narrow must not stomp a
+ *  user override (e.g. a docker click that re-opened an auto-hidden
+ *  panel). Workspace applies / the boot mount force a re-evaluation. */
+let autoHideDecidedAt: number | null = null;
+
+function onWindowResize(force = false) {
+  const w = window.innerWidth;
   const wAll = calcWorkspaceWidth(true);
   if (wAll >= MIN_WORKSPACE_WIDTH) {
+    autoHideDecidedAt = w;
     leftAutoHidden.value = false;
     rightAutoHidden.value = false;
     return;
   }
+  // Too narrow. A user override — a docker click (or panel toggle) that
+  // re-opened an auto-hidden panel while the window is still narrow — must
+  // survive height-only resizes and widening-while-still-narrow: only a
+  // genuine shrink past the last decision point (or a forced re-evaluation:
+  // workspace apply / boot) re-enforces the guard.
+  const overridden =
+    (leftPanelVisible.value && dockerPanelVisible.value && !leftAutoHidden.value) ||
+    (rightPanelVisible.value && !!L.right && !rightAutoHidden.value);
+  if (!force && overridden && autoHideDecidedAt !== null && w >= autoHideDecidedAt) return;
+  autoHideDecidedAt = w;
   // Too narrow: hide left first, then right (progressive)
   const leftIntended = leftPanelVisible.value && dockerPanelVisible.value;
   // Workspace width if we hide left (add back its width)
@@ -159,11 +179,12 @@ function onPanelResize(side: 'left' | 'right', newWidth: number) {
   }
 }
 
+const onResize = () => onWindowResize();
 onMounted(() => {
   onWindowResize();
-  window.addEventListener('resize', onWindowResize);
+  window.addEventListener('resize', onResize);
 });
-onUnmounted(() => window.removeEventListener('resize', onWindowResize));
+onUnmounted(() => window.removeEventListener('resize', onResize));
 
 /** Effective visibility: user intent, overridden when the workspace is too narrow. */
 const effDockerPanelVisible = computed(() =>

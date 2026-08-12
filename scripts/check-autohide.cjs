@@ -184,6 +184,27 @@ const { ensureServer, openApp, makeReporter, finish } = require('./lib/ui-test.c
       (await panelDisplayed('left')) === false,
     );
 
+    // ── Phase 6: User override survives height-only resizes ───────────────
+    // Narrow window auto-hides the panel; a docker click re-opens it (user
+    // override). A HEIGHT-only resize (width unchanged) must not re-enforce
+    // the width guard and collapse the panel again.
+
+    await resizeTo(700);
+    report('both auto-hidden at 700px', (await panelDisplayed('left')) === false);
+    await page.locator('.sf-docker-app[title="Explorer"]').click();
+    await page.waitForTimeout(100);
+    report('docker click re-opens left (override)', (await panelDisplayed('left')) === true);
+    await page.setViewportSize({ width: 700, height: 1100 });
+    await page.waitForTimeout(100);
+    report('override survives height-only resize', (await panelDisplayed('left')) === true);
+    await page.setViewportSize({ width: 760, height: 1100 });
+    await page.waitForTimeout(100);
+    report('override survives widening while still narrow', (await panelDisplayed('left')) === true);
+    await resizeTo(590);
+    report('genuine shrink re-enforces the guard', (await panelDisplayed('left')) === false);
+    await resizeTo(1300);
+    report('wide restores both', (await panelDisplayed('left')) === true);
+
     // ── No errors ──────────────────────────────────────────────────────────
 
     report('no console/page errors', errors.length === 0, errors.join('; '));
