@@ -102,11 +102,6 @@ function onSheetBack() {
   rootHoverPath.value.pop();
 }
 
-/** Tap a top-level tab in the panel-style tabs strip: jump to it. */
-function onSheetJumpTop(menu: MenuNodeDef) {
-  rootHoverPath.value.splice(0, rootHoverPath.value.length, menu);
-}
-
 // ── Shared flyout state ───────────────────────────────────────────────────
 // The root owns the hover path + submenu positions and passes them down as
 // props (Refs) so every recursive level shares one reactive state.
@@ -307,18 +302,6 @@ if (!props.embedded && typeof window !== 'undefined') {
             : ''
         }}</span>
         <button class="sf-menu-sheet-close" title="Close menu" @click="close"><SvgIcon name="✕" /></button>
-      </div>
-      <!-- Panel-style tabs strip: the top-level menus as tabs (like the
-           panels' section tabs — same bg-lighter strip, accent underline
-           on the active one); tapping a tab jumps to that menu. -->
-      <div class="sf-menu-sheet-crumbs">
-        <button
-          v-for="(menu, i) in items"
-          :key="menu.id ?? `menu-${i}`"
-          class="sf-menu-crumb"
-          :class="{ 'sf-menu-crumb--active': sameMenu(rootHoverPath[0], menu) }"
-          @click="onSheetJumpTop(menu)"
-        >{{ menu.label }}</button>
       </div>
       <div class="sf-menu-sheet-body">
         <template v-for="(item, i) in sheetItems" :key="item.id ?? `sep-${i}`">

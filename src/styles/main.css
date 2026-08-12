@@ -1633,49 +1633,6 @@ body.sf-dragging-row * {
   background: var(--sf-hover-overlay);
 }
 
-/* Panel-style tabs strip: the top-level menus as tabs, mirroring the
-   panels' section-tab row (same bg-lighter strip + accent underline). */
-.sf-menu-sheet-crumbs {
-  display: flex;
-  align-items: center;
-  height: 60px;
-  flex-shrink: 0;
-  background: var(--sf-bg-lighter);
-  border-bottom: 1px solid var(--sf-border);
-  overflow-x: auto;
-  overflow-y: hidden;
-}
-
-.sf-menu-crumb {
-  flex: 1 1 0%;
-  min-width: max-content;
-  height: 100%;
-  background: none;
-  border: none;
-  border-bottom: 2px solid transparent;
-  color: var(--sf-text);
-  cursor: pointer;
-  font-family: var(--sf-font);
-  font-size: 16px;
-  font-weight: 500;
-  letter-spacing: 0.3px;
-  padding: 0 10px;
-  white-space: nowrap;
-  overflow: hidden;
-  transition:
-    color 0.15s,
-    border-color 0.15s;
-}
-
-.sf-menu-crumb:hover {
-  box-shadow: inset 0 0 0 999px var(--sf-hover-overlay);
-}
-
-.sf-menu-crumb--active {
-  color: var(--sf-text-bright);
-  border-bottom-color: var(--sf-accent);
-}
-
 .sf-menu-sheet-body {
   flex: 1;
   min-height: 0;
