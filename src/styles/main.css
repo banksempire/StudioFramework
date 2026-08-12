@@ -1503,6 +1503,9 @@ body.sf-dragging-row * {
      otherwise the line between two buttons would be 2px (both edges). */
   margin: 0;
   margin-right: -1px;
+  /* With the title out of flow (absolutely centered), the buttons are the
+     only flex items — pin the group to the right edge like the menu sheet. */
+  margin-left: auto;
   border-radius: 0;
   background: transparent;
   color: var(--sf-text);
@@ -1519,6 +1522,9 @@ body.sf-dragging-row * {
 .sf-root--mobile .sf-tile-tabs .sf-mobile-rp-btn,
 .sf-root--mobile .sf-panel-close-btn {
   margin-right: 0;
+  /* Also pins the ✕ to the right when the ⋯ button is absent (a panel
+     without sub-sections) — same single-flex-item trap as the menu sheet. */
+  margin-left: auto;
 }
 
 .sf-root--mobile .sf-tile-tabs .sf-mobile-menu-btn:hover,
@@ -1725,6 +1731,16 @@ body.sf-dragging-row * {
 /* The header's [⋯ | ◨] group sits flush against the screen edge. */
 .sf-panel--mobile .sf-panel-header {
   padding-right: 0;
+}
+
+/* The mobile panel title centers between the two square buttons, exactly
+   like the menu sheet's title (absolute between the 60px side zones). */
+.sf-root--mobile .sf-panel-title {
+  position: absolute;
+  left: 60px;
+  right: 60px;
+  text-align: center;
+  pointer-events: none;
 }
 
 /* Sub-section title bars stick to the top while the panel body scrolls

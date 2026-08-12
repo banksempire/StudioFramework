@@ -271,6 +271,24 @@ const WS = '.sf-workspace';
     'fullscreen panel shows the app content (Files)',
     (await page.locator('.sf-mobile-panel .sf-panel-title').textContent()) === 'Files',
   );
+  const panelTitle = await page.evaluate(() => {
+    const h = document.querySelector('.sf-mobile-panel .sf-panel-header');
+    const t = document.querySelector('.sf-mobile-panel .sf-panel-title');
+    const c = document.querySelector('.sf-mobile-panel .sf-panel-close-btn');
+    const hr = h.getBoundingClientRect();
+    const tr = t.getBoundingClientRect();
+    const cr = c.getBoundingClientRect();
+    return {
+      center: Math.round(tr.x + tr.width / 2),
+      barCenter: Math.round(hr.x + hr.width / 2),
+      closeRight: Math.round(cr.x + cr.width),
+      barRight: Math.round(hr.x + hr.width),
+    };
+  });
+  report(
+    '⋯ panel title centered, ✕ pinned right',
+    panelTitle.center === panelTitle.barCenter && panelTitle.closeRight === panelTitle.barRight,
+  );
   // Simulated notch: the panel overlay covers the top safe-area zone with
   // the SAME color as the menu sheet (bg-light) and its header stays below.
   await page.evaluate(() => {
