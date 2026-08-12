@@ -241,8 +241,9 @@ onUnmounted(() => observer?.disconnect());
       @mousedown="onMouseDown"
     />
 
-    <!-- Title bar: [title | ⋯ | ✕] — the ⋯ visibility menu and the mobile
-         close button sit right-aligned, flush to the bar's edge. -->
+    <!-- Title bar: [title | ⋯ | ◨] — the ⋯ visibility menu and the mobile
+         close button sit right-aligned, flush to the bar's edge. ◨ is the
+         framework's panel-collapse icon (same as the right-panel toggle). -->
     <div class="sf-panel-header">
       <span class="sf-panel-title">{{ title }}</span>
       <Menu
@@ -265,7 +266,7 @@ onUnmounted(() => observer?.disconnect());
         class="sf-panel-close-btn"
         title="Close panel"
         @click="emit('close')"
-      >✕</button>
+      >◨</button>
     </div>
 
     <!-- Section tab bar - only when multiple sections -->
