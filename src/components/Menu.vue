@@ -157,6 +157,19 @@ const popEl = ref<HTMLElement | null>(null);
 const regionEl = ref<HTMLElement | null>(null);
 const popStyle = ref({ left: '0px', top: '0px' });
 
+// The mobile sheet is TELEPORTED into the framework root and positioned
+// absolute, exactly like the .sf-mobile-panel overlays — on iOS, fixed
+// elements track the visual viewport (they can sit below the URL bar, so
+// the time/signal zone showed a different color than the panels). Anchored
+// to the root (position: relative, full-bleed), both overlays cover the
+// top safe-area zone identically.
+const sheetTarget = ref<HTMLElement | 'body'>('body');
+if (!props.embedded && typeof window !== 'undefined') {
+  onMounted(() => {
+    sheetTarget.value = (document.querySelector('.sf-root') as HTMLElement | null) ?? 'body';
+  });
+}
+
 function close() {
   emit('update:open', false);
 }
@@ -277,8 +290,10 @@ if (!props.embedded && typeof window !== 'undefined') {
 
     <!-- Mobile fullscreen sheet: body takes all the space; the bar has
          [← back (when nested)] left and [✕ close] right. Tapping a row
-         with children navigates into it, leaves select. -->
-    <div v-if="open && mobile" class="sf-menu-sheet">
+         with children navigates into it, leaves select. Teleported to the
+         framework root so it anchors like the panel overlays. -->
+    <Teleport :to="sheetTarget">
+      <div v-if="open && mobile" class="sf-menu-sheet">
       <div class="sf-menu-sheet-bar">
         <button
           v-if="rootHoverPath.length > 0"
@@ -327,7 +342,8 @@ if (!props.embedded && typeof window !== 'undefined') {
           </div>
         </template>
       </div>
-    </div>
+      </div>
+    </Teleport>
 
     <div v-if="open && !mobile" ref="regionEl" class="sf-menu-region">
       <div ref="popEl" class="sf-menu-pop" :style="popStyle">

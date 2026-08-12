@@ -1564,7 +1564,12 @@ body.sf-dragging-row * {
    title-bar look (60px, square side-lined buttons). Like the panels,
    the sheet stops above the dock + status bar (85px). */
 .sf-menu-sheet {
-  position: fixed;
+  /* Absolute, anchored to the framework root (the Teleport target) — the
+     SAME mechanism as the .sf-mobile-panel overlays, so the top safe-area
+     zone (iPhone time/signal) shows the identical color for menu and
+     panel. (position: fixed would track the visual viewport on iOS and
+     could sit below the URL bar.) */
+  position: absolute;
   top: 0;
   left: 0;
   right: 0;
