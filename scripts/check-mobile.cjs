@@ -123,8 +123,15 @@ const WS = '.sf-workspace';
     Math.round(sheetBox.x) === 0 &&
       Math.round(sheetBox.y) === 0 &&
       Math.round(sheetBox.width) === vp.width &&
-      Math.round(sheetBox.height) === vp.height,
+      Math.round(sheetBox.height) === vp.height - 85,
   );
+  report('⋯ sheet shows the panel-style tabs strip', (await page.locator('.sf-menu-crumb').count()) === 5);
+  report(
+    '⋯ tabs strip lists the top-level menus',
+    JSON.stringify(await page.locator('.sf-menu-crumb').allTextContents()) ===
+      JSON.stringify(['File', 'Edit', 'Selection', 'View', 'Help']),
+  );
+  report('⋯ no active tab at the root level', (await page.locator('.sf-menu-crumb--active').count()) === 0);
   report('⋯ no back button at the root level', (await page.locator('.sf-menu-sheet-back').count()) === 0);
   report('⋯ ✕ close button present', (await page.locator('.sf-menu-sheet-close').count()) === 1);
   await page.locator('.sf-menu-sheet .sf-menu-row', { hasText: 'File' }).click();
@@ -132,6 +139,25 @@ const WS = '.sf-workspace';
   const lvl2 = await page.locator('.sf-menu-sheet .sf-menu-row .sf-menu-cell--label').allTextContents();
   report('tapping a parent navigates into it', lvl2.includes('New File') && lvl2.includes('Open Folder...'));
   report('back button appears when nested', (await page.locator('.sf-menu-sheet-back').count()) === 1);
+  report(
+    'active tab follows the current menu',
+    (await page.locator('.sf-menu-crumb--active').textContent()) === 'File',
+  );
+  // Panel-style tabs: tapping another top-level tab jumps to it.
+  await page.locator('.sf-menu-crumb', { hasText: 'Edit' }).click();
+  await page.waitForTimeout(200);
+  const editRows = await page.locator('.sf-menu-sheet .sf-menu-row .sf-menu-cell--label').allTextContents();
+  report('tapping a tab jumps to that menu', editRows.includes('Undo') && editRows.includes('Paste'));
+  report(
+    'active tab moves with the jump',
+    (await page.locator('.sf-menu-crumb--active').textContent()) === 'Edit',
+  );
+  await page.locator('.sf-menu-sheet-back').click();
+  await page.waitForTimeout(200);
+  report('back returns to the root level', (await page.locator('.sf-menu-sheet-back').count()) === 0);
+  // Re-enter File so the deep-navigation steps below have a level to start from.
+  await page.locator('.sf-menu-crumb', { hasText: 'File' }).click();
+  await page.waitForTimeout(200);
   await page.locator('.sf-menu-sheet .sf-menu-row', { hasText: 'New File' }).click();
   await page.waitForTimeout(200);
   const lvl3 = await page.locator('.sf-menu-sheet .sf-menu-row .sf-menu-cell--label').allTextContents();
@@ -139,7 +165,7 @@ const WS = '.sf-workspace';
   await page.locator('.sf-menu-sheet .sf-menu-row', { hasText: 'Text File' }).click();
   await page.waitForTimeout(200);
   report('selecting a leaf closes the menu', (await page.locator('.sf-menu-sheet').count()) === 0);
-  // Back button pops to the parent level.
+  // Back button pops to the parent level (reopen first).
   await page.locator('.sf-mobile-menu-btn').click();
   await page.waitForTimeout(200);
   await page.locator('.sf-menu-sheet .sf-menu-row', { hasText: 'View' }).click();

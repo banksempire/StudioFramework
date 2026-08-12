@@ -23,7 +23,7 @@
  * slot + open wiring; deeper levels run in `embedded` mode (box only) and
  * share the hover state through props (root-owned refs passed down).
  */
-import { computed, inject, nextTick, onMounted, type Ref, ref, watch } from 'vue';
+import { computed, inject, nextTick, onMounted, type Ref, ref, toRaw, watch } from 'vue';
 import { kIsMobile } from '../composables/useWorkspace';
 import type { MenuNodeDef } from '../types/layout';
 import Icon from './Icon.vue';
@@ -70,6 +70,14 @@ const emit = defineEmits<{
 // body takes all the space, the bar has [← back (when nested)] on the left
 // and [✕ close] on the right. Parent rows navigate INTO the level on tap
 // (no hover on touch); leaves select. Provided by the Framework root.
+
+/** Menu-item equality: ref([]) deep-wraps stored objects in reactive
+ *  proxies, so `path[0] === item` compares a proxy against the raw object
+ *  and never matches — compare the raw targets instead. */
+function sameMenu(a: MenuNodeDef | undefined, b: MenuNodeDef | undefined): boolean {
+  return !!a && !!b && toRaw(a) === toRaw(b);
+}
+
 const injectedMobile = inject(kIsMobile, null);
 const mobile = computed(() => injectedMobile?.value ?? false);
 
@@ -92,6 +100,11 @@ function onSheetRowClick(item: MenuNodeDef) {
 
 function onSheetBack() {
   rootHoverPath.value.pop();
+}
+
+/** Tap a top-level tab in the panel-style tabs strip: jump to it. */
+function onSheetJumpTop(menu: MenuNodeDef) {
+  rootHoverPath.value.splice(0, rootHoverPath.value.length, menu);
 }
 
 // ── Shared flyout state ───────────────────────────────────────────────────
@@ -280,6 +293,18 @@ if (!props.embedded && typeof window !== 'undefined') {
         }}</span>
         <button class="sf-menu-sheet-close" title="Close menu" @click="close"><SvgIcon name="✕" /></button>
       </div>
+      <!-- Panel-style tabs strip: the top-level menus as tabs (like the
+           panels' section tabs — same bg-lighter strip, accent underline
+           on the active one); tapping a tab jumps to that menu. -->
+      <div class="sf-menu-sheet-crumbs">
+        <button
+          v-for="(menu, i) in items"
+          :key="menu.id ?? `menu-${i}`"
+          class="sf-menu-crumb"
+          :class="{ 'sf-menu-crumb--active': sameMenu(rootHoverPath[0], menu) }"
+          @click="onSheetJumpTop(menu)"
+        >{{ menu.label }}</button>
+      </div>
       <div class="sf-menu-sheet-body">
         <template v-for="(item, i) in sheetItems" :key="item.id ?? `sep-${i}`">
           <div v-if="item.separator" class="sf-menu-separator" />
@@ -314,7 +339,7 @@ if (!props.embedded && typeof window !== 'undefined') {
               class="sf-menu-row"
               :class="{
                 'sf-menu-row--disabled': item.disabled,
-                'sf-menu-row--open': menuState.hoverPath.value[0] === item,
+                'sf-menu-row--open': sameMenu(menuState.hoverPath.value[0], item),
               }"
               @mouseenter="onEnter($event, item, depth)"
               @click="onRowClick(item)"
@@ -364,7 +389,7 @@ if (!props.embedded && typeof window !== 'undefined') {
             class="sf-menu-row"
             :class="{
               'sf-menu-row--disabled': item.disabled,
-              'sf-menu-row--open': hoverPath.value[depth] === item,
+              'sf-menu-row--open': sameMenu(hoverPath.value[depth], item),
             }"
             @mouseenter="onEnter($event, item, depth)"
             @click="onRowClick(item)"
