@@ -1527,11 +1527,11 @@ body.sf-dragging-row * {
 
 .sf-docker--bottom .sf-docker-app {
   border-left: none;
-  border-top: 2px solid transparent;
+  border-bottom: 2px solid transparent;
 }
 
 .sf-docker--bottom .sf-docker-app.active {
-  border-top-color: var(--sf-accent);
+  border-bottom-color: var(--sf-accent);
 }
 
 /* Fullscreen app panel opened from the dock: covers everything except the
