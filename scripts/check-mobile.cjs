@@ -139,11 +139,12 @@ const WS = '.sf-workspace';
       text: t.textContent,
       center: Math.round(tr.x + tr.width / 2),
       barCenter: Math.round(br.x + br.width / 2),
+      caps: getComputedStyle(t).textTransform,
     };
   });
   report(
-    "⋯ root title is 'menu', centered",
-    rootTitle.text === 'menu' && rootTitle.center === rootTitle.barCenter,
+    "⋯ root title is 'menu', centered, capitalized",
+    rootTitle.text === 'menu' && rootTitle.center === rootTitle.barCenter && rootTitle.caps === 'capitalize',
   );
   const closeAtRight = await page.evaluate(() => {
     const c = document.querySelector('.sf-menu-sheet-close').getBoundingClientRect();

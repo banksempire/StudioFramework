@@ -1606,6 +1606,8 @@ body.sf-dragging-row * {
   min-width: 0;
   font-size: 16px;
   font-weight: 600;
+  /* First letter of each word uppercase — titles are labels, not shouts. */
+  text-transform: capitalize;
   color: var(--sf-text);
   overflow: hidden;
   text-overflow: ellipsis;
