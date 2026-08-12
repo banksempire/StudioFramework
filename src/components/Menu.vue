@@ -299,7 +299,7 @@ if (!props.embedded && typeof window !== 'undefined') {
         <span class="sf-menu-sheet-title">{{
           rootHoverPath.length > 0
             ? rootHoverPath[rootHoverPath.length - 1].label
-            : ''
+            : 'menu'
         }}</span>
         <button class="sf-menu-sheet-close" title="Close menu" @click="close"><SvgIcon name="✕" /></button>
       </div>

@@ -1592,12 +1592,18 @@ body.sf-dragging-row * {
   height: 60px;
   flex-shrink: 0;
   border-bottom: 1px solid var(--sf-border);
+  position: relative;
 }
 
+/* Center-aligned title between the two square buttons (they reserve
+   60px each side, so the text centers on the bar regardless of whether
+   the back button is present). */
 .sf-menu-sheet-title {
-  flex: 1;
+  position: absolute;
+  left: 60px;
+  right: 60px;
+  text-align: center;
   min-width: 0;
-  padding: 0 12px;
   font-size: 16px;
   font-weight: 600;
   text-transform: uppercase;
@@ -1606,6 +1612,7 @@ body.sf-dragging-row * {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+  pointer-events: none;
 }
 
 .sf-menu-sheet-back,

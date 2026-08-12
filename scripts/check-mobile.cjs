@@ -130,6 +130,21 @@ const WS = '.sf-workspace';
     '⋯ no section-tab strip (menus do not have sections)',
     (await page.locator('.sf-menu-crumb, .sf-menu-sheet-crumbs').count()) === 0,
   );
+  const rootTitle = await page.evaluate(() => {
+    const t = document.querySelector('.sf-menu-sheet-title');
+    const bar = document.querySelector('.sf-menu-sheet-bar');
+    const tr = t.getBoundingClientRect();
+    const br = bar.getBoundingClientRect();
+    return {
+      text: t.textContent,
+      center: Math.round(tr.x + tr.width / 2),
+      barCenter: Math.round(br.x + br.width / 2),
+    };
+  });
+  report(
+    "⋯ root title is 'menu', centered",
+    rootTitle.text === 'menu' && rootTitle.center === rootTitle.barCenter,
+  );
   // Simulated iPhone notch: the sheet covers the top safe-area zone with
   // its own background and the bar stays below the inset.
   await page.evaluate(() => {
@@ -156,6 +171,21 @@ const WS = '.sf-workspace';
   const lvl2 = await page.locator('.sf-menu-sheet .sf-menu-row .sf-menu-cell--label').allTextContents();
   report('tapping a parent navigates into it', lvl2.includes('New File') && lvl2.includes('Open Folder...'));
   report('back button appears when nested', (await page.locator('.sf-menu-sheet-back').count()) === 1);
+  const nestedTitle = await page.evaluate(() => {
+    const t = document.querySelector('.sf-menu-sheet-title');
+    const bar = document.querySelector('.sf-menu-sheet-bar');
+    const tr = t.getBoundingClientRect();
+    const br = bar.getBoundingClientRect();
+    return {
+      text: t.textContent,
+      center: Math.round(tr.x + tr.width / 2),
+      barCenter: Math.round(br.x + br.width / 2),
+    };
+  });
+  report(
+    '⋯ nested title shows the level, centered',
+    nestedTitle.text === 'File' && nestedTitle.center === nestedTitle.barCenter,
+  );
   await page.locator('.sf-menu-sheet .sf-menu-row', { hasText: 'New File' }).click();
   await page.waitForTimeout(200);
   const lvl3 = await page.locator('.sf-menu-sheet .sf-menu-row .sf-menu-cell--label').allTextContents();
