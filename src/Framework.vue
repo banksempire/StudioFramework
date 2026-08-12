@@ -66,6 +66,8 @@ const MOBILE_BREAKPOINT = 500;
 const isMobile = ref(window.innerWidth < MOBILE_BREAKPOINT);
 /** Fullscreen app panel opened from the bottom dock (mobile only). */
 const mobilePanelOpen = ref(false);
+/** Fullscreen right panel opened from the mobile tile bar (mobile only). */
+const mobileRightOpen = ref(false);
 
 // ── Panel visibility ↔ workspace snapshots ────────────────────────────────
 // Snapshots (auto-saved layout + saved workspaces) carry the side panels'
@@ -239,6 +241,7 @@ function onAppSelected(appId: string) {
     } else {
       activeDockerApp.value = appId;
       mobilePanelOpen.value = true;
+      mobileRightOpen.value = false;
     }
     return;
   }
@@ -292,6 +295,18 @@ function toggleRightPanel() {
     return;
   }
   rightPanelVisible.value = !rightPanelVisible.value;
+}
+
+/** Right-panel toggle from the workspace tile bar: on mobile it opens the
+ *  right panel fullscreen (mobileRightOpen) instead of the desktop
+ *  collapse/expand. */
+function onWorkspaceToggleRightPanel() {
+  if (isMobile.value) {
+    mobileRightOpen.value = !mobileRightOpen.value;
+    if (mobileRightOpen.value) mobilePanelOpen.value = false;
+    return;
+  }
+  toggleRightPanel();
 }
 
 // ── Menu actions: framework-internal ones handled here, the rest are ──────
@@ -361,8 +376,8 @@ function onPanelAction(a: PanelAction) {
           :def="L.workspace"
           :api="api"
           :mobile="isMobile"
-          :right-panel-visible="!isMobile && !!L.right && !rightAutoHidden && rightPanelVisible"
-          @toggle-right-panel="toggleRightPanel"
+          :right-panel-visible="isMobile ? mobileRightOpen : !!L.right && !rightAutoHidden && rightPanelVisible"
+          @toggle-right-panel="onWorkspaceToggleRightPanel"
         />
 
         <Panel
@@ -398,6 +413,20 @@ function onPanelAction(a: PanelAction) {
         <Panel
           :title="dockerDef.title"
           :sections="dockerDef.sections"
+          :visible="true"
+          position="mobile"
+          @utility="onPanelUtility"
+          @component-action="onPanelAction"
+        />
+      </div>
+      <div v-if="mobileRightOpen && L.right" class="sf-mobile-panel">
+        <div class="sf-mobile-panel-bar">
+          <span class="sf-mobile-panel-title">{{ L.right.title }}</span>
+          <button class="sf-mobile-panel-close" title="Close panel" @click="mobileRightOpen = false">✕</button>
+        </div>
+        <Panel
+          :title="L.right.title"
+          :sections="L.right.sections"
           :visible="true"
           position="mobile"
           @utility="onPanelUtility"

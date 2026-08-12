@@ -2,9 +2,11 @@
 import { computed, inject, onBeforeUnmount, onMounted, ref } from 'vue';
 import { kRightPanelToggle, useWorkspaceContext } from '../composables/useWorkspace';
 import { getTabContent } from '../registry';
+import type { MenuNodeDef } from '../types/layout';
 import type { TileNode } from '../workspace/tree';
 import BlankTab from './BlankTab.vue';
 import Icon from './Icon.vue';
+import Menu from './Menu.vue';
 
 const props = defineProps<{ tile: TileNode }>();
 const ws = useWorkspaceContext();
@@ -36,6 +38,40 @@ onBeforeUnmount(() => {
 });
 
 const activeTab = computed(() => (props.tile.activeId ? (ws.tabDefs[props.tile.activeId] ?? null) : null));
+
+// ── Mobile compact bar (synthetic flat tile only) ─────────────────────────
+// The mobile title bar is NOT a tab strip: [tab selector | active tab |
+// close | right-panel expand]. The selector lists every tab (visual
+// order); selecting routes to the real tile behind the tab. The close
+// button closes the ACTIVE tab; the right-panel button toggles the right
+// panel fullscreen (rpToggle, provided by Workspace.vue).
+
+const tabMenuOpen = ref(false);
+const activeTabLabel = computed(() => activeTab.value?.label ?? '');
+const activeTabCloseable = computed(() => {
+  const id = props.tile.activeId;
+  return !!id && ws.tabDefs[id]?.closeable !== false;
+});
+const tabSelectorItems = computed<MenuNodeDef[]>(() =>
+  props.tile.tabs.map((id) => ({
+    id,
+    label: ws.tabDefs[id]?.label ?? id,
+    icon: ws.tabDefs[id]?.icon,
+    selected: id === props.tile.activeId,
+  })),
+);
+
+function onTabSelectorSelect(item: MenuNodeDef) {
+  if (!item.id) return;
+  onTabClick(item.id);
+}
+
+function onCloseActive() {
+  const id = props.tile.activeId;
+  if (!id) return;
+  if (ws.tabDefs[id]?.closeable === false) return;
+  ws.ops.closeTab(id);
+}
 const contentComp = computed(() => {
   const content = activeTab.value?.content;
   if (!content) return null;
@@ -88,54 +124,88 @@ function onTileMousedown() {
 
 <template>
   <div ref="el" class="sf-tile" :class="{ 'sf-tile--focused': focused }" :data-tile="tile.id" @mousedown="onTileMousedown">
-    <!-- Tab strip -->
+    <!-- Tab strip (desktop) / compact bar (mobile flat tile) -->
     <div class="sf-tile-tabs">
-      <div
-        v-for="tabId in tile.tabs"
-        :key="tabId"
-        class="sf-tab"
-        :class="[
-          ws.tabDefs[tabId]?.tabClass,
-          {
-            active: tabId === tile.activeId,
-            dragging: ws.dnd.dragging && ws.dnd.tabId === tabId,
-          },
-        ]"
-        :draggable="!synthetic"
-        @click="onTabClick(tabId)"
-        @mousedown="onTabMousedown($event, tabId)"
-        @dragstart="onTabDragStart($event, tabId)"
-        @dragend="ws.endDrag"
-      >
-        <Icon v-if="ws.tabDefs[tabId]?.icon" class="sf-tab-icon" :icon="ws.tabDefs[tabId].icon" />
-        <span class="sf-tab-label">{{ ws.tabDefs[tabId]?.label ?? tabId }}</span>
-        <span
-          v-if="ws.tabDefs[tabId]?.closeable !== false"
-          class="sf-tab-close"
-          @click.stop="ws.ops.closeTab(tabId)"
-        >✕</span>
-      </div>
-      <button class="sf-tab-new" :title="ws.newTabTitle" @click="ws.ops.newTab(resolveTileId())">+</button>
-      <template v-if="isTopRight">
-        <div v-if="canEvenlySpace" class="sf-btn-group">
+      <template v-if="synthetic">
+        <!-- Mobile: [tab selector | active tab | close | right panel] -->
+        <Menu
+          :items="tabSelectorItems"
+          :open="tabMenuOpen"
+          @update:open="(v) => (tabMenuOpen = v)"
+          @select="onTabSelectorSelect"
+        >
+          <template #trigger="{ toggle }">
+            <button
+              class="sf-mobile-tab-selector"
+              title="Tabs"
+              @click.stop="toggle"
+            >☰</button>
+          </template>
+        </Menu>
+        <span class="sf-mobile-tab-label">{{ activeTabLabel || 'No tab open' }}</span>
+        <button
+          class="sf-mobile-tab-close"
+          title="Close tab"
+          :disabled="!activeTabCloseable"
+          @click="onCloseActive"
+        >✕</button>
+        <div v-if="rpToggle" class="sf-mobile-rp-wrap">
           <button
-            class="sf-tab-panel-toggle"
-            title="Merge all tiles into one"
-            @click="ws.ops.mergeAll()"
-          >□</button>
-          <button
-            class="sf-tab-panel-toggle"
-            :title="evenlySpaceTitle"
-            @click="ws.ops.evenlySpace()"
-          >⇔</button>
-        </div>
-        <div v-if="rpToggle" class="sf-btn-group">
-          <button
-            class="sf-tab-panel-toggle"
+            class="sf-mobile-rp-btn"
+            :class="{ active: rpToggle.visible }"
             :title="rpToggle.visible ? 'Collapse Right Panel' : 'Expand Right Panel'"
             @click="rpToggle.toggle()"
           >{{ rpToggle.visible ? '\u25E8' : '\u25EB' }}</button>
         </div>
+      </template>
+      <template v-else>
+        <div
+          v-for="tabId in tile.tabs"
+          :key="tabId"
+          class="sf-tab"
+          :class="[
+            ws.tabDefs[tabId]?.tabClass,
+            {
+              active: tabId === tile.activeId,
+              dragging: ws.dnd.dragging && ws.dnd.tabId === tabId,
+            },
+          ]"
+          :draggable="!synthetic"
+          @click="onTabClick(tabId)"
+          @mousedown="onTabMousedown($event, tabId)"
+          @dragstart="onTabDragStart($event, tabId)"
+          @dragend="ws.endDrag"
+        >
+          <Icon v-if="ws.tabDefs[tabId]?.icon" class="sf-tab-icon" :icon="ws.tabDefs[tabId].icon" />
+          <span class="sf-tab-label">{{ ws.tabDefs[tabId]?.label ?? tabId }}</span>
+          <span
+            v-if="ws.tabDefs[tabId]?.closeable !== false"
+            class="sf-tab-close"
+            @click.stop="ws.ops.closeTab(tabId)"
+          >✕</span>
+        </div>
+        <button class="sf-tab-new" :title="ws.newTabTitle" @click="ws.ops.newTab(resolveTileId())">+</button>
+        <template v-if="isTopRight">
+          <div v-if="canEvenlySpace" class="sf-btn-group">
+            <button
+              class="sf-tab-panel-toggle"
+              title="Merge all tiles into one"
+              @click="ws.ops.mergeAll()"
+            >□</button>
+            <button
+              class="sf-tab-panel-toggle"
+              :title="evenlySpaceTitle"
+              @click="ws.ops.evenlySpace()"
+            >⇔</button>
+          </div>
+          <div v-if="rpToggle" class="sf-btn-group">
+            <button
+              class="sf-tab-panel-toggle"
+              :title="rpToggle.visible ? 'Collapse Right Panel' : 'Expand Right Panel'"
+              @click="rpToggle.toggle()"
+            >{{ rpToggle.visible ? '\u25E8' : '\u25EB' }}</button>
+          </div>
+        </template>
       </template>
     </div>
 

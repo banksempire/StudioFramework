@@ -1434,6 +1434,57 @@ body.sf-dragging-row * {
   border-radius: 0;
 }
 
+/* Taller tab strip in mobile: the flat tile's title bar is the main
+   navigation surface (thumb-friendly). */
+.sf-root--mobile .sf-tile-tabs {
+  height: 60px;
+}
+
+/* Mobile compact title bar: [tab selector | active tab | close | right
+   panel]. The selector opens a Menu listing every tab (visual order);
+   the label shows the active tab; ✕ closes it; the last button toggles
+   the right panel fullscreen. */
+.sf-root--mobile .sf-tile-tabs .sf-mobile-tab-selector,
+.sf-root--mobile .sf-tile-tabs .sf-mobile-tab-close,
+.sf-root--mobile .sf-tile-tabs .sf-mobile-rp-btn {
+  width: 40px;
+  height: 40px;
+  margin: 0 2px;
+  border: none;
+  background: transparent;
+  color: var(--sf-text);
+  font-size: 16px;
+  cursor: pointer;
+  border-radius: var(--sf-radius-sm);
+  flex-shrink: 0;
+}
+
+.sf-root--mobile .sf-tile-tabs .sf-mobile-tab-selector:hover,
+.sf-root--mobile .sf-tile-tabs .sf-mobile-tab-close:hover:not(:disabled),
+.sf-root--mobile .sf-tile-tabs .sf-mobile-rp-btn:hover {
+  background: var(--sf-hover-overlay);
+}
+
+.sf-root--mobile .sf-tile-tabs .sf-mobile-tab-close:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+
+.sf-root--mobile .sf-mobile-tab-label {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--sf-text);
+  font-size: 16px;
+  padding: 0 6px;
+}
+
+.sf-root--mobile .sf-mobile-rp-btn.active {
+  color: var(--sf-accent);
+}
+
 /* Bottom dock: one horizontal row of app icons. */
 .sf-docker--bottom {
   flex-direction: row;
@@ -1443,7 +1494,7 @@ body.sf-dragging-row * {
   align-items: center;
   /* Full-bleed bar; the side padding shifts the icons inward so rounded
      iPhone screen corners don't clip them. */
-  padding: 0 10px;
+  padding: 0 15px;
   gap: 2px;
   border-radius: 0;
   border-top: 1px solid var(--sf-border);

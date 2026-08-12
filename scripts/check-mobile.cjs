@@ -42,6 +42,13 @@ const WS = '.sf-workspace';
   const tileTabs = (i) => page.locator('.sf-tile').nth(i).locator('.sf-tab-label').allTextContents();
   const wsBox = () => page.locator(WS).boundingBox();
   const activeTabLabel = () => page.locator('.sf-tab.active .sf-tab-label').first().textContent();
+  /** Mobile compact bar: the active-tab label (not the desktop strip). */
+  const mobileBarLabel = () => page.locator('.sf-mobile-tab-label').textContent();
+  const mobileSelectorItems = async () => {
+    await page.locator('.sf-mobile-tab-selector').click();
+    await page.waitForTimeout(200);
+    return page.locator('.sf-menu-row .sf-menu-cell--label').allTextContents();
+  };
   const resizeTo = async (w) => {
     await page.setViewportSize({ width: w, height: 900 });
     await page.waitForTimeout(300);
@@ -88,15 +95,53 @@ const WS = '.sf-workspace';
       (await page.locator('.sf-left-group').count()) === 0,
   );
   report('mobile: right panel hidden', (await page.locator('.sf-panel--right').count()) === 0);
+  report('mobile: ONE tile', (await tileCount()) === 1);
   report(
-    'mobile: ONE tile holding ALL tabs (in order)',
-    (await tileCount()) === 1 && JSON.stringify(await tileTabs(0)) === JSON.stringify(allTabs),
+    'mobile bar: [selector | active tab | close | right panel]',
+    (await page.locator('.sf-mobile-tab-selector').count()) === 1 &&
+      (await page.locator('.sf-mobile-tab-label').count()) === 1 &&
+      (await page.locator('.sf-mobile-tab-close').count()) === 1 &&
+      (await page.locator('.sf-mobile-rp-btn').count()) === 1,
   );
+  report("mobile bar: shows the focused tile's active tab", allTabs.includes(await mobileBarLabel()));
 
-  // Tab click on the flat tile routes to the REAL tile (survives the switch back).
-  await tab('styles.css').click();
+  // Tab selector: lists ALL tabs in visual order; selecting routes to the
+  // REAL tile behind the tab (survives the switch back to desktop).
+  report(
+    'selector lists all tabs in order',
+    JSON.stringify(await mobileSelectorItems()) === JSON.stringify(allTabs),
+  );
+  await page.locator('.sf-menu-row', { hasText: 'styles.css' }).click();
   await page.waitForTimeout(200);
-  report('mobile: tab click activates', (await activeTabLabel()) === 'styles.css');
+  report('selecting a tab activates it', (await mobileBarLabel()) === 'styles.css');
+
+  // Close button: closes the ACTIVE tab (routed to the real tree).
+  await page.locator('.sf-mobile-tab-close').click();
+  await page.waitForTimeout(200);
+  const afterCloseTiles = [desktopTiles[0].filter((t) => t !== 'styles.css'), desktopTiles[1]];
+  report(
+    '✕ closes the active tab (4 tabs left)',
+    JSON.stringify(await mobileSelectorItems()) === JSON.stringify(afterCloseTiles.flat()),
+  );
+  // The selector menu is still open from the item-count check — pick the
+  // next tab directly (a row click both selects and closes).
+  await page.locator('.sf-menu-row', { hasText: 'layout.json' }).click();
+  await page.waitForTimeout(200);
+  report('activation survives (layout.json active)', (await mobileBarLabel()) === 'layout.json');
+
+  // Right-panel button: opens the right panel fullscreen; the overlay's ✕
+  // closes it (the fullscreen panel covers the bar, so the button is not
+  // reachable while open).
+  await page.locator('.sf-mobile-rp-btn').click();
+  await page.waitForTimeout(300);
+  report(
+    'right-panel button opens the right panel fullscreen',
+    (await page.locator('.sf-mobile-panel').isVisible()) &&
+      (await page.locator('.sf-mobile-panel-title').textContent()) === 'Properties',
+  );
+  await page.locator('.sf-mobile-panel-close').click();
+  await page.waitForTimeout(300);
+  report('overlay ✕ closes it', (await page.locator('.sf-mobile-panel').count()) === 0);
 
   // ── Mobile: fullscreen panels from the dock ─────────────────────────────
   const explorer = page.locator('.sf-docker-app[title="Explorer"]');
@@ -129,10 +174,10 @@ const WS = '.sf-workspace';
   // ── Back to desktop: the tile tree resumes exactly ──────────────────────
   await resizeTo(1300);
   report(
-    'tile structure resumes (2 tiles, same tabs)',
+    'tile structure resumes (2 tiles, styles.css closed)',
     (await tileCount()) === 2 &&
-      JSON.stringify(await tileTabs(0)) === JSON.stringify(desktopTiles[0]) &&
-      JSON.stringify(await tileTabs(1)) === JSON.stringify(desktopTiles[1]),
+      JSON.stringify(await tileTabs(0)) === JSON.stringify(afterCloseTiles[0]) &&
+      JSON.stringify(await tileTabs(1)) === JSON.stringify(afterCloseTiles[1]),
   );
   report(
     'menu bar + status bar back',
@@ -144,7 +189,7 @@ const WS = '.sf-workspace';
     (await page.locator('.sf-docker--bottom').count()) === 0 &&
       (await page.locator('.sf-panel--right').count()) === 1,
   );
-  report('mobile tab activation survived', (await activeTabLabel()) === 'styles.css');
+  report('mobile activation survived (layout.json active)', (await activeTabLabel()) === 'layout.json');
 
   // ── No errors ──────────────────────────────────────────────────────────
   report('no console/page errors', errors.length === 0, errors.join('; '));
