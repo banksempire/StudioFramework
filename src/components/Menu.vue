@@ -38,6 +38,8 @@ const props = withDefaults(
     closeOnSelect?: boolean;
     /** Embedded (deeper) level: renders only its box, positioned by boxStyle. */
     embedded?: boolean;
+    /** Root sheet title in mobile (defaults to 'menu'). */
+    title?: string;
     /** Depth of this level (root = 0). */
     depth?: number;
     /** Fixed position for this level's box (embedded only). */
@@ -299,7 +301,7 @@ if (!props.embedded && typeof window !== 'undefined') {
         <span class="sf-menu-sheet-title">{{
           rootHoverPath.length > 0
             ? rootHoverPath[rootHoverPath.length - 1].label
-            : 'menu'
+            : (props.title ?? 'menu')
         }}</span>
         <button class="sf-menu-sheet-close" title="Close menu" @click="close"><SvgIcon name="✕" /></button>
       </div>
