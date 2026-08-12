@@ -1462,8 +1462,10 @@ body.sf-dragging-row * {
   flex-shrink: 0;
 }
 
-/* Title-bar buttons are SQUARE, full bar height, thin borders between:
-   ☰ / ✕ / right-panel on the workspace bar, ⋯ and ✕ on the panel header. */
+/* Title-bar buttons are SQUARE, full bar height: ☰ / ✕ / right-panel on
+   the workspace bar, ⋯ / ◨ on the panel header. Vertical side lines only
+   (left + right) — no top/bottom borders, so each button reads as a
+   vertical segment and adjacent buttons share a boundary line. */
 .sf-root--mobile .sf-tile-tabs .sf-mobile-tab-selector,
 .sf-root--mobile .sf-tile-tabs .sf-mobile-tab-close,
 .sf-root--mobile .sf-tile-tabs .sf-mobile-rp-btn,
@@ -1472,7 +1474,9 @@ body.sf-dragging-row * {
   width: 60px;
   height: 60px;
   margin: 0;
-  border: 1px solid var(--sf-border);
+  border: none;
+  border-left: 1px solid var(--sf-border);
+  border-right: 1px solid var(--sf-border);
   border-radius: 0;
   background: transparent;
   color: var(--sf-text);
@@ -1518,7 +1522,7 @@ body.sf-dragging-row * {
   align-items: center;
   /* Full-bleed bar; the side padding shifts the icons inward so rounded
      iPhone screen corners don't clip them. */
-  padding: 0 50px;
+  padding: 0 25px;
   gap: 2px;
   border-radius: 0;
   border-top: 1px solid var(--sf-border);
