@@ -38,7 +38,9 @@ function legacyCopy(text: string, done: () => void) {
     document.execCommand('copy');
     document.body.removeChild(ta);
     done();
-  } catch { /* clipboard unavailable */ }
+  } catch {
+    /* clipboard unavailable */
+  }
 }
 
 function copyRow(item: KeyValueItem, index: number) {
@@ -46,14 +48,21 @@ function copyRow(item: KeyValueItem, index: number) {
   const done = () => {
     copiedIndex.value = index;
     if (copyTimer) clearTimeout(copyTimer);
-    copyTimer = window.setTimeout(() => { copiedIndex.value = null; }, 1200);
+    copyTimer = window.setTimeout(() => {
+      copiedIndex.value = null;
+    }, 1200);
   };
   try {
     if (navigator.clipboard?.writeText) {
-      navigator.clipboard.writeText(text).then(done).catch(() => legacyCopy(text, done));
+      navigator.clipboard
+        .writeText(text)
+        .then(done)
+        .catch(() => legacyCopy(text, done));
       return;
     }
-  } catch { /* fall through to legacy */ }
+  } catch {
+    /* fall through to legacy */
+  }
   legacyCopy(text, done);
 }
 </script>

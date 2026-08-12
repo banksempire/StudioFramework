@@ -69,7 +69,10 @@ export interface WorkspaceSnapshot {
  * empty root group is dropped (remaining root ratios renormalized).
  * Returns null when nothing of this subtree should persist.
  */
-export function nodeToSnapshot(node: WorkspaceNode, skipTab?: (tabId: string) => boolean): NodeSnapshot | null {
+export function nodeToSnapshot(
+  node: WorkspaceNode,
+  skipTab?: (tabId: string) => boolean,
+): NodeSnapshot | null {
   if (node.kind === 'tile') {
     const tabs = skipTab ? node.tabs.filter((t) => !skipTab(t)) : [...node.tabs];
     if (tabs.length === 0) return null;
@@ -132,7 +135,9 @@ export function captureSnapshot(
 }
 
 /** Rebuild roots (fresh ids) from a snapshot, preserving structure + spacing. */
-export function restoreSnapshot(snap: WorkspaceSnapshot): Array<{ id: string; node: WorkspaceNode; ratio: number }> {
+export function restoreSnapshot(
+  snap: WorkspaceSnapshot,
+): Array<{ id: string; node: WorkspaceNode; ratio: number }> {
   if (snap.version !== 1) throw new Error(`unsupported workspace snapshot version ${snap.version}`);
   return snap.roots.map((r) => ({ id: nextId('root'), node: nodeFromSnapshot(r.node), ratio: r.ratio }));
 }

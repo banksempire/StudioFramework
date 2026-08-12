@@ -1,6 +1,5 @@
 <script setup lang="ts">
-import type { PanelSubSection } from '../types/panel';
-import type { PanelAction } from '../types/panel';
+import type { PanelAction, PanelSubSection } from '../types/panel';
 import PanelComponent from './PanelComponent.vue';
 
 defineProps<{

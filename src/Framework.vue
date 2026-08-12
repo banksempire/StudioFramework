@@ -1,6 +1,6 @@
 <script lang="ts">
-import type { PanelAction } from './types/panel';
 import type { WorkspaceApi } from './composables/useWorkspace';
+import type { PanelAction } from './types/panel';
 
 /**
  * An action bubbling up from the layout to the host app:

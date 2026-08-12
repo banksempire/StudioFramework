@@ -1,10 +1,10 @@
 <script setup lang="ts">
-import { inject, ref } from 'vue';
-import { subtreeMinSize, type SplitNode } from '../workspace/tree';
-import { kWorkspace } from '../composables/useWorkspace';
+import { ref } from 'vue';
+import { useWorkspaceContext } from '../composables/useWorkspace';
+import { type SplitNode, subtreeMinSize } from '../workspace/tree';
 
 const props = defineProps<{ split: SplitNode }>();
-const ws = inject(kWorkspace)!;
+const ws = useWorkspaceContext();
 
 const el = ref<HTMLElement | null>(null);
 
@@ -23,7 +23,9 @@ function onPointerDown(e: PointerEvent) {
   const [a, b] = props.split.children;
   const dim = props.split.dir === 'row' ? 'width' : 'height';
   minA = subtreeMinSize(a, dim, ws.minTileWidth, ws.minTileHeight);
-  maxPos = (props.split.dir === 'row' ? parentRect.width : parentRect.height) - subtreeMinSize(b, dim, ws.minTileWidth, ws.minTileHeight);
+  maxPos =
+    (props.split.dir === 'row' ? parentRect.width : parentRect.height) -
+    subtreeMinSize(b, dim, ws.minTileWidth, ws.minTileHeight);
   const dragClass = props.split.dir === 'row' ? 'sf-dragging-row' : 'sf-dragging-col';
   document.body.classList.add(dragClass);
 }

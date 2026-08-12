@@ -74,7 +74,6 @@ export interface PanelSubSection {
   components: PanelComponent[];
 }
 
-
 // ── Section ────────────────────────────────────────────────────────────────
 
 export interface PanelSection {

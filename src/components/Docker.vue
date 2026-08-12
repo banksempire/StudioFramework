@@ -1,6 +1,6 @@
 <script setup lang="ts">
-import Icon from './Icon.vue';
 import type { DockerAppDef } from '../types/layout';
+import Icon from './Icon.vue';
 
 defineProps<{
   items: DockerAppDef[];

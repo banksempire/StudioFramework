@@ -1,12 +1,12 @@
 <script setup lang="ts">
-import { computed, inject } from 'vue';
+import { computed } from 'vue';
+import { useWorkspaceContext } from '../composables/useWorkspace';
 import { subtreeMinSize, type WorkspaceNode as WorkspaceNodeType } from '../workspace/tree';
-import { kWorkspace } from '../composables/useWorkspace';
 import Sash from './Sash.vue';
 import Tile from './Tile.vue';
 
 const props = defineProps<{ node: WorkspaceNodeType }>();
-const ws = inject(kWorkspace)!;
+const ws = useWorkspaceContext();
 
 const tileNode = computed(() => (props.node.kind === 'tile' ? props.node : null));
 const splitNode = computed(() => (props.node.kind === 'split' ? props.node : null));
@@ -17,13 +17,14 @@ const splitNode = computed(() => (props.node.kind === 'split' ? props.node : nul
  * the proportion is only broken when a min size is reached.
  */
 function childStyle(i: 0 | 1) {
-  const split = splitNode.value!;
+  const split = splitNode.value;
+  if (!split) return {};
   const child = split.children[i];
   const basis = (i === 0 ? split.ratio : 1 - split.ratio) * 100;
   return {
-    flexBasis: basis + '%',
-    minWidth: subtreeMinSize(child, 'width', ws.minTileWidth, ws.minTileHeight) + 'px',
-    minHeight: subtreeMinSize(child, 'height', ws.minTileWidth, ws.minTileHeight) + 'px',
+    flexBasis: `${basis}%`,
+    minWidth: `${subtreeMinSize(child, 'width', ws.minTileWidth, ws.minTileHeight)}px`,
+    minHeight: `${subtreeMinSize(child, 'height', ws.minTileWidth, ws.minTileHeight)}px`,
   };
 }
 </script>

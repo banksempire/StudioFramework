@@ -14,9 +14,12 @@
     "check:tree": "node scripts/check-tree.ts",
     "check:snap": "node scripts/check-snapshots.ts",
     "check:ws": "node scripts/check-workspace-app.cjs",
-    "typecheck": "vue-tsc --noEmit"
+    "typecheck": "vue-tsc --noEmit",
+    "lint": "biome check .",
+    "format": "biome format --write ."
   },
   "devDependencies": {
+    "@biomejs/biome": "^2.5.8",
     "@vitejs/plugin-vue": "^6.0.8",
     "playwright": "^1.62.1",
     "typescript": "^5.7.0",

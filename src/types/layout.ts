@@ -17,9 +17,9 @@ export interface MenuNodeDef {
   label?: string;
   icon?: IconDef;
   accelerator?: string;
-  action?: string;          // leaf: action id handled by the framework
+  action?: string; // leaf: action id handled by the framework
   separator?: boolean;
-  items?: MenuNodeDef[];    // children (submenu) - same class, one level down
+  items?: MenuNodeDef[]; // children (submenu) - same class, one level down
   /** Icon column mode: dot = single-select, check = multi-select. */
   iconKind?: 'dot' | 'check';
   /** Whether the selection indicator (dot/check) is marked. */
@@ -41,7 +41,7 @@ export interface DockerAppDef {
   displayName: string;
   icon: IconDef;
   badge?: string;
-  panel: PanelDef;    // panel shown when this app is active
+  panel: PanelDef; // panel shown when this app is active
 }
 
 export interface WorkspaceTabDef {
@@ -93,7 +93,7 @@ export interface StatusItemDef {
 
 export interface LayoutDefinition {
   framework: { title: string };
-  menu: MenuNodeDef[];      // top-level menus - same class as any submenu
+  menu: MenuNodeDef[]; // top-level menus - same class as any submenu
   docker: DockerAppDef[];
   right: PanelDef | null;
   workspace: WorkspaceDef;

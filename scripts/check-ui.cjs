@@ -7,8 +7,8 @@
  * - Loads the page in headless Chromium and asserts core interactions
  * - Exits non-zero on any failure; saves a screenshot to scripts/artifacts/
  */
-const fs = require('fs');
-const path = require('path');
+const fs = require('node:fs');
+const path = require('node:path');
 const { ensureServer, openApp, makeReporter, finish } = require('./lib/ui-test.cjs');
 
 const ARTIFACT_DIR = path.join(__dirname, 'artifacts');
@@ -57,7 +57,11 @@ const ARTIFACT_DIR = path.join(__dirname, 'artifacts');
   await page.click('.sf-subsection-header:has-text("PROJECT")');
   await page.waitForTimeout(300);
   const hAfter = await page.$eval(projectBody, (el) => el.getBoundingClientRect().height).catch(() => null);
-  report('expand restores original height', hBefore !== null && Math.abs(hBefore - hAfter) < 1, `${hBefore}px → ${hAfter}px`);
+  report(
+    'expand restores original height',
+    hBefore !== null && Math.abs(hBefore - hAfter) < 1,
+    `${hBefore}px → ${hAfter}px`,
+  );
 
   // ── Bars & workspace ────────────────────────────────────────────────────
   report('status bar renders', await visible('.sf-status-bar'));
@@ -89,4 +93,7 @@ const ARTIFACT_DIR = path.join(__dirname, 'artifacts');
     console.log(`screenshot saved: ${shot}`);
   }
   await finish(browser, serverProc, failed, 'CHECKS');
-})().catch((e) => { console.error('check aborted:', e.message); process.exit(2); });
+})().catch((e) => {
+  console.error('check aborted:', e.message);
+  process.exit(2);
+});

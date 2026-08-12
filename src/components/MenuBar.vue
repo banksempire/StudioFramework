@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { onMounted, onUnmounted, ref } from 'vue';
-import Menu from './Menu.vue';
 import type { MenuNodeDef } from '../types/layout';
+import Menu from './Menu.vue';
 
 // ── Keyboard accelerators ─────────────────────────────────────────────────
 // Menu items can declare `accelerator` in the layout JSON ("Ctrl+N",
@@ -104,12 +104,18 @@ function onKeyDown(e: KeyboardEvent) {
       e.preventDefault();
       const action = armed.action;
       armed = null;
-      if (armTimer !== null) { window.clearTimeout(armTimer); armTimer = null; }
+      if (armTimer !== null) {
+        window.clearTimeout(armTimer);
+        armTimer = null;
+      }
       emit('menu-action', action);
       return;
     }
     armed = null;
-    if (armTimer !== null) { window.clearTimeout(armTimer); armTimer = null; }
+    if (armTimer !== null) {
+      window.clearTimeout(armTimer);
+      armTimer = null;
+    }
   }
 
   for (const b of bindings) {
@@ -122,7 +128,10 @@ function onKeyDown(e: KeyboardEvent) {
     // Chord: arm the second key for a short window.
     armed = b;
     if (armTimer !== null) window.clearTimeout(armTimer);
-    armTimer = window.setTimeout(() => { armed = null; armTimer = null; }, 2000);
+    armTimer = window.setTimeout(() => {
+      armed = null;
+      armTimer = null;
+    }, 2000);
     return;
   }
 }

@@ -27,35 +27,37 @@ const { ensureServer, openApp, makeReporter, finish } = require('./lib/ui-test.c
   try {
     // ── Helpers ────────────────────────────────────────────────────────────
 
-    async function panelDisplayed(side) {
+    const panelDisplayed = async (side) => {
       return page.evaluate((s) => {
-        const el = document.querySelector('.sf-panel--' + s);
+        const el = document.querySelector(`.sf-panel--${s}`);
         if (!el) return null;
         return getComputedStyle(el).display !== 'none';
       }, side);
-    }
+    };
 
     /** The whole left group (docker bar + panel) actually on screen. */
-    async function leftGroupDisplayed() {
+    const leftGroupDisplayed = async () => {
       return page.evaluate(() => {
         const el = document.querySelector('.sf-left-group');
         if (!el) return null;
         return getComputedStyle(el).display !== 'none';
       });
-    }
+    };
 
-    async function resizeTo(w) {
+    const resizeTo = async (w) => {
       await page.setViewportSize({ width: w, height: 900 });
       await page.waitForTimeout(100);
-    }
+    };
 
     /** Drag a panel's resize handle. deltaPx > 0 = make wider. */
-    async function dragPanel(side, deltaPx) {
-      const handleClass = side === 'left'
-        ? '.sf-panel-resize-handle--right'
-        : '.sf-panel-resize-handle--left';
+    const dragPanel = async (side, deltaPx) => {
+      const handleClass =
+        side === 'left' ? '.sf-panel-resize-handle--right' : '.sf-panel-resize-handle--left';
       const handle = await page.$(handleClass);
-      if (!handle) { report('handle found: ' + side, false); return; }
+      if (!handle) {
+        report(`handle found: ${side}`, false);
+        return;
+      }
       const box = await handle.boundingBox();
       const cx = box.x + box.width / 2;
       const cy = box.y + box.height / 2;
@@ -65,28 +67,43 @@ const { ensureServer, openApp, makeReporter, finish } = require('./lib/ui-test.c
       await page.mouse.move(cx + deltaPx * dir, cy, { steps: 10 });
       await page.mouse.up();
       await page.waitForTimeout(100);
-    }
+    };
 
     // ── Phase 1: Window resize trigger (progressive: left first, then right) ─
 
     await resizeTo(1300);
-    report('both visible at 1300px', (await panelDisplayed('left')) === true && (await panelDisplayed('right')) === true);
+    report(
+      'both visible at 1300px',
+      (await panelDisplayed('left')) === true && (await panelDisplayed('right')) === true,
+    );
 
     // Narrow to 1000px: ws=432 < 640 but wNoLeft=692 >= 640 -> left hidden, right visible
     await resizeTo(1000);
-    report('left hidden at 1000px (left first)', (await panelDisplayed('left')) === false && (await panelDisplayed('right')) === true);
+    report(
+      'left hidden at 1000px (left first)',
+      (await panelDisplayed('left')) === false && (await panelDisplayed('right')) === true,
+    );
 
     // Narrow to 900px: wNoLeft=592 < 640 -> both hidden
     await resizeTo(900);
-    report('both hidden at 900px', (await panelDisplayed('left')) === false && (await panelDisplayed('right')) === false);
+    report(
+      'both hidden at 900px',
+      (await panelDisplayed('left')) === false && (await panelDisplayed('right')) === false,
+    );
 
     // Widen to 1000px: right restored first (reverse order)
     await resizeTo(1000);
-    report('right restored at 1000px (right first)', (await panelDisplayed('left')) === false && (await panelDisplayed('right')) === true);
+    report(
+      'right restored at 1000px (right first)',
+      (await panelDisplayed('left')) === false && (await panelDisplayed('right')) === true,
+    );
 
     // Widen to 1300px: left also restored
     await resizeTo(1300);
-    report('both restored at 1300px', (await panelDisplayed('left')) === true && (await panelDisplayed('right')) === true);
+    report(
+      'both restored at 1300px',
+      (await panelDisplayed('left')) === true && (await panelDisplayed('right')) === true,
+    );
 
     // ── Phase 2: Panel expansion + revert ─────────────────────────────────
 
@@ -162,12 +179,14 @@ const { ensureServer, openApp, makeReporter, finish } = require('./lib/ui-test.c
 
     // 900px: would-be ws = 900-48-260-0 = 592 < 640 -> left auto-hides
     await resizeTo(900);
-    report('left auto-hidden at 900px (too narrow even with 1 panel)', (await panelDisplayed('left')) === false);
+    report(
+      'left auto-hidden at 900px (too narrow even with 1 panel)',
+      (await panelDisplayed('left')) === false,
+    );
 
     // ── No errors ──────────────────────────────────────────────────────────
 
     report('no console/page errors', errors.length === 0, errors.join('; '));
-
   } catch (e) {
     await page.screenshot({ path: 'scripts/artifacts/autohide-fail.png' });
     console.error(e);

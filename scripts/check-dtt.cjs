@@ -48,27 +48,46 @@ const WS = '.sf-workspace';
   await dropAt('framework.ts', wsBox.width - 10, wsBox.height / 2);
   report('split right → 2 tiles', (await tileCount()) === 2);
   const w1 = await tileBox(1);
-  report('dragged tab takes ~half the window', Math.abs(w1.width - tileW / 2) < 30, `${w1.width}px vs half=${(tileW / 2).toFixed(0)}px`);
-  report('right tile holds framework.ts', JSON.stringify(await tileTabs(1)) === JSON.stringify(['framework.ts']));
+  report(
+    'dragged tab takes ~half the window',
+    Math.abs(w1.width - tileW / 2) < 30,
+    `${w1.width}px vs half=${(tileW / 2).toFixed(0)}px`,
+  );
+  report(
+    'right tile holds framework.ts',
+    JSON.stringify(await tileTabs(1)) === JSON.stringify(['framework.ts']),
+  );
   report('left tile keeps the rest', (await tileTabs(0)).length === 3);
 
   // ── 2. move: drag utils.ts onto the right tile's tab strip → inserted ───
   await dropAt('utils.ts', w1.x - wsBox.x + w1.width / 2, 15);
-  report('move into right tile', JSON.stringify(await tileTabs(1)) === JSON.stringify(['framework.ts', 'utils.ts']));
+  report(
+    'move into right tile',
+    JSON.stringify(await tileTabs(1)) === JSON.stringify(['framework.ts', 'utils.ts']),
+  );
   report('source tile keeps remaining', (await tileTabs(0)).length === 2);
 
   // ── 3. split bottom: drag styles.css onto the bottom edge of right tile ─
   await dropAt('styles.css', w1.x - wsBox.x + w1.width / 2, w1.height - 2);
   report('split bottom → 3 tiles', (await tileCount()) === 3);
-  report('cross-tile split removes from source', JSON.stringify(await tileTabs(0)) === JSON.stringify(['layout.json']));
-  report('bottom tile holds styles.css', JSON.stringify(await tileTabs(2)) === JSON.stringify(['styles.css']));
+  report(
+    'cross-tile split removes from source',
+    JSON.stringify(await tileTabs(0)) === JSON.stringify(['layout.json']),
+  );
+  report(
+    'bottom tile holds styles.css',
+    JSON.stringify(await tileTabs(2)) === JSON.stringify(['styles.css']),
+  );
 
   // ── 4. split top: drag framework.ts onto the top band of the bottom tile ──────
   const t2 = await tileBox(2);
   const t2BandH = Math.min(Math.max(t2.height * 0.25, 28), 56);
   await dropAt('framework.ts', t2.x - wsBox.x + t2.width / 2, t2.y - wsBox.y + 30 + 6 + t2BandH / 2);
   report('split top → 4 tiles', (await tileCount()) === 4);
-  report('top tile holds dragged tab', JSON.stringify(await tileTabs(2)) === JSON.stringify(['framework.ts']));
+  report(
+    'top tile holds dragged tab',
+    JSON.stringify(await tileTabs(2)) === JSON.stringify(['framework.ts']),
+  );
   report('target tile keeps its tab', JSON.stringify(await tileTabs(3)) === JSON.stringify(['styles.css']));
   report('source tile keeps remaining', JSON.stringify(await tileTabs(1)) === JSON.stringify(['utils.ts']));
 
@@ -91,7 +110,11 @@ const WS = '.sf-workspace';
   await page.mouse.up();
   await page.waitForTimeout(250);
   const after = (await tileBox(0)).width;
-  report('sash resize changes split', Math.abs(after - before - 80) < 12, `+${(after - before).toFixed(0)}px`);
+  report(
+    'sash resize changes split',
+    Math.abs(after - before - 80) < 12,
+    `+${(after - before).toFixed(0)}px`,
+  );
 
   // ── 7. proportional resize: window wider → ratio preserved ───────────────
   const rBefore = after / (await tileBox(1)).width;
@@ -100,7 +123,11 @@ const WS = '.sf-workspace';
   const wa = (await tileBox(0)).width;
   const wb = (await tileBox(1)).width;
   const rAfter = wa / wb;
-  report('proportions preserved on window resize', Math.abs(rBefore - rAfter) < 0.02, `ratio ${rBefore.toFixed(3)} → ${rAfter.toFixed(3)}`);
+  report(
+    'proportions preserved on window resize',
+    Math.abs(rBefore - rAfter) < 0.02,
+    `ratio ${rBefore.toFixed(3)} → ${rAfter.toFixed(3)}`,
+  );
 
   // ── 8. min size respected: shrink window hard → tiles never below min ────
   await page.setViewportSize({ width: 700, height: 500 });
@@ -113,10 +140,16 @@ const WS = '.sf-workspace';
   // ── 9. reorder + empty-source merge: styles.css to tile 0 strip start ────
   const leftBox = await tileBox(0);
   await dropAt('styles.css', leftBox.x - wsBox.x + 20, 15); // strip, before layout.json
-  report('reorder into strip start', JSON.stringify(await tileTabs(0)) === JSON.stringify(['styles.css', 'layout.json']));
+  report(
+    'reorder into strip start',
+    JSON.stringify(await tileTabs(0)) === JSON.stringify(['styles.css', 'layout.json']),
+  );
   report('emptied source tile merges away', (await tileCount()) === 1);
 
   report('no console/page errors', errors.length === 0, errors.slice(0, 3).join(' | '));
 
   await finish(browser, serverProc, isFailed(), 'DTT CHECKS');
-})().catch((e) => { console.error('aborted:', e.message); process.exit(2); });
+})().catch((e) => {
+  console.error('aborted:', e.message);
+  process.exit(2);
+});

@@ -1,6 +1,6 @@
 <script setup lang="ts">
-import { computed, inject, ref } from 'vue';
-import { kWorkspace } from '../composables/useWorkspace';
+import { computed, ref } from 'vue';
+import { useWorkspaceContext } from '../composables/useWorkspace';
 import type { WorkspaceSnapshot } from '../workspace/snapshots';
 
 /**
@@ -26,7 +26,7 @@ interface SavedWorkspace {
 
 const STORAGE_KEY = 'sf.workspaces';
 
-const ws = inject(kWorkspace)!;
+const ws = useWorkspaceContext();
 
 function loadSaved(): SavedWorkspace[] {
   try {

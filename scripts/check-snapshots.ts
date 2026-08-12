@@ -7,16 +7,16 @@
  */
 import {
   captureSnapshot,
-  restoreSnapshot,
-  nodeToSnapshot,
   nodeFromSnapshot,
+  nodeToSnapshot,
+  restoreSnapshot,
   type WorkspaceSnapshot,
 } from '../src/workspace/snapshots.ts';
 import {
   nextId,
   type SplitDir,
-  type TileNode,
   type SplitNode,
+  type TileNode,
   type WorkspaceNode,
 } from '../src/workspace/tree.ts';
 
@@ -61,7 +61,12 @@ function allTabs(node: WorkspaceNode): string[] {
 
 {
   // A deep mixed tree: row split with a nested column split, odd ratios.
-  const tree = split('row', 0.28, tile(['a', 'b'], 'b'), split('column', 0.62, tile(['c'], 'c'), tile(['d', 'e'], 'e')));
+  const tree = split(
+    'row',
+    0.28,
+    tile(['a', 'b'], 'b'),
+    split('column', 0.62, tile(['c'], 'c'), tile(['d', 'e'], 'e')),
+  );
   const roots = [{ id: nextId('root'), node: tree, ratio: 1 }];
   const snap = captureSnapshot(roots, null);
 
@@ -74,7 +79,10 @@ function allTabs(node: WorkspaceNode): string[] {
   report('restored root ratio preserved', root.ratio === 1, String(root.ratio));
 
   report('structure preserved: 3 tiles', countTiles(root.node) === 3, String(countTiles(root.node)));
-  report('tab order preserved', JSON.stringify(allTabs(root.node)) === JSON.stringify(['a', 'b', 'c', 'd', 'e']));
+  report(
+    'tab order preserved',
+    JSON.stringify(allTabs(root.node)) === JSON.stringify(['a', 'b', 'c', 'd', 'e']),
+  );
 
   // Spacing: split ratios must survive the round-trip exactly.
   const walkRatios = (n: WorkspaceNode, acc: number[]) => {
@@ -88,7 +96,11 @@ function allTabs(node: WorkspaceNode): string[] {
   const after: number[] = [];
   walkRatios(tree, before);
   walkRatios(root.node, after);
-  report('split ratios preserved', JSON.stringify(before) === JSON.stringify(after), `${JSON.stringify(before)} vs ${JSON.stringify(after)}`);
+  report(
+    'split ratios preserved',
+    JSON.stringify(before) === JSON.stringify(after),
+    `${JSON.stringify(before)} vs ${JSON.stringify(after)}`,
+  );
 
   const t = root.node.kind === 'split' ? root.node : null;
   report('split direction preserved', t?.dir === 'row', t?.dir);
@@ -115,9 +127,15 @@ function allTabs(node: WorkspaceNode): string[] {
 
   const restored = restoreSnapshot(snap);
   report('two roots restored', restored.length === 2, String(restored.length));
-  report('root ratios preserved (0.7/0.3)', restored[0].ratio === 0.7 && restored[1].ratio === 0.3,
-    `${restored[0].ratio}/${restored[1].ratio}`);
-  report('second root structure preserved', restored[1].node.kind === 'split' && restored[1].node.ratio === 0.4);
+  report(
+    'root ratios preserved (0.7/0.3)',
+    restored[0].ratio === 0.7 && restored[1].ratio === 0.3,
+    `${restored[0].ratio}/${restored[1].ratio}`,
+  );
+  report(
+    'second root structure preserved',
+    restored[1].node.kind === 'split' && restored[1].node.ratio === 0.4,
+  );
 
   // Round-trip again — snapshots are stable (idempotent).
   const again = captureSnapshot(restored, snap.rootDir);
@@ -133,8 +151,13 @@ function allTabs(node: WorkspaceNode): string[] {
     roots: [{ ratio: 1, node: { kind: 'tile', tabs: [], activeId: '' } }],
   };
   const restored = restoreSnapshot(snap);
-  report('empty root tile restores', restored.length === 1 && restored[0].node.kind === 'tile'
-    && restored[0].node.tabs.length === 0 && restored[0].node.activeId === '');
+  report(
+    'empty root tile restores',
+    restored.length === 1 &&
+      restored[0].node.kind === 'tile' &&
+      restored[0].node.tabs.length === 0 &&
+      restored[0].node.activeId === '',
+  );
 }
 
 {
@@ -163,8 +186,11 @@ function allTabs(node: WorkspaceNode): string[] {
   const tree = tile(['a', 'b'], 'a');
   const snap = captureSnapshot([{ node: tree, ratio: 1 }], null, (id) => id === 'a');
   const node = snap.roots[0].node;
-  report('transient tab excluded from the snapshot', node.kind === 'tile'
-    && JSON.stringify(node.tabs) === JSON.stringify(['b']), JSON.stringify(node));
+  report(
+    'transient tab excluded from the snapshot',
+    node.kind === 'tile' && JSON.stringify(node.tabs) === JSON.stringify(['b']),
+    JSON.stringify(node),
+  );
   report('active id moves to the first remaining tab', node.kind === 'tile' && node.activeId === 'b');
 }
 
@@ -175,7 +201,10 @@ function allTabs(node: WorkspaceNode): string[] {
   const tree = split('column', 0.25, tile(['gone']), left);
   const snap = captureSnapshot([{ node: tree, ratio: 1 }], null, (id) => id === 'gone');
   const node = snap.roots[0].node;
-  report('empty tile collapses the split to the survivor', node.kind === 'split' && node.dir === 'row' && node.ratio === 0.4);
+  report(
+    'empty tile collapses the split to the survivor',
+    node.kind === 'split' && node.dir === 'row' && node.ratio === 0.4,
+  );
 }
 
 {
@@ -184,22 +213,40 @@ function allTabs(node: WorkspaceNode): string[] {
   const r1 = { node: tile(['gone']), ratio: 0.6 };
   const r2 = { node: tile(['keep']), ratio: 0.4 };
   const snap = captureSnapshot([r1, r2], 'row', (id) => id === 'gone');
-  report('empty root dropped', snap.roots.length === 1 && snap.roots[0].node.kind === 'tile'
-    && JSON.stringify(snap.roots[0].node.tabs) === JSON.stringify(['keep']));
-  report('surviving root renormalized to fill the workspace', snap.roots[0].ratio === 1, String(snap.roots[0].ratio));
+  report(
+    'empty root dropped',
+    snap.roots.length === 1 &&
+      snap.roots[0].node.kind === 'tile' &&
+      JSON.stringify(snap.roots[0].node.tabs) === JSON.stringify(['keep']),
+  );
+  report(
+    'surviving root renormalized to fill the workspace',
+    snap.roots[0].ratio === 1,
+    String(snap.roots[0].ratio),
+  );
 }
 
 {
   // Everything transient → a single empty root persists (the layout
   // survives as an empty workspace instead of vanishing).
   const snap = captureSnapshot([{ node: tile(['a', 'b']), ratio: 1 }], null, () => true);
-  report('all-transient collapses to one empty root', snap.roots.length === 1
-    && snap.roots[0].node.kind === 'tile' && snap.roots[0].node.tabs.length === 0 && snap.roots[0].ratio === 1);
+  report(
+    'all-transient collapses to one empty root',
+    snap.roots.length === 1 &&
+      snap.roots[0].node.kind === 'tile' &&
+      snap.roots[0].node.tabs.length === 0 &&
+      snap.roots[0].ratio === 1,
+  );
 }
 
 {
   // No transients → behavior unchanged (structure + spacing preserved).
-  const tree = split('row', 0.28, tile(['a', 'b'], 'b'), split('column', 0.62, tile(['c'], 'c'), tile(['d', 'e'], 'e')));
+  const tree = split(
+    'row',
+    0.28,
+    tile(['a', 'b'], 'b'),
+    split('column', 0.62, tile(['c'], 'c'), tile(['d', 'e'], 'e')),
+  );
   const snap = captureSnapshot([{ node: tree, ratio: 1 }], null, () => false);
   const root = snap.roots[0];
   report('no-transient capture keeps ratios', root.node.kind === 'split' && root.node.ratio === 0.28);

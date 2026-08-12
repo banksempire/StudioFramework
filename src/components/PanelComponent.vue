@@ -1,10 +1,10 @@
 <script setup lang="ts">
 import { computed, provide, reactive } from 'vue';
+import { kPanelAction } from '../composables/usePanelAction';
+import { getPanelComponent } from '../registry';
+import type { PanelAction, PanelComponent, TreeNode } from '../types/panel';
 import Icon from './Icon.vue';
 import KeyValueList from './KeyValueList.vue';
-import { getPanelComponent } from '../registry';
-import { kPanelAction } from '../composables/usePanelAction';
-import type { PanelAction, PanelComponent, TreeNode } from '../types/panel';
 
 const props = defineProps<{
   component: PanelComponent;
@@ -26,7 +26,7 @@ provide(kPanelAction, (action: Omit<PanelAction, 'source'>) => {
 });
 
 const customComp = computed(() =>
-  props.component.type === 'component' ? getPanelComponent(props.component.key) ?? null : null,
+  props.component.type === 'component' ? (getPanelComponent(props.component.key) ?? null) : null,
 );
 
 function emitAction(action?: string, payload?: unknown) {

@@ -1,4 +1,4 @@
-import { ref, onUnmounted } from 'vue';
+import { onUnmounted, ref } from 'vue';
 
 export interface ResizeOptions {
   /** Minimum visible width in px — panel never displays narrower than this */

@@ -60,12 +60,15 @@ function findPath(root: WorkspaceNode, id: string): WorkspaceNode[] {
   const stack: WorkspaceNode[] = [root];
   const parent = new Map<WorkspaceNode, WorkspaceNode>();
   while (stack.length) {
-    const n = stack.pop()!;
+    const n = stack.pop();
+    if (!n) break;
     if (n.id === id) {
       const path = [n];
       let cur = n;
       while (parent.has(cur)) {
-        cur = parent.get(cur)!;
+        const p = parent.get(cur);
+        if (!p) break;
+        cur = p;
         path.push(cur);
       }
       return path.reverse();
@@ -82,7 +85,8 @@ function findPath(root: WorkspaceNode, id: string): WorkspaceNode[] {
 export function findNode(root: WorkspaceNode, id: string): WorkspaceNode | null {
   const stack: WorkspaceNode[] = [root];
   while (stack.length) {
-    const n = stack.pop()!;
+    const n = stack.pop();
+    if (!n) break;
     if (n.id === id) return n;
     if (n.kind === 'split') stack.push(n.children[1], n.children[0]);
   }
@@ -92,7 +96,8 @@ export function findNode(root: WorkspaceNode, id: string): WorkspaceNode | null 
 export function findTileByTab(root: WorkspaceNode, tabId: string): TileNode | null {
   const stack: WorkspaceNode[] = [root];
   while (stack.length) {
-    const n = stack.pop()!;
+    const n = stack.pop();
+    if (!n) break;
     if (n.kind === 'tile') {
       if (n.tabs.includes(tabId)) return n;
     } else {
@@ -111,7 +116,8 @@ export function findTile(root: WorkspaceNode, tileId: string): TileNode | null {
 export function firstTile(root: WorkspaceNode): TileNode | null {
   const stack: WorkspaceNode[] = [root];
   while (stack.length) {
-    const n = stack.pop()!;
+    const n = stack.pop();
+    if (!n) break;
     if (n.kind === 'tile') return n;
     stack.push(n.children[1], n.children[0]);
   }
@@ -166,9 +172,9 @@ export function subtreeMinSize(
       continue;
     }
     const [a, b] = n.children;
-    if (memo.has(a) && memo.has(b)) {
-      const va = memo.get(a)!;
-      const vb = memo.get(b)!;
+    const va = memo.get(a);
+    const vb = memo.get(b);
+    if (va !== undefined && vb !== undefined) {
       const sameDir = n.dir === (dimension === 'width' ? 'row' : 'column');
       memo.set(n, sameDir ? va + vb : Math.max(va, vb));
       stack.pop();
@@ -176,7 +182,7 @@ export function subtreeMinSize(
       stack.push(b, a);
     }
   }
-  return memo.get(node)!;
+  return memo.get(node) ?? (dimension === 'width' ? minTileWidth : minTileHeight);
 }
 
 /**
@@ -205,7 +211,7 @@ export function treeSplitTile(
   tabId: string,
 ): WorkspaceNode {
   const target = findNode(root, tileId);
-  if (!target || target.kind !== 'tile') return root;
+  if (target?.kind !== 'tile') return root;
   const source = findTileByTab(root, tabId);
   const sourceIsTarget = source?.id === target.id;
 
@@ -251,7 +257,12 @@ export function treeSplitTile(
  * Move a tab into (or within) a tile at `index`. Empty source tiles are
  * removed (unless the source is the root — an empty root tile stays).
  */
-export function treeMoveTab(root: WorkspaceNode, tabId: string, targetTileId: string, index: number): WorkspaceNode {
+export function treeMoveTab(
+  root: WorkspaceNode,
+  tabId: string,
+  targetTileId: string,
+  index: number,
+): WorkspaceNode {
   const source = findTileByTab(root, tabId);
   const target = findNode(root, targetTileId);
   if (!source || !target || target.kind !== 'tile') return root;
@@ -269,7 +280,7 @@ export function treeMoveTab(root: WorkspaceNode, tabId: string, targetTileId: st
   }
 
   const remaining = source.tabs.filter((t) => t !== tabId);
-  let newRoot =
+  const newRoot =
     remaining.length === 0
       ? removeTile(root, source.id)
       : replaceNode(root, source.id, {
@@ -302,13 +313,13 @@ export function treeCloseTab(root: WorkspaceNode, tabId: string): WorkspaceNode 
 
 export function treeNewTab(root: WorkspaceNode, tileId: string, tabId: string): WorkspaceNode {
   const tile = findNode(root, tileId);
-  if (!tile || tile.kind !== 'tile') return root;
+  if (tile?.kind !== 'tile') return root;
   return replaceNode(root, tileId, { ...tile, tabs: [...tile.tabs, tabId], activeId: tabId });
 }
 
 export function treeSetRatio(root: WorkspaceNode, splitId: string, ratio: number): WorkspaceNode {
   const split = findNode(root, splitId);
-  if (!split || split.kind !== 'split') return root;
+  if (split?.kind !== 'split') return root;
   const r = Math.min(0.95, Math.max(0.05, ratio));
   return replaceNode(root, splitId, { ...split, ratio: r });
 }
@@ -316,7 +327,12 @@ export function treeSetRatio(root: WorkspaceNode, splitId: string, ratio: number
 /** Insert a tab into a tile at a specific index (no source removal).
  *  Used for cross-root moves where the tab is already removed from its
  *  source root. */
-export function treeInsertTab(root: WorkspaceNode, tileId: string, tabId: string, index: number): WorkspaceNode {
+export function treeInsertTab(
+  root: WorkspaceNode,
+  tileId: string,
+  tabId: string,
+  index: number,
+): WorkspaceNode {
   const tile = findTile(root, tileId);
   if (!tile) return root;
   const idx = Math.min(Math.max(index, 0), tile.tabs.length);
@@ -329,7 +345,8 @@ export function collectAllTabs(root: WorkspaceNode): string[] {
   const tabs: string[] = [];
   const stack: WorkspaceNode[] = [root];
   while (stack.length) {
-    const n = stack.pop()!;
+    const n = stack.pop();
+    if (!n) break;
     if (n.kind === 'tile') {
       tabs.push(...n.tabs);
     } else {

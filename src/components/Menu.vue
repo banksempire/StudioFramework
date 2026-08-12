@@ -23,9 +23,9 @@
  * slot + open wiring; deeper levels run in `embedded` mode (box only) and
  * share the hover state through props (root-owned refs passed down).
  */
-import { computed, nextTick, onMounted, ref, watch, type Ref } from 'vue';
-import Icon from './Icon.vue';
+import { computed, nextTick, onMounted, type Ref, ref, watch } from 'vue';
 import type { MenuNodeDef } from '../types/layout';
+import Icon from './Icon.vue';
 
 const props = withDefaults(
   defineProps<{
@@ -96,7 +96,8 @@ function handleHover(item: MenuNodeDef, rect: DOMRect, depth: number) {
 
 /** This level's open child submenu items (next level); empty when closed. */
 const childItems = computed<MenuNodeDef[]>(() => {
-  const node = (props.embedded ? props.hoverPath!.value : rootHoverPath.value)[props.depth];
+  const path = props.embedded ? props.hoverPath?.value : rootHoverPath.value;
+  const node = path?.[props.depth];
   return node?.items?.length ? node.items : [];
 });
 const hasChildItems = computed(() => childItems.value.length > 0);
@@ -173,12 +174,15 @@ async function adjustBox() {
 }
 if (props.embedded) {
   onMounted(() => void adjustBox());
-  watch(() => props.boxStyle, () => void adjustBox());
+  watch(
+    () => props.boxStyle,
+    () => void adjustBox(),
+  );
 }
 
 function onEnter(e: MouseEvent, item: MenuNodeDef, depth: number) {
   if (item.disabled) return;
-  const fn = props.embedded ? props.hoverItem! : handleHover;
+  const fn = props.embedded ? (props.hoverItem ?? handleHover) : handleHover;
   fn(item, (e.currentTarget as HTMLElement).getBoundingClientRect(), depth);
 }
 

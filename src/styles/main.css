@@ -56,15 +56,15 @@
   --sf-text-on-accent: #fff;
   /* Semantic colors — theme overrides replace these, everything else
      derives from them (translucent variants use color-mix). */
-  --sf-danger: #f48771;      /* error / destructive text */
-  --sf-status-ok: #4ec9b0;   /* success / running */
+  --sf-danger: #f48771; /* error / destructive text */
+  --sf-status-ok: #4ec9b0; /* success / running */
   --sf-status-warn: #d7ba7d; /* warning / stopped */
-  --sf-status-err: #e5484d;  /* error badges */
-  --sf-link: #4fc1ff;        /* hyperlinks */
+  --sf-status-err: #e5484d; /* error badges */
+  --sf-link: #4fc1ff; /* hyperlinks */
   --sf-backdrop: rgba(0, 0, 0, 0.45); /* modal scrims */
   --sf-radius-sm: 3px;
-  --sf-font: 'Segoe UI', -apple-system, BlinkMacSystemFont, sans-serif;
-  --sf-mono: 'Consolas', 'Fira Code', 'JetBrains Mono', monospace;
+  --sf-font: "Segoe UI", -apple-system, BlinkMacSystemFont, sans-serif;
+  --sf-mono: "Consolas", "Fira Code", "JetBrains Mono", monospace;
 }
 
 * {
@@ -77,7 +77,9 @@
    work. The framework styles html/body; each host app styles its own mount
    element (the framework demo mounts under #framework, pi-agent-studio
    declares #app in its app.css). */
-html, body, #framework {
+html,
+body,
+#framework {
   height: 100%;
   width: 100%;
   overflow: hidden;
@@ -269,7 +271,7 @@ html, body, #framework {
   color: var(--sf-text);
   cursor: pointer;
   font-size: 16px;
-  padding: 0 10px 0.125em;  /* glyph ink rides low in its em box — nudge it up 1px (scales with font-size) */
+  padding: 0 10px 0.125em; /* glyph ink rides low in its em box — nudge it up 1px (scales with font-size) */
   height: 100%;
   display: flex;
   align-items: center;
@@ -449,9 +451,11 @@ html, body, #framework {
 }
 
 .sf-panel--hidden {
+  /* biome-ignore lint/complexity/noImportantStyles: must beat inline styles (hidden panel / drag cursor override) */
   display: none !important;
 }
 
+/* biome-ignore lint/style/noDescendingSpecificity: deliberate section ordering — different properties, not overrides */
 .sf-panel-header {
   display: flex;
   align-items: center;
@@ -475,8 +479,6 @@ html, body, #framework {
   text-overflow: ellipsis;
   white-space: nowrap;
 }
-
-
 
 /* ─── Section tabs ──────────────────────────────────────────────────────── */
 
@@ -510,7 +512,9 @@ html, body, #framework {
   padding: 0 10px;
   white-space: nowrap;
   overflow: hidden;
-  transition: color 0.15s, border-color 0.15s;
+  transition:
+    color 0.15s,
+    border-color 0.15s;
 }
 
 .sf-panel-tab:hover {
@@ -543,7 +547,7 @@ html, body, #framework {
 
 /* Visual line inside the gap: inset 1px from each edge (--sf-gap - 2px wide) */
 .sf-panel-resize-handle::after {
-  content: '';
+  content: "";
   position: absolute;
   left: 1px;
   right: 1px;
@@ -566,6 +570,7 @@ html, body, #framework {
 }
 
 .sf-panel--will-collapse .sf-panel-resize-handle::after {
+  /* biome-ignore lint/complexity/noImportantStyles: must beat inline styles (hidden panel / drag cursor override) */
   background: transparent !important;
 }
 
@@ -581,6 +586,7 @@ html, body, #framework {
 
 /* ─── Collapse indicator overlay ─────────────────────────────────────────── */
 
+/* biome-ignore lint/style/noDescendingSpecificity: deliberate section ordering — different properties, not overrides */
 .sf-panel-dtc-overlay {
   position: absolute;
   inset: 0;
@@ -625,6 +631,7 @@ html, body, #framework {
   color: var(--sf-text-bright);
 }
 
+/* biome-ignore lint/style/noDescendingSpecificity: deliberate section ordering — different properties, not overrides */
 .sf-panel-empty {
   flex: 1;
   border-radius: 0 0 var(--sf-radius) var(--sf-radius);
@@ -634,6 +641,7 @@ html, body, #framework {
    Sub-sections
    ═══════════════════════════════════════════════════════════════════════════ */
 
+/* biome-ignore lint/style/noDescendingSpecificity: deliberate section ordering — different properties, not overrides */
 .sf-subsection-body-container {
   flex: 1;
   min-height: 0;
@@ -728,11 +736,13 @@ body.sf-dragging,
 body.sf-dragging *,
 body.sf-dragging-col,
 body.sf-dragging-col * {
+  /* biome-ignore lint/complexity/noImportantStyles: must beat inline styles (hidden panel / drag cursor override) */
   cursor: row-resize !important;
 }
 
 body.sf-dragging-row,
 body.sf-dragging-row * {
+  /* biome-ignore lint/complexity/noImportantStyles: must beat inline styles (hidden panel / drag cursor override) */
   cursor: col-resize !important;
 }
 
@@ -785,7 +795,7 @@ body.sf-dragging-row * {
   border-radius: 3px;
   color: var(--sf-text);
   font-family: var(--sf-font);
-  font-size: 16px;   /* ≥16px: no iOS focus auto-zoom */
+  font-size: 16px; /* ≥16px: no iOS focus auto-zoom */
   outline: none;
 }
 
@@ -916,6 +926,7 @@ body.sf-dragging-row * {
   flex-shrink: 0;
 }
 
+/* biome-ignore lint/style/noDescendingSpecificity: deliberate section ordering — different properties, not overrides */
 .kv-value {
   color: var(--sf-text);
   text-align: right;
@@ -928,6 +939,7 @@ body.sf-dragging-row * {
 }
 
 /* Pill (badge) value + generic tones; apps may add their own kv-pill--* tones. */
+/* biome-ignore lint/style/noDescendingSpecificity: deliberate section ordering — different properties, not overrides */
 .kv-pill {
   font-size: 16px;
   text-transform: uppercase;
@@ -960,7 +972,6 @@ body.sf-dragging-row * {
   background: color-mix(in srgb, var(--sf-status-err) 15%, transparent);
   color: var(--sf-status-err);
 }
-
 
 /* ─── List ───────────────────────────────────────────────────────────────── */
 
@@ -1080,7 +1091,7 @@ body.sf-dragging-row * {
 }
 
 .sf-sash::after {
-  content: '';
+  content: "";
   position: absolute;
   background: transparent;
   transition: background 0.15s;
@@ -1271,7 +1282,7 @@ body.sf-dragging-row * {
   color: var(--sf-text);
   cursor: pointer;
   font-size: 16px;
-  padding: 0 0 0.125em;   /* glyph ink rides low in its em box — nudge it up 1px (scales with font-size) */
+  padding: 0 0 0.125em; /* glyph ink rides low in its em box — nudge it up 1px (scales with font-size) */
   width: 28px;
   height: 100%;
   flex-shrink: 0;

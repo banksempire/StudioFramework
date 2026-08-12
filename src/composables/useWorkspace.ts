@@ -1,28 +1,28 @@
-import { reactive, watch, type InjectionKey } from 'vue';
+import { type InjectionKey, inject, reactive, watch } from 'vue';
 import type { WorkspaceDef, WorkspaceTabDef } from '../types/layout';
-import {
-  findNode,
-  findTile,
-  findTileByTab,
-  nextId,
-  treeCloseTab,
-  treeInsertTab,
-  treeMoveTab,
-  treeNewTab,
-  treeSetRatio,
-  treeSplitTile,
-  collectAllTabs,
-  type DropZone,
-  type SplitDir,
-  type TileNode,
-  type WorkspaceNode,
-} from '../workspace/tree';
 import {
   captureSnapshot,
   restoreSnapshot,
   type SnapshotPanels,
   type WorkspaceSnapshot,
 } from '../workspace/snapshots';
+import {
+  collectAllTabs,
+  type DropZone,
+  findNode,
+  findTile,
+  findTileByTab,
+  nextId,
+  type SplitDir,
+  type TileNode,
+  treeCloseTab,
+  treeInsertTab,
+  treeMoveTab,
+  treeNewTab,
+  treeSetRatio,
+  treeSplitTile,
+  type WorkspaceNode,
+} from '../workspace/tree';
 
 // ── Root group model ────────────────────────────────────────────────────────
 // The workspace has N root groups arranged in a single direction (row = side
@@ -213,6 +213,17 @@ export interface RightPanelToggleApi {
 
 export const kRightPanelToggle: InjectionKey<RightPanelToggleApi> = Symbol('sf.rightPanelToggle');
 
+/**
+ * Framework context accessor for components: the workspace context is
+ * provided by the Framework root, so inside a framework tree it always
+ * exists — fail fast with a clear error instead of `inject(...)!`.
+ */
+export function useWorkspaceContext(): WorkspaceContext {
+  const api = inject(kWorkspace);
+  if (!api) throw new Error('useWorkspaceContext: workspace context not provided');
+  return api;
+}
+
 /** Find the top-right tile in a tree (row -> right, column -> top). */
 function findTopRightTileId(node: WorkspaceNode): string {
   if (node.kind === 'tile') return node.id;
@@ -224,17 +235,24 @@ export function useWorkspace(def: WorkspaceDef): WorkspaceApi {
   const minTileHeight = def.minTileHeight ?? 100;
 
   const initialTileId = nextId('tile');
-  const state = reactive<{ roots: RootGroup[]; focusedTileId: string; rootDir: SplitDir | null; newTabTitle: string }>({
-    roots: [{
-      id: nextId('root'),
-      node: {
-        kind: 'tile',
-        id: initialTileId,
-        tabs: def.tabs.map((t) => t.id),
-        activeId: def.tabs[0]?.id ?? '',
+  const state = reactive<{
+    roots: RootGroup[];
+    focusedTileId: string;
+    rootDir: SplitDir | null;
+    newTabTitle: string;
+  }>({
+    roots: [
+      {
+        id: nextId('root'),
+        node: {
+          kind: 'tile',
+          id: initialTileId,
+          tabs: def.tabs.map((t) => t.id),
+          activeId: def.tabs[0]?.id ?? '',
+        },
+        ratio: 1,
       },
-      ratio: 1,
-    }],
+    ],
     // The initial root is always a single tile, so it starts focused.
     focusedTileId: initialTileId,
     rootDir: null,
@@ -320,7 +338,9 @@ export function useWorkspace(def: WorkspaceDef): WorkspaceApi {
     if (total > 0) {
       for (const r of state.roots) r.ratio += removed.ratio * (r.ratio / total);
     } else {
-      state.roots.forEach((r) => (r.ratio = 1 / state.roots.length));
+      state.roots.forEach((r) => {
+        r.ratio = 1 / state.roots.length;
+      });
     }
   }
 
@@ -342,8 +362,12 @@ export function useWorkspace(def: WorkspaceDef): WorkspaceApi {
     if (!first) return;
     const stack: WorkspaceNode[] = [first.node];
     while (stack.length) {
-      const n = stack.pop()!;
-      if (n.kind === 'tile') { state.focusedTileId = n.id; return; }
+      const n = stack.pop();
+      if (!n) break;
+      if (n.kind === 'tile') {
+        state.focusedTileId = n.id;
+        return;
+      }
       stack.push(n.children[1], n.children[0]);
     }
   }
@@ -391,7 +415,7 @@ export function useWorkspace(def: WorkspaceDef): WorkspaceApi {
       if (json === lastAutoJson) return;
       localStorage.setItem(AUTO_KEY, json);
       lastAutoJson = json; // only after a successful write (quota errors
-                           // must not suppress future saves)
+      // must not suppress future saves)
     } catch {
       /* storage unavailable */
     }
@@ -420,7 +444,11 @@ export function useWorkspace(def: WorkspaceDef): WorkspaceApi {
     // Never leave the workspace rootless: an empty snapshot (or one with
     // zero roots) falls back to a single empty tile.
     if (restored.length === 0) {
-      restored.push({ id: nextId('root'), node: { kind: 'tile', id: nextId('tile'), tabs: [], activeId: '' }, ratio: 1 });
+      restored.push({
+        id: nextId('root'),
+        node: { kind: 'tile', id: nextId('tile'), tabs: [], activeId: '' },
+        ratio: 1,
+      });
     }
     // One pass over the new tree: collect every tab id, and turn ids
     // without a definition into ghost (blank) windows.
@@ -481,7 +509,10 @@ export function useWorkspace(def: WorkspaceDef): WorkspaceApi {
 
     newTab(tileId) {
       // Host-app override: the app decides what "+" creates (if anything).
-      if (newTabHandler) { newTabHandler(tileId); return; }
+      if (newTabHandler) {
+        newTabHandler(tileId);
+        return;
+      }
       const root = findRootByTile(tileId);
       if (!root) return;
       const id = `untitled-${nextId('tab')}`;
@@ -570,7 +601,7 @@ export function useWorkspace(def: WorkspaceDef): WorkspaceApi {
       let activeId = allTabs[0];
       for (const root of state.roots) {
         const tile = findTile(root.node, state.focusedTileId);
-        if (tile && tile.activeId && allTabs.includes(tile.activeId)) {
+        if (tile?.activeId && allTabs.includes(tile.activeId)) {
           activeId = tile.activeId;
           break;
         }
@@ -769,9 +800,7 @@ export function useWorkspace(def: WorkspaceDef): WorkspaceApi {
     },
     get topRightTileId() {
       // Row-direction: rightmost root (last). Column-direction: topmost root (first).
-      const root = state.rootDir === 'column'
-        ? state.roots[0]
-        : state.roots[state.roots.length - 1];
+      const root = state.rootDir === 'column' ? state.roots[0] : state.roots[state.roots.length - 1];
       return root ? findTopRightTileId(root.node) : '';
     },
     tabDefs,
@@ -814,4 +843,3 @@ export function useWorkspace(def: WorkspaceDef): WorkspaceApi {
     persistNow: saveAutoSnapshot,
   };
 }
-

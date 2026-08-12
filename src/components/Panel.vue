@@ -1,20 +1,23 @@
 <script setup lang="ts">
-import { computed, ref, watch, onUnmounted, nextTick } from 'vue';
+import { computed, nextTick, onUnmounted, ref, watch } from 'vue';
 import { useResize } from '../composables/useResize';
-import type { PanelAction, PanelSection } from '../types/panel';
-import SubsectionBody from './SubsectionBody.vue';
-import Menu from './Menu.vue';
 import type { MenuNodeDef } from '../types/layout';
+import type { PanelAction, PanelSection } from '../types/panel';
+import Menu from './Menu.vue';
+import SubsectionBody from './SubsectionBody.vue';
 
-const props = withDefaults(defineProps<{
-  title: string;
-  visible: boolean;
-  position: 'left' | 'right';
-  sections?: PanelSection[];
-}>(), {
-  visible: true,
-  sections: () => [],
-});
+const props = withDefaults(
+  defineProps<{
+    title: string;
+    visible: boolean;
+    position: 'left' | 'right';
+    sections?: PanelSection[];
+  }>(),
+  {
+    visible: true,
+    sections: () => [],
+  },
+);
 
 const emit = defineEmits<{
   collapse: [];
@@ -26,15 +29,15 @@ const emit = defineEmits<{
 
 // ── Resize ────────────────────────────────────────────────────────────────
 
-const resizeDir = computed(() => props.position === 'left' ? 'right' : 'left');
-const oppositeEdge = computed(() => props.position === 'left' ? 'left' : 'right');
+const resizeDir = computed(() => (props.position === 'left' ? 'right' : 'left'));
+const oppositeEdge = computed(() => (props.position === 'left' ? 'left' : 'right'));
 
 const MIN_WIDTH = 150;
 const { width, dragging, willCollapse, onMouseDown } = useResize({
   min: MIN_WIDTH,
   max: 500,
   direction: resizeDir.value,
-  collapseThreshold: Math.round(MIN_WIDTH * 2 / 3),
+  collapseThreshold: Math.round((MIN_WIDTH * 2) / 3),
   onCollapse: () => emit('collapse'),
   onResize: (w: number) => emit('resize', w),
 });
@@ -47,9 +50,7 @@ const tabsRow = ref<HTMLElement | null>(null);
 
 const visibleCount = ref(100);
 
-const hasOverflow = computed(() =>
-  props.sections.length > 1 && visibleCount.value < props.sections.length,
-);
+const hasOverflow = computed(() => props.sections.length > 1 && visibleCount.value < props.sections.length);
 
 const overflowTabs = computed(() => props.sections.slice(visibleCount.value));
 
@@ -57,20 +58,23 @@ const savedIndex = new Map<string, number>();
 let lastKey = '';
 
 function panelKey(sections: PanelSection[]) {
-  return sections.map(s => s.id).join('|');
+  return sections.map((s) => s.id).join('|');
 }
 
 lastKey = panelKey(props.sections);
 
-watch(() => props.sections, (sections, old) => {
-  if (lastKey) savedIndex.set(lastKey, activeIndex.value);
-  lastKey = panelKey(sections);
-  activeIndex.value = savedIndex.get(lastKey) ?? 0;
-  visibleCount.value = 100;
-  overflowOpen.value = false;
-  visibilityMenuOpen.value = false;
-  nextTick(() => recompute());
-});
+watch(
+  () => props.sections,
+  (sections, _old) => {
+    if (lastKey) savedIndex.set(lastKey, activeIndex.value);
+    lastKey = panelKey(sections);
+    activeIndex.value = savedIndex.get(lastKey) ?? 0;
+    visibleCount.value = 100;
+    overflowOpen.value = false;
+    visibilityMenuOpen.value = false;
+    nextTick(() => recompute());
+  },
+);
 
 function selectSection(idx: number) {
   activeIndex.value = idx;
@@ -78,7 +82,7 @@ function selectSection(idx: number) {
 }
 
 function selectOverflowSection(sectionId: string) {
-  const i = props.sections.findIndex(s => s.id === sectionId);
+  const i = props.sections.findIndex((s) => s.id === sectionId);
   if (i >= 0) selectSection(i);
   overflowOpen.value = false;
 }
@@ -88,9 +92,7 @@ function selectOverflowSection(sectionId: string) {
 function getTabs(): HTMLElement[] {
   if (!tabsRow.value) return [];
   return Array.from(
-    tabsRow.value.querySelectorAll<HTMLElement>(
-      '.sf-panel-tab:not(.sf-panel-tab--overflow)',
-    ),
+    tabsRow.value.querySelectorAll<HTMLElement>('.sf-panel-tab:not(.sf-panel-tab--overflow)'),
   );
 }
 
@@ -99,7 +101,8 @@ function recompute() {
   const n = tabs.length;
   if (n === 0) return;
 
-  const row = tabsRow.value!;
+  const row = tabsRow.value;
+  if (!row) return;
   const containerW = row.clientWidth;
   const BTN_W = 28;
 
@@ -139,27 +142,32 @@ let pending = false;
 function scheduleRecompute() {
   if (pending) return;
   pending = true;
-  requestAnimationFrame(() => { pending = false; recompute(); });
+  requestAnimationFrame(() => {
+    pending = false;
+    recompute();
+  });
 }
 
-watch(tabsRow, (el) => {
-  observer?.disconnect();
-  observer = null;
-  if (el) {
-    observer = new ResizeObserver(() => scheduleRecompute());
-    observer.observe(el);
-    nextTick(() => recompute());
-  }
-}, { immediate: true });
+watch(
+  tabsRow,
+  (el) => {
+    observer?.disconnect();
+    observer = null;
+    if (el) {
+      observer = new ResizeObserver(() => scheduleRecompute());
+      observer.observe(el);
+      nextTick(() => recompute());
+    }
+  },
+  { immediate: true },
+);
 
 // ── Sub-section visibility ─────────────────────────────────────────────────
 
 const visibilityMenuOpen = ref(false);
 const hiddenSubSections = ref<Map<string, Set<string>>>(new Map());
 
-const activeSection = computed(() =>
-  props.sections.length > 0 ? props.sections[activeIndex.value] : null,
-);
+const activeSection = computed(() => (props.sections.length > 0 ? props.sections[activeIndex.value] : null));
 const activeSectionId = computed(() => activeSection.value?.id ?? '');
 const activeSubSections = computed(() => activeSection.value?.subSections ?? []);
 const hasSubSections = computed(() => activeSubSections.value.length > 0);
@@ -167,13 +175,13 @@ const hasSubSections = computed(() => activeSubSections.value.length > 0);
 const activeHiddenIds = computed(() => {
   const sec = activeSection.value;
   if (!sec) return new Set<string>();
-  return new Set(hiddenSubSections.value.get(lastKey + '::' + sec.id) ?? []);
+  return new Set(hiddenSubSections.value.get(`${lastKey}::${sec.id}`) ?? []);
 });
 
 function toggleSubVisible(subId: string) {
   const sec = activeSection.value;
   if (!sec) return;
-  const key = lastKey + '::' + sec.id;
+  const key = `${lastKey}::${sec.id}`;
   let hidden = new Set(hiddenSubSections.value.get(key) ?? []);
   if (hidden.has(subId)) hidden.delete(subId);
   else hidden.add(subId);

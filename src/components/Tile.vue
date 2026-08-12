@@ -1,20 +1,20 @@
 <script setup lang="ts">
 import { computed, inject, onBeforeUnmount, onMounted, ref } from 'vue';
-import Icon from './Icon.vue';
-import BlankTab from './BlankTab.vue';
+import { kRightPanelToggle, useWorkspaceContext } from '../composables/useWorkspace';
 import { getTabContent } from '../registry';
 import type { TileNode } from '../workspace/tree';
-import { kWorkspace, kRightPanelToggle } from '../composables/useWorkspace';
+import BlankTab from './BlankTab.vue';
+import Icon from './Icon.vue';
 
 const props = defineProps<{ tile: TileNode }>();
-const ws = inject(kWorkspace)!;
+const ws = useWorkspaceContext();
 const rpToggle = inject(kRightPanelToggle, null);
 
 const el = ref<HTMLElement | null>(null);
 onMounted(() => ws.registerTileEl(props.tile.id, el.value));
 onBeforeUnmount(() => ws.registerTileEl(props.tile.id, null));
 
-const activeTab = computed(() => (props.tile.activeId ? ws.tabDefs[props.tile.activeId] ?? null : null));
+const activeTab = computed(() => (props.tile.activeId ? (ws.tabDefs[props.tile.activeId] ?? null) : null));
 const contentComp = computed(() => {
   const content = activeTab.value?.content;
   if (!content) return null;
@@ -24,7 +24,7 @@ const contentComp = computed(() => {
   return getTabContent(content) ?? null;
 });
 /** Registered component for the layout's emptyContent key (if any). */
-const emptyComp = computed(() => (ws.emptyContent ? getTabContent(ws.emptyContent) ?? null : null));
+const emptyComp = computed(() => (ws.emptyContent ? (getTabContent(ws.emptyContent) ?? null) : null));
 const focused = computed(() => ws.focusedTileId === props.tile.id);
 const isTopRight = computed(() => ws.topRightTileId === props.tile.id);
 const canEvenlySpace = computed(() => ws.roots.length > 1);
@@ -52,7 +52,7 @@ function onTabClick(tabId: string) {
  *  the tab is gone before the click event would activate it. */
 function onTabMousedown(e: MouseEvent, tabId: string) {
   if (e.button !== 1) return;
-  e.preventDefault();  // suppress middle-click autoscroll
+  e.preventDefault(); // suppress middle-click autoscroll
   if (ws.tabDefs[tabId]?.closeable === false) return;
   ws.ops.closeTab(tabId);
 }

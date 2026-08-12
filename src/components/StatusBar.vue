@@ -1,7 +1,7 @@
 <script setup lang="ts">
-import Icon from './Icon.vue';
 import { getStatusComponent } from '../registry';
 import type { StatusItemDef } from '../types/layout';
+import Icon from './Icon.vue';
 
 defineProps<{
   left: StatusItemDef[];

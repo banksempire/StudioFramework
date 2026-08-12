@@ -1,20 +1,29 @@
 <script setup lang="ts">
 import { provide, reactive, ref, watch } from 'vue';
-import { kWorkspace, useWorkspace, type WorkspaceApi, type DndRect, kRightPanelToggle } from '../composables/useWorkspace';
+import type { ExternalDropTarget } from '../composables/useWorkspace';
+import {
+  type DndRect,
+  kRightPanelToggle,
+  kWorkspace,
+  useWorkspace,
+  type WorkspaceApi,
+} from '../composables/useWorkspace';
 import type { WorkspaceDef } from '../types/layout';
 import type { DropZone } from '../workspace/tree';
-import type { ExternalDropTarget } from '../composables/useWorkspace';
-import WorkspaceNode from './WorkspaceNode.vue';
 import RootSash from './RootSash.vue';
+import WorkspaceNode from './WorkspaceNode.vue';
 
-const props = withDefaults(defineProps<{
-  def: WorkspaceDef;
-  rightPanelVisible?: boolean;
-  /** shared workspace api (created by the framework root when provided) */
-  api?: WorkspaceApi;
-}>(), {
-  rightPanelVisible: true,
-});
+const props = withDefaults(
+  defineProps<{
+    def: WorkspaceDef;
+    rightPanelVisible?: boolean;
+    /** shared workspace api (created by the framework root when provided) */
+    api?: WorkspaceApi;
+  }>(),
+  {
+    rightPanelVisible: true,
+  },
+);
 const emit = defineEmits<{ 'toggle-right-panel': [] }>();
 
 // Use the shared api when given (single source of truth across panels +
@@ -27,19 +36,22 @@ const rpToggle = reactive({
   visible: props.rightPanelVisible ?? true,
   toggle: () => emit('toggle-right-panel'),
 });
-watch(() => props.rightPanelVisible, (v) => { rpToggle.visible = v ?? true; });
+watch(
+  () => props.rightPanelVisible,
+  (v) => {
+    rpToggle.visible = v ?? true;
+  },
+);
 provide(kRightPanelToggle, rpToggle);
 
 const wsEl = ref<HTMLElement | null>(null);
 
 /** Tile seam size (--sf-sash-size); previews must account for it so the
  *  landing box matches the shape the split will actually produce. */
-const GAP =
-  parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--sf-sash-size')) || 1;
+const GAP = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--sf-sash-size')) || 1;
 
 /** Box corner radius (--sf-radius), for preview corners at the workspace edge. */
-const RADIUS =
-  parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--sf-radius')) || 6;
+const RADIUS = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--sf-radius')) || 6;
 
 /** Per-corner radius (tl tr br bl): only corners sitting on the workspace's
  *  outer corners round; seams and interior edges stay sharp. When the right
@@ -104,7 +116,7 @@ interface TileGeom {
   inStrip: boolean;
 }
 
-function tileGeom(id: string, el: HTMLElement, clientX: number, clientY: number): TileGeom {
+function tileGeom(id: string, el: HTMLElement, _clientX: number, clientY: number): TileGeom {
   const rect = el.getBoundingClientRect();
   const bandW = Math.min(Math.max(rect.width * 0.25, 36), 72);
   const bandH = Math.min(Math.max(rect.height * 0.25, 28), 56);
@@ -140,7 +152,11 @@ function onDragOver(e: DragEvent) {
   // Hit test: the tile under the cursor, then its zone. Edge bands decide
   // between split zones (left/right/top/bottom) and the move zone (center).
   const hit = geoms.find(
-    (g) => e.clientX >= g.rect.left && e.clientX <= g.rect.right && e.clientY >= g.rect.top && e.clientY <= g.rect.bottom,
+    (g) =>
+      e.clientX >= g.rect.left &&
+      e.clientX <= g.rect.right &&
+      e.clientY >= g.rect.top &&
+      e.clientY <= g.rect.bottom,
   );
   if (!hit) {
     clearHover();
@@ -197,7 +213,9 @@ function onDragOver(e: DragEvent) {
     dnd.indicator = null;
     dnd.index = 0;
     const r = hit.rect;
-    const corners = wsRect ? cornerPx(r, wsRect, rightSeam) : ([0, 0, 0, 0] as [number, number, number, number]);
+    const corners = wsRect
+      ? cornerPx(r, wsRect, rightSeam)
+      : ([0, 0, 0, 0] as [number, number, number, number]);
     const radius = halfRadius(zone, corners);
     const isRow = zone === 'left' || zone === 'right';
     const isStart = zone === 'left' || zone === 'top';

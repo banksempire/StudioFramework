@@ -1,15 +1,15 @@
 <script setup lang="ts">
-import { inject, ref } from 'vue';
+import { ref } from 'vue';
+import { useWorkspaceContext } from '../composables/useWorkspace';
 import { subtreeMinSize } from '../workspace/tree';
-import { kWorkspace } from '../composables/useWorkspace';
 
 const props = defineProps<{ index: number }>();
-const ws = inject(kWorkspace)!;
+const ws = useWorkspaceContext();
 
 const el = ref<HTMLElement | null>(null);
 const dragging = ref(false);
-let startPos = 0;       // absolute position of left root's leading edge
-let combinedSize = 0;   // total size of both adjacent roots
+let startPos = 0; // absolute position of left root's leading edge
+let combinedSize = 0; // total size of both adjacent roots
 let minLeft = 0;
 let maxPos = 0;
 
@@ -40,7 +40,8 @@ function onPointerDown(e: PointerEvent) {
   }
 
   minLeft = subtreeMinSize(left.node, isRow ? 'width' : 'height', ws.minTileWidth, ws.minTileHeight);
-  maxPos = combinedSize - subtreeMinSize(right.node, isRow ? 'width' : 'height', ws.minTileWidth, ws.minTileHeight);
+  maxPos =
+    combinedSize - subtreeMinSize(right.node, isRow ? 'width' : 'height', ws.minTileWidth, ws.minTileHeight);
 
   document.body.classList.add(isRow ? 'sf-dragging-row' : 'sf-dragging-col');
 }

@@ -1,8 +1,8 @@
 import { createApp } from 'vue';
-import Framework from './Framework.vue';
 import WelcomeContent from './components/WelcomeContent.vue';
 import WorkspacePanel from './components/WorkspacePanel.vue';
-import { registerTabContent, registerPanelComponent } from './registry';
+import Framework from './Framework.vue';
+import { registerPanelComponent, registerTabContent } from './registry';
 
 // The demo layout's welcome tab is rendered through the content registry.
 registerTabContent('welcome', WelcomeContent);
