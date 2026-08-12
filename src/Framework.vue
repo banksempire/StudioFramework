@@ -393,11 +393,9 @@ function onPanelAction(a: PanelAction) {
       </div>
     </div>
 
-    <StatusBar :left="L.status.left" :right="L.status.right" />
-
     <!-- Mobile: bottom dock + fullscreen app panels (menu bar hidden; the
-         workspace shows one flat tile with all tabs). The dock sits at the
-         very bottom, the status bar directly above it. -->
+         workspace shows one flat tile with all tabs). The dock sits above
+         the status bar, which stays at the very bottom. -->
     <template v-if="isMobile">
       <Docker
         position="bottom"
@@ -429,5 +427,7 @@ function onPanelAction(a: PanelAction) {
         />
       </div>
     </template>
+
+    <StatusBar :left="L.status.left" :right="L.status.right" />
   </div>
 </template>

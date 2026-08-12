@@ -1535,13 +1535,15 @@ body.sf-dragging-row * {
 }
 
 /* Fullscreen app panel opened from the dock: covers everything except the
-   dock itself, so the user can switch apps or tap the active icon to close. */
+   dock and the status bar below it, so the user can switch apps or tap the
+   active icon to close. */
 .sf-mobile-panel {
   position: absolute;
   top: 0;
   left: 0;
   right: 0;
-  bottom: 60px;
+  /* dock (60px) + status bar (25px) stay visible below the overlay */
+  bottom: 85px;
   display: flex;
   flex-direction: column;
   background: var(--sf-bg);
