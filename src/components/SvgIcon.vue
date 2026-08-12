@@ -122,6 +122,10 @@ const ICONS: Record<string, IconSpec> = {
     // arrow-down
     paths: [{ d: 'M12 5v14' }, { d: 'M19 12l-7 7-7-7' }],
   },
+  '←': {
+    // arrow-left (mobile menu sheet back button)
+    paths: [{ d: 'M19 12H5' }, { d: 'M12 19l-7-7 7-7' }],
+  },
   '🗑': {
     // trash
     paths: [

@@ -27,7 +27,7 @@ import Docker from './components/Docker.vue';
 import Panel from './components/Panel.vue';
 import Workspace from './components/Workspace.vue';
 import StatusBar from './components/StatusBar.vue';
-import { kTitleBarMenus, kWorkspace, useWorkspace } from './composables/useWorkspace';
+import { kIsMobile, kTitleBarMenus, kWorkspace, useWorkspace } from './composables/useWorkspace';
 
 const props = withDefaults(defineProps<{
   layout?: LayoutDefinition;
@@ -66,6 +66,8 @@ const rightPanelVisible = ref(true);
 
 const MOBILE_BREAKPOINT = 500;
 const isMobile = ref(window.innerWidth < MOBILE_BREAKPOINT);
+// Menus render their fullscreen sheet in mobile mode (see Menu.vue).
+provide(kIsMobile, isMobile);
 /** Fullscreen app panel opened from the bottom dock (mobile only). */
 const mobilePanelOpen = ref(false);
 /** Fullscreen right panel opened from the mobile tile bar (mobile only). */

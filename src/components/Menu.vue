@@ -23,7 +23,8 @@
  * slot + open wiring; deeper levels run in `embedded` mode (box only) and
  * share the hover state through props (root-owned refs passed down).
  */
-import { computed, nextTick, onMounted, type Ref, ref, watch } from 'vue';
+import { computed, inject, nextTick, onMounted, type Ref, ref, watch } from 'vue';
+import { kIsMobile } from '../composables/useWorkspace';
 import type { MenuNodeDef } from '../types/layout';
 import Icon from './Icon.vue';
 import SvgIcon from './SvgIcon.vue';
@@ -63,6 +64,35 @@ const emit = defineEmits<{
   'update:open': [value: boolean];
   select: [item: MenuNodeDef];
 }>();
+
+// ── Mobile fullscreen sheet ───────────────────────────────────────────────
+// In mobile mode every menu opens as a fullscreen sheet (like a panel): the
+// body takes all the space, the bar has [← back (when nested)] on the left
+// and [✕ close] on the right. Parent rows navigate INTO the level on tap
+// (no hover on touch); leaves select. Provided by the Framework root.
+const injectedMobile = inject(kIsMobile, null);
+const mobile = computed(() => injectedMobile?.value ?? false);
+
+/** Items of the currently shown sheet level (root rows when at the root). */
+const sheetItems = computed<MenuNodeDef[]>(() => {
+  const top = rootHoverPath.value[rootHoverPath.value.length - 1];
+  return top?.items?.length ? top.items : props.items;
+});
+
+/** Tap a sheet row: parent rows navigate deeper, leaves select. */
+function onSheetRowClick(item: MenuNodeDef) {
+  if (item.disabled || item.separator) return;
+  if (item.items?.length) {
+    rootHoverPath.value.push(item);
+    return;
+  }
+  close();
+  emit('select', item);
+}
+
+function onSheetBack() {
+  rootHoverPath.value.pop();
+}
 
 // ── Shared flyout state ───────────────────────────────────────────────────
 // The root owns the hover path + submenu positions and passes them down as
@@ -143,7 +173,9 @@ watch(
     if (o) {
       rootHoverPath.value.length = 0;
       rootSubPos.value = {};
-      void positionPopup();
+      if (!mobile.value) void positionPopup();
+    } else {
+      rootHoverPath.value.length = 0;
     }
   },
 );
@@ -205,7 +237,7 @@ function onEmbeddedSelect(item: MenuNodeDef) {
 }
 
 function onDocDown(e: MouseEvent) {
-  if (!props.open) return;
+  if (!props.open || mobile.value) return; // mobile: the sheet covers the screen; ✕ closes
   const t = e.target as Node;
   if (anchorEl.value?.contains(t) || regionEl.value?.contains(t)) return;
   close();
@@ -223,13 +255,56 @@ if (!props.embedded && typeof window !== 'undefined') {
 
 <template>
   <!-- Root: anchor (display:contents) + trigger slot + one region holding
-       every level's box as fixed-positioned siblings (no clipping). -->
+       every level's box as fixed-positioned siblings (no clipping). In
+       mobile mode the region is skipped — a fullscreen sheet takes over. -->
   <template v-if="!embedded">
     <span ref="anchorEl" class="sf-menu-anchor">
       <slot name="trigger" :toggle="() => emit('update:open', !open)" :open="open" />
     </span>
 
-    <div v-if="open" ref="regionEl" class="sf-menu-region">
+    <!-- Mobile fullscreen sheet: body takes all the space; the bar has
+         [← back (when nested)] left and [✕ close] right. Tapping a row
+         with children navigates into it, leaves select. -->
+    <div v-if="open && mobile" class="sf-menu-sheet">
+      <div class="sf-menu-sheet-bar">
+        <button
+          v-if="rootHoverPath.length > 0"
+          class="sf-menu-sheet-back"
+          title="Back"
+          @click="onSheetBack"
+        ><SvgIcon name="←" /></button>
+        <span class="sf-menu-sheet-title">{{
+          rootHoverPath.length > 0
+            ? rootHoverPath[rootHoverPath.length - 1].label
+            : ''
+        }}</span>
+        <button class="sf-menu-sheet-close" title="Close menu" @click="close"><SvgIcon name="✕" /></button>
+      </div>
+      <div class="sf-menu-sheet-body">
+        <template v-for="(item, i) in sheetItems" :key="item.id ?? `sep-${i}`">
+          <div v-if="item.separator" class="sf-menu-separator" />
+          <div
+            v-else
+            class="sf-menu-row"
+            :class="{ 'sf-menu-row--disabled': item.disabled }"
+            @click="onSheetRowClick(item)"
+          >
+            <span class="sf-menu-cell sf-menu-cell--icon">
+              <Icon v-if="item.icon" :icon="item.icon" />
+              <span v-else-if="item.iconKind === 'check'" class="sf-menu-mark"><SvgIcon v-if="item.selected" name="✓" /></span>
+              <span v-else-if="item.iconKind === 'dot'" class="sf-menu-mark"><SvgIcon v-if="item.selected" name="●" /></span>
+            </span>
+            <span class="sf-menu-cell sf-menu-cell--label">{{ item.label }}</span>
+            <span v-if="item.detail || item.accelerator" class="sf-menu-cell sf-menu-cell--hint">
+              {{ item.detail ?? item.accelerator }}
+            </span>
+            <span v-if="item.items?.length" class="sf-menu-cell sf-menu-cell--arrow"><SvgIcon name="▶" /></span>
+          </div>
+        </template>
+      </div>
+    </div>
+
+    <div v-if="open && !mobile" ref="regionEl" class="sf-menu-region">
       <div ref="popEl" class="sf-menu-pop" :style="popStyle">
         <div class="sf-menu-scroll">
           <template v-for="(item, i) in items" :key="item.id ?? `sep-${i}`">

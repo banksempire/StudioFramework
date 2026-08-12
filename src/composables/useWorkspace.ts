@@ -1,4 +1,4 @@
-import { type InjectionKey, inject, reactive, watch } from 'vue';
+import { type InjectionKey, inject, type Ref, reactive, watch } from 'vue';
 import type { MenuNodeDef, WorkspaceDef, WorkspaceTabDef } from '../types/layout';
 import {
   captureSnapshot,
@@ -224,6 +224,13 @@ export interface TitleBarMenusApi {
 }
 
 export const kTitleBarMenus: InjectionKey<TitleBarMenusApi> = Symbol('sf.titleBarMenus');
+
+/**
+ * Reactive mobile-mode flag provided by the Framework root (window width
+ * below MOBILE_BREAKPOINT). Menus use it to render their fullscreen sheet
+ * instead of the desktop flyout; host components can read it too.
+ */
+export const kIsMobile: InjectionKey<Ref<boolean>> = Symbol('sf.isMobile');
 
 /**
  * Framework context accessor for components: the workspace context is

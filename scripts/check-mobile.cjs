@@ -106,38 +106,58 @@ const WS = '.sf-workspace';
   );
   report("mobile bar: shows the focused tile's active tab", allTabs.includes(await mobileBarLabel()));
 
-  // ⋯ button: opens the layout's menu tree (the desktop MenuBar's menus),
-  // submenus open on hover, selecting a leaf closes the menu.
+  // ⋯ button: opens the layout's menu tree as a FULLSCREEN sheet (like a
+  // panel) — body takes all the space, [← back] left when nested, [✕
+  // close] right. Parent rows navigate on tap (no hover on touch).
   await page.locator('.sf-mobile-menu-btn').click();
   await page.waitForTimeout(200);
-  const menuRows = await page.locator('.sf-menu-row .sf-menu-cell--label').allTextContents();
+  const menuRows = await page.locator('.sf-menu-sheet .sf-menu-row .sf-menu-cell--label').allTextContents();
   report(
     '⋯ opens the layout menu tree',
     JSON.stringify(menuRows) === JSON.stringify(['File', 'Edit', 'Selection', 'View', 'Help']),
   );
-  // Raw mouse move: once the submenu opens it overlays the parent row (the
-  // 390px screen has no room beside it), so locator.hover would retry forever.
-  const fileRow = page.locator('.sf-menu-row', { hasText: 'File' });
-  const fr = await fileRow.boundingBox();
-  await page.mouse.move(fr.x + fr.width / 2, fr.y + fr.height / 2);
-  await page.waitForTimeout(250);
-  const allRows = await page.locator('.sf-menu-row .sf-menu-cell--label').allTextContents();
+  const sheetBox = await page.locator('.sf-menu-sheet').boundingBox();
+  const vp = page.viewportSize();
   report(
-    '⋯ submenu opens on hover (File items visible)',
-    allRows.includes('New File') && allRows.includes('Open Folder...'),
+    '⋯ sheet takes ALL the space',
+    Math.round(sheetBox.x) === 0 &&
+      Math.round(sheetBox.y) === 0 &&
+      Math.round(sheetBox.width) === vp.width &&
+      Math.round(sheetBox.height) === vp.height,
   );
-  // The deepest visible leaf (File > New File > Text File) sits on top of
-  // every other pop, so its click is never intercepted.
-  const textFile = page.locator('.sf-menu-row', { hasText: 'Text File' });
-  report('⋯ submenu stays inside the viewport', (await textFile.boundingBox()).x >= 0);
-  await textFile.click();
+  report('⋯ no back button at the root level', (await page.locator('.sf-menu-sheet-back').count()) === 0);
+  report('⋯ ✕ close button present', (await page.locator('.sf-menu-sheet-close').count()) === 1);
+  await page.locator('.sf-menu-sheet .sf-menu-row', { hasText: 'File' }).click();
   await page.waitForTimeout(200);
-  report('⋯ selecting a leaf closes the menu', (await page.locator('.sf-menu-row').count()) === 0);
+  const lvl2 = await page.locator('.sf-menu-sheet .sf-menu-row .sf-menu-cell--label').allTextContents();
+  report('tapping a parent navigates into it', lvl2.includes('New File') && lvl2.includes('Open Folder...'));
+  report('back button appears when nested', (await page.locator('.sf-menu-sheet-back').count()) === 1);
+  await page.locator('.sf-menu-sheet .sf-menu-row', { hasText: 'New File' }).click();
+  await page.waitForTimeout(200);
+  const lvl3 = await page.locator('.sf-menu-sheet .sf-menu-row .sf-menu-cell--label').allTextContents();
+  report('deep navigation works (3 levels)', lvl3.includes('Text File') && lvl3.includes('Vue SFC'));
+  await page.locator('.sf-menu-sheet .sf-menu-row', { hasText: 'Text File' }).click();
+  await page.waitForTimeout(200);
+  report('selecting a leaf closes the menu', (await page.locator('.sf-menu-sheet').count()) === 0);
+  // Back button pops to the parent level.
   await page.locator('.sf-mobile-menu-btn').click();
   await page.waitForTimeout(200);
-  await page.locator('.sf-mobile-tab-label').click({ position: { x: 5, y: 5 } });
+  await page.locator('.sf-menu-sheet .sf-menu-row', { hasText: 'View' }).click();
   await page.waitForTimeout(200);
-  report('⋯ click-away closes the menu', (await page.locator('.sf-menu-row').count()) === 0);
+  await page.locator('.sf-menu-sheet-back').click();
+  await page.waitForTimeout(200);
+  report(
+    '← back returns to the root level',
+    JSON.stringify(
+      await page.locator('.sf-menu-sheet .sf-menu-row .sf-menu-cell--label').allTextContents(),
+    ) === JSON.stringify(['File', 'Edit', 'Selection', 'View', 'Help']),
+  );
+  // ✕ closes from any level.
+  await page.locator('.sf-menu-sheet .sf-menu-row', { hasText: 'Help' }).click();
+  await page.waitForTimeout(200);
+  await page.locator('.sf-menu-sheet-close').click();
+  await page.waitForTimeout(200);
+  report('✕ closes the sheet', (await page.locator('.sf-menu-sheet').count()) === 0);
 
   // Tab selector: lists ALL tabs in visual order; selecting routes to the
   // REAL tile behind the tab (survives the switch back to desktop).
