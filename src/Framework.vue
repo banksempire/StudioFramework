@@ -24,7 +24,6 @@ import { loadLayout } from './layout/loadLayout';
 import type { LayoutDefinition } from './types/layout';
 import MenuBar from './components/MenuBar.vue';
 import Docker from './components/Docker.vue';
-import Icon from './components/Icon.vue';
 import Panel from './components/Panel.vue';
 import Workspace from './components/Workspace.vue';
 import StatusBar from './components/StatusBar.vue';
@@ -405,30 +404,23 @@ function onPanelAction(a: PanelAction) {
         @app-selected="onAppSelected"
       />
       <div v-if="mobilePanelOpen && dockerDef" class="sf-mobile-panel">
-        <div class="sf-mobile-panel-bar">
-          <Icon v-if="activeDockerItem" class="sf-mobile-panel-icon" :icon="activeDockerItem.icon" />
-          <span class="sf-mobile-panel-title">{{ activeDockerItem?.displayName ?? dockerDef.title }}</span>
-          <button class="sf-mobile-panel-close" title="Close panel" @click="mobilePanelOpen = false">✕</button>
-        </div>
         <Panel
           :title="dockerDef.title"
           :sections="dockerDef.sections"
           :visible="true"
           position="mobile"
+          @close="mobilePanelOpen = false"
           @utility="onPanelUtility"
           @component-action="onPanelAction"
         />
       </div>
       <div v-if="mobileRightOpen && L.right" class="sf-mobile-panel">
-        <div class="sf-mobile-panel-bar">
-          <span class="sf-mobile-panel-title">{{ L.right.title }}</span>
-          <button class="sf-mobile-panel-close" title="Close panel" @click="mobileRightOpen = false">✕</button>
-        </div>
         <Panel
           :title="L.right.title"
           :sections="L.right.sections"
           :visible="true"
           position="mobile"
+          @close="mobileRightOpen = false"
           @utility="onPanelUtility"
           @component-action="onPanelAction"
         />

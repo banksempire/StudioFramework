@@ -1434,17 +1434,12 @@ body.sf-dragging-row * {
   border-radius: 0;
 }
 
-/* All title bars share ONE height in mobile: the workspace bar, the
-   fullscreen panel overlay bars, and the panels' own header + section
-   tabs all use 60px (thumb-friendly, visually consistent). */
-.sf-mobile-panel-bar {
-  padding: 0 10px;
-}
-
+/* All title bars share ONE height in mobile: the workspace bar, and the
+   panels' own header + section tabs all use 60px (thumb-friendly,
+   visually consistent). */
 .sf-root--mobile .sf-tile-tabs,
 .sf-root--mobile .sf-panel-header,
-.sf-root--mobile .sf-panel-tabs,
-.sf-root--mobile .sf-mobile-panel-bar {
+.sf-root--mobile .sf-panel-tabs {
   height: 60px;
 }
 
@@ -1468,13 +1463,12 @@ body.sf-dragging-row * {
 }
 
 /* Title-bar buttons are SQUARE, full bar height, thin borders between:
-   ☰ / ✕ / right-panel on the workspace bar, ✕ on the fullscreen overlay
-   bars, ⋯ on the panel header. */
+   ☰ / ✕ / right-panel on the workspace bar, ⋯ and ✕ on the panel header. */
 .sf-root--mobile .sf-tile-tabs .sf-mobile-tab-selector,
 .sf-root--mobile .sf-tile-tabs .sf-mobile-tab-close,
 .sf-root--mobile .sf-tile-tabs .sf-mobile-rp-btn,
-.sf-root--mobile .sf-mobile-panel-close,
-.sf-root--mobile .sf-panel-header-btn {
+.sf-root--mobile .sf-panel-header-btn,
+.sf-root--mobile .sf-panel-close-btn {
   width: 60px;
   height: 60px;
   margin: 0;
@@ -1490,8 +1484,8 @@ body.sf-dragging-row * {
 .sf-root--mobile .sf-tile-tabs .sf-mobile-tab-selector:hover,
 .sf-root--mobile .sf-tile-tabs .sf-mobile-tab-close:hover:not(:disabled),
 .sf-root--mobile .sf-tile-tabs .sf-mobile-rp-btn:hover,
-.sf-root--mobile .sf-mobile-panel-close:hover,
-.sf-root--mobile .sf-panel-header-btn:hover {
+.sf-root--mobile .sf-panel-header-btn:hover,
+.sf-root--mobile .sf-panel-close-btn:hover {
   background: var(--sf-hover-overlay);
 }
 
@@ -1554,28 +1548,14 @@ body.sf-dragging-row * {
   z-index: 20;
 }
 
-.sf-mobile-panel-bar {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 6px 10px;
-  background: var(--sf-bg-lighter);
-  border-bottom: 1px solid var(--sf-border);
-  flex-shrink: 0;
-}
-
-.sf-mobile-panel-title {
-  flex: 1;
-  font-size: 16px;
-  color: var(--sf-text);
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
 .sf-panel--mobile {
   width: 100%;
   flex: 1;
   min-height: 0;
   border-radius: 0;
+}
+
+/* The header's [⋯ | ✕] group sits flush against the screen edge. */
+.sf-panel--mobile .sf-panel-header {
+  padding-right: 0;
 }

@@ -21,6 +21,8 @@ const props = withDefaults(
 
 const emit = defineEmits<{
   collapse: [];
+  /** Mobile fullscreen panels close via a header ✕ button. */
+  close: [];
   'select-section': [sectionId: string];
   resize: [width: number];
   utility: [subId: string, utilityId: string];
@@ -239,7 +241,8 @@ onUnmounted(() => observer?.disconnect());
       @mousedown="onMouseDown"
     />
 
-    <!-- Title bar -->
+    <!-- Title bar: [title | ⋯ | ✕] — the ⋯ visibility menu and the mobile
+         close button sit right-aligned, flush to the bar's edge. -->
     <div class="sf-panel-header">
       <span class="sf-panel-title">{{ title }}</span>
       <Menu
@@ -257,6 +260,12 @@ onUnmounted(() => observer?.disconnect());
           >⋯</button>
         </template>
       </Menu>
+      <button
+        v-if="position === 'mobile'"
+        class="sf-panel-close-btn"
+        title="Close panel"
+        @click="emit('close')"
+      >✕</button>
     </div>
 
     <!-- Section tab bar - only when multiple sections -->

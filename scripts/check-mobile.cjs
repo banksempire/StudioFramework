@@ -137,9 +137,9 @@ const WS = '.sf-workspace';
   report(
     'right-panel button opens the right panel fullscreen',
     (await page.locator('.sf-mobile-panel').isVisible()) &&
-      (await page.locator('.sf-mobile-panel-title').textContent()) === 'Properties',
+      (await page.locator('.sf-mobile-panel .sf-panel-title').textContent()) === 'Properties',
   );
-  await page.locator('.sf-mobile-panel-close').click();
+  await page.locator('.sf-panel-close-btn').click();
   await page.waitForTimeout(300);
   report('overlay ✕ closes it', (await page.locator('.sf-mobile-panel').count()) === 0);
 
@@ -148,9 +148,9 @@ const WS = '.sf-workspace';
   await explorer.click();
   await page.waitForTimeout(300);
   report(
-    'dock tap opens the app panel fullscreen',
+    'dock tap opens the app panel fullscreen (header shows the panel name)',
     (await page.locator('.sf-mobile-panel').isVisible()) &&
-      (await page.locator('.sf-mobile-panel-title').textContent()) === 'Explorer',
+      (await page.locator('.sf-mobile-panel .sf-panel-title').textContent()) === 'Files',
   );
   report(
     'fullscreen panel shows the app content (Files)',
@@ -167,7 +167,7 @@ const WS = '.sf-workspace';
     'switching apps swaps the panel',
     (await page.locator('.sf-mobile-panel .sf-panel-title').textContent()) === 'Search',
   );
-  await page.locator('.sf-mobile-panel-close').click();
+  await page.locator('.sf-panel-close-btn').click();
   await page.waitForTimeout(300);
   report('✕ closes the panel', (await page.locator('.sf-mobile-panel').count()) === 0);
 
