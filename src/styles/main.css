@@ -1518,7 +1518,7 @@ body.sf-dragging-row * {
   align-items: center;
   /* Full-bleed bar; the side padding shifts the icons inward so rounded
      iPhone screen corners don't clip them. */
-  padding: 0 15px;
+  padding: 0 50px;
   gap: 2px;
   border-radius: 0;
   border-top: 1px solid var(--sf-border);
