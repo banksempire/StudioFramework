@@ -1499,7 +1499,9 @@ body.sf-dragging-row * {
   border-radius: 0;
   background: transparent;
   color: var(--sf-text);
-  font-size: 16px;
+  /* Icons render at 1em — 30px makes the SVG glyphs larger and easier to
+     hit on touch screens. */
+  font-size: 30px;
   cursor: pointer;
   flex-shrink: 0;
 }
@@ -1541,8 +1543,8 @@ body.sf-dragging-row * {
 }
 
 .sf-root--mobile .sf-mobile-rp-icon {
-  width: 16px;
-  height: 16px;
+  width: 1em;
+  height: 1em;
   display: block;
   margin: auto;
 }
