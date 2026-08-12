@@ -106,6 +106,22 @@ export interface PanelStateProvider {
   apply: (panels: SnapshotPanels) => void;
 }
 
+/**
+ * Per-window state hook — the host app's counterpart to PanelStateProvider.
+ * Windows are allowed to carry state that survives workspace persistence
+ * (e.g. a chat composer's height): the workspace root owns the snapshots
+ * but not the window internals, so the host registers a provider whose
+ * read() is merged into every captured snapshot (keyed by tab id, opaque
+ * payload) and whose apply() receives the stored state on restore. Pass
+ * `null` to detach (snapshots then carry no window state).
+ */
+export interface WindowStateProvider {
+  /** Current per-window state, keyed by tab id (opaque, JSON-able). */
+  read: () => Record<string, unknown> | null;
+  /** Restore per-window state captured in a snapshot. */
+  apply: (state: Record<string, unknown>) => void;
+}
+
 export interface WorkspaceApi {
   roots: RootGroup[];
   /** direction of root arrangement (set by first root-level split) */
@@ -175,6 +191,15 @@ export interface WorkspaceApi {
   apply(snapshot: WorkspaceSnapshot): string[];
   /** Register the side-panel visibility provider (see PanelStateProvider). */
   setPanelStateProvider(provider: PanelStateProvider | null): void;
+  /** Register the per-window state provider (see WindowStateProvider). */
+  setWindowStateProvider(provider: WindowStateProvider | null): void;
+  /**
+   * Persist the current workspace (layout + panels + window state) to the
+   * auto-save slot immediately. The auto-save fires on layout changes the
+   * framework observes; host apps whose own state is part of the snapshot
+   * (via WindowStateProvider) call this when that state changes.
+   */
+  persistNow(): void;
 }
 
 export type WorkspaceContext = WorkspaceApi;
@@ -346,13 +371,15 @@ export function useWorkspace(def: WorkspaceDef): WorkspaceApi {
 
   let lastAutoJson: string | null = null;
   /** The current layout as a snapshot: transient tabs (host previews) are
-   *  excluded, side-panel visibility included when a provider is set. */
+   *  excluded, side-panel visibility included when a provider is set, and
+   *  per-window state merged in when a window-state provider is set. */
   function currentSnapshot(): WorkspaceSnapshot {
     return captureSnapshot(
       state.roots,
       state.rootDir,
       (id) => !!tabDefs[id]?.transient,
       panelProvider?.read() ?? undefined,
+      windowProvider?.read() ?? undefined,
     );
   }
   function saveAutoSnapshot() {
@@ -381,6 +408,12 @@ export function useWorkspace(def: WorkspaceDef): WorkspaceApi {
   /** Panels from a snapshot applied before a provider was registered (the
    *  boot auto-restore runs before the framework root wires its refs). */
   let pendingPanels: SnapshotPanels | null = null;
+
+  /** Per-window state: captured with the layout, applied on restore. */
+  let windowProvider: WindowStateProvider | null = null;
+  /** Window state from a snapshot applied before the host registered its
+   *  provider (the boot auto-restore runs before bindWorkspace). */
+  let pendingWindows: Record<string, unknown> | null = null;
 
   function applySnapshot(snap: WorkspaceSnapshot): string[] {
     const restored = restoreSnapshot(snap);
@@ -420,6 +453,10 @@ export function useWorkspace(def: WorkspaceDef): WorkspaceApi {
     if (snap.panels) {
       if (panelProvider) panelProvider.apply(snap.panels);
       else pendingPanels = snap.panels;
+    }
+    if (snap.windows) {
+      if (windowProvider) windowProvider.apply(snap.windows);
+      else pendingWindows = snap.windows;
     }
     return ghosts;
   }
@@ -767,6 +804,14 @@ export function useWorkspace(def: WorkspaceDef): WorkspaceApi {
         pendingPanels = null;
       }
     },
+    setWindowStateProvider(provider: WindowStateProvider | null) {
+      windowProvider = provider;
+      if (provider && pendingWindows) {
+        provider.apply(pendingWindows);
+        pendingWindows = null;
+      }
+    },
+    persistNow: saveAutoSnapshot,
   };
 }
 

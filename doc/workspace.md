@@ -163,8 +163,11 @@ via the `kWorkspace` injection key:
 | `newTabTitle` | `string` | Tooltip of the tile-strip "+" button (default "New file") |
 | `setNewTabHandler(handler, title?)` | | Override the tile-strip "+": the handler (tile id) runs instead of creating an "Untitled" tab; `null` restores the default |
 | `findTileGlobal(tileId)` | | Find a tile across all roots |
-| `capture()` | `WorkspaceSnapshot` | Capture structure + spacing (split + root ratios) as a plain JSON object (no node ids) |
+| `capture()` | `WorkspaceSnapshot` | Capture structure + spacing (split + root ratios) as a plain JSON object (no node ids) — includes side-panel visibility and per-window state when providers are registered |
 | `apply(snapshot)` | `string[]` | Replace the whole workspace with a snapshot; returns the ids of tabs that had no definition (now blank ghost windows) |
+| `setPanelStateProvider(provider)` | | Register the side-panel visibility provider (see `PanelStateProvider`) |
+| `setWindowStateProvider(provider)` | | Register the per-window state provider (see `WindowStateProvider`) — host app windows may carry state that survives workspace persistence |
+| `persistNow()` | | Persist the current workspace (layout + panels + window state) to the auto-save slot immediately (for host state changes the framework can't observe) |
 
 ## Snapshots & persistence
 
@@ -185,6 +188,14 @@ unit-tested via `npm run check:snap`):
   `beforeunload`) and restores it on startup — an unsaved layout survives a
   page refresh for free. `apply()` also triggers this, so a loaded saved
   workspace becomes the layout that survives the next reload.
+- **Per-window state**: windows are allowed to carry state that survives
+  workspace persistence. The host registers a `WindowStateProvider`
+  (`read` → per-tab-id opaque payload merged into every captured snapshot;
+  `apply` → receives the stored state on restore; a snapshot applied before
+  registration is held pending and flushed at registration, same as
+  panels). The framework never inspects the payload — the host decides what
+  its windows need (e.g. a chat composer's drag-resized height). Host state
+  changes the framework can't observe are persisted via `persistNow()`.
 
 ## Workspace app (saved workspaces)
 

@@ -54,6 +54,12 @@ export interface WorkspaceSnapshot {
   roots: RootSnapshot[];
   /** side-panel visibility — applied on restore (absent = don't touch). */
   panels?: SnapshotPanels;
+  /**
+   * Per-window state, keyed by tab id — the host app's opaque payload
+   * (e.g. a chat composer height). Captured with the layout, applied on
+   * restore (absent = don't touch).
+   */
+  windows?: Record<string, unknown>;
 }
 
 /**
@@ -102,6 +108,7 @@ export function captureSnapshot(
   rootDir: SplitDir | null,
   skipTab?: (tabId: string) => boolean,
   panels?: SnapshotPanels,
+  windows?: Record<string, unknown>,
 ): WorkspaceSnapshot {
   const kept: RootSnapshot[] = [];
   for (const r of roots) {
@@ -120,6 +127,7 @@ export function captureSnapshot(
   }
   const snap: WorkspaceSnapshot = { version: 1, rootDir, roots: kept };
   if (panels) snap.panels = { ...panels };
+  if (windows) snap.windows = { ...windows };
   return snap;
 }
 

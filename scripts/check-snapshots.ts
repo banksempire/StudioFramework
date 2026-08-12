@@ -215,6 +215,20 @@ function allTabs(node: WorkspaceNode): string[] {
   report('no panels arg → no panels field', snap2.panels === undefined);
 }
 
+{
+  // Per-window state is captured with the layout (keyed by tab id, opaque
+  // payload) and round-trips through restore → re-capture.
+  const tree = tile(['a', 'b']);
+  const windows = { a: { composerHeight: 240 }, b: { zoom: 1.5 } };
+  const snap = captureSnapshot([{ node: tree, ratio: 1 }], null, undefined, undefined, windows);
+  report('capture stores window state', JSON.stringify(snap.windows) === JSON.stringify(windows));
+  const restored = restoreSnapshot(snap);
+  const again = captureSnapshot(restored, null, undefined, undefined, windows);
+  report('window state round-trips', JSON.stringify(again.windows) === JSON.stringify(windows));
+  const snap2 = captureSnapshot([{ node: tree, ratio: 1 }], null);
+  report('no windows arg → no windows field', snap2.windows === undefined);
+}
+
 // ── nodeToSnapshot / nodeFromSnapshot symmetry ─────────────────────────────
 
 {
