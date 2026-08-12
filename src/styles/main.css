@@ -1479,15 +1479,19 @@ body.sf-dragging-row * {
 }
 
 /* Title-bar buttons are SQUARE, full bar height: ☰ / ✕ / right-panel on
-   the workspace bar, ⋯ / ◨ on the panel header. Vertical side lines only
-   (left + right) — no top/bottom borders, so each button reads as a
-   vertical segment and adjacent buttons share a boundary line. */
+   the workspace bar, ⋯ / ◨ on the panel header, and ← / ✕ on the menu
+   sheet bar (the sheet lives inside .sf-root--mobile via Teleport).
+   Vertical side lines only (left + right) — no top/bottom borders, so
+   each button reads as a vertical segment and adjacent buttons share a
+   boundary line. */
 .sf-root--mobile .sf-tile-tabs .sf-mobile-menu-btn,
 .sf-root--mobile .sf-tile-tabs .sf-mobile-tab-selector,
 .sf-root--mobile .sf-tile-tabs .sf-mobile-tab-close,
 .sf-root--mobile .sf-tile-tabs .sf-mobile-rp-btn,
 .sf-root--mobile .sf-panel-header-btn,
-.sf-root--mobile .sf-panel-close-btn {
+.sf-root--mobile .sf-panel-close-btn,
+.sf-root--mobile .sf-menu-sheet-back,
+.sf-root--mobile .sf-menu-sheet-close {
   width: 60px;
   height: 60px;
   /* Explicit flex centering: SVG icons have no ink box, so UA button
@@ -1519,7 +1523,8 @@ body.sf-dragging-row * {
    (and right border) would land 1px past the bar's edge. The overlap
    still happens because the PRECEDING button's -1px margin pulls it in. */
 .sf-root--mobile .sf-tile-tabs .sf-mobile-rp-btn,
-.sf-root--mobile .sf-panel-close-btn {
+.sf-root--mobile .sf-panel-close-btn,
+.sf-root--mobile .sf-menu-sheet-close {
   margin-right: 0;
 }
 
@@ -1540,7 +1545,9 @@ body.sf-dragging-row * {
 .sf-root--mobile .sf-tile-tabs .sf-mobile-tab-close:hover:not(:disabled),
 .sf-root--mobile .sf-tile-tabs .sf-mobile-rp-btn:hover,
 .sf-root--mobile .sf-panel-header-btn:hover,
-.sf-root--mobile .sf-panel-close-btn:hover {
+.sf-root--mobile .sf-panel-close-btn:hover,
+.sf-root--mobile .sf-menu-sheet-back:hover,
+.sf-root--mobile .sf-menu-sheet-close:hover {
   background: var(--sf-hover-overlay);
 }
 
@@ -1573,10 +1580,10 @@ body.sf-dragging-row * {
 
 /* Mobile menu sheet: every menu opens fullscreen, styled like the
    panels — same background, same header treatment (border-bottom,
-   uppercase bold title) and a panel-style tabs strip. The bar holds
-   [← back (when nested)] left and [✕ close] right, matching the
-   title-bar look (60px, square side-lined buttons). Like the panels,
-   the sheet stops above the dock + status bar (85px). */
+   bold title) and the bar holds [← back (when nested)] left and
+   [✕ close] right, matching the title-bar look (60px, square side-lined
+   buttons). Like the panels, the sheet stops above the dock + status
+   bar (85px). */
 .sf-menu-sheet {
   /* Absolute, anchored to the framework root (the Teleport target) — the
      SAME mechanism as the .sf-mobile-panel overlays, so the top safe-area
@@ -1602,7 +1609,6 @@ body.sf-dragging-row * {
 .sf-menu-sheet-bar {
   display: flex;
   align-items: center;
-  justify-content: space-between;
   height: 60px;
   flex-shrink: 0;
   border-bottom: 1px solid var(--sf-border);
@@ -1629,36 +1635,13 @@ body.sf-dragging-row * {
   pointer-events: none;
 }
 
-.sf-menu-sheet-back,
-.sf-menu-sheet-close {
-  width: 60px;
-  height: 60px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border: none;
-  border-left: 1px solid var(--sf-border);
-  border-right: 1px solid var(--sf-border);
-  margin: 0;
-  background: transparent;
-  color: var(--sf-text);
-  /* Icons render at 1em — same 30px size as the workspace title-bar
-     buttons. */
-  font-size: 30px;
-  cursor: pointer;
-  flex-shrink: 0;
-}
-
 /* The close button always pins to the bar's right edge — at the root
    level the back button is absent, and with a single flex item
-   justify-content can't right-align it. */
-.sf-menu-sheet-close {
+   justify-content can't right-align it. (Button geometry comes from the
+   shared mobile square-button rule above; this needs the same
+   specificity to beat that rule's margin shorthand.) */
+.sf-root--mobile .sf-menu-sheet-close {
   margin-left: auto;
-}
-
-.sf-menu-sheet-back:hover,
-.sf-menu-sheet-close:hover {
-  background: var(--sf-hover-overlay);
 }
 
 .sf-menu-sheet-body {
