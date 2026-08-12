@@ -304,6 +304,7 @@ onUnmounted(() => observer?.disconnect());
       :key="activeSectionId"
       :sub-sections="activeSubSections"
       :hidden-ids="activeHiddenIds"
+      :mobile="position === 'mobile'"
       @utility="(subId, utilityId) => emit('utility', subId, utilityId)"
       @component-action="(a) => emit('component-action', a)"
     />

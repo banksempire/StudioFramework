@@ -1555,7 +1555,16 @@ body.sf-dragging-row * {
   border-radius: 0;
 }
 
-/* The header's [⋯ | ✕] group sits flush against the screen edge. */
+/* The header's [⋯ | ◨] group sits flush against the screen edge. */
 .sf-panel--mobile .sf-panel-header {
   padding-right: 0;
+}
+
+/* Sub-section title bars stick to the top while the panel body scrolls
+   (opaque background so content never shows through underneath). */
+.sf-root--mobile .sf-subsection-header {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  background: var(--sf-bg-light);
 }

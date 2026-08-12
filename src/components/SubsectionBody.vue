@@ -3,10 +3,18 @@ import { computed, nextTick, onMounted, onUnmounted, reactive, ref, watch } from
 import type { PanelAction, PanelSubSection } from '../types/panel';
 import SubSection from './SubSection.vue';
 
-const props = defineProps<{
-  subSections: PanelSubSection[];
-  hiddenIds: Set<string>;
-}>();
+const props = withDefaults(
+  defineProps<{
+    subSections: PanelSubSection[];
+    hiddenIds: Set<string>;
+    /** Mobile: variable-height sub-sections show ALL their content (auto
+     *  height, no distribution/drag handles) — see Framework mobile mode. */
+    mobile?: boolean;
+  }>(),
+  {
+    mobile: false,
+  },
+);
 
 const emit = defineEmits<{
   utility: [subId: string, utilityId: string];
@@ -51,6 +59,8 @@ watch(visibleSubSections, (subs) => {
 });
 
 function isResizeable(sub: PanelSubSection): boolean {
+  // Mobile: no variable heights — every sub-section shows its full content.
+  if (props.mobile) return false;
   const st = states[sub.id];
   return !!st && st.isExpanded && !props.hiddenIds.has(sub.id) && sub.isHeightVariable;
 }
@@ -64,7 +74,9 @@ function getBodyHeight(sub: PanelSubSection): number {
 
 /** What to pass as bodyHeight prop to SubSection (null = auto). */
 function bodyHeightFor(sub: PanelSubSection): number | null {
-  if (!sub.isHeightVariable) return null;
+  // Mobile: auto height for everything — the panel scrolls as one body and
+  // every sub-section shows all its content.
+  if (!sub.isHeightVariable || props.mobile) return null;
   const st = states[sub.id];
   if (!st?.isExpanded) return 0;
   return Math.max(st.height, sub.minHeight ?? 0);
