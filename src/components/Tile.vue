@@ -155,7 +155,7 @@ function onTileMousedown() {
             :class="{ active: rpToggle.visible }"
             :title="rpToggle.visible ? 'Collapse Right Panel' : 'Expand Right Panel'"
             @click="rpToggle.toggle()"
-          >{{ rpToggle.visible ? '\u25E8' : '\u25EB' }}</button>
+          >{{ rpToggle.visible ? '\u25EA' : '\u25E9' }}</button>
         </div>
       </template>
       <template v-else>
