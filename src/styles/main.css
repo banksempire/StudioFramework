@@ -20,10 +20,14 @@
 }
 
 /* Vector icons inherit the surrounding font size (16px buttons, 12px
-   tab strips, ...) so they match the text glyphs they replace. */
+   tab strips, ...) so they match the text glyphs they replace. Block
+   display: no baseline participation, so flex parents center them
+   exactly (inline svg sits on the text baseline in some engines). */
 .sf-icon--svg {
+  display: block;
   width: 1em;
   height: 1em;
+  flex-shrink: 0;
 }
 
 .sf-docker-app-icon.sf-icon--img {
@@ -278,7 +282,7 @@ body,
   color: var(--sf-text);
   cursor: pointer;
   font-size: 16px;
-  padding: 0 10px 0.125em; /* glyph ink rides low in its em box — nudge it up 1px (scales with font-size) */
+  padding: 0 10px;
   height: 100%;
   display: flex;
   align-items: center;
@@ -1289,7 +1293,6 @@ body.sf-dragging-row * {
   color: var(--sf-text);
   cursor: pointer;
   font-size: 16px;
-  padding: 0 0 0.125em; /* glyph ink rides low in its em box — nudge it up 1px (scales with font-size) */
   width: 28px;
   height: 100%;
   flex-shrink: 0;
@@ -1480,6 +1483,12 @@ body.sf-dragging-row * {
 .sf-root--mobile .sf-panel-close-btn {
   width: 60px;
   height: 60px;
+  /* Explicit flex centering: SVG icons have no ink box, so UA button
+     layout (which centers text glyphs) leaves them off-center — this is
+     what made the icons look misaligned on iPhone/Safari. */
+  display: flex;
+  align-items: center;
+  justify-content: center;
   border: none;
   border-left: 1px solid var(--sf-border);
   border-right: 1px solid var(--sf-border);
