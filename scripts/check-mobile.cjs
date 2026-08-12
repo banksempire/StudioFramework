@@ -88,7 +88,7 @@ const WS = '.sf-workspace';
   // ── Mobile: auto-trigger below 500px ────────────────────────────────────
   await resizeTo(450);
   report('mobile: menu bar hidden', (await page.locator('.sf-menu-bar').count()) === 0);
-  report('mobile: status bar hidden', (await page.locator('.sf-status-bar').count()) === 0);
+  report('mobile: status bar visible', (await page.locator('.sf-status-bar').count()) === 1);
   report(
     'mobile: bottom dock instead of the left rail',
     (await page.locator('.sf-docker--bottom').count()) === 1 &&
