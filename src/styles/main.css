@@ -1600,6 +1600,9 @@ body.sf-dragging-row * {
   margin: 0;
   background: transparent;
   color: var(--sf-text);
+  /* Icons render at 1em — same 30px size as the workspace title-bar
+     buttons. */
+  font-size: 30px;
   cursor: pointer;
   flex-shrink: 0;
 }
