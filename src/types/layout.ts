@@ -82,6 +82,13 @@ export interface StatusItemDef {
   id?: string;
   label: string;
   icon?: IconDef;
+  /**
+   * Registered status-bar component (see registerStatusComponent) rendered
+   * instead of the static icon+label — for live indicators (connectivity…).
+   * Props come from `props`.
+   */
+  component?: string;
+  props?: Record<string, unknown>;
 }
 
 export interface LayoutDefinition {

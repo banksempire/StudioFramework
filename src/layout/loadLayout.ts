@@ -197,10 +197,14 @@ function toDockerApp(v: unknown, path: string): DockerAppDef {
 
 function toStatusItem(v: unknown, path: string): StatusItemDef {
   const r = needRecord(v, path);
+  const component = optString(r.component, path + '.component');
   return {
     id: optString(r.id, path + '.id'),
-    label: needString(r.label, path + '.label'),
+    // A component item needs no static label (it renders itself).
+    label: component ? (r.label === undefined ? '' : needString(r.label, path + '.label')) : needString(r.label, path + '.label'),
     icon: toIcon(r.icon, path + '.icon'),
+    component,
+    props: r.props === undefined ? undefined : needRecord(r.props, path + '.props'),
   };
 }
 
