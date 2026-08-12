@@ -245,7 +245,10 @@ onUnmounted(() => observer?.disconnect());
     <!-- Title bar: [title | ⋯ | ◨] — the ⋯ visibility menu and the mobile
          close button sit right-aligned, flush to the bar's edge. ✕ closes
          the panel. -->
-    <div class="sf-panel-header">
+    <div
+      class="sf-panel-header"
+      :class="{ 'sf-panel-header--no-sub': !hasSubSections }"
+    >
       <span class="sf-panel-title">{{ title }}</span>
       <Menu
         :items="visibilityItems"

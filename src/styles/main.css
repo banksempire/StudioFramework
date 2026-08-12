@@ -1500,12 +1500,11 @@ body.sf-dragging-row * {
   border-left: 1px solid var(--sf-border);
   border-right: 1px solid var(--sf-border);
   /* Overlap adjacent buttons by 1px so their side borders coincide —
-     otherwise the line between two buttons would be 2px (both edges). */
-  margin: 0;
-  margin-right: -1px;
-  /* With the title out of flow (absolutely centered), the buttons are the
-     only flex items — pin the group to the right edge like the menu sheet. */
-  margin-left: auto;
+     otherwise the line between two buttons would be 2px (both edges).
+     NOTE: no margin-left:auto here — biome folds adjacent margins into
+     a shorthand that would leak auto onto EVERY button in this list
+     (two autos split the free space and float the ⋯ mid-bar). */
+  margin: 0 -1px 0 0;
   border-radius: 0;
   background: transparent;
   color: var(--sf-text);
@@ -1522,8 +1521,17 @@ body.sf-dragging-row * {
 .sf-root--mobile .sf-tile-tabs .sf-mobile-rp-btn,
 .sf-root--mobile .sf-panel-close-btn {
   margin-right: 0;
-  /* Also pins the ✕ to the right when the ⋯ button is absent (a panel
-     without sub-sections) — same single-flex-item trap as the menu sheet. */
+}
+
+/* The ⋯ is the first flex item (the title is out of flow) — its auto
+   margin pins the whole [⋯ ✕] group to the right edge. */
+.sf-root--mobile .sf-panel-header-btn {
+  margin-left: auto;
+}
+
+/* A panel WITHOUT sub-sections has no ⋯ button, so the ✕ is the first
+   flex item and pins itself right. */
+.sf-root--mobile .sf-panel-header--no-sub .sf-panel-close-btn {
   margin-left: auto;
 }
 

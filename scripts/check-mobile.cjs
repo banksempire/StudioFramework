@@ -274,20 +274,26 @@ const WS = '.sf-workspace';
   const panelTitle = await page.evaluate(() => {
     const h = document.querySelector('.sf-mobile-panel .sf-panel-header');
     const t = document.querySelector('.sf-mobile-panel .sf-panel-title');
+    const d = document.querySelector('.sf-mobile-panel .sf-panel-header-btn');
     const c = document.querySelector('.sf-mobile-panel .sf-panel-close-btn');
     const hr = h.getBoundingClientRect();
     const tr = t.getBoundingClientRect();
+    const dr = d.getBoundingClientRect();
     const cr = c.getBoundingClientRect();
     return {
       center: Math.round(tr.x + tr.width / 2),
       barCenter: Math.round(hr.x + hr.width / 2),
       closeRight: Math.round(cr.x + cr.width),
       barRight: Math.round(hr.x + hr.width),
+      // The ⋯ sits flush against the ✕ (60px wide each, 1px overlap).
+      ellipsisRightBeforeClose: Math.abs(Math.round(dr.x + dr.width) - Math.round(cr.x)) <= 1,
     };
   });
   report(
-    '⋯ panel title centered, ✕ pinned right',
-    panelTitle.center === panelTitle.barCenter && panelTitle.closeRight === panelTitle.barRight,
+    '⋯ panel title centered, ⋯ then ✕ pinned right',
+    panelTitle.center === panelTitle.barCenter &&
+      panelTitle.closeRight === panelTitle.barRight &&
+      panelTitle.ellipsisRightBeforeClose,
   );
   // Simulated notch: the panel overlay covers the top safe-area zone with
   // the SAME color as the menu sheet (bg-light) and its header stays below.
