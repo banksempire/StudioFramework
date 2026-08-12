@@ -1635,6 +1635,13 @@ body.sf-dragging-row * {
   flex-shrink: 0;
 }
 
+/* The close button always pins to the bar's right edge — at the root
+   level the back button is absent, and with a single flex item
+   justify-content can't right-align it. */
+.sf-menu-sheet-close {
+  margin-left: auto;
+}
+
 .sf-menu-sheet-back:hover,
 .sf-menu-sheet-close:hover {
   background: var(--sf-hover-overlay);

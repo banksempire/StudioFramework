@@ -145,6 +145,12 @@ const WS = '.sf-workspace';
     "⋯ root title is 'menu', centered",
     rootTitle.text === 'menu' && rootTitle.center === rootTitle.barCenter,
   );
+  const closeAtRight = await page.evaluate(() => {
+    const c = document.querySelector('.sf-menu-sheet-close').getBoundingClientRect();
+    const bar = document.querySelector('.sf-menu-sheet-bar').getBoundingClientRect();
+    return Math.round(c.x + c.width) === Math.round(bar.x + bar.width);
+  });
+  report('⋯ close button on the top right at the root level', closeAtRight);
   // Simulated iPhone notch: the sheet covers the top safe-area zone with
   // its own background and the bar stays below the inset.
   await page.evaluate(() => {
