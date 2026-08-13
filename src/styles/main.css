@@ -1682,7 +1682,11 @@ body.sf-dragging-row * {
   background: var(--sf-bg-lighter);
 }
 
+/* Mobile dock apps are SQUARE buttons matching the dock height (60px) —
+   the full bar is one row of 60×60 touch targets. */
 .sf-docker--bottom .sf-docker-app {
+  width: 60px;
+  height: 60px;
   border-left: none;
   border-bottom: 2px solid transparent;
 }
