@@ -1442,12 +1442,15 @@ body.sf-dragging-row * {
   --sf-safe-top: env(safe-area-inset-top, 0px);
   --sf-safe-bottom: env(safe-area-inset-bottom, 0px);
   padding: var(--sf-safe-top) 0 var(--sf-safe-bottom);
-  gap: 0;
+  /* Rounded boxes like the desktop chrome: center group, dock and status
+     bar each float as a card on the dark root, separated by the same gap
+     (the seam between two touching rounded corners would notch). */
+  gap: var(--sf-gap);
   position: relative;
 }
 
 .sf-root--mobile .sf-center-group {
-  border-radius: 0;
+  border-radius: var(--sf-radius);
 }
 
 /* All title bars share ONE height in mobile: the workspace bar, and the
@@ -1588,9 +1591,10 @@ body.sf-dragging-row * {
   top: 0;
   left: 0;
   right: 0;
-  /* dock (60px) + status bar (25px) + bottom safe area stay visible,
-     like the panels */
-  bottom: calc(85px + var(--sf-safe-bottom, 0px));
+  /* dock (60px) + status bar (25px) + the two 8px gaps between the
+     rounded cards (101px) + bottom safe area stay visible, like the
+     panels */
+  bottom: calc(101px + var(--sf-safe-bottom, 0px));
   z-index: 40;
   display: flex;
   flex-direction: column;
@@ -1661,7 +1665,8 @@ body.sf-dragging-row * {
   color: var(--sf-text-dim);
 }
 
-/* Bottom dock: one horizontal row of app icons. */
+/* Bottom dock: one horizontal row of app icons — a rounded card like the
+   status bar (the gap above it separates it from the main area). */
 .sf-docker--bottom {
   flex-direction: row;
   width: 100%;
@@ -1672,8 +1677,7 @@ body.sf-dragging-row * {
      iPhone screen corners don't clip them. */
   padding: 0 25px;
   gap: 2px;
-  border-radius: 0;
-  border-top: 1px solid var(--sf-border);
+  border-radius: var(--sf-radius);
   background: var(--sf-bg-lighter);
 }
 
@@ -1694,8 +1698,9 @@ body.sf-dragging-row * {
   top: 0;
   left: 0;
   right: 0;
-  /* dock (60px) + status bar (25px) + bottom safe area stay visible */
-  bottom: calc(85px + var(--sf-safe-bottom, 0px));
+  /* dock (60px) + status bar (25px) + the two 8px gaps between the
+     rounded cards (101px) + bottom safe area stay visible */
+  bottom: calc(101px + var(--sf-safe-bottom, 0px));
   display: flex;
   flex-direction: column;
   /* The overlay covers the top safe-area zone (notch); the panel body

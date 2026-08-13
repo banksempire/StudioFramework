@@ -123,7 +123,7 @@ const WS = '.sf-workspace';
     Math.round(sheetBox.x) === 0 &&
       Math.round(sheetBox.y) === 0 &&
       Math.round(sheetBox.width) === vp.width &&
-      Math.round(sheetBox.height) === vp.height - 85,
+      Math.round(sheetBox.height) === vp.height - 101,
   );
   report('⋯ no back button at the root level', (await page.locator('.sf-menu-sheet-back').count()) === 0);
   report(
