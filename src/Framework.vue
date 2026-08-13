@@ -79,10 +79,17 @@ const mobileRightOpen = ref(false);
 const STATUS_SLOT = 33; // 25px bar + 8px gap — the status bar's layout slot (mirrors Docker.vue)
 const statusReveal = ref(1);
 const statusDragging = ref(false);
+/** Reveal captured when the drag started — the finger's delta moves the
+ *  box 1:1 from THAT state (not from a fixed anchor), so dragging up
+ *  from hidden and dragging down from shown both track exactly. */
+let dragStartReveal = 1;
 
 function onStatusDrag(dy: number) {
-  statusDragging.value = true;
-  statusReveal.value = Math.min(1, Math.max(0, 1 - dy / STATUS_SLOT));
+  if (!statusDragging.value) {
+    dragStartReveal = statusReveal.value;
+    statusDragging.value = true;
+  }
+  statusReveal.value = Math.min(1, Math.max(0, dragStartReveal - dy / STATUS_SLOT));
 }
 
 function onStatusSettle(show: boolean) {

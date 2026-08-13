@@ -32,9 +32,18 @@ const emit = defineEmits<{
 // over distance) or, for slow releases, from the displacement: less than
 // half the slot snaps back to visible, more hides. A tap (no move) still
 // reaches the app's click handler.
+//
+// Touch slop: browsers withhold the first ~10px of movement and deliver
+// it in ONE late touchmove — without anchoring, that move would jump the
+// reveal (on a swipe-up from hidden it clamps straight to 1 = the bar
+// pops open). So the first dispatched move only ESTABLISHES the drag
+// anchor (the reveal stays put) and tracking is 1:1 from there — unless
+// that first move is fast enough to be a genuine flick, which should
+// count as movement (anchoring would swallow the whole flick).
 const STATUS_SLOT = 33; // 25px bar + 8px gap — the status bar's layout slot (mirrors Framework.vue)
 const VELOCITY_WINS = 0.4; // px/ms — a faster release flicks past the half-slot threshold
-const swipe = { x: 0, y: 0, t: 0, active: false };
+const FLICK_VELOCITY = 0.6; // px/ms — a first move this fast is a flick, not slop
+const swipe = { x: 0, y: 0, t: 0, active: false, moved: false, anchor: 0 };
 
 function onTouchStart(e: TouchEvent) {
   if (props.position !== 'bottom' || e.touches.length !== 1) return;
@@ -42,25 +51,34 @@ function onTouchStart(e: TouchEvent) {
   swipe.x = t.clientX;
   swipe.y = t.clientY;
   swipe.t = performance.now();
+  swipe.moved = false;
+  swipe.anchor = 0;
   swipe.active = true;
 }
 
 function onTouchMove(e: TouchEvent) {
   if (!swipe.active) return;
   const t = e.touches[0];
-  emit('status-drag', t.clientY - swipe.y);
+  const now = performance.now();
+  const raw = t.clientY - swipe.y;
+  if (!swipe.moved) {
+    swipe.moved = true;
+    const v0 = now > swipe.t ? raw / (now - swipe.t) : 0;
+    swipe.anchor = Math.abs(v0) > FLICK_VELOCITY ? 0 : raw;
+  }
+  emit('status-drag', raw - swipe.anchor);
 }
 
 function onTouchEnd(e: TouchEvent) {
   if (!swipe.active) return;
   swipe.active = false;
   const t = e.changedTouches[0];
-  const dy = t.clientY - swipe.y;
+  const dy = t.clientY - swipe.y - swipe.anchor;
   const dx = t.clientX - swipe.x;
   // Horizontal intent (the dock scrolls sideways) — leave the bar alone.
   if (Math.abs(dx) > Math.abs(dy)) return;
   const elapsed = performance.now() - swipe.t;
-  const velocity = elapsed > 0 ? dy / elapsed : 0; // px/ms, positive = downward
+  const velocity = elapsed > 0 ? (t.clientY - swipe.y) / elapsed : 0; // px/ms, positive = downward
   const show = velocity < -VELOCITY_WINS ? true : velocity > VELOCITY_WINS ? false : dy < STATUS_SLOT / 2;
   emit('status-settle', show);
 }
