@@ -1442,15 +1442,16 @@ body.sf-dragging-row * {
   --sf-safe-top: env(safe-area-inset-top, 0px);
   --sf-safe-bottom: env(safe-area-inset-bottom, 0px);
   padding: var(--sf-safe-top) 0 var(--sf-safe-bottom);
-  /* Rounded boxes like the desktop chrome: center group, dock and status
-     bar each float as a card on the dark root, separated by the same gap
-     (the seam between two touching rounded corners would notch). */
-  gap: var(--sf-gap);
+  /* The dock shares ONE rounded box with the main area (square seam, see
+     below); only the status bar floats as a separate card below it. */
+  gap: 0;
   position: relative;
 }
 
+/* Main area + dock = one rounded box: the top corners round, the seam
+   corners stay square, the dock rounds the bottom. */
 .sf-root--mobile .sf-center-group {
-  border-radius: var(--sf-radius);
+  border-radius: var(--sf-radius) var(--sf-radius) 0 0;
 }
 
 /* All title bars share ONE height in mobile: the workspace bar, and the
@@ -1591,10 +1592,9 @@ body.sf-dragging-row * {
   top: 0;
   left: 0;
   right: 0;
-  /* dock (60px) + status bar (25px) + the two 8px gaps between the
-     rounded cards (101px) + bottom safe area stay visible, like the
-     panels */
-  bottom: calc(101px + var(--sf-safe-bottom, 0px));
+  /* dock (60px, sharing the main box) + gap (8px) + status bar (25px) +
+     bottom safe area stay visible, like the panels */
+  bottom: calc(93px + var(--sf-safe-bottom, 0px));
   z-index: 40;
   display: flex;
   flex-direction: column;
@@ -1665,8 +1665,9 @@ body.sf-dragging-row * {
   color: var(--sf-text-dim);
 }
 
-/* Bottom dock: one horizontal row of app icons — a rounded card like the
-   status bar (the gap above it separates it from the main area). */
+/* Bottom dock: one horizontal row of app icons. It shares the rounded
+   box with the main area above — square top corners at the seam, rounded
+   bottom corners (the status bar floats below, separated by a gap). */
 .sf-docker--bottom {
   flex-direction: row;
   width: 100%;
@@ -1677,7 +1678,7 @@ body.sf-dragging-row * {
      iPhone screen corners don't clip them. */
   padding: 0 25px;
   gap: 2px;
-  border-radius: var(--sf-radius);
+  border-radius: 0 0 var(--sf-radius) var(--sf-radius);
   background: var(--sf-bg-lighter);
 }
 
@@ -1698,9 +1699,9 @@ body.sf-dragging-row * {
   top: 0;
   left: 0;
   right: 0;
-  /* dock (60px) + status bar (25px) + the two 8px gaps between the
-     rounded cards (101px) + bottom safe area stay visible */
-  bottom: calc(101px + var(--sf-safe-bottom, 0px));
+  /* dock (60px, sharing the main box) + gap (8px) + status bar (25px) +
+     bottom safe area stay visible */
+  bottom: calc(93px + var(--sf-safe-bottom, 0px));
   display: flex;
   flex-direction: column;
   /* The overlay covers the top safe-area zone (notch); the panel body
@@ -1744,9 +1745,11 @@ body.sf-dragging-row * {
   background: var(--sf-bg-light);
 }
 
-/* The status bar sits at the very bottom of the mobile screen, where the
-   rounded corner eats into the right side — pad it (same 25px as the
-   dock) so the last item stays clear of the curvature. */
+/* The status bar sits at the very bottom of the mobile screen as its own
+   rounded card: the gap above separates it from the shared main+dock box,
+   and the right padding clears the device's rounded screen corner (same
+   25px as the dock). */
 .sf-root--mobile .sf-status-bar {
+  margin-top: var(--sf-gap);
   padding-right: 25px;
 }
