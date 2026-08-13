@@ -167,8 +167,15 @@ body,
   white-space: nowrap;
 }
 
-.sf-menu-item:hover {
-  box-shadow: inset 0 0 0 999px var(--sf-hover-overlay);
+/* ─── Hover (pointer devices only) ───────────────────────────────────────
+   Every :hover rule is gated behind @media (hover: hover): touch devices
+   have no hover, and after a tap the browser keeps the element in its
+   :hover state ("sticky hover") — gating keeps tapped buttons from
+   staying highlighted. Press feedback (:active) is NOT gated. */
+@media (hover: hover) {
+  .sf-menu-item:hover {
+    box-shadow: inset 0 0 0 999px var(--sf-hover-overlay);
+  }
 }
 .sf-menu-item--open {
   background: var(--sf-active);
@@ -223,8 +230,10 @@ body,
   white-space: nowrap;
   color: var(--sf-text);
 }
-.sf-menu-row:hover {
-  box-shadow: inset 0 0 0 999px var(--sf-hover-overlay);
+@media (hover: hover) {
+  .sf-menu-row:hover {
+    box-shadow: inset 0 0 0 999px var(--sf-hover-overlay);
+  }
 }
 .sf-menu-row--open {
   background: var(--sf-accent);
@@ -234,9 +243,11 @@ body,
   opacity: 0.45;
   cursor: default;
 }
-.sf-menu-row--disabled:hover {
-  box-shadow: none;
-  color: var(--sf-text);
+@media (hover: hover) {
+  .sf-menu-row--disabled:hover {
+    box-shadow: none;
+    color: var(--sf-text);
+  }
 }
 
 /* Icon column: always reserved so rows align; shows icon / check / dot. */
@@ -267,16 +278,20 @@ body,
   overflow: hidden;
   text-overflow: ellipsis;
 }
-.sf-menu-row:hover .sf-menu-cell--hint {
-  color: var(--sf-text-on-accent);
+@media (hover: hover) {
+  .sf-menu-row:hover .sf-menu-cell--hint {
+    color: var(--sf-text-on-accent);
+  }
 }
 .sf-menu-cell--arrow {
   font-size: 16px;
   margin-left: 8px;
   color: var(--sf-text-muted);
 }
-.sf-menu-row:hover .sf-menu-cell--arrow {
-  color: var(--sf-text-on-accent);
+@media (hover: hover) {
+  .sf-menu-row:hover .sf-menu-cell--arrow {
+    color: var(--sf-text-on-accent);
+  }
 }
 
 /* Segregation line between items. */
@@ -309,9 +324,11 @@ body,
   justify-content: center;
 }
 
-.sf-menu-action-btn:hover {
-  box-shadow: inset 0 0 0 999px var(--sf-hover-overlay);
-  color: var(--sf-text-bright);
+@media (hover: hover) {
+  .sf-menu-action-btn:hover {
+    box-shadow: inset 0 0 0 999px var(--sf-hover-overlay);
+    color: var(--sf-text-bright);
+  }
 }
 
 /* Left toggle button — matches Docker width */
@@ -402,9 +419,11 @@ body,
   transition: color 0.15s;
 }
 
-.sf-docker-app:hover {
-  color: var(--sf-text-bright);
-  box-shadow: inset 0 0 0 999px var(--sf-hover-overlay);
+@media (hover: hover) {
+  .sf-docker-app:hover {
+    color: var(--sf-text-bright);
+    box-shadow: inset 0 0 0 999px var(--sf-hover-overlay);
+  }
 }
 
 .sf-docker-app.active {
@@ -567,10 +586,12 @@ body,
     border-color 0.15s;
 }
 
-.sf-panel-tab:hover {
-  /* Same full-coverage overlay as .sf-tab:hover (background layers paint
-     under the transparent bottom border; inset shadows don't). */
-  background: linear-gradient(var(--sf-hover-overlay), var(--sf-hover-overlay)), var(--sf-control);
+@media (hover: hover) {
+  .sf-panel-tab:hover {
+    /* Same full-coverage overlay as .sf-tab:hover (background layers
+       paint under the transparent bottom border; inset shadows don't). */
+    background: linear-gradient(var(--sf-hover-overlay), var(--sf-hover-overlay)), var(--sf-control);
+  }
 }
 
 .sf-panel-tab--active {
@@ -616,9 +637,14 @@ body,
   right: 0;
 }
 
-.sf-panel-resize-handle:hover::after,
 .sf-panel--dragging .sf-panel-resize-handle::after {
   background: var(--sf-accent);
+}
+
+@media (hover: hover) {
+  .sf-panel-resize-handle:hover::after {
+    background: var(--sf-accent);
+  }
 }
 
 .sf-panel--will-collapse .sf-panel-resize-handle::after {
@@ -680,9 +706,11 @@ body,
   justify-content: center;
 }
 
-.sf-panel-header-btn:hover {
-  box-shadow: inset 0 0 0 999px var(--sf-hover-overlay);
-  color: var(--sf-text-bright);
+@media (hover: hover) {
+  .sf-panel-header-btn:hover {
+    box-shadow: inset 0 0 0 999px var(--sf-hover-overlay);
+    color: var(--sf-text-bright);
+  }
 }
 
 /* ─── Panel content buttons (framework-level) ──────────────────────────── */
@@ -695,8 +723,10 @@ body,
   background: var(--sf-bar);
 }
 
-.sf-panel-btn:hover {
-  box-shadow: inset 0 0 0 999px var(--sf-hover-overlay);
+@media (hover: hover) {
+  .sf-panel-btn:hover {
+    box-shadow: inset 0 0 0 999px var(--sf-hover-overlay);
+  }
 }
 
 /* biome-ignore lint/style/noDescendingSpecificity: deliberate section ordering — different properties, not overrides */
@@ -745,8 +775,10 @@ body,
 
 /* The whole title bar is the expand/collapse toggle — hover highlights it
    like every other clickable control (added layer, never a bg replace). */
-.sf-subsection-header:hover {
-  box-shadow: inset 0 0 0 999px var(--sf-hover-overlay);
+@media (hover: hover) {
+  .sf-subsection-header:hover {
+    box-shadow: inset 0 0 0 999px var(--sf-hover-overlay);
+  }
 }
 
 .sf-subsection-arrow {
@@ -774,9 +806,13 @@ body,
 }
 
 /* Show buttons when active OR hovered (any part), but not when collapsed */
-.sf-subsection--active:not(.sf-subsection--collapsed) .sf-subsection-utils,
-.sf-subsection:not(.sf-subsection--collapsed):hover .sf-subsection-utils {
+.sf-subsection--active:not(.sf-subsection--collapsed) .sf-subsection-utils {
   display: flex;
+}
+@media (hover: hover) {
+  .sf-subsection:not(.sf-subsection--collapsed):hover .sf-subsection-utils {
+    display: flex;
+  }
 }
 
 .sf-subsection-util {
@@ -791,9 +827,11 @@ body,
   align-items: center;
 }
 
-.sf-subsection-util:hover {
-  box-shadow: inset 0 0 0 999px var(--sf-hover-overlay);
-  color: var(--sf-text-bright);
+@media (hover: hover) {
+  .sf-subsection-util:hover {
+    box-shadow: inset 0 0 0 999px var(--sf-hover-overlay);
+    color: var(--sf-text-bright);
+  }
 }
 
 .sf-subsection-body {
@@ -834,8 +872,10 @@ body.sf-dragging-row * {
   transition: background 0.15s;
 }
 
-.sf-subsection-drag-handle:hover {
-  background: var(--sf-accent);
+@media (hover: hover) {
+  .sf-subsection-drag-handle:hover {
+    background: var(--sf-accent);
+  }
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════
@@ -901,8 +941,10 @@ body.sf-dragging-row * {
   cursor: pointer;
 }
 
-.sf-pc-btn:hover {
-  box-shadow: inset 0 0 0 999px var(--sf-hover-overlay);
+@media (hover: hover) {
+  .sf-pc-btn:hover {
+    box-shadow: inset 0 0 0 999px var(--sf-hover-overlay);
+  }
 }
 
 /* ─── Tree ──────────────────────────────────────────────────────────────── */
@@ -921,8 +963,10 @@ body.sf-dragging-row * {
   border-radius: 2px;
 }
 
-.sf-pc-tree-node:hover {
-  box-shadow: inset 0 0 0 999px var(--sf-hover-overlay);
+@media (hover: hover) {
+  .sf-pc-tree-node:hover {
+    box-shadow: inset 0 0 0 999px var(--sf-hover-overlay);
+  }
 }
 
 .sf-pc-tree-arrow {
@@ -981,8 +1025,10 @@ body.sf-dragging-row * {
   border-radius: 3px;
 }
 
-.kv-row:hover {
-  box-shadow: inset 0 0 0 999px var(--sf-hover-overlay);
+@media (hover: hover) {
+  .kv-row:hover {
+    box-shadow: inset 0 0 0 999px var(--sf-hover-overlay);
+  }
 }
 
 /* transient "Copied" feedback after a row click */
@@ -1056,8 +1102,10 @@ body.sf-dragging-row * {
   border-radius: 2px;
 }
 
-.sf-pc-list-item:hover {
-  box-shadow: inset 0 0 0 999px var(--sf-hover-overlay);
+@media (hover: hover) {
+  .sf-pc-list-item:hover {
+    box-shadow: inset 0 0 0 999px var(--sf-hover-overlay);
+  }
 }
 
 .sf-pc-list-icon {
@@ -1195,9 +1243,14 @@ body.sf-dragging-row * {
   bottom: calc((var(--sf-sash-hit) - var(--sf-sash-size)) / -2);
 }
 
-.sf-sash:hover::after,
 .sf-sash--dragging::after {
   background: var(--sf-accent);
+}
+
+@media (hover: hover) {
+  .sf-sash:hover::after {
+    background: var(--sf-accent);
+  }
 }
 
 /* ─── Tile ────────────────────────────────────────────────────────────── */
@@ -1283,12 +1336,14 @@ body.sf-dragging-row * {
   opacity: 0.4;
 }
 
-.sf-tab:hover {
-  /* Translucent overlay as an extra BACKGROUND layer, not an inset
-     shadow: backgrounds paint under the transparent top/bottom borders,
-     so the highlight covers the whole tab — an inset shadow is clipped
-     to the padding box and leaves 2px strips unlit. */
-  background: linear-gradient(var(--sf-hover-overlay), var(--sf-hover-overlay)), var(--sf-panel-bg);
+@media (hover: hover) {
+  .sf-tab:hover {
+    /* Translucent overlay as an extra BACKGROUND layer, not an inset
+       shadow: backgrounds paint under the transparent top/bottom borders,
+       so the highlight covers the whole tab — an inset shadow is clipped
+       to the padding box and leaves 2px strips unlit. */
+    background: linear-gradient(var(--sf-hover-overlay), var(--sf-hover-overlay)), var(--sf-panel-bg);
+  }
 }
 
 .sf-tab.active {
@@ -1318,14 +1373,21 @@ body.sf-dragging-row * {
   visibility: hidden;
 }
 
-.sf-tab:hover .sf-tab-close,
 .sf-tab.active .sf-tab-close {
   visibility: visible;
 }
 
-.sf-tab-close:hover {
-  box-shadow: inset 0 0 0 999px var(--sf-hover-overlay);
-  color: var(--sf-text-bright);
+@media (hover: hover) {
+  .sf-tab:hover .sf-tab-close {
+    visibility: visible;
+  }
+}
+
+@media (hover: hover) {
+  .sf-tab-close:hover {
+    box-shadow: inset 0 0 0 999px var(--sf-hover-overlay);
+    color: var(--sf-text-bright);
+  }
 }
 
 .sf-tab-new {
@@ -1339,9 +1401,11 @@ body.sf-dragging-row * {
   flex-shrink: 0;
 }
 
-.sf-tab-new:hover {
-  color: var(--sf-text-bright);
-  box-shadow: inset 0 0 0 999px var(--sf-hover-overlay);
+@media (hover: hover) {
+  .sf-tab-new:hover {
+    color: var(--sf-text-bright);
+    box-shadow: inset 0 0 0 999px var(--sf-hover-overlay);
+  }
 }
 
 /* Button group: wraps buttons in one rounded corner box with thin dividers */
@@ -1384,9 +1448,11 @@ body.sf-dragging-row * {
   border-right: 1px solid var(--sf-border);
 }
 
-.sf-tab-panel-toggle:hover {
-  color: var(--sf-text-bright);
-  box-shadow: inset 0 0 0 999px var(--sf-hover-overlay);
+@media (hover: hover) {
+  .sf-tab-panel-toggle:hover {
+    color: var(--sf-text-bright);
+    box-shadow: inset 0 0 0 999px var(--sf-hover-overlay);
+  }
 }
 
 /* ─── Welcome Panel ──────────────────────────────────────────────────────── */
@@ -1473,8 +1539,10 @@ body.sf-dragging-row * {
   gap: 4px;
 }
 
-.sf-status-item:hover {
-  box-shadow: inset 0 0 0 999px var(--sf-hover-overlay);
+@media (hover: hover) {
+  .sf-status-item:hover {
+    box-shadow: inset 0 0 0 999px var(--sf-hover-overlay);
+  }
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════
@@ -1495,8 +1563,10 @@ body.sf-dragging-row * {
   border-radius: 3px;
 }
 
-::-webkit-scrollbar-thumb:hover {
-  background: var(--sf-text-muted);
+@media (hover: hover) {
+  ::-webkit-scrollbar-thumb:hover {
+    background: var(--sf-text-muted);
+  }
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════
@@ -1661,15 +1731,17 @@ body.sf-dragging-row * {
   margin-left: auto;
 }
 
-.sf-root--mobile .sf-tile-tabs .sf-mobile-menu-btn:hover,
-.sf-root--mobile .sf-tile-tabs .sf-mobile-tab-selector:hover,
-.sf-root--mobile .sf-tile-tabs .sf-mobile-tab-close:hover:not(:disabled),
-.sf-root--mobile .sf-tile-tabs .sf-mobile-rp-btn:hover,
-.sf-root--mobile .sf-panel-header-btn:hover,
-.sf-root--mobile .sf-panel-close-btn:hover,
-.sf-root--mobile .sf-menu-sheet-back:hover,
-.sf-root--mobile .sf-menu-sheet-close:hover {
-  background: var(--sf-hover-overlay);
+@media (hover: hover) {
+  .sf-root--mobile .sf-tile-tabs .sf-mobile-menu-btn:hover,
+  .sf-root--mobile .sf-tile-tabs .sf-mobile-tab-selector:hover,
+  .sf-root--mobile .sf-tile-tabs .sf-mobile-tab-close:hover:not(:disabled),
+  .sf-root--mobile .sf-tile-tabs .sf-mobile-rp-btn:hover,
+  .sf-root--mobile .sf-panel-header-btn:hover,
+  .sf-root--mobile .sf-panel-close-btn:hover,
+  .sf-root--mobile .sf-menu-sheet-back:hover,
+  .sf-root--mobile .sf-menu-sheet-close:hover {
+    background: var(--sf-hover-overlay);
+  }
 }
 
 .sf-root--mobile .sf-tile-tabs .sf-mobile-tab-close:disabled {
