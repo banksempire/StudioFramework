@@ -295,11 +295,17 @@ interface DragState {
   aboveIds: string[];
   belowIds: string[];
   startHeights: Record<string, number>;
+  /** handle element (for pointer-capture release) */
+  el: HTMLElement;
+  pointerId: number;
 }
 
 let dragState: DragState | null = null;
 
-function startDrag(index: number, e: MouseEvent) {
+// Pointer events + capture (like the sashes): the handle keeps receiving
+// moves when the pointer leaves the window — document-level mousemove/
+// mouseup would be lost outside the browser, leaving the drag stuck.
+function startDrag(index: number, e: PointerEvent) {
   e.preventDefault();
   const visible = visibleSubSections.value;
   const aboveIds: string[] = [];
@@ -318,14 +324,14 @@ function startDrag(index: number, e: MouseEvent) {
     startHeights[id] = states[id].height;
   }
 
-  dragState = { startY: e.clientY, aboveIds, belowIds, startHeights };
-  window.addEventListener('mousemove', onDragMove);
-  window.addEventListener('mouseup', onDragEnd);
+  const el = e.currentTarget as HTMLElement;
+  el.setPointerCapture(e.pointerId);
+  dragState = { startY: e.clientY, aboveIds, belowIds, startHeights, el, pointerId: e.pointerId };
   document.body.classList.add('sf-dragging');
   document.body.style.userSelect = 'none';
 }
 
-function onDragMove(e: MouseEvent) {
+function onDragMove(e: PointerEvent) {
   if (!dragState) return;
   const delta = e.clientY - dragState.startY;
 
@@ -343,9 +349,9 @@ function onDragMove(e: MouseEvent) {
 }
 
 function onDragEnd() {
+  if (!dragState) return;
+  dragState.el.releasePointerCapture(dragState.pointerId);
   dragState = null;
-  window.removeEventListener('mousemove', onDragMove);
-  window.removeEventListener('mouseup', onDragEnd);
   document.body.classList.remove('sf-dragging');
   document.body.style.userSelect = '';
 }
@@ -358,8 +364,6 @@ onUnmounted(() => {
     o.disconnect();
   });
   fixedObservers.clear();
-  window.removeEventListener('mousemove', onDragMove);
-  window.removeEventListener('mouseup', onDragEnd);
 });
 </script>
 
@@ -383,7 +387,10 @@ onUnmounted(() => {
       >
         <div
           class="sf-subsection-drag-handle"
-          @mousedown="startDrag(i, $event)"
+          @pointerdown="startDrag(i, $event)"
+          @pointermove="onDragMove"
+          @pointerup="onDragEnd"
+          @pointercancel="onDragEnd"
         />
       </div>
     </template>

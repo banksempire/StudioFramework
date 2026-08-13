@@ -37,7 +37,7 @@ const resizeDir = computed(() => (props.position === 'left' ? 'right' : 'left'))
 const oppositeEdge = computed(() => (props.position === 'left' ? 'left' : 'right'));
 
 const MIN_WIDTH = 150;
-const { width, dragging, willCollapse, onMouseDown } = useResize({
+const { width, dragging, willCollapse, onPointerDown, onPointerMove, onPointerUp } = useResize({
   min: MIN_WIDTH,
   max: 500,
   direction: resizeDir.value,
@@ -239,7 +239,10 @@ onUnmounted(() => observer?.disconnect());
       v-if="resizable"
       class="sf-panel-resize-handle"
       :class="'sf-panel-resize-handle--' + resizeDir"
-      @mousedown="onMouseDown"
+      @pointerdown="onPointerDown"
+      @pointermove="onPointerMove"
+      @pointerup="onPointerUp"
+      @pointercancel="onPointerUp"
     />
 
     <!-- Title bar: [title | ⋯ | ◨] on desktop; on mobile the ⋯ moves to

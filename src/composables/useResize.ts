@@ -1,4 +1,4 @@
-import { onUnmounted, ref } from 'vue';
+import { ref } from 'vue';
 
 export interface ResizeOptions {
   /** Minimum visible width in px — panel never displays narrower than this */
@@ -34,24 +34,31 @@ export function useResize(options: ResizeOptions) {
   let startX = 0;
   let startWidth = 0;
   let rawWidth = 260;
+  let handleEl: HTMLElement | null = null;
+  let pointerId = 0;
 
   function displayWidth(raw: number): number {
     // Never show narrower than min — hard visual floor
     return Math.min(max, Math.max(min, raw));
   }
 
-  function onMouseDown(e: MouseEvent) {
+  // Pointer events + capture (like the sashes): the handle keeps receiving
+  // moves even when the pointer leaves the window — document-level
+  // mousemove/mouseup would be lost outside the browser, leaving the drag
+  // stuck with a col-resize cursor and user-select disabled.
+  function onPointerDown(e: PointerEvent) {
     dragging.value = true;
     startX = e.clientX;
     startWidth = width.value;
     rawWidth = width.value;
-    document.addEventListener('mousemove', onMouseMove);
-    document.addEventListener('mouseup', onMouseUp);
+    handleEl = e.currentTarget as HTMLElement;
+    pointerId = e.pointerId;
+    handleEl.setPointerCapture(pointerId);
     document.body.style.cursor = 'col-resize';
     document.body.style.userSelect = 'none';
   }
 
-  function onMouseMove(e: MouseEvent) {
+  function onPointerMove(e: PointerEvent) {
     if (!dragging.value) return;
     const delta = e.clientX - startX;
     rawWidth = startWidth + delta * sign;
@@ -61,10 +68,11 @@ export function useResize(options: ResizeOptions) {
     onResize?.(width.value);
   }
 
-  function onMouseUp() {
+  function onPointerUp() {
+    if (!dragging.value) return;
     dragging.value = false;
-    document.removeEventListener('mousemove', onMouseMove);
-    document.removeEventListener('mouseup', onMouseUp);
+    handleEl?.releasePointerCapture(pointerId);
+    handleEl = null;
     document.body.style.cursor = '';
     document.body.style.userSelect = '';
 
@@ -76,15 +84,12 @@ export function useResize(options: ResizeOptions) {
     }
   }
 
-  onUnmounted(() => {
-    document.removeEventListener('mousemove', onMouseMove);
-    document.removeEventListener('mouseup', onMouseUp);
-  });
-
   return {
     width,
     dragging,
     willCollapse,
-    onMouseDown,
+    onPointerDown,
+    onPointerMove,
+    onPointerUp,
   };
 }
