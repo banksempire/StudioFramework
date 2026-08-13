@@ -38,11 +38,12 @@ const ARTIFACT_DIR = path.join(__dirname, 'artifacts');
   report('menu closes on leaf click', !(await visible('.sf-menu-pop')));
 
   // ── Docker panel switching ──────────────────────────────────────────────
-  await page.click('.sf-docker-app:has-text("🐛")');
+  // (Icons are SVG glyphs now — select apps by their title, not emoji text.)
+  await page.click('.sf-docker-app[title="Debug"]');
   await page.waitForTimeout(300);
   report('docker app switches panel', await visible('text=VARIABLES'));
 
-  await page.click('.sf-docker-app:has-text("📁")');
+  await page.click('.sf-docker-app[title="Explorer"]');
   await page.waitForTimeout(300);
 
   // ── Sub-section collapse/expand height preservation ─────────────────────
