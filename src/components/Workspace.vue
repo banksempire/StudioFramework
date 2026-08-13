@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, provide, reactive, ref, watch } from 'vue';
+import { computed, onMounted, onUnmounted, provide, reactive, ref, watch } from 'vue';
 import type { ExternalDropTarget } from '../composables/useWorkspace';
 import {
   type DndRect,
@@ -126,7 +126,7 @@ function clearHover() {
   api.dnd.indicator = null;
 }
 
-/** Per-tile geometry for zone detection. */
+/** Per-tile geometry for zone detection, cached per drag. */
 interface TileGeom {
   id: string;
   rect: DOMRect;
@@ -135,21 +135,58 @@ interface TileGeom {
   /** strip bottom + 6px tolerance — where the split bands start */
   contentTop: number;
   stripR: DOMRect | null;
-  tabs: HTMLElement[];
-  inStrip: boolean;
+  /** strip tab rects — measured once per drag */
+  tabRects: DOMRect[];
 }
 
-function tileGeom(id: string, el: HTMLElement, _clientX: number, clientY: number): TileGeom {
+function tileGeom(id: string, el: HTMLElement): TileGeom {
   const rect = el.getBoundingClientRect();
   const bandW = Math.min(Math.max(rect.width * 0.25, 36), 72);
   const bandH = Math.min(Math.max(rect.height * 0.25, 28), 56);
   const strip = el.querySelector<HTMLElement>('.sf-tile-tabs');
   const stripR = strip?.getBoundingClientRect() ?? null;
-  const tabs = strip ? [...strip.querySelectorAll<HTMLElement>('.sf-tab')] : [];
+  const tabRects = (strip ? [...strip.querySelectorAll<HTMLElement>('.sf-tab')] : []).map((t) =>
+    t.getBoundingClientRect(),
+  );
   const contentTop = (stripR ? stripR.bottom : rect.top) + 6; // inStrip tolerance
-  const inStrip = !!stripR && stripR.height > 0 && clientY >= stripR.top - 6 && clientY <= stripR.bottom + 6;
-  return { id, rect, bandW, bandH, contentTop, stripR, tabs, inStrip };
+  return { id, rect, bandW, bandH, contentTop, stripR, tabRects };
 }
+
+// ── Drag geometry cache ──────────────────────────────────────────────────
+// dragover fires every frame during a drag; reading every tile's and
+// tab's rect per event was the hot path (N tiles × M tabs of forced
+// layout at 60 Hz — a 20-tile × 5-tab workspace ≈ 240 reads/event).
+// Layout cannot change during a drag (the dragged tab only gets an
+// opacity class), so the geometry is measured ONCE per drag and reused.
+// Invalidated when it can: drag start, window resize, and any scroll.
+let geomCache: TileGeom[] | null = null;
+
+function getGeoms(): TileGeom[] {
+  if (geomCache) return geomCache;
+  geomCache = [];
+  for (const [id, el] of api.tileEls) geomCache.push(tileGeom(id, el));
+  return geomCache;
+}
+
+function invalidateGeoms() {
+  geomCache = null;
+}
+
+// A drag session starts (or ends) → drop the cache from the previous one.
+watch(
+  () => [api.dnd.dragging, api.dnd.externalDrop],
+  () => {
+    geomCache = null;
+  },
+);
+onMounted(() => {
+  window.addEventListener('resize', invalidateGeoms);
+  window.addEventListener('scroll', invalidateGeoms, true);
+});
+onUnmounted(() => {
+  window.removeEventListener('resize', invalidateGeoms);
+  window.removeEventListener('scroll', invalidateGeoms, true);
+});
 
 function onDragOver(e: DragEvent) {
   // Always prevent default: keeps drop allowed and stops the browser from
@@ -168,9 +205,8 @@ function onDragOver(e: DragEvent) {
   const rightSeam = !!props.rightPanelVisible;
   const dnd = api.dnd;
 
-  // Per-tile geometry for hit testing.
-  const geoms: TileGeom[] = [];
-  for (const [id, el] of api.tileEls) geoms.push(tileGeom(id, el, e.clientX, e.clientY));
+  // Per-tile geometry for hit testing (cached per drag — see getGeoms).
+  const geoms = getGeoms();
 
   // Hit test: the tile under the cursor, then its zone. Edge bands decide
   // between split zones (left/right/top/bottom) and the move zone (center).
@@ -189,8 +225,14 @@ function onDragOver(e: DragEvent) {
   const dx = e.clientX - hit.rect.left;
   const dy = e.clientY - hit.rect.top;
   const contentStart = hit.contentTop - hit.rect.top; // below the strip
+  // Cursor-dependent, so computed per event (the strip rect itself is cached).
+  const inStrip =
+    !!hit.stripR &&
+    hit.stripR.height > 0 &&
+    e.clientY >= hit.stripR.top - 6 &&
+    e.clientY <= hit.stripR.bottom + 6;
   let zone: DropZone = 'center';
-  if (hit.inStrip) {
+  if (inStrip) {
     zone = 'center'; // The tab strip is the reorder zone (VSCode behavior).
   } else if (dx < hit.bandW) {
     zone = 'left';
@@ -214,14 +256,13 @@ function onDragOver(e: DragEvent) {
     dnd.glow = glow;
     const tile = api.findTileGlobal(hit.id);
     const tabCount = tile ? tile.tabs.length : 0;
-    if (hit.inStrip && hit.stripR) {
+    if (inStrip && hit.stripR) {
       let idx = 0;
-      for (const t of hit.tabs) {
-        const tr = t.getBoundingClientRect();
+      for (const tr of hit.tabRects) {
         if (e.clientX > tr.left + tr.width / 2) idx += 1;
       }
       dnd.index = idx;
-      const left = idx < hit.tabs.length ? hit.tabs[idx].getBoundingClientRect().left : hit.stripR.right - 1;
+      const left = idx < hit.tabRects.length ? hit.tabRects[idx].left : hit.stripR.right - 1;
       dnd.indicator = { x: left - origin.x, y: hit.stripR.top - origin.y, h: hit.stripR.height };
     } else {
       // Over the content area: append.
