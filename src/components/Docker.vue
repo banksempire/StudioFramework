@@ -18,35 +18,51 @@ const props = withDefaults(
 
 const emit = defineEmits<{
   'app-selected': [appId: string];
-  /** Mobile bottom dock: a vertical swipe toggles the status bar — swipe
-   *  up shows it, swipe down hides it. */
-  'status-swipe': ['up' | 'down'];
+  /** Mobile bottom dock: dragging vertically moves the status bar with
+   *  the finger (dy = finger delta, positive = downward). */
+  'status-drag': [dy: number];
+  /** Release: settle the status bar — true = show, false = hide. */
+  'status-settle': [show: boolean];
 }>();
 
 // ── Status-bar swipe (mobile) ────────────────────────────────────────────
-// Track the touch from start to end and decide by the NET displacement:
-// a dominant vertical move of >= SWIPE_THRESHOLD px counts — up (finger
-// moves up) shows the status bar, down hides it. No move = a tap, which
-// still reaches the app's click handler.
-const SWIPE_THRESHOLD = 24;
-const swipeStart = { x: 0, y: 0, active: false };
+// CONTINUOUS drag: every touchmove reports the finger's vertical delta
+// (the framework maps it 1:1 to the status bar's reveal), and on release
+// the settle direction comes from the release velocity (a flick wins
+// over distance) or, for slow releases, from the displacement: less than
+// half the slot snaps back to visible, more hides. A tap (no move) still
+// reaches the app's click handler.
+const STATUS_SLOT = 33; // 25px bar + 8px gap — the status bar's layout slot (mirrors Framework.vue)
+const VELOCITY_WINS = 0.4; // px/ms — a faster release flicks past the half-slot threshold
+const swipe = { x: 0, y: 0, t: 0, active: false };
 
 function onTouchStart(e: TouchEvent) {
   if (props.position !== 'bottom' || e.touches.length !== 1) return;
   const t = e.touches[0];
-  swipeStart.x = t.clientX;
-  swipeStart.y = t.clientY;
-  swipeStart.active = true;
+  swipe.x = t.clientX;
+  swipe.y = t.clientY;
+  swipe.t = performance.now();
+  swipe.active = true;
+}
+
+function onTouchMove(e: TouchEvent) {
+  if (!swipe.active) return;
+  const t = e.touches[0];
+  emit('status-drag', t.clientY - swipe.y);
 }
 
 function onTouchEnd(e: TouchEvent) {
-  if (!swipeStart.active) return;
-  swipeStart.active = false;
+  if (!swipe.active) return;
+  swipe.active = false;
   const t = e.changedTouches[0];
-  const dy = t.clientY - swipeStart.y;
-  const dx = t.clientX - swipeStart.x;
-  if (Math.abs(dy) < SWIPE_THRESHOLD || Math.abs(dx) > Math.abs(dy)) return;
-  emit('status-swipe', dy < 0 ? 'up' : 'down');
+  const dy = t.clientY - swipe.y;
+  const dx = t.clientX - swipe.x;
+  // Horizontal intent (the dock scrolls sideways) — leave the bar alone.
+  if (Math.abs(dx) > Math.abs(dy)) return;
+  const elapsed = performance.now() - swipe.t;
+  const velocity = elapsed > 0 ? dy / elapsed : 0; // px/ms, positive = downward
+  const show = velocity < -VELOCITY_WINS ? true : velocity > VELOCITY_WINS ? false : dy < STATUS_SLOT / 2;
+  emit('status-settle', show);
 }
 </script>
 
@@ -55,6 +71,7 @@ function onTouchEnd(e: TouchEvent) {
     class="sf-docker"
     :class="{ 'sf-docker--bottom': position === 'bottom' }"
     @touchstart.passive="onTouchStart"
+    @touchmove.passive="onTouchMove"
     @touchend.passive="onTouchEnd"
   >
     <div v-if="position === 'left'" class="sf-docker-handle" />

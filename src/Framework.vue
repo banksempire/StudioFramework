@@ -73,11 +73,21 @@ const mobilePanelOpen = ref(false);
 /** Fullscreen right panel opened from the mobile tile bar (mobile only). */
 const mobileRightOpen = ref(false);
 /** Mobile: the status bar can be swiped away (dock swipe down) and back
- *  (dock swipe up). Desktop always shows it. */
-const statusBarVisible = ref(true);
+ *  (dock swipe up). --sf-status-reveal (0..1) drives the layout
+ *  CONTINUOUSLY: while dragging, the bar follows the finger; on release
+ *  it springs to the snapped state. Desktop always shows the bar. */
+const STATUS_SLOT = 33; // 25px bar + 8px gap — the status bar's layout slot (mirrors Docker.vue)
+const statusReveal = ref(1);
+const statusDragging = ref(false);
 
-function onStatusSwipe(dir: 'up' | 'down') {
-  statusBarVisible.value = dir === 'up';
+function onStatusDrag(dy: number) {
+  statusDragging.value = true;
+  statusReveal.value = Math.min(1, Math.max(0, 1 - dy / STATUS_SLOT));
+}
+
+function onStatusSettle(show: boolean) {
+  statusDragging.value = false;
+  statusReveal.value = show ? 1 : 0;
 }
 
 // ── Panel visibility ↔ workspace snapshots ────────────────────────────────
@@ -349,7 +359,14 @@ function onPanelAction(a: PanelAction) {
 </script>
 
 <template>
-  <div class="sf-root" :class="{ 'sf-root--mobile': isMobile, 'sf-status-hidden': isMobile && !statusBarVisible }">
+  <div
+    class="sf-root"
+    :class="{
+      'sf-root--mobile': isMobile,
+      'sf-status-dragging': isMobile && statusDragging,
+    }"
+    :style="{ '--sf-status-reveal': String(statusReveal) }"
+  >
     <MenuBar
       v-if="!isMobile"
       :menus="L.menu"
@@ -415,7 +432,8 @@ function onPanelAction(a: PanelAction) {
         :active-app="activeDockerApp"
         :panel-visible="mobilePanelOpen"
         @app-selected="onAppSelected"
-        @status-swipe="onStatusSwipe"
+        @status-drag="onStatusDrag"
+        @status-settle="onStatusSettle"
       />
       <div v-if="mobilePanelOpen && dockerDef" class="sf-mobile-panel">
         <Panel
@@ -441,10 +459,6 @@ function onPanelAction(a: PanelAction) {
       </div>
     </template>
 
-    <StatusBar
-      v-if="!isMobile || statusBarVisible"
-      :left="L.status.left"
-      :right="L.status.right"
-    />
+    <StatusBar :left="L.status.left" :right="L.status.right" />
   </div>
 </template>
