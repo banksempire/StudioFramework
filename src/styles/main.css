@@ -1446,13 +1446,14 @@ body.sf-dragging-row * {
      below); only the status bar floats as a separate card below it. */
   gap: 0;
   position: relative;
-  /* The iPhone signal zone (time/notch/battery strip) is PURE BLACK —
-     black blends into the bezel. The root's background shows through
-     the top safe-area padding, so a black strip is layered over the
-     inset with the dark theme color below it. */
-  background:
-    linear-gradient(#000, #000) top / 100% var(--sf-safe-top, 0px) no-repeat,
-    var(--sf-bg-dark);
+  /* PURE BLACK root: on iPhone the root's background is what shows in
+     the notch/signal strip (top safe inset), in every gap between the
+     boxes (e.g. between the dock and the status bar) and in the bottom
+     home-indicator zone — black blends into the bezel. (A conditional
+     strip over --sf-bg-dark is NOT enough: in plain Safari the inset
+     can resolve to 0 and the notch zone would show the grey theme
+     color.) */
+  background: #000;
 }
 
 /* Main area + dock = one rounded box: the top corners round, the seam
