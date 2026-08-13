@@ -1683,12 +1683,17 @@ body.sf-dragging-row * {
 }
 
 /* Mobile dock apps are SQUARE buttons matching the dock height (60px) —
-   the full bar is one row of 60×60 touch targets. */
+   the full bar is one row of 60×60 touch targets. Their SVG icons render
+   at 30×30 (1em of the 30px font-size; the svg icon scales with it). */
 .sf-docker--bottom .sf-docker-app {
   width: 60px;
   height: 60px;
   border-left: none;
   border-bottom: 2px solid transparent;
+}
+
+.sf-docker--bottom .sf-docker-app-icon {
+  font-size: 30px;
 }
 
 .sf-docker--bottom .sf-docker-app.active {
