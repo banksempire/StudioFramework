@@ -1642,23 +1642,50 @@ body.sf-dragging-row * {
   margin-left: auto;
 }
 
+/* The body scrolls; every group renders as one rounded card and the
+   cards stack with a gap between (grouped-list style, like iOS
+   Settings). Side padding leaves a gutter around the cards. */
 .sf-menu-sheet-body {
   flex: 1;
   min-height: 0;
   overflow-y: auto;
-  padding: 8px 0;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 12px;
 }
 
+/* One rounded card per group (the runs of items between separators) —
+   the same theme shape as the status bar and dock boxes. */
+.sf-menu-group {
+  flex-shrink: 0;
+  border-radius: var(--sf-radius);
+  background: var(--sf-bg-lighter);
+  border: 1px solid var(--sf-border);
+  overflow: hidden;
+}
+
+/* Rows fill the card; adjacent rows share a hairline (the menu's own
+   separators became the card boundaries). 44px is the standard
+   touch-row height — larger than the desktop 28px but compact enough
+   that several cards fit the sheet. */
 .sf-menu-sheet .sf-menu-row {
-  padding: 0 16px;
-  height: 52px;
+  padding: 0 14px;
+  height: 44px;
   border-radius: 0;
   font-size: 16px;
   gap: 10px;
 }
+.sf-menu-sheet .sf-menu-row + .sf-menu-row {
+  border-top: 1px solid var(--sf-border);
+}
+.sf-menu-sheet .sf-menu-row:active {
+  box-shadow: inset 0 0 0 999px var(--sf-hover-overlay);
+}
 
 .sf-menu-sheet .sf-menu-cell--icon {
   width: 24px;
+  font-size: 20px;
 }
 
 .sf-menu-sheet .sf-menu-cell--arrow {

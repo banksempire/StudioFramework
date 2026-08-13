@@ -89,6 +89,26 @@ const sheetItems = computed<MenuNodeDef[]>(() => {
   return top?.items?.length ? top.items : props.items;
 });
 
+/** Split the level's items into groups at the separator boundaries — each
+ *  maximal run of non-separator items becomes one rounded card (the
+ *  separators themselves are dropped; they are the card boundaries). */
+const sheetGroups = computed<MenuNodeDef[][]>(() => {
+  const groups: MenuNodeDef[][] = [];
+  let cur: MenuNodeDef[] = [];
+  for (const item of sheetItems.value) {
+    if (item.separator) {
+      if (cur.length) {
+        groups.push(cur);
+        cur = [];
+      }
+    } else {
+      cur.push(item);
+    }
+  }
+  if (cur.length) groups.push(cur);
+  return groups;
+});
+
 /** Tap a sheet row: parent rows navigate deeper, leaves select. */
 function onSheetRowClick(item: MenuNodeDef) {
   if (item.disabled || item.separator) return;
@@ -306,10 +326,12 @@ if (!props.embedded && typeof window !== 'undefined') {
         <button class="sf-menu-sheet-close" title="Close menu" @click="close"><SvgIcon name="✕" /></button>
       </div>
       <div class="sf-menu-sheet-body">
-        <template v-for="(item, i) in sheetItems" :key="item.id ?? `sep-${i}`">
-          <div v-if="item.separator" class="sf-menu-separator" />
+        <!-- One rounded card per group: the runs of items between
+             separators (separators become the card boundaries). -->
+        <div v-for="(group, gi) in sheetGroups" :key="`group-${gi}`" class="sf-menu-group">
           <div
-            v-else
+            v-for="(item, i) in group"
+            :key="item.id ?? `item-${i}`"
             class="sf-menu-row"
             :class="{ 'sf-menu-row--disabled': item.disabled }"
             @click="onSheetRowClick(item)"
@@ -325,7 +347,7 @@ if (!props.embedded && typeof window !== 'undefined') {
             </span>
             <span v-if="item.items?.length" class="sf-menu-cell sf-menu-cell--arrow"><SvgIcon name="▶" /></span>
           </div>
-        </template>
+        </div>
       </div>
       </div>
     </Teleport>
