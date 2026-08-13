@@ -683,6 +683,20 @@ body,
   color: var(--sf-text-bright);
 }
 
+/* ─── Panel content buttons (framework-level) ──────────────────────────── */
+
+/* Apps mark their panel-content buttons with .sf-panel-btn: raised
+   chrome-colored controls (L1 --sf-bar) on the panel body. Apps keep
+   their own shape (width, radius, border); the color and hover come
+   from the framework. */
+.sf-panel-btn {
+  background: var(--sf-bar);
+}
+
+.sf-panel-btn:hover {
+  box-shadow: inset 0 0 0 999px var(--sf-hover-overlay);
+}
+
 /* biome-ignore lint/style/noDescendingSpecificity: deliberate section ordering — different properties, not overrides */
 .sf-panel-empty {
   flex: 1;
