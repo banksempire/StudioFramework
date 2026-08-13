@@ -1991,6 +1991,13 @@ body.sf-dragging-row * {
   padding-right: 0;
 }
 
+/* Mobile: the panel body insets 10px from each screen edge — the header
+   and section tabs stay full-bleed, the content breathes. */
+.sf-root--mobile .sf-panel--mobile .sf-subsection-body-container,
+.sf-root--mobile .sf-panel--mobile .sf-panel-empty {
+  margin: 0 10px;
+}
+
 /* The mobile panel title centers between the two square buttons, exactly
    like the menu sheet's title (absolute between the 60px side zones). */
 .sf-root--mobile .sf-panel-title {
