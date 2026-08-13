@@ -94,7 +94,12 @@ body,
   height: 100%;
   width: 100%;
   overflow: hidden;
-  background: var(--sf-bg);
+  /* PURE BLACK document background: on iPhone this is what iOS paints in
+     the notch/status-bar zone (standalone mode with viewport-fit=cover
+     and black-translucent) and in the overscroll rubber-band areas.
+     The .sf-root paints its own theme background over everything else,
+     so only those zones ever show this color. */
+  background: #000;
   color: var(--sf-text);
   font-family: var(--sf-font);
   font-size: 16px;
@@ -1773,6 +1778,10 @@ body.sf-dragging-row * {
   flex: 1;
   min-height: 0;
   border-radius: 0;
+  /* Transparent so the overlay's background shows through: the overlay
+     layers a PURE-BLACK notch strip (env safe-area inset) over the panel
+     color — the panel's own --sf-bg-light would otherwise cover it. */
+  background: transparent;
 }
 
 /* The header's [⋯ | ✕] buttons sit flush against BOTH screen edges (⋯
