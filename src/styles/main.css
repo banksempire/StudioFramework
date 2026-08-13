@@ -1748,6 +1748,12 @@ body.sf-dragging-row * {
   flex-shrink: 0;
   border-bottom: 1px solid var(--sf-border);
   position: relative;
+  /* Same rounded top corners as the main window: the bar is the sheet's
+     first child and the sheet doesn't clip (overflow visible), so the
+     bar's own corners must round — otherwise its square corners paint
+     over the sheet's rounded ones. The arc shows the bar color, exactly
+     like the main window's arc shows the tab bar. */
+  border-radius: var(--sf-radius) var(--sf-radius) 0 0;
   /* Same chrome color as the docker (and the panel title bar) */
   background: var(--sf-bar);
 }
