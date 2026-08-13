@@ -1931,40 +1931,45 @@ body.sf-dragging-row * {
 
 /* Mobile: the status bar can be swiped away (dock swipe down) and back
    (dock swipe up). The reveal (0..1) drives the layout CONTINUOUSLY —
-   the bar follows the finger while dragging, and on release the
-   geometry springs to the snapped state (settle transition below). */
+   the main+dock box slides down over the bar while dragging, and on
+   release the geometry springs to the snapped state (settle transition
+   below). The status bar itself never moves. */
 
 /* The status bar sits at the very bottom of the mobile screen as its own
-   rounded card, and the right padding clears the device's rounded screen
-   corner (same 25px as the dock). Its layout slot = margin-top (gap) +
-   25px height + negative bottom margin, so it scales with the reveal:
-   - margin-top scales the 8px gap above the dock,
-   - the negative bottom margin shrinks the slot to 0 when hidden — the
-     flex column then gives the freed space to the shared main+dock box,
-     which grows down over the bar's spot,
-   - the bar itself stays glued to the bottom of its slot: it slides
-     below the viewport edge when hidden (clipped by the document); on
-     notched devices the transform carries it the extra safe-bottom
-     distance so it clears the home-indicator zone too. */
+   rounded card: the gap above separates it from the shared main+dock
+   box, and the right padding clears the device's rounded screen corner
+   (same 25px as the dock). It keeps a FIXED slot (gap 8px + 25px) — the
+   reveal moves the box ABOVE it, not the bar. */
 .sf-root--mobile .sf-status-bar {
-  margin-top: calc(var(--sf-status-reveal) * var(--sf-gap));
-  margin-bottom: calc(var(--sf-status-reveal) * 25px - 25px);
-  transform: translateY(calc((1 - var(--sf-status-reveal)) * var(--sf-safe-bottom, 0px)));
+  margin-top: var(--sf-gap);
   padding-right: 25px;
 }
 
+/* Hiding = the main+dock box slides DOWN over the status bar: a negative
+   bottom margin shrinks the DOCK's layout slot by (1 - reveal) * 33px,
+   the flex column hands the freed space to the workbench, and the whole
+   box (flush seam included) moves down by exactly that much — the dock's
+   bottom edge sweeps over the bar, covering it. The overlays' bottom
+   calc (60px + 33px * reveal + safe-bottom) tracks the same box. */
+.sf-root--mobile .sf-docker--bottom {
+  margin-bottom: calc(var(--sf-status-reveal) * 33px - 33px);
+  /* Paint above the status bar it slides over (the bar is a later
+     sibling and would otherwise draw on top of the overlap). */
+  position: relative;
+  z-index: 2;
+}
+
 /* Settle spring: after a swipe ends, the reveal-driven geometry animates
-   to the snapped state. Disabled while dragging, so the bar tracks the
+   to the snapped state. Disabled while dragging, so the box tracks the
    finger 1:1. */
-.sf-root--mobile .sf-status-bar,
+.sf-root--mobile .sf-docker--bottom,
 .sf-root--mobile .sf-menu-sheet,
 .sf-root--mobile .sf-mobile-panel {
   transition:
     margin 0.25s ease,
-    transform 0.25s ease,
     bottom 0.25s ease;
 }
-.sf-root--mobile.sf-status-dragging .sf-status-bar,
+.sf-root--mobile.sf-status-dragging .sf-docker--bottom,
 .sf-root--mobile.sf-status-dragging .sf-menu-sheet,
 .sf-root--mobile.sf-status-dragging .sf-mobile-panel {
   transition: none;
