@@ -1446,6 +1446,10 @@ body.sf-dragging-row * {
 .sf-root--mobile {
   --sf-safe-top: env(safe-area-inset-top, 0px);
   --sf-safe-bottom: env(safe-area-inset-bottom, 0px);
+  /* Mobile boxes get a rounder corner than the desktop 6px — 10px for
+     every rounded box (main area, dock, status bar, menu sheet, panel
+     overlay, menu group cards). */
+  --sf-radius: 10px;
   padding: var(--sf-safe-top) 0 var(--sf-safe-bottom);
   /* The dock shares ONE rounded box with the main area (square seam, see
      below); only the status bar floats as a separate card below it. */
