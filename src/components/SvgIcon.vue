@@ -224,8 +224,9 @@ const ICONS: Record<string, IconSpec> = {
     ],
   },
   '🗂': {
-    // Windows-style 2×2 grid of four squares (Workspace)
-    paths: [{ d: 'M3 3h7v7H3z' }, { d: 'M14 3h7v7h-7z' }, { d: 'M14 14h7v7h-7z' }, { d: 'M3 14h7v7H3z' }],
+    // Windows-style 2×2 grid of four squares (Workspace) — 8×8 squares
+    // from x/y 2 to 22 so the glyph fills the viewBox like the other icons
+    paths: [{ d: 'M2 2h8v8H2z' }, { d: 'M14 2h8v8h-8z' }, { d: 'M14 14h8v8h-8z' }, { d: 'M2 14h8v8H2z' }],
   },
   '💬': {
     // chat bubble: round-corner box with three dots and a narrow
