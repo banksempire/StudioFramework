@@ -228,12 +228,11 @@ const ICONS: Record<string, IconSpec> = {
     paths: [{ d: 'M3 3h7v7H3z' }, { d: 'M14 3h7v7h-7z' }, { d: 'M14 14h7v7h-7z' }, { d: 'M3 14h7v7H3z' }],
   },
   '💬': {
-    // chat bubble: rounder-corner box, three dots, and a tail drawn as two
-    // strokes meeting at a point (outlined triangle, not a solid line)
+    // chat bubble: round-corner box with three dots and a bottom-right
+    // tail — ONE continuous outline, so the tail and box share a single
+    // stroke with no seam between them
     paths: [
-      { d: 'M4 9a4 4 0 0 1 4-4h8a4 4 0 0 1 4 4v6a4 4 0 0 1-4 4H8a4 4 0 0 1-4-4V9z' },
-      { d: 'M10 19l12 3' },
-      { d: 'M20 13l2 9' },
+      { d: 'M4 9a4 4 0 0 1 4-4h8a4 4 0 0 1 4 4v4l2 9-12-3H8a4 4 0 0 1-4-4V9z' },
       { d: 'M8 12m-1.5 0a1.5 1.5 0 1 0 3 0a1.5 1.5 0 1 0-3 0', filled: true },
       { d: 'M12 12m-1.5 0a1.5 1.5 0 1 0 3 0a1.5 1.5 0 1 0-3 0', filled: true },
       { d: 'M16 12m-1.5 0a1.5 1.5 0 1 0 3 0a1.5 1.5 0 1 0-3 0', filled: true },
