@@ -1446,6 +1446,13 @@ body.sf-dragging-row * {
      below); only the status bar floats as a separate card below it. */
   gap: 0;
   position: relative;
+  /* The iPhone signal zone (time/notch/battery strip) is PURE BLACK —
+     black blends into the bezel. The root's background shows through
+     the top safe-area padding, so a black strip is layered over the
+     inset with the dark theme color below it. */
+  background:
+    linear-gradient(#000, #000) top / 100% var(--sf-safe-top, 0px) no-repeat,
+    var(--sf-bg-dark);
 }
 
 /* Main area + dock = one rounded box: the top corners round, the seam
@@ -1600,8 +1607,13 @@ body.sf-dragging-row * {
   flex-direction: column;
   /* Darker than the panels (--sf-bg-light): the menu sheet is a
      transient overlay, and the darker backdrop makes the rounded
-     group cards (--sf-bg-lighter) stand out more. */
-  background: var(--sf-bg);
+     group cards (--sf-bg-lighter) stand out more. The notch strip on
+     top is PURE BLACK like the root's — the sheet covers the signal
+     zone with its own background, so it layers a black strip over the
+     top safe inset too. */
+  background:
+    linear-gradient(#000, #000) top / 100% var(--sf-safe-top, 0px) no-repeat,
+    var(--sf-bg);
   /* The sheet covers the top safe-area zone (notch) with its own
      background — identical to the panels — while the bar stays below. */
   padding-top: var(--sf-safe-top, 0px);
@@ -1744,8 +1756,12 @@ body.sf-dragging-row * {
   display: flex;
   flex-direction: column;
   /* The overlay covers the top safe-area zone (notch); the panel body
-     fills it, so use the panel color — identical to the menu sheet. */
-  background: var(--sf-bg-light);
+     fills it, so use the panel color — identical to the menu sheet.
+     The notch strip itself is PURE BLACK (same treatment as the root
+     and the menu sheet). */
+  background:
+    linear-gradient(#000, #000) top / 100% var(--sf-safe-top, 0px) no-repeat,
+    var(--sf-bg-light);
   /* Keep the panel header below the notch */
   padding-top: var(--sf-safe-top, 0px);
   z-index: 20;
