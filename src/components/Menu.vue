@@ -23,7 +23,7 @@
  * slot + open wiring; deeper levels run in `embedded` mode (box only) and
  * share the hover state through props (root-owned refs passed down).
  */
-import { computed, inject, nextTick, onMounted, type Ref, ref, toRaw, watch } from 'vue';
+import { computed, inject, nextTick, onMounted, onUnmounted, type Ref, ref, toRaw, watch } from 'vue';
 import { kIsMobile } from '../composables/useWorkspace';
 import type { MenuNodeDef } from '../types/layout';
 import Icon from './Icon.vue';
@@ -293,6 +293,12 @@ function onDocKey(e: KeyboardEvent) {
 if (!props.embedded && typeof window !== 'undefined') {
   window.addEventListener('mousedown', onDocDown);
   window.addEventListener('keydown', onDocKey);
+  // Menus unmount (panels switch docker apps, menu bars re-render): drop
+  // the window listeners so they can't leak per mount.
+  onUnmounted(() => {
+    window.removeEventListener('mousedown', onDocDown);
+    window.removeEventListener('keydown', onDocKey);
+  });
 }
 </script>
 
