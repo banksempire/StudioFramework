@@ -228,14 +228,14 @@ const ICONS: Record<string, IconSpec> = {
     paths: [{ d: 'M3 3h7v7H3z' }, { d: 'M14 3h7v7h-7z' }, { d: 'M14 14h7v7h-7z' }, { d: 'M3 14h7v7H3z' }],
   },
   '💬': {
-    // chat bubble: round-corner box with three dots and a NARROW
-    // bottom-right tail — one continuous outline, no seam between the
-    // tail and the box
+    // chat bubble: round-corner box with three dots and a narrow
+    // bottom-right tail — fills the viewBox (18 wide box, tail to the
+    // 23,23 corner) so it reads the same size as the other dock glyphs
     paths: [
-      { d: 'M4 9a4 4 0 0 1 4-4h8a4 4 0 0 1 4 4v6l2 7-6-3H8a4 4 0 0 1-4-4V9z' },
-      { d: 'M8 12m-1.5 0a1.5 1.5 0 1 0 3 0a1.5 1.5 0 1 0-3 0', filled: true },
-      { d: 'M12 12m-1.5 0a1.5 1.5 0 1 0 3 0a1.5 1.5 0 1 0-3 0', filled: true },
-      { d: 'M16 12m-1.5 0a1.5 1.5 0 1 0 3 0a1.5 1.5 0 1 0-3 0', filled: true },
+      { d: 'M3 6a4 4 0 0 1 4-4h10a4 4 0 0 1 4 4v8l2 9-7-4H7a4 4 0 0 1-4-4V6z' },
+      { d: 'M8 10.5m-1.5 0a1.5 1.5 0 1 0 3 0a1.5 1.5 0 1 0-3 0', filled: true },
+      { d: 'M12 10.5m-1.5 0a1.5 1.5 0 1 0 3 0a1.5 1.5 0 1 0-3 0', filled: true },
+      { d: 'M16 10.5m-1.5 0a1.5 1.5 0 1 0 3 0a1.5 1.5 0 1 0-3 0', filled: true },
     ],
   },
 };
