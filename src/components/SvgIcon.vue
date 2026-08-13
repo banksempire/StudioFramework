@@ -228,9 +228,9 @@ const ICONS: Record<string, IconSpec> = {
     paths: [{ d: 'M3 3h7v7H3z' }, { d: 'M14 3h7v7h-7z' }, { d: 'M14 14h7v7h-7z' }, { d: 'M3 14h7v7H3z' }],
   },
   '💬': {
-    // chat bubble: rounded-corner box with a right-pointing tail + three dots
+    // chat bubble: rounded-corner box with a bottom tail leaning right + three dots
     paths: [
-      { d: 'M4 5a2 2 0 0 1 2-2h11a2 2 0 0 1 2 2v4l3 2-3 2v4a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V5z' },
+      { d: 'M4 5a2 2 0 0 1 2-2h11a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2h-9l4 3v-3h-6a2 2 0 0 1-2-2V5z' },
       { d: 'M8 11m-1.5 0a1.5 1.5 0 1 0 3 0a1.5 1.5 0 1 0-3 0', filled: true },
       { d: 'M12 11m-1.5 0a1.5 1.5 0 1 0 3 0a1.5 1.5 0 1 0-3 0', filled: true },
       { d: 'M16 11m-1.5 0a1.5 1.5 0 1 0 3 0a1.5 1.5 0 1 0-3 0', filled: true },
