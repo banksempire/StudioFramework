@@ -1991,8 +1991,11 @@ body.sf-dragging-row * {
   padding-right: 0;
 }
 
-/* Mobile: the panel body insets 10px from each screen edge — the header
-   and section tabs stay full-bleed, the content breathes. */
+/* Mobile: the panel body insets 10px from each screen edge — the title
+   bar stays full-bleed (its edge-to-edge buttons are by design), while
+   the section tab row and the subsection content all align to the same
+   10px gutters. */
+.sf-root--mobile .sf-panel--mobile .sf-panel-tabs-wrapper,
 .sf-root--mobile .sf-panel--mobile .sf-subsection-body-container,
 .sf-root--mobile .sf-panel--mobile .sf-panel-empty {
   margin: 0 10px;
