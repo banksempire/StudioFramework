@@ -72,6 +72,13 @@ provide(kIsMobile, isMobile);
 const mobilePanelOpen = ref(false);
 /** Fullscreen right panel opened from the mobile tile bar (mobile only). */
 const mobileRightOpen = ref(false);
+/** Mobile: the status bar can be swiped away (dock swipe down) and back
+ *  (dock swipe up). Desktop always shows it. */
+const statusBarVisible = ref(true);
+
+function onStatusSwipe(dir: 'up' | 'down') {
+  statusBarVisible.value = dir === 'up';
+}
 
 // ── Panel visibility ↔ workspace snapshots ────────────────────────────────
 // Snapshots (auto-saved layout + saved workspaces) carry the side panels'
@@ -342,7 +349,7 @@ function onPanelAction(a: PanelAction) {
 </script>
 
 <template>
-  <div class="sf-root" :class="{ 'sf-root--mobile': isMobile }">
+  <div class="sf-root" :class="{ 'sf-root--mobile': isMobile, 'sf-status-hidden': isMobile && !statusBarVisible }">
     <MenuBar
       v-if="!isMobile"
       :menus="L.menu"
@@ -408,6 +415,7 @@ function onPanelAction(a: PanelAction) {
         :active-app="activeDockerApp"
         :panel-visible="mobilePanelOpen"
         @app-selected="onAppSelected"
+        @status-swipe="onStatusSwipe"
       />
       <div v-if="mobilePanelOpen && dockerDef" class="sf-mobile-panel">
         <Panel
@@ -433,6 +441,10 @@ function onPanelAction(a: PanelAction) {
       </div>
     </template>
 
-    <StatusBar :left="L.status.left" :right="L.status.right" />
+    <StatusBar
+      v-if="!isMobile || statusBarVisible"
+      :left="L.status.left"
+      :right="L.status.right"
+    />
   </div>
 </template>

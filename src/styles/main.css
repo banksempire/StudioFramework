@@ -721,11 +721,6 @@ body,
 
 .sf-subsection {
   flex-shrink: 0;
-  box-shadow: inset 0 1px 0 var(--sf-border);
-}
-
-.sf-subsection:first-child {
-  box-shadow: none;
 }
 
 .sf-subsection-header {
@@ -1928,6 +1923,16 @@ body.sf-dragging-row * {
   right: 60px;
   text-align: center;
   pointer-events: none;
+}
+
+/* Mobile: the status bar can be swiped away (dock swipe down) and back
+   (dock swipe up). Hidden = the flex column drops it, so the shared
+   main+dock box extends to the bottom safe zone — and the overlays
+   (which stop at the main box's spot) end at the dock's top seam:
+   60px, with no status-bar gap anymore. */
+.sf-root--mobile.sf-status-hidden .sf-menu-sheet,
+.sf-root--mobile.sf-status-hidden .sf-mobile-panel {
+  bottom: calc(60px + var(--sf-safe-bottom, 0px));
 }
 
 /* The status bar sits at the very bottom of the mobile screen as its own
