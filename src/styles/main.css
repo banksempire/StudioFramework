@@ -1461,6 +1461,14 @@ body.sf-dragging-row * {
   background: #000;
 }
 
+/* The workbench is the square layer behind the rounded main box — its
+   background shows in the corner arcs of every rounded box that sits on
+   it (main box, menu sheet, panel overlays). Black, so the arcs blend
+   into the root instead of showing the grey --sf-bg-dark. */
+.sf-root--mobile .sf-workbench {
+  background: #000;
+}
+
 /* Main area + dock = one rounded box: the top corners round, the seam
    corners stay square, the dock rounds the bottom. */
 .sf-root--mobile .sf-center-group {
@@ -1611,6 +1619,10 @@ body.sf-dragging-row * {
   z-index: 40;
   display: flex;
   flex-direction: column;
+  /* Same rounded box as the main area: the sheet fills the main box's
+     spot, so it shares its shape — top corners rounded (var(--sf-radius)),
+     square corners at the seam where the dock (rounded below) meets it. */
+  border-radius: var(--sf-radius) var(--sf-radius) 0 0;
   /* Darker than the panels (--sf-bg-light): the menu sheet is a
      transient overlay, and the darker backdrop makes the rounded
      group cards (--sf-bg-lighter) stand out more. The notch strip on
@@ -1761,6 +1773,9 @@ body.sf-dragging-row * {
   bottom: calc(93px + var(--sf-safe-bottom, 0px));
   display: flex;
   flex-direction: column;
+  /* Same rounded box as the main area (see .sf-menu-sheet): top corners
+     rounded, square seam where the dock meets it. */
+  border-radius: var(--sf-radius) var(--sf-radius) 0 0;
   /* The overlay covers the top safe-area zone (notch); the panel body
      fills it, so use the panel color — identical to the menu sheet.
      The notch strip itself is PURE BLACK (same treatment as the root
