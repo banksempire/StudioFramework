@@ -1740,8 +1740,8 @@ body.sf-dragging-row * {
 }
 
 /* The status bar sits at the very bottom of the mobile screen, where the
-   rounded corner eats into the right side — pad it so the last item stays
-   clear of the curvature. */
+   rounded corner eats into the right side — pad it (same 25px as the
+   dock) so the last item stays clear of the curvature. */
 .sf-root--mobile .sf-status-bar {
-  padding-right: 50px;
+  padding-right: 25px;
 }
