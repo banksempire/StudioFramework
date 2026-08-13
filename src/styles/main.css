@@ -568,7 +568,9 @@ body,
 }
 
 .sf-panel-tab:hover {
-  box-shadow: inset 0 0 0 999px var(--sf-hover-overlay);
+  /* Same full-coverage overlay as .sf-tab:hover (background layers paint
+     under the transparent bottom border; inset shadows don't). */
+  background: linear-gradient(var(--sf-hover-overlay), var(--sf-hover-overlay)), var(--sf-control);
 }
 
 .sf-panel-tab--active {
@@ -1266,7 +1268,8 @@ body.sf-dragging-row * {
   padding: 0 12px;
   height: 100%;
   cursor: pointer;
-  background: var(--sf-bg);
+  /* L3 — tabs sit on the L1 tab strip as darker slots */
+  background: var(--sf-panel-bg);
   border-top: 2px solid transparent;
   border-bottom: 2px solid transparent;
   border-right: 1px solid var(--sf-border);
@@ -1286,7 +1289,11 @@ body.sf-dragging-row * {
 }
 
 .sf-tab:hover {
-  box-shadow: inset 0 0 0 999px var(--sf-hover-overlay);
+  /* Translucent overlay as an extra BACKGROUND layer, not an inset
+     shadow: backgrounds paint under the transparent top/bottom borders,
+     so the highlight covers the whole tab — an inset shadow is clipped
+     to the padding box and leaves 2px strips unlit. */
+  background: linear-gradient(var(--sf-hover-overlay), var(--sf-hover-overlay)), var(--sf-panel-bg);
 }
 
 .sf-tab.active {
@@ -1534,6 +1541,22 @@ body.sf-dragging-row * {
   border-radius: var(--sf-radius) var(--sf-radius) 0 0;
 }
 
+/* Mobile: no L0 box outlines — the shell is full-bleed. The main area
+   drops its border and keeps only the top corners rounded, so it sits
+   flush on the borderless dock; together they read as one box. */
+.sf-root--mobile .sf-workspace {
+  border: none;
+  border-radius: var(--sf-radius) var(--sf-radius) 0 0;
+}
+
+.sf-root--mobile .sf-docker {
+  border: none;
+}
+
+.sf-root--mobile .sf-panel {
+  border: none;
+}
+
 /* All title bars share ONE height in mobile: the workspace bar, and the
    panels' own header + section tabs all use 60px (thumb-friendly,
    visually consistent). */
@@ -1605,11 +1628,33 @@ body.sf-dragging-row * {
 
 /* The last button in each bar keeps margin-right: 0 — otherwise its box
    (and right border) would land 1px past the bar's edge. The overlap
-   still happens because the PRECEDING button's -1px margin pulls it in. */
+   still happens because the PRECEDING button's -1px margin pulls it in.
+   (.sf-mobile-tab-close also counts when the right-panel toggle is
+   absent — then it IS the last button.) */
 .sf-root--mobile .sf-tile-tabs .sf-mobile-rp-btn,
+.sf-root--mobile .sf-tile-tabs .sf-mobile-tab-close:last-child,
 .sf-root--mobile .sf-panel-close-btn,
 .sf-root--mobile .sf-menu-sheet-close {
   margin-right: 0;
+}
+
+/* Borders only BETWEEN elements: the first button of a bar drops its
+   left border and the last one its right border, so a bar never paints
+   a line at the main window's edge — only at the internal boundaries
+   between adjacent buttons. (The sheet ✕ keeps its LEFT border: the
+   centered title text precedes it, so that side is an internal
+   boundary.) */
+.sf-root--mobile .sf-tile-tabs .sf-mobile-menu-btn,
+.sf-root--mobile .sf-panel-header-btn,
+.sf-root--mobile .sf-menu-sheet-back {
+  border-left: none;
+}
+
+.sf-root--mobile .sf-tile-tabs .sf-mobile-rp-btn,
+.sf-root--mobile .sf-tile-tabs .sf-mobile-tab-close:last-child,
+.sf-root--mobile .sf-panel-close-btn,
+.sf-root--mobile .sf-menu-sheet-close {
+  border-right: none;
 }
 
 /* The ⋯ is the first flex item and stays flush LEFT; the ✕ (last flex
