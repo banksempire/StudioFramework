@@ -313,7 +313,8 @@ const WS = '.sf-workspace';
     'panel safe-area: covers the notch zone, header below it, same bg as the sheet',
     Math.round(safePanel.y) === 0 &&
       Math.round(safePanelHeader.y) === 44 &&
-      safePanelBg === 'rgb(37, 37, 38)',
+      // L3 panel content color (--sf-panel-bg #101010)
+      safePanelBg === 'rgb(16, 16, 16)',
   );
   await page.evaluate(() => {
     const root = document.querySelector('.sf-root--mobile');
