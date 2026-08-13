@@ -228,12 +228,12 @@ const ICONS: Record<string, IconSpec> = {
     paths: [{ d: 'M3 3h7v7H3z' }, { d: 'M14 3h7v7h-7z' }, { d: 'M14 14h7v7h-7z' }, { d: 'M3 14h7v7H3z' }],
   },
   '💬': {
-    // chat bubble: rounded-corner box with a tail + three dots
+    // chat bubble: rounded-corner box with a right-pointing tail + three dots
     paths: [
-      { d: 'M4 6a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v7a2 2 0 0 1-2 2h-5l-4 4v-4H6a2 2 0 0 1-2-2V6z' },
-      { d: 'M8 9.5m-1.5 0a1.5 1.5 0 1 0 3 0a1.5 1.5 0 1 0-3 0', filled: true },
-      { d: 'M12 9.5m-1.5 0a1.5 1.5 0 1 0 3 0a1.5 1.5 0 1 0-3 0', filled: true },
-      { d: 'M16 9.5m-1.5 0a1.5 1.5 0 1 0 3 0a1.5 1.5 0 1 0-3 0', filled: true },
+      { d: 'M4 5a2 2 0 0 1 2-2h11a2 2 0 0 1 2 2v4l3 2-3 2v4a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V5z' },
+      { d: 'M8 11m-1.5 0a1.5 1.5 0 1 0 3 0a1.5 1.5 0 1 0-3 0', filled: true },
+      { d: 'M12 11m-1.5 0a1.5 1.5 0 1 0 3 0a1.5 1.5 0 1 0-3 0', filled: true },
+      { d: 'M16 11m-1.5 0a1.5 1.5 0 1 0 3 0a1.5 1.5 0 1 0-3 0', filled: true },
     ],
   },
 };
