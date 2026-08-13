@@ -270,8 +270,10 @@ function moveItem(id: string, dir: -1 | 1) {
   flex-shrink: 0;
 }
 
-.sf-ws-btn:hover {
-  background: var(--sf-bg-lighter);
+@media (hover: hover) {
+  .sf-ws-btn:hover {
+    background: var(--sf-bg-lighter);
+  }
 }
 
 .sf-ws-btn:disabled {
@@ -285,8 +287,10 @@ function moveItem(id: string, dir: -1 | 1) {
   color: var(--sf-text-on-accent);
 }
 
-.sf-ws-btn--primary:hover {
-  background: var(--sf-accent-dim);
+@media (hover: hover) {
+  .sf-ws-btn--primary:hover {
+    background: var(--sf-accent-dim);
+  }
 }
 
 .sf-ws-error {
@@ -316,8 +320,10 @@ function moveItem(id: string, dir: -1 | 1) {
   cursor: pointer;
 }
 
-.sf-ws-item:hover {
-  box-shadow: inset 0 0 0 999px var(--sf-hover-overlay);
+@media (hover: hover) {
+  .sf-ws-item:hover {
+    box-shadow: inset 0 0 0 999px var(--sf-hover-overlay);
+  }
 }
 
 .sf-ws-item-main {
