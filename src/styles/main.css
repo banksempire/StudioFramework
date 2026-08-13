@@ -44,7 +44,8 @@
      own background (selected theme-blue items keep their color) — painted
      via an inset box-shadow overlay in every :hover rule. */
   --sf-hover-overlay: rgba(255, 255, 255, 0.06);
-  --sf-border: #3c3c3c;
+  /* L0 — thin segregation lines: borders, tile seams, tab separators. */
+  --sf-border: #3a3a3a;
   --sf-text: #cccccc;
   --sf-text-muted: #858585;
   --sf-text-bright: #e0e0e0;
@@ -65,6 +66,14 @@
   --sf-selection: #264f78;
   --sf-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
   --sf-text-on-accent: #fff;
+  /* L1 — chrome surfaces: docker, menu bar, panel/tile title bars, menu
+     sheet bar, and buttons inside panels all share it. */
+  --sf-bar: #292929;
+  /* L2 — panel section selector (bar + tab buttons), raised cards. */
+  --sf-control: #212121;
+  /* L3 — panel content area (below the chrome bars) and the mobile menu
+     sheet body. */
+  --sf-panel-bg: #101010;
   /* Semantic colors — theme overrides replace these, everything else
      derives from them (translucent variants use color-mix). */
   --sf-danger: #f48771; /* error / destructive text */
@@ -132,10 +141,12 @@ body,
   display: flex;
   align-items: center;
   height: 25px;
-  background: var(--sf-bg-lighter);
+  background: var(--sf-bar);
   flex-shrink: 0;
   -webkit-app-region: drag;
   border-radius: var(--sf-radius);
+  /* L0 outline around the rounded box */
+  border: 2px solid var(--sf-border);
 }
 
 .sf-menu-items {
@@ -350,16 +361,21 @@ body,
   display: flex;
   flex-direction: column;
   width: 48px;
-  background: var(--sf-bg-lighter);
+  background: var(--sf-bar);
   flex-shrink: 0;
   padding-top: 4px;
   gap: 2px;
   border-radius: var(--sf-radius);
+  /* L0 outline around the rounded box (the right edge drops when the
+     left panel shares the box — see the :has rule below) */
+  border: 2px solid var(--sf-border);
 }
 
 /* When the left panel is visible, Docker's right corners are square (shared box) */
 .sf-left-group:has(.sf-panel:not(.sf-panel--hidden)) .sf-docker {
   border-radius: var(--sf-radius) 0 0 var(--sf-radius);
+  /* no seam line between docker and panel: one shared outline */
+  border-right: none;
 }
 
 .sf-left-group {
@@ -423,21 +439,29 @@ body,
    ═══════════════════════════════════════════════════════════════════════════ */
 
 .sf-panel {
-  background: var(--sf-bg-light);
+  background: var(--sf-panel-bg);
   display: flex;
   flex-direction: column;
   flex-shrink: 0;
   position: relative;
   min-width: 100px;
   border-radius: var(--sf-radius);
+  /* L0 outline around the rounded box (the left panel drops its left
+     edge — the docker shares the box; the right panel keeps its left
+     border as the workspace seam) */
+  border: 2px solid var(--sf-border);
 }
 
 .sf-panel--left {
   border-radius: 0 var(--sf-radius) var(--sf-radius) 0;
+  /* no seam line between docker and panel: one shared outline */
+  border-left: none;
 }
 
 .sf-panel--right {
-  border-radius: 0;
+  /* Right corners round to match .sf-center-group's radius, so the
+     outline follows the curve; the left edge stays square (seam). */
+  border-radius: 0 var(--sf-radius) var(--sf-radius) 0;
   border-left: 1px solid var(--sf-border);
 }
 
@@ -485,6 +509,7 @@ body,
   justify-content: space-between;
   padding: 0 12px;
   height: 30px;
+  background: var(--sf-bar);
   font-size: 16px;
   font-weight: 600;
   text-transform: uppercase;
@@ -514,7 +539,7 @@ body,
   display: flex;
   align-items: center;
   height: 30px;
-  background: var(--sf-bg-lighter);
+  background: var(--sf-control);
   border-bottom: 1px solid var(--sf-border);
   overflow: hidden;
 }
@@ -523,7 +548,9 @@ body,
   flex: 1 1 0%;
   min-width: max-content;
   height: 100%;
-  background: none;
+  /* Part of the section-selector bar, not a "panel button": stays the
+     same color as the bar. */
+  background: var(--sf-control);
   border: none;
   border-bottom: 2px solid transparent;
   color: var(--sf-text);
@@ -636,8 +663,10 @@ body,
 
 /* ─── Panel header button (⋯ visibility toggle) ─────────────────────────── */
 
+/* Same color as the title bar it sits on (--sf-bar): the ⋯ reads as a
+   flush part of the bar, not a raised control. */
 .sf-panel-header-btn {
-  background: none;
+  background: var(--sf-bar);
   border: none;
   color: var(--sf-text);
   cursor: pointer;
@@ -694,6 +723,13 @@ body,
   font-weight: 600;
   letter-spacing: 0.5px;
   user-select: none;
+  /* Sub-section title bars pin to the top while the panel body scrolls
+     (opaque panel-body background so content never shows through
+     underneath) — desktop and mobile alike. */
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  background: var(--sf-panel-bg);
 }
 
 /* The whole title bar is the expand/collapse toggle — hover highlights it
@@ -1048,6 +1084,20 @@ body.sf-dragging-row * {
   min-height: 0;
   background: var(--sf-bg-dark);
   overflow: hidden;
+  /* L0 outline around the box (the right edge drops while a right panel
+     shares the box — see the :has rule below). The corners round to
+     match .sf-center-group's own radius, so the outline follows the
+     curve instead of being clipped by the wrapper. */
+  border: 2px solid var(--sf-border);
+  border-radius: var(--sf-radius);
+}
+
+/* Workspace + right panel share one outline: the right panel's left
+   border is the seam, so the workspace drops its right border and keeps
+   only its left corners rounded while a right panel is visible. */
+.sf-workspace:has(+ .sf-panel:not(.sf-panel--hidden)) {
+  border-right: none;
+  border-radius: var(--sf-radius) 0 0 var(--sf-radius);
 }
 
 .sf-workspace-inner {
@@ -1145,7 +1195,7 @@ body.sf-dragging-row * {
   display: flex;
   align-items: center;
   height: 30px;
-  background: var(--sf-bg-light);
+  background: var(--sf-bar);
   flex-shrink: 0;
   /* Never scrolls: when tabs don't fit they compress (see .sf-tab), so
      every tab stays visible and reachable. */
@@ -1618,15 +1668,15 @@ body.sf-dragging-row * {
      spot, so it shares its shape — top corners rounded (var(--sf-radius)),
      square corners at the seam where the dock (rounded below) meets it. */
   border-radius: var(--sf-radius) var(--sf-radius) 0 0;
-  /* Darker than the panels (--sf-bg-light): the menu sheet is a
-     transient overlay, and the darker backdrop makes the rounded
-     group cards (--sf-bg-lighter) stand out more. The notch strip on
-     top is PURE BLACK like the root's — the sheet covers the signal
+  /* Same body color as the panels (--sf-panel-bg): the menu sheet is a
+     transient overlay mirroring the panel look, and the slightly
+     lighter group cards (--sf-control) stand out on it. The notch strip
+     on top is PURE BLACK like the root's — the sheet covers the signal
      zone with its own background, so it layers a black strip over the
      top safe inset too. */
   background:
     linear-gradient(#000, #000) top / 100% var(--sf-safe-top, 0px) no-repeat,
-    var(--sf-bg);
+    var(--sf-panel-bg);
   /* The sheet covers the top safe-area zone (notch) with its own
      background — identical to the panels — while the bar stays below. */
   padding-top: var(--sf-safe-top, 0px);
@@ -1639,6 +1689,8 @@ body.sf-dragging-row * {
   flex-shrink: 0;
   border-bottom: 1px solid var(--sf-border);
   position: relative;
+  /* Same chrome color as the docker (and the panel title bar) */
+  background: var(--sf-bar);
 }
 
 /* Center-aligned title between the two square buttons (they reserve
@@ -1684,11 +1736,12 @@ body.sf-dragging-row * {
 }
 
 /* One rounded card per group (the runs of items between separators) —
-   the same theme shape as the status bar and dock boxes. */
+   the same theme shape as the status bar and dock boxes, raised with
+   the control color like the section selector bar. */
 .sf-menu-group {
   flex-shrink: 0;
   border-radius: var(--sf-radius);
-  background: var(--sf-bg-lighter);
+  background: var(--sf-control);
   border: 1px solid var(--sf-border);
   overflow: hidden;
 }
@@ -1734,7 +1787,8 @@ body.sf-dragging-row * {
   padding: 0 25px;
   gap: 2px;
   border-radius: 0 0 var(--sf-radius) var(--sf-radius);
-  background: var(--sf-bg-lighter);
+  /* Same chrome color as the desktop docker */
+  background: var(--sf-bar);
 }
 
 /* Mobile dock apps are SQUARE buttons matching the dock height (60px) —
@@ -1777,7 +1831,7 @@ body.sf-dragging-row * {
      and the menu sheet). */
   background:
     linear-gradient(#000, #000) top / 100% var(--sf-safe-top, 0px) no-repeat,
-    var(--sf-bg-light);
+    var(--sf-panel-bg);
   /* Keep the panel header below the notch */
   padding-top: var(--sf-safe-top, 0px);
   z-index: 20;
@@ -1809,15 +1863,6 @@ body.sf-dragging-row * {
   right: 60px;
   text-align: center;
   pointer-events: none;
-}
-
-/* Sub-section title bars stick to the top while the panel body scrolls
-   (opaque background so content never shows through underneath). */
-.sf-root--mobile .sf-subsection-header {
-  position: sticky;
-  top: 0;
-  z-index: 1;
-  background: var(--sf-bg-light);
 }
 
 /* The status bar sits at the very bottom of the mobile screen as its own
