@@ -1598,7 +1598,10 @@ body.sf-dragging-row * {
   z-index: 40;
   display: flex;
   flex-direction: column;
-  background: var(--sf-bg-light);
+  /* Darker than the panels (--sf-bg-light): the menu sheet is a
+     transient overlay, and the darker backdrop makes the rounded
+     group cards (--sf-bg-lighter) stand out more. */
+  background: var(--sf-bg);
   /* The sheet covers the top safe-area zone (notch) with its own
      background — identical to the panels — while the bar stays below. */
   padding-top: var(--sf-safe-top, 0px);
