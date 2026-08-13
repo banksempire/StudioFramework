@@ -1992,11 +1992,15 @@ body.sf-dragging-row * {
 }
 
 /* Mobile: the panel body insets 10px from each screen edge — the title
-   bar stays full-bleed (its edge-to-edge buttons are by design), while
-   the section tab row and the subsection content all align to the same
-   10px gutters. */
-.sf-root--mobile .sf-panel--mobile .sf-panel-tabs-wrapper,
-.sf-root--mobile .sf-panel--mobile .sf-subsection-body-container,
+   bar AND the section selector row stay full-bleed (both are chrome
+   rows; their edge-to-edge buttons/tabs are by design). The body uses
+   PADDING, not margin: the scrollbar of the scroll container sits at
+   the container's own edge, so a margin would drag it 10px inward —
+   padding keeps it flush while the content clears it. */
+.sf-root--mobile .sf-panel--mobile .sf-subsection-body-container {
+  padding: 0 10px;
+}
+
 .sf-root--mobile .sf-panel--mobile .sf-panel-empty {
   margin: 0 10px;
 }
