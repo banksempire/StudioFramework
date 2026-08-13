@@ -1441,12 +1441,6 @@ body.sf-dragging-row * {
 .sf-root--mobile {
   --sf-safe-top: env(safe-area-inset-top, 0px);
   --sf-safe-bottom: env(safe-area-inset-bottom, 0px);
-  /* Height of the PURE-BLACK status strip that overlays layer over the
-     notch zone. env() alone is not enough: in plain Safari the inset
-     reports 0 (it only reports in standalone/fullscreen), yet the page
-     still draws under the notch — so the strip is at least the iPhone
-     status-bar height (47px) and grows with the reported inset. */
-  --sf-status-strip: max(env(safe-area-inset-top, 0px), 47px);
   padding: var(--sf-safe-top) 0 var(--sf-safe-bottom);
   /* The dock shares ONE rounded box with the main area (square seam, see
      below); only the status bar floats as a separate card below it. */
@@ -1617,10 +1611,9 @@ body.sf-dragging-row * {
      group cards (--sf-bg-lighter) stand out more. The notch strip on
      top is PURE BLACK like the root's — the sheet covers the signal
      zone with its own background, so it layers a black strip over the
-     top safe inset (min. iPhone status-bar height, see
-     --sf-status-strip). */
+     top safe inset too. */
   background:
-    linear-gradient(#000, #000) top / 100% var(--sf-status-strip, 47px) no-repeat,
+    linear-gradient(#000, #000) top / 100% var(--sf-safe-top, 0px) no-repeat,
     var(--sf-bg);
   /* The sheet covers the top safe-area zone (notch) with its own
      background — identical to the panels — while the bar stays below. */
@@ -1766,9 +1759,9 @@ body.sf-dragging-row * {
   /* The overlay covers the top safe-area zone (notch); the panel body
      fills it, so use the panel color — identical to the menu sheet.
      The notch strip itself is PURE BLACK (same treatment as the root
-     and the menu sheet, min. iPhone status-bar height). */
+     and the menu sheet). */
   background:
-    linear-gradient(#000, #000) top / 100% var(--sf-status-strip, 47px) no-repeat,
+    linear-gradient(#000, #000) top / 100% var(--sf-safe-top, 0px) no-repeat,
     var(--sf-bg-light);
   /* Keep the panel header below the notch */
   padding-top: var(--sf-safe-top, 0px);
@@ -1780,10 +1773,6 @@ body.sf-dragging-row * {
   flex: 1;
   min-height: 0;
   border-radius: 0;
-  /* Transparent so the overlay's background shows through: the overlay
-     layers a PURE-BLACK notch strip over the panel color — the panel's
-     own --sf-bg-light would otherwise cover the strip. */
-  background: transparent;
 }
 
 /* The header's [⋯ | ✕] buttons sit flush against BOTH screen edges (⋯
