@@ -1531,7 +1531,9 @@ body.sf-dragging-row * {
   background: var(--sf-accent);
   color: var(--sf-text-on-accent);
   font-size: 16px;
-  padding: 0 10px;
+  /* 25px left inset matches the dock's side padding — items (e.g. the
+     connectivity indicator) keep clear of the rounded corner */
+  padding: 0 10px 0 25px;
   flex-shrink: 0;
   border-radius: var(--sf-radius);
 }
