@@ -54,9 +54,10 @@ export interface WorkspaceTabDef {
   /** props passed to the content renderer component */
   props?: Record<string, unknown>;
   /**
-   * Extra CSS class(es) applied to the tab element. Host apps use this for
-   * per-tab visual state (e.g. a dimmed "preview" tab) — the framework only
-   * applies the string, it never styles it.
+   * Extra CSS class(es) applied to the tab element, and (mobile mode) to
+   * the title-bar label that represents the active tab. Host apps use this
+   * for per-tab visual state (e.g. a dimmed "preview" tab) — the framework
+   * only applies the string, it never styles it.
    */
   tabClass?: string;
   /**

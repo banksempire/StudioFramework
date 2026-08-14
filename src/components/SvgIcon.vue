@@ -155,6 +155,11 @@ const ICONS: Record<string, IconSpec> = {
     // filled dot (menu single-select mark)
     paths: [{ d: 'M12 12m-3 0a3 3 0 1 0 6 0a3 3 0 1 0-6 0', filled: true }],
   },
+  '◉': {
+    // large filled dot — status indicators (16-unit circle so the glyph
+    // fills the viewBox like the other icons)
+    paths: [{ d: 'M12 12m-8 0a8 8 0 1 0 16 0a8 8 0 1 0-16 0', filled: true }],
+  },
   '–': {
     // dash (tree checkbox mid state)
     paths: [{ d: 'M7 12h10' }],

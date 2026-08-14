@@ -169,7 +169,10 @@ function onTileMousedown() {
             ><SvgIcon name="☰" /></button>
           </template>
         </Menu>
-        <span class="sf-mobile-tab-label">{{ activeTabLabel || 'No tab open' }}</span>
+        <span class="sf-mobile-tab-label" :class="activeTab?.tabClass">
+          <Icon v-if="activeTab?.icon" class="sf-mobile-tab-icon" :icon="activeTab.icon" />
+          <span class="sf-mobile-tab-text">{{ activeTabLabel || 'No tab open' }}</span>
+        </span>
         <button
           class="sf-mobile-tab-close"
           title="Close tab"
