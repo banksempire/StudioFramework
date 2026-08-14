@@ -44,8 +44,9 @@ const WS = '.sf-workspace';
   const activeTabLabel = () => page.locator('.sf-tab.active .sf-tab-label').first().textContent();
   /** Mobile compact bar: the active-tab label (not the desktop strip). */
   const mobileBarLabel = () => page.locator('.sf-mobile-tab-label').textContent();
+  /** Tapping the active-tab label opens the tab-list menu. */
   const mobileSelectorItems = async () => {
-    await page.locator('.sf-mobile-tab-selector').click();
+    await page.locator('.sf-mobile-tab-label').click();
     await page.waitForTimeout(200);
     return page.locator('.sf-menu-row .sf-menu-cell--label').allTextContents();
   };
@@ -97,11 +98,11 @@ const WS = '.sf-workspace';
   report('mobile: right panel hidden', (await page.locator('.sf-panel--right').count()) === 0);
   report('mobile: ONE tile', (await tileCount()) === 1);
   report(
-    'mobile bar: [⋯ menu | selector | active tab | close | right panel]',
+    'mobile bar: [⋯ menu | active tab (tap opens the tab list) | right panel]',
     (await page.locator('.sf-mobile-menu-btn').count()) === 1 &&
-      (await page.locator('.sf-mobile-tab-selector').count()) === 1 &&
+      (await page.locator('.sf-mobile-tab-selector').count()) === 0 &&
       (await page.locator('.sf-mobile-tab-label').count()) === 1 &&
-      (await page.locator('.sf-mobile-tab-close').count()) === 1 &&
+      (await page.locator('.sf-mobile-tab-close').count()) === 0 &&
       (await page.locator('.sf-mobile-rp-btn').count()) === 1,
   );
   report("mobile bar: shows the focused tile's active tab", allTabs.includes(await mobileBarLabel()));
@@ -220,26 +221,20 @@ const WS = '.sf-workspace';
   await page.waitForTimeout(200);
   report('✕ closes the sheet', (await page.locator('.sf-menu-sheet').count()) === 0);
 
-  // Tab selector: lists ALL tabs in visual order; selecting routes to the
-  // REAL tile behind the tab (survives the switch back to desktop).
+  // Tab selector: tapping the ACTIVE-TAB LABEL opens a Menu listing ALL
+  // tabs in visual order; selecting routes to the REAL tile behind the
+  // tab (survives the switch back to desktop).
   report(
-    'selector lists all tabs in order',
+    'label tap lists all tabs in order',
     JSON.stringify(await mobileSelectorItems()) === JSON.stringify(allTabs),
   );
   await page.locator('.sf-menu-row', { hasText: 'styles.css' }).click();
   await page.waitForTimeout(200);
   report('selecting a tab activates it', (await mobileBarLabel()) === 'styles.css');
-
-  // Close button: closes the ACTIVE tab (routed to the real tree).
-  await page.locator('.sf-mobile-tab-close').click();
+  // Pick another tab directly (reopen the menu, then a row click both
+  // selects and closes).
+  await page.locator('.sf-mobile-tab-label').click();
   await page.waitForTimeout(200);
-  const afterCloseTiles = [desktopTiles[0].filter((t) => t !== 'styles.css'), desktopTiles[1]];
-  report(
-    '✕ closes the active tab (4 tabs left)',
-    JSON.stringify(await mobileSelectorItems()) === JSON.stringify(afterCloseTiles.flat()),
-  );
-  // The selector menu is still open from the item-count check — pick the
-  // next tab directly (a row click both selects and closes).
   await page.locator('.sf-menu-row', { hasText: 'layout.json' }).click();
   await page.waitForTimeout(200);
   report('activation survives (layout.json active)', (await mobileBarLabel()) === 'layout.json');
@@ -340,10 +335,10 @@ const WS = '.sf-workspace';
   // ── Back to desktop: the tile tree resumes exactly ──────────────────────
   await resizeTo(1300);
   report(
-    'tile structure resumes (2 tiles, styles.css closed)',
+    'tile structure resumes (2 tiles, all 5 tabs intact)',
     (await tileCount()) === 2 &&
-      JSON.stringify(await tileTabs(0)) === JSON.stringify(afterCloseTiles[0]) &&
-      JSON.stringify(await tileTabs(1)) === JSON.stringify(afterCloseTiles[1]),
+      JSON.stringify(await tileTabs(0)) === JSON.stringify(desktopTiles[0]) &&
+      JSON.stringify(await tileTabs(1)) === JSON.stringify(desktopTiles[1]),
   );
   report(
     'menu bar + status bar back',

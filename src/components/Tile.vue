@@ -49,18 +49,14 @@ onBeforeUnmount(() => {
 const activeTab = computed(() => (props.tile.activeId ? (ws.tabDefs[props.tile.activeId] ?? null) : null));
 
 // ── Mobile compact bar (synthetic flat tile only) ─────────────────────────
-// The mobile title bar is NOT a tab strip: [tab selector | active tab |
-// close | right-panel expand]. The selector lists every tab (visual
-// order); selecting routes to the real tile behind the tab. The close
-// button closes the ACTIVE tab; the right-panel button toggles the right
-// panel fullscreen (rpToggle, provided by Workspace.vue).
+// The mobile title bar is NOT a tab strip: [⋯ menu | active tab | right-
+// panel expand]. Tapping the active-tab label opens a Menu listing every
+// tab (visual order); selecting routes to the real tile behind the tab.
+// The right-panel button toggles the right panel fullscreen (rpToggle,
+// provided by Workspace.vue).
 
 const tabMenuOpen = ref(false);
 const activeTabLabel = computed(() => activeTab.value?.label ?? '');
-const activeTabCloseable = computed(() => {
-  const id = props.tile.activeId;
-  return !!id && ws.tabDefs[id]?.closeable !== false;
-});
 const tabSelectorItems = computed<MenuNodeDef[]>(() =>
   props.tile.tabs.map((id) => ({
     id,
@@ -75,12 +71,6 @@ function onTabSelectorSelect(item: MenuNodeDef) {
   onTabClick(item.id);
 }
 
-function onCloseActive() {
-  const id = props.tile.activeId;
-  if (!id) return;
-  if (ws.tabDefs[id]?.closeable === false) return;
-  ws.ops.closeTab(id);
-}
 const contentComp = computed(() => {
   const content = activeTab.value?.content;
   if (!content) return null;
@@ -136,10 +126,12 @@ function onTileMousedown() {
     <!-- Tab strip (desktop) / compact bar (mobile flat tile) -->
     <div class="sf-tile-tabs">
       <template v-if="synthetic">
-        <!-- Mobile: [⋯ menu | tab selector | active tab | close | right
+        <!-- Mobile: [⋯ menu | active tab (tap opens the tab list) | right
              panel] — the ⋯ button opens the layout's menu tree (the same
-             menus the desktop MenuBar shows), dispatching the same
-             actions. -->
+             menus the desktop MenuBar shows); tapping the active-tab
+             label opens a Menu listing every tab (visual order);
+             selecting routes to the real tile behind the tab; the last
+             button toggles the right panel fullscreen. -->
         <Menu
           v-if="titleBarMenus"
           :items="titleBarMenus.menus"
@@ -163,22 +155,16 @@ function onTileMousedown() {
         >
           <template #trigger="{ toggle }">
             <button
-              class="sf-mobile-tab-selector"
+              class="sf-mobile-tab-label"
+              :class="activeTab?.tabClass"
               title="Tabs"
               @click.stop="toggle"
-            ><SvgIcon name="☰" /></button>
+            >
+              <Icon v-if="activeTab?.icon" class="sf-mobile-tab-icon" :icon="activeTab.icon" />
+              <span class="sf-mobile-tab-text">{{ activeTabLabel || 'No tab open' }}</span>
+            </button>
           </template>
         </Menu>
-        <span class="sf-mobile-tab-label" :class="activeTab?.tabClass">
-          <Icon v-if="activeTab?.icon" class="sf-mobile-tab-icon" :icon="activeTab.icon" />
-          <span class="sf-mobile-tab-text">{{ activeTabLabel || 'No tab open' }}</span>
-        </span>
-        <button
-          class="sf-mobile-tab-close"
-          title="Close tab"
-          :disabled="!activeTabCloseable"
-          @click="onCloseActive"
-        ><SvgIcon name="✕" /></button>
         <div v-if="rpToggle" class="sf-mobile-rp-wrap">
           <button
             class="sf-mobile-rp-btn"

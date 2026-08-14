@@ -1696,11 +1696,8 @@ body.sf-dragging-row * {
 
 /* The last button in each bar keeps margin-right: 0 — otherwise its box
    (and right border) would land 1px past the bar's edge. The overlap
-   still happens because the PRECEDING button's -1px margin pulls it in.
-   (.sf-mobile-tab-close also counts when the right-panel toggle is
-   absent — then it IS the last button.) */
+   still happens because the PRECEDING button's -1px margin pulls it in. */
 .sf-root--mobile .sf-tile-tabs .sf-mobile-rp-btn,
-.sf-root--mobile .sf-tile-tabs .sf-mobile-tab-close:last-child,
 .sf-root--mobile .sf-panel-close-btn,
 .sf-root--mobile .sf-menu-sheet-close {
   margin-right: 0;
@@ -1719,7 +1716,6 @@ body.sf-dragging-row * {
 }
 
 .sf-root--mobile .sf-tile-tabs .sf-mobile-rp-btn,
-.sf-root--mobile .sf-tile-tabs .sf-mobile-tab-close:last-child,
 .sf-root--mobile .sf-panel-close-btn,
 .sf-root--mobile .sf-menu-sheet-close {
   border-right: none;
