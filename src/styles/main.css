@@ -1360,6 +1360,17 @@ body.sf-dragging-row * {
   font-size: 16px;
 }
 
+/* Reserved icon slot: every tab keeps the [icon|text] shape even without
+   an icon — the 16px column is always there (and can host animated
+   indicators, e.g. a pulsing status dot). */
+.sf-tab-icon-slot {
+  width: 16px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
 .sf-tab-label {
   min-width: 0;
   overflow: hidden;
@@ -1744,6 +1755,15 @@ body.sf-dragging-row * {
 
 .sf-mobile-tab-icon {
   font-size: 16px;
+  flex-shrink: 0;
+}
+
+/* Same reserved-icon-slot rule for the mobile title-bar label. */
+.sf-mobile-tab-icon-slot {
+  width: 16px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   flex-shrink: 0;
 }
 

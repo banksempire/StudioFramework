@@ -163,7 +163,9 @@ function onTileMousedown() {
               :class="activeTab?.tabClass"
               @click.stop="toggle"
             >
-              <Icon v-if="activeTab?.icon" class="sf-mobile-tab-icon" :icon="activeTab.icon" />
+              <span class="sf-mobile-tab-icon-slot">
+                <Icon v-if="activeTab?.icon" class="sf-mobile-tab-icon" :icon="activeTab.icon" />
+              </span>
               <span class="sf-mobile-tab-text">{{ activeTabLabel || 'No tab open' }}</span>
             </span>
           </template>
@@ -204,7 +206,12 @@ function onTileMousedown() {
           @dragstart="onTabDragStart($event, tabId)"
           @dragend="ws.endDrag"
         >
-          <Icon v-if="ws.tabDefs[tabId]?.icon" class="sf-tab-icon" :icon="ws.tabDefs[tabId].icon" />
+          <!-- The icon slot is ALWAYS reserved (16px): tabs line up as
+               [icon|text] even when a tab has no icon, and the slot can
+               host animated indicators (e.g. a pulsing status dot). -->
+          <span class="sf-tab-icon-slot">
+            <Icon v-if="ws.tabDefs[tabId]?.icon" class="sf-tab-icon" :icon="ws.tabDefs[tabId].icon" />
+          </span>
           <span class="sf-tab-label">{{ ws.tabDefs[tabId]?.label ?? tabId }}</span>
           <span
             v-if="ws.tabDefs[tabId]?.closeable !== false"
