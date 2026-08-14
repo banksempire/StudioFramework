@@ -151,7 +151,7 @@ via the `kWorkspace` injection key:
 | `minTileWidth` / `minTileHeight` | `number` | Min sizes from the layout |
 | `ops.activateTab(tileId, tabId)` | | Activate a tab and focus its tile |
 | `ops.closeTab(tabId)` | | Close a tab anywhere in the workspace |
-| `ops.newTab(tileId)` | | Append an "Untitled" tab (or run the app's `setNewTabHandler` override) |
+| `ops.newTab(tileId)` | | Append an "Untitled" tab (or run the app's `setNewTabHandler` override) — programmatic only: the tab strip has no "+" button |
 | `ops.splitTile(tileId, dir, side, tabId)` | | DnD split (root-group or nested) |
 | `ops.moveTab(tabId, targetTileId, index)` | | Move a tab across/within roots |
 | `ops.setRatio(splitId, ratio)` | | Set a tree split's ratio (clamped) |
@@ -160,8 +160,8 @@ via the `kWorkspace` injection key:
 | `ops.focusTile(tileId)` | | Focus a tile |
 | `dnd` | `DndState` | Drag state: `dragging`, `tabId`, `sourceTileId`, `fromIndex`, `tileId`, `zone`, `index`, `preview`, `glow`, `indicator` |
 | `registerTileEl(id, el)` / `tileEls` | | Tile element registry for hit testing |
-| `newTabTitle` | `string` | Tooltip of the tile-strip "+" button (default "New file") |
-| `setNewTabHandler(handler, title?)` | | Override the tile-strip "+": the handler (tile id) runs instead of creating an "Untitled" tab; `null` restores the default |
+| `newTabTitle` | `string` | Tooltip for hosts that render their own new-tab control (default "New file"; the framework's strip shows no "+") |
+| `setNewTabHandler(handler, title?)` | | Override tab creation: the handler (tile id) runs instead of creating an "Untitled" tab; `null` restores the default |
 | `findTileGlobal(tileId)` | | Find a tile across all roots |
 | `capture()` | `WorkspaceSnapshot` | Capture structure + spacing (split + root ratios) as a plain JSON object (no node ids) — includes side-panel visibility and per-window state when providers are registered |
 | `apply(snapshot)` | `string[]` | Replace the whole workspace with a snapshot; returns the ids of tabs that had no definition (now blank ghost windows) |

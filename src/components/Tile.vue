@@ -219,7 +219,6 @@ function onTileMousedown() {
             @click.stop="ws.ops.closeTab(tabId)"
           ><SvgIcon name="✕" /></span>
         </div>
-        <button class="sf-tab-new" :title="ws.newTabTitle" @click="ws.ops.newTab(resolveTileId())">+</button>
         <template v-if="isTopRight">
           <div v-if="canEvenlySpace" class="sf-btn-group">
             <button

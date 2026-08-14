@@ -80,7 +80,13 @@ const WS = '.sf-workspace';
   report('split right → 2 tiles', (await tileCount()) === 2);
   // The 2-tile layout is auto-saved; reload now so the mobile switch below
   // runs on the restored (unsplit) boot state? No — keep the split live.
-  await page.locator('.sf-tab-new').first().click();
+  // Add a tab programmatically (the tab strip has no "+" button — the
+  // demo exposes the workspace API on window.__sfWorkspace for scripts).
+  await page.evaluate(() => {
+    const api = window.__sfWorkspace;
+    const walk = (node) => (node.kind === 'tile' ? node.id : walk(node.children[0]));
+    api.ops.newTab(walk(api.roots[0].node));
+  });
   await page.waitForTimeout(300);
   const desktopTiles = [await tileTabs(0), await tileTabs(1)];
   const allTabs = desktopTiles.flat();

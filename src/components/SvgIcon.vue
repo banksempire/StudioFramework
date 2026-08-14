@@ -97,8 +97,20 @@ const ICONS: Record<string, IconSpec> = {
     paths: [{ d: 'M9 18l6-6-6-6' }],
   },
   '⇔': {
-    // evenly-space: three equal bars
-    paths: [{ d: 'M18 20V10' }, { d: 'M12 20V4' }, { d: 'M6 20v-6' }],
+    // evenly-space: two vertical bars (the boundaries) with a
+    // horizontal hollow double-headed arrow between them — reads as
+    // "|<=>|". The arrowhead and the connecting bar are drawn as
+    // a SINGLE continuous closed outline so the junctions have no
+    // overlapping borders (the previous triangle + rectangle
+    // design doubled up the vertical edges at the junctions).
+    // stroke-linejoin="round" smooths the corners at the junction
+    // turns. Bounds (1,1)–(23,23) so the icon fills the viewBox
+    // with 1-unit padding on every side.
+    paths: [
+      { d: 'M1 1v22' }, // left bar
+      { d: 'M23 1v22' }, // right bar
+      { d: 'M5 12L9 7L9 10L15 10L15 7L19 12L15 17L15 14L9 14L9 17Z' }, // single hollow arrow outline
+    ],
   },
   '□': {
     // merge all: maximize corners

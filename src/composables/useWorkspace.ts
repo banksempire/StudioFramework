@@ -138,12 +138,13 @@ export interface WorkspaceApi {
   startDrag(tabId: string, tileId: string, index: number): void;
   endDrag(): void;
   registerTileEl(id: string, el: HTMLElement | null): void;
-  /** Tooltip of the tile strip "+" button (default "New file"). */
+  /** Tooltip for host-rendered new-tab controls (default "New file"; the
+   *  framework's own tab strip has no "+" button). */
   readonly newTabTitle: string;
   /**
-   * Override the tile strip "+" button. When a handler is set, clicking "+"
-   * calls it (with the tile id) instead of creating the generic "Untitled"
-   * tab — host apps decide what a new workspace item means (e.g. "New Chat").
+   * Override tab creation: when a handler is set, `ops.newTab(tileId)` calls
+   * it (with the tile id) instead of creating the generic "Untitled" tab —
+   * host apps decide what a new workspace item means (e.g. "New Chat").
    * Pass `null` to restore the default behavior/title.
    */
   setNewTabHandler(handler: ((tileId: string) => void) | null, title?: string): void;
