@@ -224,16 +224,22 @@ const ICONS: Record<string, IconSpec> = {
     ],
   },
   '🗂': {
-    // Windows-style 2×2 grid of four squares (Workspace) — 8×8 squares
-    // from x/y 2 to 22 so the glyph fills the viewBox like the other icons
-    paths: [{ d: 'M2 2h8v8H2z' }, { d: 'M14 2h8v8h-8z' }, { d: 'M14 14h8v8h-8z' }, { d: 'M2 14h8v8H2z' }],
+    // Windows-style 2×2 grid of four squares (Workspace) — 9×9 squares
+    // with a 4-unit gap between them, bounds (1,1)–(23,23) so the
+    // glyph fills the viewBox with 1-unit padding on every side
+    // (no empty space surrounds the icon body)
+    paths: [{ d: 'M1 1h9v9H1z' }, { d: 'M14 1h9v9h-9z' }, { d: 'M14 14h9v9h-9z' }, { d: 'M1 14h9v9H1z' }],
   },
   '💬': {
-    // chat bubble: round-corner box with three dots and a narrow
-    // bottom-right tail — fills the viewBox (18 wide box, tail to the
-    // 23,23 corner) so it reads the same size as the other dock glyphs
+    // chat bubble: round-corner box (radius 3) with all four corners
+    // rounded and a tail notch cut into the bottom edge. Single
+    // continuous outline so the box-tail junction has no border.
+    // Designed to fill the 24x24 viewBox tightly — 1-unit padding
+    // on every side. Tail apex at (19,23); line A direction
+    // (-1,+4) = 76° (vs original 77°), line B direction (-7,-4) =
+    // 30° (exact match).
     paths: [
-      { d: 'M3 6a4 4 0 0 1 4-4h10a4 4 0 0 1 4 4v8l2 9-7-4H7a4 4 0 0 1-4-4V6z' },
+      { d: 'M1 4a3 3 0 0 1 3-3h16a3 3 0 0 1 3 3v12a3 3 0 0 1-3 3L19 23L12 19H4a3 3 0 0 1-3-3V4z' },
       { d: 'M8 10.5m-1.5 0a1.5 1.5 0 1 0 3 0a1.5 1.5 0 1 0-3 0', filled: true },
       { d: 'M12 10.5m-1.5 0a1.5 1.5 0 1 0 3 0a1.5 1.5 0 1 0-3 0', filled: true },
       { d: 'M16 10.5m-1.5 0a1.5 1.5 0 1 0 3 0a1.5 1.5 0 1 0-3 0', filled: true },
