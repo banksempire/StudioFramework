@@ -1729,7 +1729,9 @@ body.sf-dragging-row * {
   gap: 6px;
   color: var(--sf-text);
   font-size: 16px;
-  padding: 0 6px;
+  /* Side breathing room for the active-tab text (and its icon) — the
+     label fills the bar's middle, so it needs padding on both sides. */
+  padding: 0 12px;
 }
 
 .sf-root--mobile .sf-mobile-tab-text {
