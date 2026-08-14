@@ -154,15 +154,18 @@ function onTileMousedown() {
           @select="onTabSelectorSelect"
         >
           <template #trigger="{ toggle }">
-            <button
+            <!-- The label stays a plain span with its original styles —
+                 it is the trigger of the tab-list menu (the anchor is
+                 display:contents, so the span is still the bar's direct
+                 flex item). -->
+            <span
               class="sf-mobile-tab-label"
               :class="activeTab?.tabClass"
-              title="Tabs"
               @click.stop="toggle"
             >
               <Icon v-if="activeTab?.icon" class="sf-mobile-tab-icon" :icon="activeTab.icon" />
               <span class="sf-mobile-tab-text">{{ activeTabLabel || 'No tab open' }}</span>
-            </button>
+            </span>
           </template>
         </Menu>
         <div v-if="rpToggle" class="sf-mobile-rp-wrap">

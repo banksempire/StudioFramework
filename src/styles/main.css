@@ -1634,34 +1634,17 @@ body.sf-dragging-row * {
   height: 60px;
 }
 
-/* Mobile compact title bar: [tab selector | active tab | close | right
-   panel]. The selector opens a Menu listing every tab (visual order);
-   the label shows the active tab; ✕ closes it; the last button toggles
-   the right panel fullscreen. */
-.sf-root--mobile .sf-tile-tabs .sf-mobile-tab-selector,
-.sf-root--mobile .sf-tile-tabs .sf-mobile-tab-close,
-.sf-root--mobile .sf-tile-tabs .sf-mobile-rp-btn {
-  width: 40px;
-  height: 40px;
-  margin: 0 2px;
-  border: none;
-  background: transparent;
-  color: var(--sf-text);
-  font-size: 16px;
-  cursor: pointer;
-  border-radius: var(--sf-radius-sm);
-  flex-shrink: 0;
-}
-
-/* Title-bar buttons are SQUARE, full bar height: ☰ / ✕ / right-panel on
-   the workspace bar, ⋯ / ◨ on the panel header, and ← / ✕ on the menu
+/* Mobile compact title bar: [⋯ menu | active tab (tap opens the tab
+   list) | right panel]. The active-tab label is the trigger of a Menu
+   listing every tab (visual order); the last button toggles the right
+   panel fullscreen. */
+/* Title-bar buttons are SQUARE, full bar height: ⋯ / right-panel on the
+   workspace bar, ⋯ / ✕ on the panel header, and ← / ✕ on the menu
    sheet bar (the sheet lives inside .sf-root--mobile via Teleport).
    Vertical side lines only (left + right) — no top/bottom borders, so
    each button reads as a vertical segment and adjacent buttons share a
    boundary line. */
 .sf-root--mobile .sf-tile-tabs .sf-mobile-menu-btn,
-.sf-root--mobile .sf-tile-tabs .sf-mobile-tab-selector,
-.sf-root--mobile .sf-tile-tabs .sf-mobile-tab-close,
 .sf-root--mobile .sf-tile-tabs .sf-mobile-rp-btn,
 .sf-root--mobile .sf-panel-header-btn,
 .sf-root--mobile .sf-panel-close-btn,
@@ -1729,8 +1712,6 @@ body.sf-dragging-row * {
 
 @media (hover: hover) {
   .sf-root--mobile .sf-tile-tabs .sf-mobile-menu-btn:hover,
-  .sf-root--mobile .sf-tile-tabs .sf-mobile-tab-selector:hover,
-  .sf-root--mobile .sf-tile-tabs .sf-mobile-tab-close:hover:not(:disabled),
   .sf-root--mobile .sf-tile-tabs .sf-mobile-rp-btn:hover,
   .sf-root--mobile .sf-panel-header-btn:hover,
   .sf-root--mobile .sf-panel-close-btn:hover,
@@ -1738,11 +1719,6 @@ body.sf-dragging-row * {
   .sf-root--mobile .sf-menu-sheet-close:hover {
     background: var(--sf-hover-overlay);
   }
-}
-
-.sf-root--mobile .sf-tile-tabs .sf-mobile-tab-close:disabled {
-  opacity: 0.4;
-  cursor: default;
 }
 
 .sf-root--mobile .sf-mobile-tab-label {
