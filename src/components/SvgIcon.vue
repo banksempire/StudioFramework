@@ -62,6 +62,14 @@ const ICONS: Record<string, IconSpec> = {
     // plus
     paths: [{ d: 'M12 5v14' }, { d: 'M5 12h14' }],
   },
+  '🖼': {
+    // image: frame + mountain + sun
+    paths: [
+      { d: 'M3 4h18v16H3z' },
+      { d: 'M3 15.5l5-5 4 4 3.5-3.5 5.5 5.5' },
+      { d: 'M15.5 8.5m-1.5 0a1.5 1.5 0 1 0 3 0a1.5 1.5 0 1 0-3 0', filled: true },
+    ],
+  },
   '🟨': {
     // yellow square swatch
     paths: [{ d: 'M4 4h16v16H4z', filled: true }],
@@ -147,13 +155,20 @@ const ICONS: Record<string, IconSpec> = {
       { d: 'M14 11v6' },
     ],
   },
-  // Panel toggles: half-filled squares (left half = panel open, right half
-  // = closed) — replaces the font-dependent ◨/◫ glyphs.
+  // Panel toggles: square with the RIGHT half filled (panel expanded,
+  // ◨) / square bisected by a vertical line (panel collapsed, ◫).
+  // Drawn as SVG paths so every font renders them the same — the
+  // Unicode glyphs themselves vary by device font. The right-half
+  // fill on the expanded state lines up with the panel sitting on
+  // that side of the icon. Used by the non-mobile side-panel toggle
+  // buttons (MenuBar + Tile's top-right tab strip). The mobile
+  // variant draws its own inline SVG in Tile.vue so this only
+  // affects non-mobile.
   '\u25E8': {
     paths: [{ d: 'M4 4h16v16H4z' }, { d: 'M12 4h8v16h-8z', filled: true }],
   },
   '\u25EB': {
-    paths: [{ d: 'M4 4h16v16H4z' }, { d: 'M4 4h8v16H4z', filled: true }],
+    paths: [{ d: 'M4 4h16v16H4z' }, { d: 'M12 4v16' }],
   },
   // Chat streaming cursor: a solid block bar.
   '▌': {
