@@ -1609,6 +1609,12 @@ body.sf-dragging-row * {
   /* 0..1 — how much of the status bar is revealed; the dock swipe
      gesture drives it continuously (see .sf-status-bar). */
   --sf-status-reveal: 1;
+  /* Status-bar slot = 8px gap + 30px bar. The bar is 30px tall so its
+     15px corner radius does NOT overlap itself (15+15 > 25 would make
+     the browser scale the corners down to 12.5px, mismatching the
+     main box's true 15px corners and leaving a sliver of the bar
+     visible when the dock covers it). */
+  --sf-status-slot: 38px;
   padding: var(--sf-safe-top) 0 var(--sf-safe-bottom);
   /* The dock shares ONE rounded box with the main area (square seam, see
      below); only the status bar floats as a separate card below it. */
@@ -1796,10 +1802,10 @@ body.sf-dragging-row * {
   top: 0;
   left: 0;
   right: 0;
-  /* dock (60px, sharing the main box) + status-bar slot (33px, scaled by
+  /* dock (60px, sharing the main box) + status-bar slot (38px, scaled by
      the swipe reveal) + gap + bottom safe area stay visible, like the
      panels */
-  bottom: calc(60px + 33px * var(--sf-status-reveal, 1) + var(--sf-safe-bottom, 0px));
+  bottom: calc(60px + var(--sf-status-slot) * var(--sf-status-reveal, 1) + var(--sf-safe-bottom, 0px));
   z-index: 40;
   display: flex;
   flex-direction: column;
@@ -1962,9 +1968,9 @@ body.sf-dragging-row * {
   top: 0;
   left: 0;
   right: 0;
-  /* dock (60px, sharing the main box) + status-bar slot (33px, scaled by
+  /* dock (60px, sharing the main box) + status-bar slot (38px, scaled by
      the swipe reveal) + bottom safe area stay visible */
-  bottom: calc(60px + 33px * var(--sf-status-reveal, 1) + var(--sf-safe-bottom, 0px));
+  bottom: calc(60px + var(--sf-status-slot) * var(--sf-status-reveal, 1) + var(--sf-safe-bottom, 0px));
   display: flex;
   flex-direction: column;
   /* Same rounded box as the main area (see .sf-menu-sheet): top corners
@@ -2033,21 +2039,25 @@ body.sf-dragging-row * {
 /* The status bar sits at the very bottom of the mobile screen as its own
    rounded card: the gap above separates it from the shared main+dock
    box, and the right padding clears the device's rounded screen corner
-   (same 25px as the dock). It keeps a FIXED slot (gap 8px + 25px) — the
-   reveal moves the box ABOVE it, not the bar. */
+   (same 25px as the dock). It keeps a FIXED slot (gap 8px + 30px) — the
+   reveal moves the box ABOVE it, not the bar. The 30px height keeps the
+   15px corner radius true (25px would make the browser shrink it to
+   12.5px — see --sf-status-slot), so the bar's corners match the main
+   box's exactly and the dock covers it flush. */
 .sf-root--mobile .sf-status-bar {
   margin-top: var(--sf-gap);
   padding-right: 25px;
+  height: 30px;
 }
 
 /* Hiding = the main+dock box slides DOWN over the status bar: a negative
-   bottom margin shrinks the DOCK's layout slot by (1 - reveal) * 33px,
+   bottom margin shrinks the DOCK's layout slot by (1 - reveal) * 38px,
    the flex column hands the freed space to the workbench, and the whole
    box (flush seam included) moves down by exactly that much — the dock's
    bottom edge sweeps over the bar, covering it. The overlays' bottom
-   calc (60px + 33px * reveal + safe-bottom) tracks the same box. */
+   calc (60px + slot * reveal + safe-bottom) tracks the same box. */
 .sf-root--mobile .sf-docker--bottom {
-  margin-bottom: calc(var(--sf-status-reveal) * 33px - 33px);
+  margin-bottom: calc(var(--sf-status-reveal) * var(--sf-status-slot) - var(--sf-status-slot));
   /* Paint above the status bar it slides over (the bar is a later
      sibling and would otherwise draw on top of the overlap). */
   position: relative;

@@ -40,7 +40,7 @@ const emit = defineEmits<{
 // anchor (the reveal stays put) and tracking is 1:1 from there — unless
 // that first move is fast enough to be a genuine flick, which should
 // count as movement (anchoring would swallow the whole flick).
-const STATUS_SLOT = 33; // 25px bar + 8px gap — the status bar's layout slot (mirrors Framework.vue)
+const STATUS_SLOT = 38; // 30px bar + 8px gap — the status bar's layout slot (mirrors Framework.vue)
 const VELOCITY_WINS = 0.4; // px/ms — a faster release flicks past the half-slot threshold
 const FLICK_VELOCITY = 0.6; // px/ms — a first move this fast is a flick, not slop
 const swipe = { x: 0, y: 0, t: 0, active: false, moved: false, anchor: 0 };

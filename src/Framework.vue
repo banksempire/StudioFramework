@@ -76,7 +76,7 @@ const mobileRightOpen = ref(false);
  *  (dock swipe up). --sf-status-reveal (0..1) drives the layout
  *  CONTINUOUSLY: while dragging, the bar follows the finger; on release
  *  it springs to the snapped state. Desktop always shows the bar. */
-const STATUS_SLOT = 33; // 25px bar + 8px gap — the status bar's layout slot (mirrors Docker.vue)
+const STATUS_SLOT = 38; // 30px bar + 8px gap — the status bar's layout slot (mirrors Docker.vue)
 const statusReveal = ref(1);
 const statusDragging = ref(false);
 /** Reveal captured when the drag started — the finger's delta moves the
