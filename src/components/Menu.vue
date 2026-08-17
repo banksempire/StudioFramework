@@ -339,7 +339,10 @@ if (!props.embedded && typeof window !== 'undefined') {
             v-for="(item, i) in group"
             :key="item.id ?? `item-${i}`"
             class="sf-menu-row"
-            :class="{ 'sf-menu-row--disabled': item.disabled }"
+            :class="{
+              'sf-menu-row--disabled': item.disabled,
+              'sf-menu-row--selected': item.selected && !item.iconKind,
+            }"
             @click="onSheetRowClick(item)"
           >
             <span class="sf-menu-cell sf-menu-cell--icon">
@@ -369,6 +372,7 @@ if (!props.embedded && typeof window !== 'undefined') {
               :class="{
                 'sf-menu-row--disabled': item.disabled,
                 'sf-menu-row--open': sameMenu(menuState.hoverPath.value[0], item),
+                'sf-menu-row--selected': item.selected && !item.iconKind,
               }"
               @mouseenter="onEnter($event, item, depth)"
               @click="onRowClick(item)"
@@ -419,6 +423,7 @@ if (!props.embedded && typeof window !== 'undefined') {
             :class="{
               'sf-menu-row--disabled': item.disabled,
               'sf-menu-row--open': sameMenu(hoverPath.value[depth], item),
+              'sf-menu-row--selected': item.selected && !item.iconKind,
             }"
             @mouseenter="onEnter($event, item, depth)"
             @click="onRowClick(item)"

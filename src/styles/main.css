@@ -239,6 +239,24 @@ body,
   background: var(--sf-accent);
   color: var(--sf-text-on-accent);
 }
+
+/* Left accent line marking the currently selected row when the selection
+   is positional (no check/dot mark in the icon cell) — e.g. the mobile
+   tab-list menu marks which session is shown. Absolutely positioned, so
+   it adds no layout drift. */
+.sf-menu-row--selected {
+  position: relative;
+}
+.sf-menu-row--selected::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 3px;
+  background: var(--sf-accent);
+  pointer-events: none;
+}
 .sf-menu-row--disabled {
   opacity: 0.45;
   cursor: default;
