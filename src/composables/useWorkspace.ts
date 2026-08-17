@@ -688,6 +688,11 @@ export function useWorkspace(def: WorkspaceDef): WorkspaceApi {
             state.roots.push(newRoot);
           }
         }
+        // removeTabFromRoots may have dropped the LAST other root (and with it
+        // the arrangement direction) before the fallback re-inserted ours —
+        // with two roots again the direction must come back or the root sash
+        // renders degenerate (wrong axis, zero size) and can't be dragged.
+        if (state.roots.length > 1) state.rootDir = dir;
         state.focusedTileId = newTile.id;
       } else {
         // Split within the root's tree (nested tile, or orthogonal direction)
