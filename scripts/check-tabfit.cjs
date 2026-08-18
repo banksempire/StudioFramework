@@ -68,6 +68,44 @@ const { ensureServer, makeReporter, finish } = require('./lib/ui-test.cjs');
   const tid = await tileId();
   await page.evaluate((id) => {
     const api = window.__sfWorkspace;
+    api.ops.openTab(id, { id: 'mix-short', label: 's', icon: '📄' });
+    api.ops.openTab(id, {
+      id: 'mix-long',
+      label: 'a-rather-long-label-that-refuses-to-shrink.ts',
+      icon: '📄',
+    });
+  }, tid);
+  await page.waitForTimeout(300);
+  report(
+    'moderate mix of short and long tabs squeezes evenly',
+    await page.evaluate(() => {
+      const bar = document.querySelector('.sf-tile-tabs-inner');
+      if (!bar || bar.style.getPropertyValue('--sf-tab-basis') === '') return false;
+      const widths = Array.from(bar.children)
+        .filter((t) => t.classList.contains('sf-tab'))
+        .map((t) => Math.round(t.getBoundingClientRect().width));
+      return (
+        widths.length === 6 &&
+        Math.max(...widths) - Math.min(...widths) <= 1 &&
+        bar.style.getPropertyValue('--sf-tab-basis') !== ''
+      );
+    }),
+  );
+  await page.evaluate(() => {
+    const api = window.__sfWorkspace;
+    api.ops.closeTab('mix-short');
+    api.ops.closeTab('mix-long');
+  });
+  await page.waitForFunction(
+    () => {
+      const el = document.querySelector('.sf-tile-tabs-inner');
+      return el && el.style.getPropertyValue('--sf-tab-basis') === '';
+    },
+    null,
+    { timeout: 5000 },
+  );
+  await page.evaluate((id) => {
+    const api = window.__sfWorkspace;
     for (let i = 0; i < 24; i++) {
       api.ops.openTab(id, {
         id: `bulk-${i}`,

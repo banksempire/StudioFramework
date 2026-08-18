@@ -652,11 +652,17 @@ body,
   top: 0;
   z-index: 1;
   background: var(--sf-panel-bg);
+  box-shadow:
+    inset 0 1px 0 var(--sf-border),
+    inset 0 -1px 0 var(--sf-border);
 }
 
 @media (hover: hover) {
   .sf-subsection-header:hover {
-    box-shadow: inset 0 0 0 999px var(--sf-hover-overlay);
+    box-shadow:
+      inset 0 0 0 999px var(--sf-hover-overlay),
+      inset 0 1px 0 var(--sf-border),
+      inset 0 -1px 0 var(--sf-border);
   }
 }
 
@@ -1177,7 +1183,7 @@ body.sf-dragging-row * {
   white-space: nowrap;
   font-size: 16px;
   min-width: 0;
-  flex: 0 1 var(--sf-tab-basis, auto);
+  flex: 0 var(--sf-tab-shrink, 1) var(--sf-tab-basis, auto);
   max-width: var(--sf-tab-max-width);
   user-select: none;
 }

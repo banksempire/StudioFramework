@@ -66,13 +66,13 @@ function measureTabFit() {
   if (!bar) return;
   const tabs = Array.from(bar.children) as HTMLElement[];
   const available = bar.clientWidth;
-  if (bar.style.getPropertyValue('--sf-tab-basis')) {
-    bar.style.removeProperty('--sf-tab-basis');
-    setTabFit(bar, 'full');
-    void bar.clientWidth;
-  }
+  bar.style.removeProperty('--sf-tab-basis');
+  setTabFit(bar, 'full');
+  bar.style.setProperty('--sf-tab-shrink', '0');
+  void bar.clientWidth;
   let natural = 0;
   for (const t of tabs) natural += t.scrollWidth;
+  bar.style.removeProperty('--sf-tab-shrink');
   if (tabs.length === 0 || natural <= available) return;
   const basis = Math.max(22, Math.floor(available / tabs.length));
   bar.style.setProperty('--sf-tab-basis', `${basis}px`);
