@@ -1598,6 +1598,12 @@ body.sf-dragging-row * {
    the sliding layer is the absolutely-positioned slide that fills the
    whole row (inset: 0) and carries the row's background, press overlay
    and selected marker — nothing of the item is left behind. */
+/* Tab-selection dropdown (mobile): a standalone sheet listing the
+   workspace tabs. Each row is swipeable LEFT to reveal a Close button;
+   the ENTIRE row block (background + content) slides as one unit because
+   the sliding layer is the absolutely-positioned slide that fills the
+   whole row (inset: 0) and carries the row's background, press overlay
+   and selected marker — nothing of the item is left behind. */
 .sf-tab-dropdown {
   position: absolute;
   top: 0;
@@ -1649,18 +1655,6 @@ body.sf-dragging-row * {
   flex: 1;
   min-height: 0;
   overflow-y: auto;
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-  padding: 12px;
-}
-
-.sf-tab-dropdown-group {
-  flex-shrink: 0;
-  border-radius: var(--sf-radius);
-  background: var(--sf-control);
-  border: 1px solid var(--sf-border);
-  overflow: hidden;
 }
 
 .sf-tab-dropdown-row {
@@ -1679,7 +1673,7 @@ body.sf-dragging-row * {
   align-items: center;
   gap: 10px;
   padding: 0 14px;
-  background: var(--sf-control);
+  background: var(--sf-panel-bg);
   cursor: pointer;
   touch-action: pan-y;
   transition: transform 180ms ease;

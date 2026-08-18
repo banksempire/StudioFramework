@@ -167,7 +167,6 @@ onMounted(() => {
         </button>
       </div>
       <div class="sf-tab-dropdown-body">
-        <div class="sf-tab-dropdown-group">
           <div
             v-for="tab in items"
             :key="tab.id"
@@ -204,7 +203,6 @@ onMounted(() => {
               <span class="sf-tab-dropdown-label">{{ tab.label }}</span>
             </div>
           </div>
-        </div>
       </div>
     </div>
   </Teleport>

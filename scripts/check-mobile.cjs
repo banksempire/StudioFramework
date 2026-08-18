@@ -320,6 +320,14 @@ const WS = '.sf-workspace';
   await page.waitForTimeout(200);
   const rowsA = await page.locator('.sf-tab-dropdown .sf-tab-dropdown-label').allTextContents();
   report('tab list reopens with all 5 tabs', JSON.stringify(rowsA) === JSON.stringify(allTabs));
+  report(
+    'list items are NOT wrapped in a rounded box',
+    (await page.locator('.sf-tab-dropdown-group').count()) === 0 &&
+      (await page.evaluate(() => {
+        const r = document.querySelector('.sf-tab-dropdown-row');
+        return r && getComputedStyle(r.parentElement).borderRadius === '0px';
+      })),
+  );
   report('active tab is layout.json', (await mobileBarLabel()) === 'layout.json');
 
   const cdp = await context.newCDPSession(page);
