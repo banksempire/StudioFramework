@@ -148,10 +148,11 @@ function onSheetBack() {
 // vertical pans stay native (touch-action: pan-y sets scrolling, so a
 // swipe only claims the gesture once horizontal intent is clear).
 
-/** Pixels the row body slides left — matches the reveal button's visible
- *  width (button is 86px, which minus the row's 14px side padding is the
- *  72px the content must travel to uncover it exactly). */
-const SWIPE_REVEAL = 72;
+/** Pixels the row body slides left — the full reveal-button width
+ *  (86px): the body is full-bleed, so sliding it by the button's own
+ *  width exposes the ENTIRE button (its left edge is then flush with the
+ *  content's right edge). */
+const SWIPE_REVEAL = 86;
 
 interface SwipeState {
   startX: number;
@@ -242,6 +243,15 @@ function isSwipeActive(item: MenuNodeDef, i: number): boolean {
 
 function isSwipeRevealed(item: MenuNodeDef, i: number): boolean {
   return swipeRows[rowKey(item, i)]?.revealed ?? false;
+}
+
+/** The button is visible while the row is being dragged open (beyond a
+ *  few px) — it is unveiled DURING the swipe, not only after release. */
+function isSwipeActionVisible(item: MenuNodeDef, i: number): boolean {
+  const s = swipeRows[rowKey(item, i)];
+  if (!s) return false;
+  if (s.revealed) return true;
+  return s.active && swipeOffset(item, i) < -4;
 }
 
 /** The revealed action button was tapped: emit up and collapse the row
@@ -482,7 +492,10 @@ if (!props.embedded && typeof window !== 'undefined') {
             <button
               v-if="item.swipeAction"
               class="sf-menu-swipe-action"
-              :class="{ revealed: isSwipeRevealed(item, i) }"
+              :class="{
+                revealed: isSwipeRevealed(item, i),
+                active: isSwipeActionVisible(item, i),
+              }"
               title="Close"
               @click.stop="onSwipeAction(item)"
             >

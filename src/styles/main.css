@@ -1902,7 +1902,11 @@ body.sf-dragging-row * {
    touch-row height — larger than the desktop 28px but compact enough
    that several cards fit the sheet. */
 .sf-menu-sheet .sf-menu-row {
-  padding: 0 14px;
+  /* The side padding now lives INSIDE the sliding body — the row itself
+     is borderless padding so the body can be full-bleed: the whole item
+     block (background + content) slides as one, leaving only the reveal
+     button behind. */
+  padding: 0;
   height: 44px;
   border-radius: 0;
   font-size: 16px;
@@ -1922,15 +1926,18 @@ body.sf-dragging-row * {
   box-shadow: inset 0 0 0 999px var(--sf-hover-overlay);
 }
 
-/* The sliding part of a sheet row: slides LEFT (inline transform from
-   the swipe handlers) to uncover the reveal button. Its background must
-   match the card so the button stays hidden while the row is closed. */
+/* The sliding part of a sheet row: full-bleed (covers the whole row,
+   including the space where the row's side padding used to be) so the
+   ENTIRE item block moves when swiped and only the reveal button is left
+   behind. Its background matches the card so it covers the button while
+   the row is closed. The row's 14px side padding lives here now. */
 .sf-menu-sheet .sf-menu-row-body {
-  flex: 1;
+  width: 100%;
   min-width: 0;
   display: flex;
   align-items: center;
   gap: 10px;
+  padding: 0 14px;
   background: var(--sf-control);
   transition: transform 180ms ease;
   will-change: transform;
@@ -1940,9 +1947,12 @@ body.sf-dragging-row * {
 }
 
 /* The revealed action (e.g. Close): a destructive button pinned to the
-   row's right edge, invisible while closed. The body slides 72px left
-   to reveal it — the button is 86px wide, so minus the row's 14px side
-   padding its left edge lands exactly where the content stops. */
+   row's right edge, invisible while closed — and visible the moment the
+   body starts sliding (the .active class is applied while dragging, so
+   the button is unveiled DURING the swipe, not only after the release).
+   The body is full-bleed and slides exactly 86px (the button's own
+   width) to uncover it entirely — its left edge is then flush with the
+   content's right edge. */
 .sf-menu-swipe-action {
   position: absolute;
   top: 0;
@@ -1965,7 +1975,8 @@ body.sf-dragging-row * {
   touch-action: none;
   -webkit-tap-highlight-color: transparent;
 }
-.sf-menu-swipe-action.revealed {
+.sf-menu-swipe-action.revealed,
+.sf-menu-swipe-action.active {
   opacity: 1;
   visibility: visible;
 }

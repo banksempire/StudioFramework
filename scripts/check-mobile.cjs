@@ -381,39 +381,72 @@ const WS = '.sf-workspace';
   });
   await cdp.send('Emulation.setTouchEmulationEnabled', { enabled: true, maxTouchPoints: 5 });
   const sheetRow = (label) => page.locator('.sf-menu-sheet .sf-menu-row', { hasText: label });
-  const swipeRowLeft = async (label, dist = 110) => {
-    const b = await sheetRow(label).boundingBox();
+  const touch = (type, touchPoints) => cdp.send('Input.dispatchTouchEvent', { type, touchPoints });
+  const swipeStart = async (locator) => {
+    const b = await locator.boundingBox();
     const y = b.y + b.height / 2;
     const x0 = b.x + b.width - 18;
-    await cdp.send('Input.dispatchTouchEvent', { type: 'touchStart', touchPoints: [{ x: x0, y }] });
-    for (let i = 1; i <= 8; i += 1) {
-      await cdp.send('Input.dispatchTouchEvent', {
-        type: 'touchMove',
-        touchPoints: [{ x: x0 - (dist * i) / 8, y }],
-      });
-      await page.waitForTimeout(20);
+    await touch('touchStart', [{ x: x0, y }]);
+    return { x0, y };
+  };
+  const swipeMoveTo = async (x, y, steps = 1) => {
+    for (let i = 1; i <= steps; i += 1) {
+      await touch('touchMove', [{ x, y }]);
+      await page.waitForTimeout(16);
     }
-    await cdp.send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] });
+  };
+  const swipeEnd = async () => {
+    await touch('touchEnd', []);
     await page.waitForTimeout(320); // snap transition (180ms)
   };
   const tapEl = async (locator) => {
     const b = await locator.boundingBox();
     const x = b.x + b.width / 2;
     const y = b.y + b.height / 2;
-    await cdp.send('Input.dispatchTouchEvent', { type: 'touchStart', touchPoints: [{ x, y }] });
-    await cdp.send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] });
+    await touch('touchStart', [{ x, y }]);
+    await touch('touchEnd', []);
     await page.waitForTimeout(250);
   };
 
-  // 1) Swipe a NON-active row (styles.css): the Close button reveals and
-  //    ONLY that row is open (iOS list behavior).
-  await swipeRowLeft('styles.css');
+  // 1) Swipe a NON-active row (styles.css). MID-DRAG (finger still down):
+  //    the whole row block must already be sliding — the row body is
+  //    full-bleed (≈ the row width, not a padded inner strip) — and the
+  //    Close button is ALREADY visible (unveiled during the swipe, not
+  //    only after release).
+  const mid = await swipeStart(sheetRow('styles.css'));
+  await swipeMoveTo(mid.x0 - 110, mid.y, 3);
+  const midBody = sheetRow('styles.css').locator('.sf-menu-row-body');
+  const midTransform = await midBody.evaluate((el) => getComputedStyle(el).transform);
+  // getComputedStyle resolves translate3d → matrix(1,0,0,1,X,0); pull X.
+  const txOf = (tf) => {
+    const m = /^matrix\(1, 0, 0, 1, (-?[\d.]+)/.exec(tf);
+    return m ? Number(m[1]) : null;
+  };
+  const midTx = txOf(midTransform);
+  const fullBleed = await page.evaluate(() => {
+    const row = Array.from(document.querySelectorAll('.sf-menu-sheet .sf-menu-row')).find((r) =>
+      r.textContent?.includes('styles.css'),
+    );
+    const body = row?.querySelector('.sf-menu-row-body');
+    const rb = row.getBoundingClientRect();
+    const bb = body.getBoundingClientRect();
+    return { same: rb.width - bb.width <= 2.5, rowW: rb.width, bodyW: bb.width };
+  });
+  const midBtn = sheetRow('styles.css').locator('.sf-menu-swipe-action');
+  const midBtnActive = sheetRow('styles.css').locator('.sf-menu-swipe-action.active');
+  report(
+    'mid-drag: the whole block slides, button already visible',
+    fullBleed.same && midTx !== null && midTx < 0 && (await midBtn.isVisible()),
+    `rowW=${fullBleed.rowW} bodyW=${fullBleed.bodyW} tf=${midTransform}`,
+  );
+  report('mid-drag: button carries the active (unveiled) class', (await midBtnActive.count()) === 1);
+  await swipeEnd();
   const rowBody = sheetRow('styles.css').locator('.sf-menu-row-body');
   const closeBtn1 = sheetRow('styles.css').locator('.sf-menu-swipe-action');
   const bodyTransform = await rowBody.evaluate((el) => getComputedStyle(el).transform);
   report(
-    'swiping a row left reveals its Close button',
-    (await closeBtn1.isVisible()) && /-72/.test(bodyTransform) && bodyTransform !== 'none',
+    'released: row snaps open (-86px), Close button revealed',
+    (await closeBtn1.isVisible()) && /-86/.test(bodyTransform) && bodyTransform !== 'none',
   );
   report(
     'only the swiped row is revealed',
@@ -431,7 +464,12 @@ const WS = '.sf-workspace';
   );
 
   // 3) The ACTIVE row is swipeable too — closing it activates the neighbor.
-  await swipeRowLeft('layout.json');
+  const act = await swipeStart(sheetRow('layout.json'));
+  for (let i = 1; i <= 8; i += 1) {
+    await touch('touchMove', [{ x: act.x0 - (110 * i) / 8, y: act.y }]);
+    await page.waitForTimeout(16);
+  }
+  await swipeEnd();
   const closeBtn2 = sheetRow('layout.json').locator('.sf-menu-swipe-action');
   report('the active row is also swipeable', await closeBtn2.isVisible());
   await tapEl(closeBtn2);
