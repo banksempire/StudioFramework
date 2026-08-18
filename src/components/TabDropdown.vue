@@ -75,7 +75,6 @@ function onDown(e: PointerEvent, id: string) {
   s.dx = 0;
   s.dy = 0;
   s.active = false;
-  (e.currentTarget as HTMLElement).setPointerCapture?.(e.pointerId);
 }
 
 function onMove(e: PointerEvent, id: string) {
@@ -86,6 +85,7 @@ function onMove(e: PointerEvent, id: string) {
   if (!s.active) {
     if (Math.abs(s.dx) < 6 || Math.abs(s.dx) < Math.abs(s.dy)) return;
     s.active = true;
+    (e.currentTarget as HTMLElement).setPointerCapture?.(e.pointerId);
     for (const k of Object.keys(rows)) {
       if (k !== id) rows[k].revealed = false;
     }
@@ -167,6 +167,7 @@ onMounted(() => {
         </button>
       </div>
       <div class="sf-tab-dropdown-body">
+        <div class="sf-tab-dropdown-list">
           <div
             v-for="tab in items"
             :key="tab.id"
@@ -203,6 +204,7 @@ onMounted(() => {
               <span class="sf-tab-dropdown-label">{{ tab.label }}</span>
             </div>
           </div>
+        </div>
       </div>
     </div>
   </Teleport>

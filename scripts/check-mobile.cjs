@@ -336,7 +336,7 @@ const WS = '.sf-workspace';
     'the list is ALWAYS a scroll container (even when the 5 rows fit)',
     (await page.evaluate(() => {
       const b = document.querySelector('.sf-tab-dropdown-body');
-      return b && getComputedStyle(b).overflowY === 'scroll';
+      return b && getComputedStyle(b).overflowY === 'scroll' && b.scrollHeight > b.clientHeight;
     })) === true,
   );
   report('active tab is layout.json', (await mobileBarLabel()) === 'layout.json');
@@ -352,6 +352,8 @@ const WS = '.sf-workspace';
   });
   await cdp.send('Emulation.setTouchEmulationEnabled', { enabled: true, maxTouchPoints: 5 });
   const sheetRow = (label) => page.locator('.sf-tab-dropdown-row', { hasText: label });
+  const isRowRevealed = async (label) =>
+    (await sheetRow(label).locator('.sf-tab-dropdown-close-btn.revealed').count()) === 1;
   const touch = (type, touchPoints) => cdp.send('Input.dispatchTouchEvent', { type, touchPoints });
   const swipeStart = async (locator) => {
     const b = await locator.boundingBox();
@@ -378,6 +380,27 @@ const WS = '.sf-workspace';
     await touch('touchEnd', []);
     await page.waitForTimeout(250);
   };
+
+  // Vertical pan on a row must be owned by the BROWSER (native scroll +
+  // inertia): the JS swipe handlers never capture the pointer for vertical
+  // drags, so the list scrolls even with only a few rows.
+  const vrow = sheetRow('styles.css');
+  const vb = await vrow.boundingBox();
+  const vx = vb.x + vb.width / 2;
+  const vy0 = vb.y + vb.height / 2;
+  await touch('touchStart', [{ x: vx, y: vy0 }]);
+  for (let i = 1; i <= 6; i += 1) {
+    await touch('touchMove', [{ x: vx, y: vy0 - i * 24 }]);
+    await page.waitForTimeout(16);
+  }
+  const scrolledMidDrag = await page.evaluate(() => {
+    const b = document.querySelector('.sf-tab-dropdown-body');
+    return b.scrollTop > 0;
+  });
+  await touch('touchEnd', []);
+  await page.waitForTimeout(250);
+  report('vertical pan on a row scrolls the list natively (no JS scroll)', scrolledMidDrag);
+  report('a vertical pan does not reveal the Close button', !(await isRowRevealed('styles.css')));
 
   const mid = await swipeStart(sheetRow('styles.css'));
   await swipeMoveTo(mid.x0 - 110, mid.y, 3);

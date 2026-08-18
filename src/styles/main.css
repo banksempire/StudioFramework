@@ -1655,6 +1655,13 @@ body.sf-dragging-row * {
   flex: 1;
   min-height: 0;
   overflow-y: scroll;
+  display: flex;
+  flex-direction: column;
+}
+
+.sf-tab-dropdown-list {
+  flex: 1 0 auto;
+  min-height: calc(100% + 1px);
 }
 
 .sf-tab-dropdown-row {
