@@ -328,6 +328,10 @@ const WS = '.sf-workspace';
         return r && getComputedStyle(r.parentElement).borderRadius === '0px';
       })),
   );
+  report(
+    'list items are 60px tall',
+    (await page.locator('.sf-tab-dropdown-row').first().boundingBox()).height === 60,
+  );
   report('active tab is layout.json', (await mobileBarLabel()) === 'layout.json');
 
   const cdp = await context.newCDPSession(page);

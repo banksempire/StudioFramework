@@ -1659,7 +1659,7 @@ body.sf-dragging-row * {
 
 .sf-tab-dropdown-row {
   position: relative;
-  height: 44px;
+  height: 60px;
   overflow: hidden;
 }
 .sf-tab-dropdown-row + .sf-tab-dropdown-row {
