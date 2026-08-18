@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, inject, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue';
+import { computed, inject, onBeforeUnmount, onMounted, ref, watch } from 'vue';
 import { kRightPanelToggle, kTitleBarMenus, useWorkspaceContext } from '../composables/useWorkspace';
 import { getTabContent } from '../registry';
 import type { MenuNodeDef } from '../types/layout';
@@ -39,8 +39,9 @@ onMounted(() => {
   if (bar) {
     tabFitObserver = new ResizeObserver(measureTabFit);
     tabFitObserver.observe(bar);
-    document.fonts?.ready.then(measureTabFit).catch(() => undefined);
-    nextTick(measureTabFit);
+    if (document.fonts?.status === 'loading') {
+      document.fonts.ready.then(measureTabFit).catch(() => undefined);
+    }
   }
 });
 onBeforeUnmount(() => {
@@ -66,14 +67,27 @@ function measureTabFit() {
   if (!bar) return;
   const tabs = Array.from(bar.children) as HTMLElement[];
   const available = bar.clientWidth;
+  let natural = 0;
+  for (const t of tabs) {
+    const label = t.querySelector('.sf-tab-label');
+    const close = t.querySelector('.sf-tab-close');
+    natural += 40 + (label ? label.scrollWidth : 0) + (close ? 32 : 6);
+  }
+  if (natural <= available && bar.getAttribute('data-tabfit') !== 'icon') {
+    if (bar.style.getPropertyValue('--sf-tab-basis')) {
+      bar.style.removeProperty('--sf-tab-basis');
+      setTabFit(bar, 'full');
+    }
+    return;
+  }
   bar.style.removeProperty('--sf-tab-basis');
   setTabFit(bar, 'full');
   bar.style.setProperty('--sf-tab-shrink', '0');
   void bar.clientWidth;
-  let natural = 0;
+  natural = 0;
   for (const t of tabs) natural += t.scrollWidth;
   bar.style.removeProperty('--sf-tab-shrink');
-  if (tabs.length === 0 || natural <= available) return;
+  if (natural <= available) return;
   const basis = Math.max(22, Math.floor(available / tabs.length));
   bar.style.setProperty('--sf-tab-basis', `${basis}px`);
   setTabFit(bar, basis < 64 ? 'icon' : basis < 110 ? 'compact' : 'full');
@@ -88,10 +102,14 @@ const tabList = computed(() =>
   })),
 );
 
-watch(tabList, (items) => {
-  if (items.length === 0) tabMenuOpen.value = false;
-});
-watch(tabList, () => nextTick(measureTabFit));
+watch(
+  tabList,
+  (items) => {
+    if (items.length === 0) tabMenuOpen.value = false;
+    measureTabFit();
+  },
+  { flush: 'post' },
+);
 
 const contentComp = computed(() => {
   const content = activeTab.value?.content;
