@@ -14,6 +14,7 @@
     "check:mobile": "node scripts/check-mobile.cjs",
     "check:tree": "node scripts/check-tree.ts",
     "check:snap": "node scripts/check-snapshots.ts",
+    "check:tabfit": "node scripts/check-tabfit.cjs",
     "check:ws": "node scripts/check-workspace-app.cjs",
     "typecheck": "vue-tsc --noEmit",
     "lint": "biome check .",

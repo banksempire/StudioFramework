@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, inject, onBeforeUnmount, onMounted, ref, watch } from 'vue';
+import { computed, inject, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue';
 import { kRightPanelToggle, kTitleBarMenus, useWorkspaceContext } from '../composables/useWorkspace';
 import { getTabContent } from '../registry';
 import type { MenuNodeDef } from '../types/layout';
@@ -35,8 +35,17 @@ function resolveTileId(tabId?: string): string {
 onMounted(() => {
   if (synthetic.value) return;
   ws.registerTileEl(props.tile.id, el.value);
+  const bar = tabsInnerEl.value;
+  if (bar) {
+    tabFitObserver = new ResizeObserver(measureTabFit);
+    tabFitObserver.observe(bar);
+    document.fonts?.ready.then(measureTabFit).catch(() => undefined);
+    nextTick(measureTabFit);
+  }
 });
 onBeforeUnmount(() => {
+  tabFitObserver?.disconnect();
+  tabFitObserver = null;
   if (synthetic.value) return;
   ws.registerTileEl(props.tile.id, null);
 });
@@ -44,6 +53,31 @@ onBeforeUnmount(() => {
 const activeTab = computed(() => (props.tile.activeId ? (ws.tabDefs[props.tile.activeId] ?? null) : null));
 
 const tabMenuOpen = ref(false);
+const tabsInnerEl = ref<HTMLElement | null>(null);
+let tabFitObserver: ResizeObserver | null = null;
+
+function setTabFit(bar: HTMLElement, mode: 'full' | 'compact' | 'icon') {
+  if (mode === 'full') bar.removeAttribute('data-tabfit');
+  else bar.setAttribute('data-tabfit', mode);
+}
+
+function measureTabFit() {
+  const bar = tabsInnerEl.value;
+  if (!bar) return;
+  const tabs = Array.from(bar.children) as HTMLElement[];
+  const available = bar.clientWidth;
+  if (bar.style.getPropertyValue('--sf-tab-basis')) {
+    bar.style.removeProperty('--sf-tab-basis');
+    setTabFit(bar, 'full');
+    void bar.clientWidth;
+  }
+  let natural = 0;
+  for (const t of tabs) natural += t.scrollWidth;
+  if (tabs.length === 0 || natural <= available) return;
+  const basis = Math.max(22, Math.floor(available / tabs.length));
+  bar.style.setProperty('--sf-tab-basis', `${basis}px`);
+  setTabFit(bar, basis < 64 ? 'icon' : basis < 110 ? 'compact' : 'full');
+}
 const activeTabLabel = computed(() => activeTab.value?.label ?? '');
 const tabList = computed(() =>
   props.tile.tabs.map((id) => ({
@@ -57,6 +91,7 @@ const tabList = computed(() =>
 watch(tabList, (items) => {
   if (items.length === 0) tabMenuOpen.value = false;
 });
+watch(tabList, () => nextTick(measureTabFit));
 
 const contentComp = computed(() => {
   const content = activeTab.value?.content;
@@ -152,6 +187,7 @@ function onTileMousedown() {
         </div>
       </template>
       <template v-else>
+        <div ref="tabsInnerEl" class="sf-tile-tabs-inner">
         <div
           v-for="tabId in tile.tabs"
           :key="tabId"
@@ -178,6 +214,7 @@ function onTileMousedown() {
             class="sf-tab-close"
             @click.stop="ws.ops.closeTab(tabId)"
           ><SvgIcon name="✕" /></span>
+        </div>
         </div>
         <template v-if="isTopRight">
           <div v-if="canEvenlySpace" class="sf-btn-group">
