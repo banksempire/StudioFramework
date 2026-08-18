@@ -358,6 +358,104 @@ const WS = '.sf-workspace';
   );
   report('mobile activation survived (layout.json active)', (await activeTabLabel()) === 'layout.json');
 
+  // ── Mobile again: swipe a tab-list row LEFT to reveal Close ────────────
+  await resizeTo(450);
+  report('mobile again: one flat tile, 5 tabs', (await tileCount()) === 1);
+  await page.locator('.sf-mobile-tab-label').click();
+  await page.waitForTimeout(200);
+  const rowsA = await page.locator('.sf-menu-sheet .sf-menu-row .sf-menu-cell--label').allTextContents();
+  report('tab list reopens with all 5 tabs', JSON.stringify(rowsA) === JSON.stringify(allTabs));
+  report('active tab is layout.json', (await mobileBarLabel()) === 'layout.json');
+
+  // Real touch swipe: Chromium needs touch emulation for
+  // Input.dispatchTouchEvent, after which mouse clicks misbehave on this
+  // context — so everything from here on taps/swipes via CDP.
+  const cdp = await context.newCDPSession(page);
+  await cdp.send('Emulation.setDeviceMetricsOverride', {
+    width: 450,
+    height: 900,
+    deviceScaleFactor: 1,
+    mobile: true,
+    screenWidth: 450,
+    screenHeight: 900,
+  });
+  await cdp.send('Emulation.setTouchEmulationEnabled', { enabled: true, maxTouchPoints: 5 });
+  const sheetRow = (label) => page.locator('.sf-menu-sheet .sf-menu-row', { hasText: label });
+  const swipeRowLeft = async (label, dist = 110) => {
+    const b = await sheetRow(label).boundingBox();
+    const y = b.y + b.height / 2;
+    const x0 = b.x + b.width - 18;
+    await cdp.send('Input.dispatchTouchEvent', { type: 'touchStart', touchPoints: [{ x: x0, y }] });
+    for (let i = 1; i <= 8; i += 1) {
+      await cdp.send('Input.dispatchTouchEvent', {
+        type: 'touchMove',
+        touchPoints: [{ x: x0 - (dist * i) / 8, y }],
+      });
+      await page.waitForTimeout(20);
+    }
+    await cdp.send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] });
+    await page.waitForTimeout(320); // snap transition (180ms)
+  };
+  const tapEl = async (locator) => {
+    const b = await locator.boundingBox();
+    const x = b.x + b.width / 2;
+    const y = b.y + b.height / 2;
+    await cdp.send('Input.dispatchTouchEvent', { type: 'touchStart', touchPoints: [{ x, y }] });
+    await cdp.send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] });
+    await page.waitForTimeout(250);
+  };
+
+  // 1) Swipe a NON-active row (styles.css): the Close button reveals and
+  //    ONLY that row is open (iOS list behavior).
+  await swipeRowLeft('styles.css');
+  const rowBody = sheetRow('styles.css').locator('.sf-menu-row-body');
+  const closeBtn1 = sheetRow('styles.css').locator('.sf-menu-swipe-action');
+  const bodyTransform = await rowBody.evaluate((el) => getComputedStyle(el).transform);
+  report(
+    'swiping a row left reveals its Close button',
+    (await closeBtn1.isVisible()) && /-72/.test(bodyTransform) && bodyTransform !== 'none',
+  );
+  report(
+    'only the swiped row is revealed',
+    (await page.locator('.sf-menu-sheet .sf-menu-swipe-action.revealed').count()) === 1,
+  );
+
+  // 2) Tapping the Close button removes the tab; the ACTIVE tab is not
+  //    touched and the menu stays open.
+  await tapEl(closeBtn1);
+  await page.waitForTimeout(200);
+  const rowsB = await page.locator('.sf-menu-sheet .sf-menu-row .sf-menu-cell--label').allTextContents();
+  report(
+    'Close removes the tab (4 left), active tab untouched',
+    rowsB.length === 4 && !rowsB.includes('styles.css') && (await mobileBarLabel()) === 'layout.json',
+  );
+
+  // 3) The ACTIVE row is swipeable too — closing it activates the neighbor.
+  await swipeRowLeft('layout.json');
+  const closeBtn2 = sheetRow('layout.json').locator('.sf-menu-swipe-action');
+  report('the active row is also swipeable', await closeBtn2.isVisible());
+  await tapEl(closeBtn2);
+  await page.waitForTimeout(200);
+  const newActive = await mobileBarLabel();
+  const rowsC = await page.locator('.sf-menu-sheet .sf-menu-row .sf-menu-cell--label').allTextContents();
+  report(
+    'closing the ACTIVE tab activates a neighbor',
+    rowsC.length === 3 && newActive !== 'layout.json' && Boolean(newActive),
+  );
+  const selectedLabel = await page.locator('.sf-menu-row--selected .sf-menu-cell--label').textContent();
+  report(
+    'selection marker follows the new active tab',
+    (await page.locator('.sf-menu-row--selected').count()) === 1 && selectedLabel === newActive,
+  );
+
+  // 4) A bare tap (no drag) still selects the tab and closes the sheet.
+  await tapEl(sheetRow('framework.t'));
+  await page.waitForTimeout(250);
+  report(
+    'a plain tap still selects and closes the sheet',
+    (await mobileBarLabel()) === 'framework.ts' && (await page.locator('.sf-menu-sheet').count()) === 0,
+  );
+
   // ── No errors ──────────────────────────────────────────────────────────
   report('no console/page errors', errors.length === 0, errors.join('; '));
 

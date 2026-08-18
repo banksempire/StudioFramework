@@ -1907,12 +1907,67 @@ body.sf-dragging-row * {
   border-radius: 0;
   font-size: 16px;
   gap: 10px;
+  /* Swipe-to-reveal: horizontal drags go to the JS pointer handlers,
+     vertical pans scroll the sheet natively (never reach the handlers);
+     the overflow clip keeps the sliding body + reveal button inside the
+     rounded card; relative anchors the absolutely-positioned button. */
+  touch-action: pan-y;
+  overflow: hidden;
+  position: relative;
 }
 .sf-menu-sheet .sf-menu-row + .sf-menu-row {
   border-top: 1px solid var(--sf-border);
 }
 .sf-menu-sheet .sf-menu-row:active {
   box-shadow: inset 0 0 0 999px var(--sf-hover-overlay);
+}
+
+/* The sliding part of a sheet row: slides LEFT (inline transform from
+   the swipe handlers) to uncover the reveal button. Its background must
+   match the card so the button stays hidden while the row is closed. */
+.sf-menu-sheet .sf-menu-row-body {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: var(--sf-control);
+  transition: transform 180ms ease;
+  will-change: transform;
+}
+.sf-menu-sheet .sf-menu-row--swiping .sf-menu-row-body {
+  transition: none;
+}
+
+/* The revealed action (e.g. Close): a destructive button pinned to the
+   row's right edge, invisible while closed. The body slides 72px left
+   to reveal it — the button is 86px wide, so minus the row's 14px side
+   padding its left edge lands exactly where the content stops. */
+.sf-menu-swipe-action {
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  width: 86px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 0;
+  border: none;
+  background: #c43d2f; /* destructive red — reads as an irreversible action */
+  color: #fff;
+  font-size: 16px;
+  cursor: pointer;
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 150ms ease;
+  touch-action: none;
+  -webkit-tap-highlight-color: transparent;
+}
+.sf-menu-swipe-action.revealed {
+  opacity: 1;
+  visibility: visible;
 }
 
 .sf-menu-sheet .sf-menu-cell--icon {

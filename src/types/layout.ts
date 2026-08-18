@@ -29,6 +29,9 @@ export interface MenuNodeDef {
   disabled?: boolean;
   /** Opaque payload for app-specific leaf actions. */
   data?: unknown;
+  /** Mobile sheet only: swipe the row LEFT to reveal this action (e.g.
+   *  Close). The revealed button emits the menu's `swipe-action` event. */
+  swipeAction?: { label?: string; icon?: string };
 }
 
 export interface PanelDef {

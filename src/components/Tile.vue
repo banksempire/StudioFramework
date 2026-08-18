@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, inject, onBeforeUnmount, onMounted, ref } from 'vue';
+import { computed, inject, onBeforeUnmount, onMounted, ref, watch } from 'vue';
 import { kRightPanelToggle, kTitleBarMenus, useWorkspaceContext } from '../composables/useWorkspace';
 import { getTabContent } from '../registry';
 import type { MenuNodeDef } from '../types/layout';
@@ -63,6 +63,9 @@ const tabSelectorItems = computed<MenuNodeDef[]>(() =>
     label: ws.tabDefs[id]?.label ?? id,
     icon: ws.tabDefs[id]?.icon,
     selected: id === props.tile.activeId,
+    // Swipeable close: rows expose a swipe-left Close action unless the
+    // tab is not closeable (same rule as the desktop ✕).
+    swipeAction: ws.tabDefs[id]?.closeable === false ? undefined : { label: 'Close' },
   })),
 );
 
@@ -70,6 +73,18 @@ function onTabSelectorSelect(item: MenuNodeDef) {
   if (!item.id) return;
   onTabClick(item.id);
 }
+
+/** The revealed Close button on a swiped tab row was tapped. */
+function onTabSelectorSwipeAction(item: MenuNodeDef) {
+  if (!item.id) return;
+  ws.ops.closeTab(item.id);
+}
+
+// The tab-list sheet has nothing to show once the flat tile's LAST tab
+// closes — drop it instead of rendering an empty card.
+watch(tabSelectorItems, (items) => {
+  if (items.length === 0) tabMenuOpen.value = false;
+});
 
 const contentComp = computed(() => {
   const content = activeTab.value?.content;
@@ -152,6 +167,7 @@ function onTileMousedown() {
           :open="tabMenuOpen"
           @update:open="(v) => (tabMenuOpen = v)"
           @select="onTabSelectorSelect"
+          @swipe-action="onTabSelectorSwipeAction"
         >
           <template #trigger="{ toggle }">
             <!-- The label stays a plain span with its original styles —

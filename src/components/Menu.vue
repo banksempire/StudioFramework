@@ -23,7 +23,18 @@
  * slot + open wiring; deeper levels run in `embedded` mode (box only) and
  * share the hover state through props (root-owned refs passed down).
  */
-import { computed, inject, nextTick, onMounted, onUnmounted, type Ref, ref, toRaw, watch } from 'vue';
+import {
+  computed,
+  inject,
+  nextTick,
+  onMounted,
+  onUnmounted,
+  type Ref,
+  reactive,
+  ref,
+  toRaw,
+  watch,
+} from 'vue';
 import { kIsMobile } from '../composables/useWorkspace';
 import type { MenuNodeDef } from '../types/layout';
 import Icon from './Icon.vue';
@@ -65,6 +76,8 @@ const props = withDefaults(
 const emit = defineEmits<{
   'update:open': [value: boolean];
   select: [item: MenuNodeDef];
+  /** Fired when a swiped-open row's action button is tapped (mobile sheet). */
+  'swipe-action': [item: MenuNodeDef];
 }>();
 
 // ── Mobile fullscreen sheet ───────────────────────────────────────────────
@@ -109,8 +122,14 @@ const sheetGroups = computed<MenuNodeDef[][]>(() => {
   return groups;
 });
 
-/** Tap a sheet row: parent rows navigate deeper, leaves select. */
-function onSheetRowClick(item: MenuNodeDef) {
+/** Tap a sheet row: parent rows navigate deeper, leaves select. A real
+ *  drag ends with a stray click on the row — suppressed via the key the
+ *  swipe handler recorded, so swiping never selects the tab. */
+function onSheetRowClick(item: MenuNodeDef, i: number) {
+  if (suppressedSwipeKey.value === rowKey(item, i)) {
+    suppressedSwipeKey.value = null;
+    return;
+  }
   if (item.disabled || item.separator) return;
   if (item.items?.length) {
     rootHoverPath.value.push(item);
@@ -122,6 +141,114 @@ function onSheetRowClick(item: MenuNodeDef) {
 
 function onSheetBack() {
   rootHoverPath.value.pop();
+}
+
+// ── Mobile sheet: swipe a row LEFT to reveal an action (e.g. Close) ──────
+// iOS list behavior: opening a row collapses every other revealed row;
+// vertical pans stay native (touch-action: pan-y sets scrolling, so a
+// swipe only claims the gesture once horizontal intent is clear).
+
+/** Pixels the row body slides left — matches the reveal button's visible
+ *  width (button is 86px, which minus the row's 14px side padding is the
+ *  72px the content must travel to uncover it exactly). */
+const SWIPE_REVEAL = 72;
+
+interface SwipeState {
+  startX: number;
+  startY: number;
+  dx: number;
+  dy: number;
+  active: boolean;
+  revealed: boolean;
+}
+
+const swipeRows = reactive<Record<string, SwipeState>>({});
+const suppressedSwipeKey = ref<string | null>(null);
+
+function rowKey(item: MenuNodeDef, i: number): string {
+  return item.id ?? `item-${i}`;
+}
+
+function swipeState(item: MenuNodeDef, i: number): SwipeState {
+  const key = rowKey(item, i);
+  if (!swipeRows[key]) {
+    swipeRows[key] = { startX: 0, startY: 0, dx: 0, dy: 0, active: false, revealed: false };
+  }
+  return swipeRows[key];
+}
+
+function clampSwipe(v: number): number {
+  return Math.max(-SWIPE_REVEAL, Math.min(0, v));
+}
+
+function onSwipeDown(e: PointerEvent, item: MenuNodeDef, i: number) {
+  if (!item.swipeAction) return;
+  if (e.pointerType === 'mouse' && e.button !== 0) return;
+  const s = swipeState(item, i);
+  s.startX = e.clientX;
+  s.startY = e.clientY;
+  s.dx = 0;
+  s.dy = 0;
+  s.active = false;
+  (e.currentTarget as HTMLElement).setPointerCapture?.(e.pointerId);
+}
+
+function onSwipeMove(e: PointerEvent, item: MenuNodeDef, i: number) {
+  if (!item.swipeAction) return;
+  const s = swipeState(item, i);
+  s.dx = e.clientX - s.startX;
+  s.dy = e.clientY - s.startY;
+  if (!s.active) {
+    // Horizontal intent must be clear before claiming the gesture — if
+    // the finger moves mostly vertically the browser already owns the
+    // scroll (touch-action: pan-y → pointercancel) and we never get here.
+    if (Math.abs(s.dx) < 6 || Math.abs(s.dx) < Math.abs(s.dy)) return;
+    s.active = true;
+    // One revealed row at a time: collapse the others.
+    const key = rowKey(item, i);
+    for (const k of Object.keys(swipeRows)) {
+      if (k !== key) swipeRows[k].revealed = false;
+    }
+  }
+}
+
+function onSwipeEnd(item: MenuNodeDef, i: number) {
+  if (!item.swipeAction) return;
+  const s = swipeState(item, i);
+  if (s.active) {
+    const base = s.revealed ? -SWIPE_REVEAL : 0;
+    const off = clampSwipe(base + s.dx);
+    s.revealed = off < -SWIPE_REVEAL / 2;
+    // The pointerup that ends a real drag is followed by a click on the
+    // row — suppress it so a swipe never also selects the tab.
+    suppressedSwipeKey.value = rowKey(item, i);
+  }
+  s.active = false;
+}
+
+function swipeOffset(item: MenuNodeDef, i: number): number {
+  const s = swipeRows[rowKey(item, i)];
+  if (!s) return 0;
+  if (s.active) {
+    const base = s.revealed ? -SWIPE_REVEAL : 0;
+    return clampSwipe(base + s.dx);
+  }
+  return s.revealed ? -SWIPE_REVEAL : 0;
+}
+
+function isSwipeActive(item: MenuNodeDef, i: number): boolean {
+  return swipeRows[rowKey(item, i)]?.active ?? false;
+}
+
+function isSwipeRevealed(item: MenuNodeDef, i: number): boolean {
+  return swipeRows[rowKey(item, i)]?.revealed ?? false;
+}
+
+/** The revealed action button was tapped: emit up and collapse the row
+ *  (in case the consumer does not remove the item, e.g. a guard). */
+function onSwipeAction(item: MenuNodeDef) {
+  for (const k of Object.keys(swipeRows)) swipeRows[k].revealed = false;
+  emit('swipe-action', item);
 }
 
 // ── Shared flyout state ───────────────────────────────────────────────────
@@ -342,19 +469,45 @@ if (!props.embedded && typeof window !== 'undefined') {
             :class="{
               'sf-menu-row--disabled': item.disabled,
               'sf-menu-row--selected': item.selected && !item.iconKind,
+              'sf-menu-row--swiping': isSwipeActive(item, i),
             }"
-            @click="onSheetRowClick(item)"
+            @pointerdown="onSwipeDown($event, item, i)"
+            @pointermove="onSwipeMove($event, item, i)"
+            @pointerup="onSwipeEnd(item, i)"
+            @pointercancel="onSwipeEnd(item, i)"
+            @click="onSheetRowClick(item, i)"
           >
-            <span class="sf-menu-cell sf-menu-cell--icon">
-              <Icon v-if="item.icon" :icon="item.icon" />
-              <span v-else-if="item.iconKind === 'check'" class="sf-menu-mark"><SvgIcon v-if="item.selected" name="✓" /></span>
-              <span v-else-if="item.iconKind === 'dot'" class="sf-menu-mark"><SvgIcon v-if="item.selected" name="●" /></span>
+            <!-- Swipe-to-reveal action (mobile): pinned to the right
+                 edge, hidden until the row body slides left. -->
+            <button
+              v-if="item.swipeAction"
+              class="sf-menu-swipe-action"
+              :class="{ revealed: isSwipeRevealed(item, i) }"
+              title="Close"
+              @click.stop="onSwipeAction(item)"
+            >
+              <SvgIcon name="✕" />
+              <span>{{ item.swipeAction.label ?? 'Close' }}</span>
+            </button>
+            <span
+              class="sf-menu-row-body"
+              :style="
+                item.swipeAction
+                  ? { transform: `translate3d(${swipeOffset(item, i)}px, 0, 0)` }
+                  : undefined
+              "
+            >
+              <span class="sf-menu-cell sf-menu-cell--icon">
+                <Icon v-if="item.icon" :icon="item.icon" />
+                <span v-else-if="item.iconKind === 'check'" class="sf-menu-mark"><SvgIcon v-if="item.selected" name="✓" /></span>
+                <span v-else-if="item.iconKind === 'dot'" class="sf-menu-mark"><SvgIcon v-if="item.selected" name="●" /></span>
+              </span>
+              <span class="sf-menu-cell sf-menu-cell--label">{{ item.label }}</span>
+              <span v-if="item.detail || item.accelerator" class="sf-menu-cell sf-menu-cell--hint">
+                {{ item.detail ?? item.accelerator }}
+              </span>
+              <span v-if="item.items?.length" class="sf-menu-cell sf-menu-cell--arrow"><SvgIcon name="▶" /></span>
             </span>
-            <span class="sf-menu-cell sf-menu-cell--label">{{ item.label }}</span>
-            <span v-if="item.detail || item.accelerator" class="sf-menu-cell sf-menu-cell--hint">
-              {{ item.detail ?? item.accelerator }}
-            </span>
-            <span v-if="item.items?.length" class="sf-menu-cell sf-menu-cell--arrow"><SvgIcon name="▶" /></span>
           </div>
         </div>
       </div>
