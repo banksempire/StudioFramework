@@ -34,7 +34,7 @@ const WS = '.sf-workspace';
   const mobileSelectorItems = async () => {
     await page.locator('.sf-mobile-tab-label').click();
     await page.waitForTimeout(200);
-    return page.locator('.sf-menu-row .sf-menu-cell--label').allTextContents();
+    return page.locator('.sf-tab-dropdown .sf-tab-dropdown-label').allTextContents();
   };
   const resizeTo = async (w) => {
     await page.setViewportSize({ width: w, height: 900 });
@@ -203,12 +203,12 @@ const WS = '.sf-workspace';
     'label tap lists all tabs in order',
     JSON.stringify(await mobileSelectorItems()) === JSON.stringify(allTabs),
   );
-  await page.locator('.sf-menu-row', { hasText: 'styles.css' }).click();
+  await page.locator('.sf-tab-dropdown-row', { hasText: 'styles.css' }).click();
   await page.waitForTimeout(200);
   report('selecting a tab activates it', (await mobileBarLabel()) === 'styles.css');
   await page.locator('.sf-mobile-tab-label').click();
   await page.waitForTimeout(200);
-  await page.locator('.sf-menu-row', { hasText: 'layout.json' }).click();
+  await page.locator('.sf-tab-dropdown-row', { hasText: 'layout.json' }).click();
   await page.waitForTimeout(200);
   report('activation survives (layout.json active)', (await mobileBarLabel()) === 'layout.json');
 
@@ -318,7 +318,7 @@ const WS = '.sf-workspace';
   report('mobile again: one flat tile, 5 tabs', (await tileCount()) === 1);
   await page.locator('.sf-mobile-tab-label').click();
   await page.waitForTimeout(200);
-  const rowsA = await page.locator('.sf-menu-sheet .sf-menu-row .sf-menu-cell--label').allTextContents();
+  const rowsA = await page.locator('.sf-tab-dropdown .sf-tab-dropdown-label').allTextContents();
   report('tab list reopens with all 5 tabs', JSON.stringify(rowsA) === JSON.stringify(allTabs));
   report('active tab is layout.json', (await mobileBarLabel()) === 'layout.json');
 
@@ -332,7 +332,7 @@ const WS = '.sf-workspace';
     screenHeight: 900,
   });
   await cdp.send('Emulation.setTouchEmulationEnabled', { enabled: true, maxTouchPoints: 5 });
-  const sheetRow = (label) => page.locator('.sf-menu-sheet .sf-menu-row', { hasText: label });
+  const sheetRow = (label) => page.locator('.sf-tab-dropdown-row', { hasText: label });
   const touch = (type, touchPoints) => cdp.send('Input.dispatchTouchEvent', { type, touchPoints });
   const swipeStart = async (locator) => {
     const b = await locator.boundingBox();
@@ -362,7 +362,7 @@ const WS = '.sf-workspace';
 
   const mid = await swipeStart(sheetRow('styles.css'));
   await swipeMoveTo(mid.x0 - 110, mid.y, 3);
-  const midBody = sheetRow('styles.css').locator('.sf-menu-row-body');
+  const midBody = sheetRow('styles.css').locator('.sf-tab-dropdown-slide');
   const midTransform = await midBody.evaluate((el) => getComputedStyle(el).transform);
   const txOf = (tf) => {
     const m = /^matrix\(1, 0, 0, 1, (-?[\d.]+)/.exec(tf);
@@ -370,25 +370,32 @@ const WS = '.sf-workspace';
   };
   const midTx = txOf(midTransform);
   const fullBleed = await page.evaluate(() => {
-    const row = Array.from(document.querySelectorAll('.sf-menu-sheet .sf-menu-row')).find((r) =>
+    const row = Array.from(document.querySelectorAll('.sf-tab-dropdown-row')).find((r) =>
       r.textContent?.includes('styles.css'),
     );
-    const body = row?.querySelector('.sf-menu-row-body');
+    const slide = row?.querySelector('.sf-tab-dropdown-slide');
     const rb = row.getBoundingClientRect();
-    const bb = body.getBoundingClientRect();
-    return { same: rb.width - bb.width <= 2.5, rowW: rb.width, bodyW: bb.width };
+    const sb = slide.getBoundingClientRect();
+    return {
+      w: rb.width - sb.width <= 2.5,
+      h: rb.height - sb.height <= 1.5,
+      rowW: rb.width,
+      slideW: sb.width,
+      rowH: rb.height,
+      slideH: sb.height,
+    };
   });
-  const midBtn = sheetRow('styles.css').locator('.sf-menu-swipe-action');
-  const midBtnActive = sheetRow('styles.css').locator('.sf-menu-swipe-action.active');
+  const midBtn = sheetRow('styles.css').locator('.sf-tab-dropdown-close-btn');
+  const midBtnActive = sheetRow('styles.css').locator('.sf-tab-dropdown-close-btn.active');
   report(
-    'mid-drag: the whole block slides, button already visible',
-    fullBleed.same && midTx !== null && midTx < 0 && (await midBtn.isVisible()),
-    `rowW=${fullBleed.rowW} bodyW=${fullBleed.bodyW} tf=${midTransform}`,
+    'mid-drag: the WHOLE row block slides (full width + height), button already visible',
+    fullBleed.w && fullBleed.h && midTx !== null && midTx < 0 && (await midBtn.isVisible()),
+    `row=${fullBleed.rowW}x${fullBleed.rowH} slide=${fullBleed.slideW}x${fullBleed.slideH} tf=${midTransform}`,
   );
   report('mid-drag: button carries the active (unveiled) class', (await midBtnActive.count()) === 1);
   await swipeEnd();
-  const rowBody = sheetRow('styles.css').locator('.sf-menu-row-body');
-  const closeBtn1 = sheetRow('styles.css').locator('.sf-menu-swipe-action');
+  const rowBody = sheetRow('styles.css').locator('.sf-tab-dropdown-slide');
+  const closeBtn1 = sheetRow('styles.css').locator('.sf-tab-dropdown-close-btn');
   const bodyTransform = await rowBody.evaluate((el) => getComputedStyle(el).transform);
   report(
     'released: row snaps open (-86px), Close button revealed',
@@ -396,12 +403,12 @@ const WS = '.sf-workspace';
   );
   report(
     'only the swiped row is revealed',
-    (await page.locator('.sf-menu-sheet .sf-menu-swipe-action.revealed').count()) === 1,
+    (await page.locator('.sf-tab-dropdown-close-btn.revealed').count()) === 1,
   );
 
   await tapEl(closeBtn1);
   await page.waitForTimeout(200);
-  const rowsB = await page.locator('.sf-menu-sheet .sf-menu-row .sf-menu-cell--label').allTextContents();
+  const rowsB = await page.locator('.sf-tab-dropdown-label').allTextContents();
   report(
     'Close removes the tab (4 left), active tab untouched',
     rowsB.length === 4 && !rowsB.includes('styles.css') && (await mobileBarLabel()) === 'layout.json',
@@ -413,27 +420,30 @@ const WS = '.sf-workspace';
     await page.waitForTimeout(16);
   }
   await swipeEnd();
-  const closeBtn2 = sheetRow('layout.json').locator('.sf-menu-swipe-action');
+  const closeBtn2 = sheetRow('layout.json').locator('.sf-tab-dropdown-close-btn');
   report('the active row is also swipeable', await closeBtn2.isVisible());
   await tapEl(closeBtn2);
   await page.waitForTimeout(200);
   const newActive = await mobileBarLabel();
-  const rowsC = await page.locator('.sf-menu-sheet .sf-menu-row .sf-menu-cell--label').allTextContents();
+  const rowsC = await page.locator('.sf-tab-dropdown-label').allTextContents();
   report(
     'closing the ACTIVE tab activates a neighbor',
     rowsC.length === 3 && newActive !== 'layout.json' && Boolean(newActive),
   );
-  const selectedLabel = await page.locator('.sf-menu-row--selected .sf-menu-cell--label').textContent();
+  const markedMatches = await page.evaluate((lbl) => {
+    const mark = document.querySelector('.sf-tab-dropdown-mark');
+    return mark?.closest('.sf-tab-dropdown-row')?.textContent?.includes(lbl) ?? false;
+  }, newActive);
   report(
     'selection marker follows the new active tab',
-    (await page.locator('.sf-menu-row--selected').count()) === 1 && selectedLabel === newActive,
+    (await page.locator('.sf-tab-dropdown-mark').count()) === 1 && markedMatches,
   );
 
   await tapEl(sheetRow('framework.t'));
   await page.waitForTimeout(250);
   report(
-    'a plain tap still selects and closes the sheet',
-    (await mobileBarLabel()) === 'framework.ts' && (await page.locator('.sf-menu-sheet').count()) === 0,
+    'a plain tap still selects and closes the dropdown',
+    (await mobileBarLabel()) === 'framework.ts' && (await page.locator('.sf-tab-dropdown').count()) === 0,
   );
 
   report('no console/page errors', errors.length === 0, errors.join('; '));

@@ -13,7 +13,6 @@ export interface MenuNodeDef {
   detail?: string;
   disabled?: boolean;
   data?: unknown;
-  swipeAction?: { label?: string; icon?: string };
 }
 
 export interface PanelDef {

@@ -1406,7 +1406,8 @@ body.sf-dragging-row * {
 .sf-root--mobile .sf-panel-header-btn,
 .sf-root--mobile .sf-panel-close-btn,
 .sf-root--mobile .sf-menu-sheet-back,
-.sf-root--mobile .sf-menu-sheet-close {
+.sf-root--mobile .sf-menu-sheet-close,
+.sf-root--mobile .sf-tab-dropdown-close {
   width: 60px;
   height: 60px;
   display: flex;
@@ -1426,7 +1427,8 @@ body.sf-dragging-row * {
 
 .sf-root--mobile .sf-tile-tabs .sf-mobile-rp-btn,
 .sf-root--mobile .sf-panel-close-btn,
-.sf-root--mobile .sf-menu-sheet-close {
+.sf-root--mobile .sf-menu-sheet-close,
+.sf-root--mobile .sf-tab-dropdown-close {
   margin-right: 0;
 }
 
@@ -1438,7 +1440,8 @@ body.sf-dragging-row * {
 
 .sf-root--mobile .sf-tile-tabs .sf-mobile-rp-btn,
 .sf-root--mobile .sf-panel-close-btn,
-.sf-root--mobile .sf-menu-sheet-close {
+.sf-root--mobile .sf-menu-sheet-close,
+.sf-root--mobile .sf-tab-dropdown-close {
   border-right: none;
 }
 
@@ -1452,7 +1455,8 @@ body.sf-dragging-row * {
   .sf-root--mobile .sf-panel-header-btn:hover,
   .sf-root--mobile .sf-panel-close-btn:hover,
   .sf-root--mobile .sf-menu-sheet-back:hover,
-  .sf-root--mobile .sf-menu-sheet-close:hover {
+  .sf-root--mobile .sf-menu-sheet-close:hover,
+  .sf-root--mobile .sf-tab-dropdown-close:hover {
     background: var(--sf-hover-overlay);
   }
 }
@@ -1566,14 +1570,11 @@ body.sf-dragging-row * {
 }
 
 .sf-menu-sheet .sf-menu-row {
-  padding: 0;
+  padding: 0 14px;
   height: 44px;
   border-radius: 0;
   font-size: 16px;
   gap: 10px;
-  touch-action: pan-y;
-  overflow: hidden;
-  position: relative;
 }
 .sf-menu-sheet .sf-menu-row + .sf-menu-row {
   border-top: 1px solid var(--sf-border);
@@ -1582,22 +1583,143 @@ body.sf-dragging-row * {
   box-shadow: inset 0 0 0 999px var(--sf-hover-overlay);
 }
 
-.sf-menu-sheet .sf-menu-row-body {
-  width: 100%;
+.sf-menu-sheet .sf-menu-cell--icon {
+  width: 24px;
+  font-size: 20px;
+}
+
+.sf-menu-sheet .sf-menu-cell--arrow {
+  color: var(--sf-text-dim);
+}
+
+/* Tab-selection dropdown (mobile): a standalone sheet listing the
+   workspace tabs. Each row is swipeable LEFT to reveal a Close button;
+   the ENTIRE row block (background + content) slides as one unit because
+   the sliding layer is the absolutely-positioned slide that fills the
+   whole row (inset: 0) and carries the row's background, press overlay
+   and selected marker — nothing of the item is left behind. */
+.sf-tab-dropdown {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: calc(60px + var(--sf-status-slot) * var(--sf-status-reveal, 1) + var(--sf-safe-bottom, 0px));
+  z-index: 40;
+  display: flex;
+  flex-direction: column;
+  border-radius: var(--sf-radius) var(--sf-radius) 0 0;
+  background:
+    linear-gradient(#000, #000) top / 100% var(--sf-safe-top, 0px) no-repeat,
+    var(--sf-panel-bg);
+  padding-top: var(--sf-safe-top, 0px);
+}
+
+.sf-tab-dropdown-bar {
+  display: flex;
+  align-items: center;
+  height: 60px;
+  flex-shrink: 0;
+  border-bottom: 1px solid var(--sf-border);
+  position: relative;
+  border-radius: var(--sf-radius) var(--sf-radius) 0 0;
+  background: var(--sf-bar);
+}
+
+.sf-tab-dropdown-title {
+  position: absolute;
+  left: 60px;
+  right: 60px;
+  text-align: center;
   min-width: 0;
+  font-size: 16px;
+  font-weight: 600;
+  text-transform: capitalize;
+  color: var(--sf-text);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  pointer-events: none;
+}
+
+.sf-tab-dropdown-close {
+  margin-left: auto;
+}
+
+.sf-tab-dropdown-body {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 12px;
+}
+
+.sf-tab-dropdown-group {
+  flex-shrink: 0;
+  border-radius: var(--sf-radius);
+  background: var(--sf-control);
+  border: 1px solid var(--sf-border);
+  overflow: hidden;
+}
+
+.sf-tab-dropdown-row {
+  position: relative;
+  height: 44px;
+  overflow: hidden;
+}
+.sf-tab-dropdown-row + .sf-tab-dropdown-row {
+  border-top: 1px solid var(--sf-border);
+}
+
+.sf-tab-dropdown-slide {
+  position: absolute;
+  inset: 0;
   display: flex;
   align-items: center;
   gap: 10px;
   padding: 0 14px;
   background: var(--sf-control);
+  cursor: pointer;
+  touch-action: pan-y;
   transition: transform 180ms ease;
   will-change: transform;
 }
-.sf-menu-sheet .sf-menu-row--swiping .sf-menu-row-body {
+.sf-tab-dropdown-slide:active {
+  box-shadow: inset 0 0 0 999px var(--sf-hover-overlay);
+}
+.sf-tab-dropdown-slide--swiping {
   transition: none;
 }
 
-.sf-menu-swipe-action {
+.sf-tab-dropdown-mark {
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 3px;
+  background: var(--sf-accent);
+  pointer-events: none;
+}
+
+.sf-tab-dropdown-icon {
+  width: 24px;
+  font-size: 20px;
+  flex-shrink: 0;
+  display: flex;
+}
+
+.sf-tab-dropdown-label {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 16px;
+  color: var(--sf-text);
+}
+
+.sf-tab-dropdown-close-btn {
   position: absolute;
   top: 0;
   right: 0;
@@ -1619,19 +1741,10 @@ body.sf-dragging-row * {
   touch-action: none;
   -webkit-tap-highlight-color: transparent;
 }
-.sf-menu-swipe-action.revealed,
-.sf-menu-swipe-action.active {
+.sf-tab-dropdown-close-btn.revealed,
+.sf-tab-dropdown-close-btn.active {
   opacity: 1;
   visibility: visible;
-}
-
-.sf-menu-sheet .sf-menu-cell--icon {
-  width: 24px;
-  font-size: 20px;
-}
-
-.sf-menu-sheet .sf-menu-cell--arrow {
-  color: var(--sf-text-dim);
 }
 
 .sf-docker--bottom {

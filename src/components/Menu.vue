@@ -1,16 +1,5 @@
 <script setup lang="ts">
-import {
-  computed,
-  inject,
-  nextTick,
-  onMounted,
-  onUnmounted,
-  type Ref,
-  reactive,
-  ref,
-  toRaw,
-  watch,
-} from 'vue';
+import { computed, inject, nextTick, onMounted, onUnmounted, type Ref, ref, toRaw, watch } from 'vue';
 import { kIsMobile } from '../composables/useWorkspace';
 import type { MenuNodeDef } from '../types/layout';
 import Icon from './Icon.vue';
@@ -43,7 +32,6 @@ const props = withDefaults(
 const emit = defineEmits<{
   'update:open': [value: boolean];
   select: [item: MenuNodeDef];
-  'swipe-action': [item: MenuNodeDef];
 }>();
 
 function sameMenu(a: MenuNodeDef | undefined, b: MenuNodeDef | undefined): boolean {
@@ -75,11 +63,7 @@ const sheetGroups = computed<MenuNodeDef[][]>(() => {
   return groups;
 });
 
-function onSheetRowClick(item: MenuNodeDef, i: number) {
-  if (suppressedSwipeKey.value === rowKey(item, i)) {
-    suppressedSwipeKey.value = null;
-    return;
-  }
+function onSheetRowClick(item: MenuNodeDef) {
   if (item.disabled || item.separator) return;
   if (item.items?.length) {
     rootHoverPath.value.push(item);
@@ -91,105 +75,6 @@ function onSheetRowClick(item: MenuNodeDef, i: number) {
 
 function onSheetBack() {
   rootHoverPath.value.pop();
-}
-
-const SWIPE_REVEAL = 86;
-
-interface SwipeState {
-  startX: number;
-  startY: number;
-  dx: number;
-  dy: number;
-  active: boolean;
-  revealed: boolean;
-}
-
-const swipeRows = reactive<Record<string, SwipeState>>({});
-const suppressedSwipeKey = ref<string | null>(null);
-
-function rowKey(item: MenuNodeDef, i: number): string {
-  return item.id ?? `item-${i}`;
-}
-
-function swipeState(item: MenuNodeDef, i: number): SwipeState {
-  const key = rowKey(item, i);
-  if (!swipeRows[key]) {
-    swipeRows[key] = { startX: 0, startY: 0, dx: 0, dy: 0, active: false, revealed: false };
-  }
-  return swipeRows[key];
-}
-
-function clampSwipe(v: number): number {
-  return Math.max(-SWIPE_REVEAL, Math.min(0, v));
-}
-
-function onSwipeDown(e: PointerEvent, item: MenuNodeDef, i: number) {
-  if (!item.swipeAction) return;
-  if (e.pointerType === 'mouse' && e.button !== 0) return;
-  const s = swipeState(item, i);
-  s.startX = e.clientX;
-  s.startY = e.clientY;
-  s.dx = 0;
-  s.dy = 0;
-  s.active = false;
-  (e.currentTarget as HTMLElement).setPointerCapture?.(e.pointerId);
-}
-
-function onSwipeMove(e: PointerEvent, item: MenuNodeDef, i: number) {
-  if (!item.swipeAction) return;
-  const s = swipeState(item, i);
-  s.dx = e.clientX - s.startX;
-  s.dy = e.clientY - s.startY;
-  if (!s.active) {
-    if (Math.abs(s.dx) < 6 || Math.abs(s.dx) < Math.abs(s.dy)) return;
-    s.active = true;
-    const key = rowKey(item, i);
-    for (const k of Object.keys(swipeRows)) {
-      if (k !== key) swipeRows[k].revealed = false;
-    }
-  }
-}
-
-function onSwipeEnd(item: MenuNodeDef, i: number) {
-  if (!item.swipeAction) return;
-  const s = swipeState(item, i);
-  if (s.active) {
-    const base = s.revealed ? -SWIPE_REVEAL : 0;
-    const off = clampSwipe(base + s.dx);
-    s.revealed = off < -SWIPE_REVEAL / 2;
-    suppressedSwipeKey.value = rowKey(item, i);
-  }
-  s.active = false;
-}
-
-function swipeOffset(item: MenuNodeDef, i: number): number {
-  const s = swipeRows[rowKey(item, i)];
-  if (!s) return 0;
-  if (s.active) {
-    const base = s.revealed ? -SWIPE_REVEAL : 0;
-    return clampSwipe(base + s.dx);
-  }
-  return s.revealed ? -SWIPE_REVEAL : 0;
-}
-
-function isSwipeActive(item: MenuNodeDef, i: number): boolean {
-  return swipeRows[rowKey(item, i)]?.active ?? false;
-}
-
-function isSwipeRevealed(item: MenuNodeDef, i: number): boolean {
-  return swipeRows[rowKey(item, i)]?.revealed ?? false;
-}
-
-function isSwipeActionVisible(item: MenuNodeDef, i: number): boolean {
-  const s = swipeRows[rowKey(item, i)];
-  if (!s) return false;
-  if (s.revealed) return true;
-  return s.active && swipeOffset(item, i) < -4;
-}
-
-function onSwipeAction(item: MenuNodeDef) {
-  for (const k of Object.keys(swipeRows)) swipeRows[k].revealed = false;
-  emit('swipe-action', item);
 }
 
 const rootHoverPath = ref<MenuNodeDef[]>([]);
@@ -364,46 +249,19 @@ if (!props.embedded && typeof window !== 'undefined') {
             :class="{
               'sf-menu-row--disabled': item.disabled,
               'sf-menu-row--selected': item.selected && !item.iconKind,
-              'sf-menu-row--swiping': isSwipeActive(item, i),
             }"
-            @pointerdown="onSwipeDown($event, item, i)"
-            @pointermove="onSwipeMove($event, item, i)"
-            @pointerup="onSwipeEnd(item, i)"
-            @pointercancel="onSwipeEnd(item, i)"
-            @click="onSheetRowClick(item, i)"
+            @click="onSheetRowClick(item)"
           >
-            <button
-              v-if="item.swipeAction"
-              class="sf-menu-swipe-action"
-              :class="{
-                revealed: isSwipeRevealed(item, i),
-                active: isSwipeActionVisible(item, i),
-              }"
-              title="Close"
-              @click.stop="onSwipeAction(item)"
-            >
-              <SvgIcon name="✕" />
-              <span>{{ item.swipeAction.label ?? 'Close' }}</span>
-            </button>
-            <span
-              class="sf-menu-row-body"
-              :style="
-                item.swipeAction
-                  ? { transform: `translate3d(${swipeOffset(item, i)}px, 0, 0)` }
-                  : undefined
-              "
-            >
-              <span class="sf-menu-cell sf-menu-cell--icon">
-                <Icon v-if="item.icon" :icon="item.icon" />
-                <span v-else-if="item.iconKind === 'check'" class="sf-menu-mark"><SvgIcon v-if="item.selected" name="✓" /></span>
-                <span v-else-if="item.iconKind === 'dot'" class="sf-menu-mark"><SvgIcon v-if="item.selected" name="●" /></span>
-              </span>
-              <span class="sf-menu-cell sf-menu-cell--label">{{ item.label }}</span>
-              <span v-if="item.detail || item.accelerator" class="sf-menu-cell sf-menu-cell--hint">
-                {{ item.detail ?? item.accelerator }}
-              </span>
-              <span v-if="item.items?.length" class="sf-menu-cell sf-menu-cell--arrow"><SvgIcon name="▶" /></span>
+            <span class="sf-menu-cell sf-menu-cell--icon">
+              <Icon v-if="item.icon" :icon="item.icon" />
+              <span v-else-if="item.iconKind === 'check'" class="sf-menu-mark"><SvgIcon v-if="item.selected" name="✓" /></span>
+              <span v-else-if="item.iconKind === 'dot'" class="sf-menu-mark"><SvgIcon v-if="item.selected" name="●" /></span>
             </span>
+            <span class="sf-menu-cell sf-menu-cell--label">{{ item.label }}</span>
+            <span v-if="item.detail || item.accelerator" class="sf-menu-cell sf-menu-cell--hint">
+              {{ item.detail ?? item.accelerator }}
+            </span>
+            <span v-if="item.items?.length" class="sf-menu-cell sf-menu-cell--arrow"><SvgIcon name="▶" /></span>
           </div>
         </div>
       </div>

@@ -8,6 +8,7 @@ import BlankTab from './BlankTab.vue';
 import Icon from './Icon.vue';
 import Menu from './Menu.vue';
 import SvgIcon from './SvgIcon.vue';
+import TabDropdown from './TabDropdown.vue';
 
 const props = defineProps<{ tile: TileNode }>();
 const ws = useWorkspaceContext();
@@ -44,27 +45,16 @@ const activeTab = computed(() => (props.tile.activeId ? (ws.tabDefs[props.tile.a
 
 const tabMenuOpen = ref(false);
 const activeTabLabel = computed(() => activeTab.value?.label ?? '');
-const tabSelectorItems = computed<MenuNodeDef[]>(() =>
+const tabList = computed(() =>
   props.tile.tabs.map((id) => ({
     id,
     label: ws.tabDefs[id]?.label ?? id,
     icon: ws.tabDefs[id]?.icon,
-    selected: id === props.tile.activeId,
-    swipeAction: ws.tabDefs[id]?.closeable === false ? undefined : { label: 'Close' },
+    closeable: ws.tabDefs[id]?.closeable !== false,
   })),
 );
 
-function onTabSelectorSelect(item: MenuNodeDef) {
-  if (!item.id) return;
-  onTabClick(item.id);
-}
-
-function onTabSelectorSwipeAction(item: MenuNodeDef) {
-  if (!item.id) return;
-  ws.ops.closeTab(item.id);
-}
-
-watch(tabSelectorItems, (items) => {
+watch(tabList, (items) => {
   if (items.length === 0) tabMenuOpen.value = false;
 });
 
@@ -128,26 +118,24 @@ function onTileMousedown() {
             ><SvgIcon name="⋯" /></button>
           </template>
         </Menu>
-        <Menu
-          :items="tabSelectorItems"
+        <TabDropdown
           :open="tabMenuOpen"
+          :items="tabList"
+          :active-id="props.tile.activeId"
           @update:open="(v) => (tabMenuOpen = v)"
-          @select="onTabSelectorSelect"
-          @swipe-action="onTabSelectorSwipeAction"
+          @select="onTabClick"
+          @close="ws.ops.closeTab"
+        />
+        <span
+          class="sf-mobile-tab-label"
+          :class="activeTab?.tabClass"
+          @click.stop="tabMenuOpen = !tabMenuOpen"
         >
-          <template #trigger="{ toggle }">
-            <span
-              class="sf-mobile-tab-label"
-              :class="activeTab?.tabClass"
-              @click.stop="toggle"
-            >
-              <span class="sf-mobile-tab-icon-slot">
-                <Icon v-if="activeTab?.icon" class="sf-mobile-tab-icon" :icon="activeTab.icon" />
-              </span>
-              <span class="sf-mobile-tab-text">{{ activeTabLabel || 'No tab open' }}</span>
-            </span>
-          </template>
-        </Menu>
+          <span class="sf-mobile-tab-icon-slot">
+            <Icon v-if="activeTab?.icon" class="sf-mobile-tab-icon" :icon="activeTab.icon" />
+          </span>
+          <span class="sf-mobile-tab-text">{{ activeTabLabel || 'No tab open' }}</span>
+        </span>
         <div v-if="rpToggle" class="sf-mobile-rp-wrap">
           <button
             class="sf-mobile-rp-btn"
