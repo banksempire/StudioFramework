@@ -8,8 +8,8 @@ const ws = useWorkspaceContext();
 
 const el = ref<HTMLElement | null>(null);
 const dragging = ref(false);
-let startPos = 0; // absolute position of left root's leading edge
-let combinedSize = 0; // total size of both adjacent roots
+let startPos = 0;
+let combinedSize = 0;
 let minLeft = 0;
 let maxPos = 0;
 
@@ -18,7 +18,6 @@ function onPointerDown(e: PointerEvent) {
   dragging.value = true;
   el.value?.setPointerCapture(e.pointerId);
 
-  // Use sibling elements instead of index-based child lookup (robust to DOM changes)
   const leftEl = el.value?.previousElementSibling as HTMLElement | null;
   const rightEl = el.value?.nextElementSibling as HTMLElement | null;
   if (!leftEl || !rightEl) return;

@@ -1,14 +1,3 @@
-/**
- * Headless UI check for Mobile mode (window width < 500px).
- *
- * Usage: SF_TEST_PORT=7494 npm run check:mobile   (demo dev server on a test port)
- *
- * Covers: auto-trigger below 500px (menu bar + status bar + side panels
- * hidden, bottom dock instead of the left rail), the flat single-tile
- * workspace holding ALL tabs (the real tile tree stays untouched), dock
- * taps opening/closing fullscreen panels, and the tile structure resuming
- * exactly when the window widens again (relationship not lost).
- */
 const { chromium } = require('playwright');
 const { ensureServer, makeReporter, finish } = require('./lib/ui-test.cjs');
 
@@ -18,7 +7,6 @@ const WS = '.sf-workspace';
   const serverProc = await ensureServer();
   const browser = await chromium.launch();
   const context = await browser.newContext({ viewport: { width: 1300, height: 900 } });
-  // Clear localStorage on the FIRST navigation only (a reload must keep it).
   await context.addInitScript(() => {
     if (!sessionStorage.getItem('mobile-check-cleared')) {
       sessionStorage.setItem('mobile-check-cleared', '1');
@@ -42,9 +30,7 @@ const WS = '.sf-workspace';
   const tileTabs = (i) => page.locator('.sf-tile').nth(i).locator('.sf-tab-label').allTextContents();
   const wsBox = () => page.locator(WS).boundingBox();
   const activeTabLabel = () => page.locator('.sf-tab.active .sf-tab-label').first().textContent();
-  /** Mobile compact bar: the active-tab label (not the desktop strip). */
   const mobileBarLabel = () => page.locator('.sf-mobile-tab-label').textContent();
-  /** Tapping the active-tab label opens the tab-list menu. */
   const mobileSelectorItems = async () => {
     await page.locator('.sf-mobile-tab-label').click();
     await page.waitForTimeout(200);
@@ -55,7 +41,6 @@ const WS = '.sf-workspace';
     await page.waitForTimeout(300);
   };
 
-  // ── Desktop baseline: split into 2 tiles + a new tab ────────────────────
   report(
     'desktop: menu bar + status bar visible',
     (await page.locator('.sf-menu-bar').count()) === 1 &&
@@ -71,17 +56,12 @@ const WS = '.sf-workspace';
     (await tileCount()) === 1 && (await tileTabs(0)).length === 4,
   );
 
-  // Split right: framework.ts to the right edge → 2 tiles.
   const wb = await wsBox();
   await tab('framework.ts').dragTo(page.locator(WS), {
     targetPosition: { x: wb.width - 10, y: wb.height / 2 },
   });
   await page.waitForTimeout(400);
   report('split right → 2 tiles', (await tileCount()) === 2);
-  // The 2-tile layout is auto-saved; reload now so the mobile switch below
-  // runs on the restored (unsplit) boot state? No — keep the split live.
-  // Add a tab programmatically (the tab strip has no "+" button — the
-  // demo exposes the workspace API on window.__sfWorkspace for scripts).
   await page.evaluate(() => {
     const api = window.__sfWorkspace;
     const walk = (node) => (node.kind === 'tile' ? node.id : walk(node.children[0]));
@@ -92,7 +72,6 @@ const WS = '.sf-workspace';
   const allTabs = desktopTiles.flat();
   report('new tab added (5 tabs total)', allTabs.length === 5);
 
-  // ── Mobile: auto-trigger below 500px ────────────────────────────────────
   await resizeTo(450);
   report('mobile: menu bar hidden', (await page.locator('.sf-menu-bar').count()) === 0);
   report('mobile: status bar visible', (await page.locator('.sf-status-bar').count()) === 1);
@@ -113,9 +92,6 @@ const WS = '.sf-workspace';
   );
   report("mobile bar: shows the focused tile's active tab", allTabs.includes(await mobileBarLabel()));
 
-  // ⋯ button: opens the layout's menu tree as a FULLSCREEN sheet (like a
-  // panel) — body takes all the space, [← back] left when nested, [✕
-  // close] right. Parent rows navigate on tap (no hover on touch).
   await page.locator('.sf-mobile-menu-btn').click();
   await page.waitForTimeout(200);
   const menuRows = await page.locator('.sf-menu-sheet .sf-menu-row .sf-menu-cell--label').allTextContents();
@@ -159,8 +135,6 @@ const WS = '.sf-workspace';
     return Math.round(c.x + c.width) === Math.round(bar.x + bar.width);
   });
   report('⋯ close button on the top right at the root level', closeAtRight);
-  // Simulated iPhone notch: the sheet covers the top safe-area zone with
-  // its own background and the bar stays below the inset.
   await page.evaluate(() => {
     const root = document.querySelector('.sf-root--mobile');
     root.style.setProperty('--sf-safe-top', '44px');
@@ -207,7 +181,6 @@ const WS = '.sf-workspace';
   await page.locator('.sf-menu-sheet .sf-menu-row', { hasText: 'Text File' }).click();
   await page.waitForTimeout(200);
   report('selecting a leaf closes the menu', (await page.locator('.sf-menu-sheet').count()) === 0);
-  // Back button pops to the parent level (reopen first).
   await page.locator('.sf-mobile-menu-btn').click();
   await page.waitForTimeout(200);
   await page.locator('.sf-menu-sheet .sf-menu-row', { hasText: 'View' }).click();
@@ -220,16 +193,12 @@ const WS = '.sf-workspace';
       await page.locator('.sf-menu-sheet .sf-menu-row .sf-menu-cell--label').allTextContents(),
     ) === JSON.stringify(['File', 'Edit', 'Selection', 'View', 'Help']),
   );
-  // ✕ closes from any level.
   await page.locator('.sf-menu-sheet .sf-menu-row', { hasText: 'Help' }).click();
   await page.waitForTimeout(200);
   await page.locator('.sf-menu-sheet-close').click();
   await page.waitForTimeout(200);
   report('✕ closes the sheet', (await page.locator('.sf-menu-sheet').count()) === 0);
 
-  // Tab selector: tapping the ACTIVE-TAB LABEL opens a Menu listing ALL
-  // tabs in visual order; selecting routes to the REAL tile behind the
-  // tab (survives the switch back to desktop).
   report(
     'label tap lists all tabs in order',
     JSON.stringify(await mobileSelectorItems()) === JSON.stringify(allTabs),
@@ -237,17 +206,12 @@ const WS = '.sf-workspace';
   await page.locator('.sf-menu-row', { hasText: 'styles.css' }).click();
   await page.waitForTimeout(200);
   report('selecting a tab activates it', (await mobileBarLabel()) === 'styles.css');
-  // Pick another tab directly (reopen the menu, then a row click both
-  // selects and closes).
   await page.locator('.sf-mobile-tab-label').click();
   await page.waitForTimeout(200);
   await page.locator('.sf-menu-row', { hasText: 'layout.json' }).click();
   await page.waitForTimeout(200);
   report('activation survives (layout.json active)', (await mobileBarLabel()) === 'layout.json');
 
-  // Right-panel button: opens the right panel fullscreen; the overlay's ✕
-  // closes it (the fullscreen panel covers the bar, so the button is not
-  // reachable while open).
   await page.locator('.sf-mobile-rp-btn').click();
   await page.waitForTimeout(300);
   report(
@@ -259,7 +223,6 @@ const WS = '.sf-workspace';
   await page.waitForTimeout(300);
   report('overlay ✕ closes it', (await page.locator('.sf-mobile-panel').count()) === 0);
 
-  // ── Mobile: fullscreen panels from the dock ─────────────────────────────
   const explorer = page.locator('.sf-docker-app[title="Explorer"]');
   await explorer.click();
   await page.waitForTimeout(300);
@@ -286,8 +249,6 @@ const WS = '.sf-workspace';
       barCenter: Math.round(hr.x + hr.width / 2),
       closeRight: Math.round(cr.x + cr.width),
       barRight: Math.round(hr.x + hr.width),
-      // The ⋯ sits flush against the bar's LEFT edge (60px wide, 1px
-      // overlap margin); the ✕ stays pinned right.
       ellipsisLeft: Math.abs(Math.round(dr.x) - Math.round(hr.x)) <= 1,
     };
   });
@@ -297,8 +258,6 @@ const WS = '.sf-workspace';
       panelTitle.closeRight === panelTitle.barRight &&
       panelTitle.ellipsisLeft,
   );
-  // Simulated notch: the panel overlay covers the top safe-area zone with
-  // the SAME color as the menu sheet (bg-light) and its header stays below.
   await page.evaluate(() => {
     const root = document.querySelector('.sf-root--mobile');
     root.style.setProperty('--sf-safe-top', '44px');
@@ -314,7 +273,6 @@ const WS = '.sf-workspace';
     'panel safe-area: covers the notch zone, header below it, same bg as the sheet',
     Math.round(safePanel.y) === 0 &&
       Math.round(safePanelHeader.y) === 44 &&
-      // L3 panel content color (--sf-panel-bg #101010)
       safePanelBg === 'rgb(16, 16, 16)',
   );
   await page.evaluate(() => {
@@ -327,7 +285,6 @@ const WS = '.sf-workspace';
   await page.waitForTimeout(300);
   report('tapping the open app again closes it', (await page.locator('.sf-mobile-panel').count()) === 0);
 
-  // Different app + the ✕ close button.
   await page.locator('.sf-docker-app[title="Search"]').click();
   await page.waitForTimeout(300);
   report(
@@ -338,7 +295,6 @@ const WS = '.sf-workspace';
   await page.waitForTimeout(300);
   report('✕ closes the panel', (await page.locator('.sf-mobile-panel').count()) === 0);
 
-  // ── Back to desktop: the tile tree resumes exactly ──────────────────────
   await resizeTo(1300);
   report(
     'tile structure resumes (2 tiles, all 5 tabs intact)',
@@ -358,7 +314,6 @@ const WS = '.sf-workspace';
   );
   report('mobile activation survived (layout.json active)', (await activeTabLabel()) === 'layout.json');
 
-  // ── Mobile again: swipe a tab-list row LEFT to reveal Close ────────────
   await resizeTo(450);
   report('mobile again: one flat tile, 5 tabs', (await tileCount()) === 1);
   await page.locator('.sf-mobile-tab-label').click();
@@ -367,9 +322,6 @@ const WS = '.sf-workspace';
   report('tab list reopens with all 5 tabs', JSON.stringify(rowsA) === JSON.stringify(allTabs));
   report('active tab is layout.json', (await mobileBarLabel()) === 'layout.json');
 
-  // Real touch swipe: Chromium needs touch emulation for
-  // Input.dispatchTouchEvent, after which mouse clicks misbehave on this
-  // context — so everything from here on taps/swipes via CDP.
   const cdp = await context.newCDPSession(page);
   await cdp.send('Emulation.setDeviceMetricsOverride', {
     width: 450,
@@ -397,7 +349,7 @@ const WS = '.sf-workspace';
   };
   const swipeEnd = async () => {
     await touch('touchEnd', []);
-    await page.waitForTimeout(320); // snap transition (180ms)
+    await page.waitForTimeout(320);
   };
   const tapEl = async (locator) => {
     const b = await locator.boundingBox();
@@ -408,16 +360,10 @@ const WS = '.sf-workspace';
     await page.waitForTimeout(250);
   };
 
-  // 1) Swipe a NON-active row (styles.css). MID-DRAG (finger still down):
-  //    the whole row block must already be sliding — the row body is
-  //    full-bleed (≈ the row width, not a padded inner strip) — and the
-  //    Close button is ALREADY visible (unveiled during the swipe, not
-  //    only after release).
   const mid = await swipeStart(sheetRow('styles.css'));
   await swipeMoveTo(mid.x0 - 110, mid.y, 3);
   const midBody = sheetRow('styles.css').locator('.sf-menu-row-body');
   const midTransform = await midBody.evaluate((el) => getComputedStyle(el).transform);
-  // getComputedStyle resolves translate3d → matrix(1,0,0,1,X,0); pull X.
   const txOf = (tf) => {
     const m = /^matrix\(1, 0, 0, 1, (-?[\d.]+)/.exec(tf);
     return m ? Number(m[1]) : null;
@@ -453,8 +399,6 @@ const WS = '.sf-workspace';
     (await page.locator('.sf-menu-sheet .sf-menu-swipe-action.revealed').count()) === 1,
   );
 
-  // 2) Tapping the Close button removes the tab; the ACTIVE tab is not
-  //    touched and the menu stays open.
   await tapEl(closeBtn1);
   await page.waitForTimeout(200);
   const rowsB = await page.locator('.sf-menu-sheet .sf-menu-row .sf-menu-cell--label').allTextContents();
@@ -463,7 +407,6 @@ const WS = '.sf-workspace';
     rowsB.length === 4 && !rowsB.includes('styles.css') && (await mobileBarLabel()) === 'layout.json',
   );
 
-  // 3) The ACTIVE row is swipeable too — closing it activates the neighbor.
   const act = await swipeStart(sheetRow('layout.json'));
   for (let i = 1; i <= 8; i += 1) {
     await touch('touchMove', [{ x: act.x0 - (110 * i) / 8, y: act.y }]);
@@ -486,7 +429,6 @@ const WS = '.sf-workspace';
     (await page.locator('.sf-menu-row--selected').count()) === 1 && selectedLabel === newActive,
   );
 
-  // 4) A bare tap (no drag) still selects the tab and closes the sheet.
   await tapEl(sheetRow('framework.t'));
   await page.waitForTimeout(250);
   report(
@@ -494,7 +436,6 @@ const WS = '.sf-workspace';
     (await mobileBarLabel()) === 'framework.ts' && (await page.locator('.sf-menu-sheet').count()) === 0,
   );
 
-  // ── No errors ──────────────────────────────────────────────────────────
   report('no console/page errors', errors.length === 0, errors.join('; '));
 
   await finish(browser, serverProc, isFailed(), 'MOBILE CHECKS');

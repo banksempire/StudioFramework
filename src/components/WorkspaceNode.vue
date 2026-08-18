@@ -11,11 +11,6 @@ const ws = useWorkspaceContext();
 const tileNode = computed(() => (props.node.kind === 'tile' ? props.node : null));
 const splitNode = computed(() => (props.node.kind === 'split' ? props.node : null));
 
-/**
- * Flexbox sizing: the ratio is baked into flex-basis, so workspace resizes
- * keep tiles proportional automatically. Min sizes act as the floor —
- * the proportion is only broken when a min size is reached.
- */
 function childStyle(i: 0 | 1) {
   const split = splitNode.value;
   if (!split) return {};

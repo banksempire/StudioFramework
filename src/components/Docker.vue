@@ -7,7 +7,6 @@ const props = withDefaults(
     items: DockerAppDef[];
     activeApp: string;
     panelVisible?: boolean;
-    /** 'left' = the desktop icon rail; 'bottom' = the mobile dock. */
     position?: 'left' | 'bottom';
   }>(),
   {
@@ -18,31 +17,13 @@ const props = withDefaults(
 
 const emit = defineEmits<{
   'app-selected': [appId: string];
-  /** Mobile bottom dock: dragging vertically moves the status bar with
-   *  the finger (dy = finger delta, positive = downward). */
   'status-drag': [dy: number];
-  /** Release: settle the status bar — true = show, false = hide. */
   'status-settle': [show: boolean];
 }>();
 
-// ── Status-bar swipe (mobile) ────────────────────────────────────────────
-// CONTINUOUS drag: every touchmove reports the finger's vertical delta
-// (the framework maps it 1:1 to the status bar's reveal), and on release
-// the settle direction comes from the release velocity (a flick wins
-// over distance) or, for slow releases, from the displacement: less than
-// half the slot snaps back to visible, more hides. A tap (no move) still
-// reaches the app's click handler.
-//
-// Touch slop: browsers withhold the first ~10px of movement and deliver
-// it in ONE late touchmove — without anchoring, that move would jump the
-// reveal (on a swipe-up from hidden it clamps straight to 1 = the bar
-// pops open). So the first dispatched move only ESTABLISHES the drag
-// anchor (the reveal stays put) and tracking is 1:1 from there — unless
-// that first move is fast enough to be a genuine flick, which should
-// count as movement (anchoring would swallow the whole flick).
-const STATUS_SLOT = 38; // 30px bar + 8px gap — the status bar's layout slot (mirrors Framework.vue)
-const VELOCITY_WINS = 0.4; // px/ms — a faster release flicks past the half-slot threshold
-const FLICK_VELOCITY = 0.6; // px/ms — a first move this fast is a flick, not slop
+const STATUS_SLOT = 38;
+const VELOCITY_WINS = 0.4;
+const FLICK_VELOCITY = 0.6;
 const swipe = { x: 0, y: 0, t: 0, active: false, moved: false, anchor: 0 };
 
 function onTouchStart(e: TouchEvent) {
@@ -75,10 +56,9 @@ function onTouchEnd(e: TouchEvent) {
   const t = e.changedTouches[0];
   const dy = t.clientY - swipe.y - swipe.anchor;
   const dx = t.clientX - swipe.x;
-  // Horizontal intent (the dock scrolls sideways) — leave the bar alone.
   if (Math.abs(dx) > Math.abs(dy)) return;
   const elapsed = performance.now() - swipe.t;
-  const velocity = elapsed > 0 ? (t.clientY - swipe.y) / elapsed : 0; // px/ms, positive = downward
+  const velocity = elapsed > 0 ? (t.clientY - swipe.y) / elapsed : 0;
   const show = velocity < -VELOCITY_WINS ? true : velocity > VELOCITY_WINS ? false : dy < STATUS_SLOT / 2;
   emit('status-settle', show);
 }

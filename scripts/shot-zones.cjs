@@ -6,7 +6,6 @@ const PORT = process.env.SF_TEST_PORT || '7492';
   await page.goto(`http://localhost:${PORT}/`, { waitUntil: 'networkidle' });
   await page.reload({ waitUntil: 'networkidle' });
   await page.waitForTimeout(500);
-  // split first so the zone map shows per-tile zones
   const wsBox = await page.locator('.sf-workspace').boundingBox();
   await page
     .locator('.sf-tab:has-text("framework.ts")')
@@ -17,7 +16,6 @@ const PORT = process.env.SF_TEST_PORT || '7492';
   await page.mouse.down();
   await page.mouse.move(tb.x + tb.width / 2 + 30, tb.y + tb.height / 2, { steps: 3 });
   await page.waitForTimeout(300);
-  // hover the bottom band of the right tile to show an active zone + preview
   const right = await page.locator('.sf-tile').nth(1).boundingBox();
   await page.mouse.move(right.x + right.width / 2, right.y + right.height - 4, { steps: 8 });
   await page.waitForTimeout(300);

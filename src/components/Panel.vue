@@ -22,15 +22,12 @@ const props = withDefaults(
 
 const emit = defineEmits<{
   collapse: [];
-  /** Mobile fullscreen panels close via a header ✕ button. */
   close: [];
   'select-section': [sectionId: string];
   resize: [width: number];
   utility: [subId: string, utilityId: string];
   'component-action': [action: PanelAction];
 }>();
-
-// ── Resize (desktop only — mobile panels are fullscreen) ─────────────────
 
 const resizable = computed(() => props.position !== 'mobile');
 const resizeDir = computed(() => (props.position === 'left' ? 'right' : 'left'));
@@ -45,8 +42,6 @@ const { width, dragging, willCollapse, onPointerDown, onPointerMove, onPointerUp
   onCollapse: () => emit('collapse'),
   onResize: (w: number) => emit('resize', w),
 });
-
-// ── Section tabs ──────────────────────────────────────────────────────────
 
 const activeIndex = ref(0);
 const overflowOpen = ref(false);
@@ -90,8 +85,6 @@ function selectOverflowSection(sectionId: string) {
   if (i >= 0) selectSection(i);
   overflowOpen.value = false;
 }
-
-// ── Overflow detection ────────────────────────────────────────────────────
 
 function getTabs(): HTMLElement[] {
   if (!tabsRow.value) return [];
@@ -166,8 +159,6 @@ watch(
   { immediate: true },
 );
 
-// ── Sub-section visibility ─────────────────────────────────────────────────
-
 const visibilityMenuOpen = ref(false);
 const hiddenSubSections = ref<Map<string, Set<string>>>(new Map());
 
@@ -193,8 +184,6 @@ function toggleSubVisible(subId: string) {
   hiddenSubSections.value = new Map(hiddenSubSections.value);
 }
 
-// Unified-menu item lists: the visibility ⋯ menu (multi-select checks) and
-// the section-tabs overflow menu (single-select dots).
 const visibilityItems = computed<MenuNodeDef[]>(() =>
   activeSubSections.value.map((sub) => ({
     id: sub.id,
@@ -216,8 +205,6 @@ const overflowItems = computed<MenuNodeDef[]>(() =>
 function sectionsIndexOf(sec: PanelSection) {
   return props.sections.indexOf(sec);
 }
-
-// ── Cleanup ────────────────────────────────────────────────────────────────
 
 onUnmounted(() => observer?.disconnect());
 </script>
@@ -245,8 +232,6 @@ onUnmounted(() => observer?.disconnect());
       @pointercancel="onPointerUp"
     />
 
-    <!-- Title bar: [title | ⋯ | ◨] on desktop; on mobile the ⋯ moves to
-         the LEFT edge and the ✕ stays right: [⋯ | title | ✕]. -->
     <div
       class="sf-panel-header"
       :class="{ 'sf-panel-header--no-sub': !hasSubSections }"
@@ -275,7 +260,6 @@ onUnmounted(() => observer?.disconnect());
       ><SvgIcon name="✕" /></button>
     </div>
 
-    <!-- Section tab bar - only when multiple sections -->
     <div v-if="sections.length > 1" class="sf-panel-tabs-wrapper">
       <div ref="tabsRow" class="sf-panel-tabs">
         <button
@@ -304,7 +288,6 @@ onUnmounted(() => observer?.disconnect());
       </div>
     </div>
 
-    <!-- Sub-section body -->
     <SubsectionBody
       v-if="hasSubSections"
       :key="activeSectionId"
@@ -316,7 +299,6 @@ onUnmounted(() => observer?.disconnect());
     />
     <div v-else class="sf-panel-empty" />
 
-    <!-- DTC glow overlay - renders above all content -->
     <div
       v-if="willCollapse"
       class="sf-panel-dtc-overlay"

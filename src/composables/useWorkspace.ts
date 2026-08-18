@@ -24,16 +24,9 @@ import {
   type WorkspaceNode,
 } from '../workspace/tree';
 
-// ── Root group model ────────────────────────────────────────────────────────
-// The workspace has N root groups arranged in a single direction (row = side
-// by side, column = stacked). Each root is an independent tree that can
-// contain both row and column splits. Splits on a root tile in the root
-// direction create new root groups; all other splits stay within the tree.
-
 export interface RootGroup {
   id: string;
   node: WorkspaceNode;
-  /** width fraction (0..1); all roots sum to 1 */
   ratio: number;
 }
 
@@ -41,11 +34,8 @@ export interface WorkspaceOps {
   activateTab(tileId: string, tabId: string): void;
   closeTab(tabId: string): void;
   newTab(tileId: string): void;
-  /** Insert a runtime-defined tab (definition registered in tabDefs). */
   openTab(tileId: string, tab: WorkspaceTabDef): void;
-  /** Insert a runtime-defined tab at a specific position in a tile. */
   insertTab(tileId: string, index: number, tab: WorkspaceTabDef): void;
-  /** Split a tile and open a runtime-defined tab in the new half. */
   splitOpen(tileId: string, dir: SplitDir, side: 'start' | 'end', tab: WorkspaceTabDef): void;
   setRatio(splitId: string, ratio: number): void;
   setRootRatio(index: number, ratio: number): void;
@@ -56,11 +46,6 @@ export interface WorkspaceOps {
   focusTile(tileId: string): void;
 }
 
-/**
- * Content key of the framework's built-in blank page. Ghost tabs (windows
- * restored from a snapshot whose definition no longer exists) render this
- * instead of a host component.
- */
 export const BLANK_CONTENT = 'sf-blank';
 
 export interface DndRect {
@@ -68,13 +53,11 @@ export interface DndRect {
   y: number;
   w: number;
   h: number;
-  /** per-corner border-radius (tl tr br bl); only workspace-edge corners round */
   radius?: string;
 }
 
 export interface DndState {
   dragging: boolean;
-  /** True while an EXTERNAL drag (non-tab, e.g. a panel item) hovers the workspace. */
   externalDrop: boolean;
   tabId: string;
   sourceTileId: string;
@@ -87,49 +70,28 @@ export interface DndState {
   indicator: { x: number; y: number; h: number } | null;
 }
 
-/** Drop target for external drags: the tile, its drop zone, and the tab index. */
 export interface ExternalDropTarget {
   tileId: string;
   zone: DropZone;
-  /** tab insertion index for zone 'center' (tab-strip hover) */
   index: number;
 }
 
-/**
- * Side-panel visibility hook. The framework root owns the panel refs, the
- * workspace API owns the snapshots — the root registers a provider so
- * capture() stores the panels' expand/collapse state and apply() restores
- * it. Pass `null` to detach (snapshots then carry no panel state).
- */
 export interface PanelStateProvider {
   read: () => SnapshotPanels | null;
   apply: (panels: SnapshotPanels) => void;
 }
 
-/**
- * Per-window state hook — the host app's counterpart to PanelStateProvider.
- * Windows are allowed to carry state that survives workspace persistence
- * (e.g. a chat composer's height): the workspace root owns the snapshots
- * but not the window internals, so the host registers a provider whose
- * read() is merged into every captured snapshot (keyed by tab id, opaque
- * payload) and whose apply() receives the stored state on restore. Pass
- * `null` to detach (snapshots then carry no window state).
- */
 export interface WindowStateProvider {
-  /** Current per-window state, keyed by tab id (opaque, JSON-able). */
   read: () => Record<string, unknown> | null;
-  /** Restore per-window state captured in a snapshot. */
   apply: (state: Record<string, unknown>) => void;
 }
 
 export interface WorkspaceApi {
   roots: RootGroup[];
-  /** direction of root arrangement (set by first root-level split) */
   rootDir: SplitDir | null;
   focusedTileId: string;
   readonly topRightTileId: string;
   tabDefs: Record<string, WorkspaceTabDef>;
-  /** tab-content key rendered inside an empty tile (no tabs open), if any */
   readonly emptyContent: string;
   minTileWidth: number;
   minTileHeight: number;
@@ -138,68 +100,23 @@ export interface WorkspaceApi {
   startDrag(tabId: string, tileId: string, index: number): void;
   endDrag(): void;
   registerTileEl(id: string, el: HTMLElement | null): void;
-  /** Tooltip for host-rendered new-tab controls (default "New file"; the
-   *  framework's own tab strip has no "+" button). */
   readonly newTabTitle: string;
-  /**
-   * Override tab creation: when a handler is set, `ops.newTab(tileId)` calls
-   * it (with the tile id) instead of creating the generic "Untitled" tab —
-   * host apps decide what a new workspace item means (e.g. "New Chat").
-   * Pass `null` to restore the default behavior/title.
-   */
   setNewTabHandler(handler: ((tileId: string) => void) | null, title?: string): void;
   tileEls: Map<string, HTMLElement>;
-  /** Find a tile across all roots. */
   findTileGlobal(tileId: string): TileNode | null;
-  /** Find the tile holding a tab across all roots. */
   findTabGlobal(tabId: string): TileNode | null;
-  /**
-   * Tab-click notification: called whenever the user clicks a tab element
-   * (host apps can distinguish real clicks from programmatic activation,
-   * e.g. for preview/review semantics). Pass `null` to disable.
-   */
   setTabClickHandler(handler: ((tabId: string) => void) | null): void;
-  /** Internal: fire the registered tab-click handler (called by tiles). */
   notifyTabClick(tabId: string): void;
-  /**
-   * External drop support: host apps register a predicate over the
-   * dataTransfer types (their own drag payload) and a handler that receives
-   * the drop event + target. The framework stays payload-agnostic — it only
-   * shows the same hover zones/previews as tab drags and forwards the drop.
-   * Pass `null`/`null` to disable.
-   */
   setExternalDropHandler(
     accepts: ((types: string[]) => boolean) | null,
     handler: ((e: DragEvent, target: ExternalDropTarget) => void) | null,
   ): void;
-  /** Does the registered predicate accept this dataTransfer's types? */
   acceptsExternal(types: string[]): boolean;
-  /** Forward a drop to the registered handler (no-op if none). */
   deliverExternalDrop(e: DragEvent, target: ExternalDropTarget): void;
-  /**
-   * Capture the current workspace (tile structure + spacing) as a plain
-   * JSON snapshot. Node ids are stripped — a snapshot can be stored and
-   * applied onto any live workspace. Includes the side panels' visibility
-   * when a panel-state provider is registered.
-   */
   capture(): WorkspaceSnapshot;
-  /**
-   * Replace the whole workspace with a snapshot (structure + spacing
-   * restored exactly, side-panel visibility restored via the registered
-   * provider). Tab ids without a registered definition become ghost
-   * windows rendered as the built-in blank page; returns their ids.
-   */
   apply(snapshot: WorkspaceSnapshot): string[];
-  /** Register the side-panel visibility provider (see PanelStateProvider). */
   setPanelStateProvider(provider: PanelStateProvider | null): void;
-  /** Register the per-window state provider (see WindowStateProvider). */
   setWindowStateProvider(provider: WindowStateProvider | null): void;
-  /**
-   * Persist the current workspace (layout + panels + window state) to the
-   * auto-save slot immediately. The auto-save fires on layout changes the
-   * framework observes; host apps whose own state is part of the snapshot
-   * (via WindowStateProvider) call this when that state changes.
-   */
   persistNow(): void;
 }
 
@@ -214,11 +131,6 @@ export interface RightPanelToggleApi {
 
 export const kRightPanelToggle: InjectionKey<RightPanelToggleApi> = Symbol('sf.rightPanelToggle');
 
-/**
- * Title-bar menu access: the mobile workspace bar renders a … button that
- * opens the layout's menu tree (the same menus the desktop MenuBar shows).
- * Provided by the Framework root; absent in host apps that skip it.
- */
 export interface TitleBarMenusApi {
   menus: MenuNodeDef[];
   onAction: (actionId: string) => void;
@@ -226,25 +138,14 @@ export interface TitleBarMenusApi {
 
 export const kTitleBarMenus: InjectionKey<TitleBarMenusApi> = Symbol('sf.titleBarMenus');
 
-/**
- * Reactive mobile-mode flag provided by the Framework root (window width
- * below MOBILE_BREAKPOINT). Menus use it to render their fullscreen sheet
- * instead of the desktop flyout; host components can read it too.
- */
 export const kIsMobile: InjectionKey<Ref<boolean>> = Symbol('sf.isMobile');
 
-/**
- * Framework context accessor for components: the workspace context is
- * provided by the Framework root, so inside a framework tree it always
- * exists — fail fast with a clear error instead of `inject(...)!`.
- */
 export function useWorkspaceContext(): WorkspaceContext {
   const api = inject(kWorkspace);
   if (!api) throw new Error('useWorkspaceContext: workspace context not provided');
   return api;
 }
 
-/** Find the top-right tile in a tree (row -> right, column -> top). */
 function findTopRightTileId(node: WorkspaceNode): string {
   if (node.kind === 'tile') return node.id;
   return findTopRightTileId(node.dir === 'row' ? node.children[1] : node.children[0]);
@@ -273,16 +174,11 @@ export function useWorkspace(def: WorkspaceDef): WorkspaceApi {
         ratio: 1,
       },
     ],
-    // The initial root is always a single tile, so it starts focused.
     focusedTileId: initialTileId,
     rootDir: null,
     newTabTitle: 'New file',
   });
 
-  // ── Tile strip "+" extension point ─────────────────────────────────────
-  // By default "+" appends a generic "Untitled" tab (editor-like default).
-  // Host apps can replace the whole behavior via setNewTabHandler so what a
-  // new workspace item means is decided by the app, not the framework.
   let newTabHandler: ((tileId: string) => void) | null = null;
 
   function setNewTabHandler(handler: ((tileId: string) => void) | null, title?: string) {
@@ -291,9 +187,6 @@ export function useWorkspace(def: WorkspaceDef): WorkspaceApi {
     else if (!handler) state.newTabTitle = 'New file';
   }
 
-  // ── External drop support ──────────────────────────────────────────────
-  // Host apps register a payload predicate + drop handler; the framework
-  // only renders the hover zones and forwards the drop (payload-agnostic).
   let extAccepts: ((types: string[]) => boolean) | null = null;
   let extHandler: ((e: DragEvent, target: ExternalDropTarget) => void) | null = null;
 
@@ -313,9 +206,6 @@ export function useWorkspace(def: WorkspaceDef): WorkspaceApi {
     extHandler?.(e, target);
   }
 
-  // ── Tab-click hook ──────────────────────────────────────────────────────
-  // Real user clicks on a tab element (distinct from programmatic
-  // activation via ops). Host apps decide what a click means.
   let tabClickHandler: ((tabId: string) => void) | null = null;
 
   function setTabClickHandler(handler: ((tabId: string) => void) | null) {
@@ -328,8 +218,6 @@ export function useWorkspace(def: WorkspaceDef): WorkspaceApi {
 
   const tabDefs = reactive<Record<string, WorkspaceTabDef>>({});
   for (const t of def.tabs) tabDefs[t.id] = t;
-
-  // ── Helpers ─────────────────────────────────────────────────────────────
 
   function findRootByTile(tileId: string): RootGroup | null {
     return state.roots.find((r) => findTile(r.node, tileId)) ?? null;
@@ -347,7 +235,6 @@ export function useWorkspace(def: WorkspaceDef): WorkspaceApi {
     return root.node.kind === 'tile' && root.node.tabs.length === 0;
   }
 
-  /** Remove a root by index and redistribute its ratio proportionally. */
   function removeRoot(index: number) {
     const removed = state.roots[index];
     if (!removed) return;
@@ -364,7 +251,6 @@ export function useWorkspace(def: WorkspaceDef): WorkspaceApi {
     }
   }
 
-  /** Remove a tab from whichever root contains it. Empty roots are removed. */
   function removeTabFromRoots(tabId: string) {
     const root = findRootByTab(tabId);
     if (!root) return;
@@ -392,14 +278,6 @@ export function useWorkspace(def: WorkspaceDef): WorkspaceApi {
     }
   }
 
-  // ── Snapshots & persistence ────────────────────────────────────────────
-  // The current (unsaved) layout survives page reloads: every change to
-  // the tile structure or spacing is snapshotted into localStorage
-  // (debounced) and restored on the next startup. Missing windows — tab
-  // ids whose definition the host no longer provides (e.g. a deleted chat
-  // session) — keep their slot in the tree and render the built-in blank
-  // page until the host re-registers them.
-
   const AUTO_KEY = 'sf.workspace.layout';
 
   function loadAutoSnapshot(): WorkspaceSnapshot | null {
@@ -409,14 +287,11 @@ export function useWorkspace(def: WorkspaceDef): WorkspaceApi {
       const snap = JSON.parse(raw);
       return snap && snap.version === 1 && Array.isArray(snap.roots) ? snap : null;
     } catch {
-      return null; // storage unavailable / corrupt — start fresh
+      return null;
     }
   }
 
   let lastAutoJson: string | null = null;
-  /** The current layout as a snapshot: transient tabs (host previews) are
-   *  excluded, side-panel visibility included when a provider is set, and
-   *  per-window state merged in when a window-state provider is set. */
   function currentSnapshot(): WorkspaceSnapshot {
     return captureSnapshot(
       state.roots,
@@ -429,40 +304,24 @@ export function useWorkspace(def: WorkspaceDef): WorkspaceApi {
   function saveAutoSnapshot() {
     try {
       const json = JSON.stringify(currentSnapshot());
-      // Idempotence guard: loading a workspace applies the same layout the
-      // auto-save already holds — skip the redundant write (and the whole
-      // capture/stringify) when nothing changed since the last save.
       if (json === lastAutoJson) return;
       localStorage.setItem(AUTO_KEY, json);
-      lastAutoJson = json; // only after a successful write (quota errors
-      // must not suppress future saves)
-    } catch {
-      /* storage unavailable */
-    }
+      lastAutoJson = json;
+    } catch {}
   }
 
-  /** Ghost window: a tab id with no definition (deleted session, closed
-   *  view…) — the tile keeps its slot, the content is a blank page. */
   function ghostDef(id: string): WorkspaceTabDef {
     return { id, label: id, content: BLANK_CONTENT, tabClass: 'sf-tab--ghost' };
   }
 
-  /** Side-panel visibility: captured with the layout, applied on restore. */
   let panelProvider: PanelStateProvider | null = null;
-  /** Panels from a snapshot applied before a provider was registered (the
-   *  boot auto-restore runs before the framework root wires its refs). */
   let pendingPanels: SnapshotPanels | null = null;
 
-  /** Per-window state: captured with the layout, applied on restore. */
   let windowProvider: WindowStateProvider | null = null;
-  /** Window state from a snapshot applied before the host registered its
-   *  provider (the boot auto-restore runs before bindWorkspace). */
   let pendingWindows: Record<string, unknown> | null = null;
 
   function applySnapshot(snap: WorkspaceSnapshot): string[] {
     const restored = restoreSnapshot(snap);
-    // Never leave the workspace rootless: an empty snapshot (or one with
-    // zero roots) falls back to a single empty tile.
     if (restored.length === 0) {
       restored.push({
         id: nextId('root'),
@@ -470,8 +329,6 @@ export function useWorkspace(def: WorkspaceDef): WorkspaceApi {
         ratio: 1,
       });
     }
-    // One pass over the new tree: collect every tab id, and turn ids
-    // without a definition into ghost (blank) windows.
     const live = new Set<string>();
     const ghosts: string[] = [];
     const walk = (node: WorkspaceNode) => {
@@ -489,9 +346,6 @@ export function useWorkspace(def: WorkspaceDef): WorkspaceApi {
       }
     };
     for (const r of restored) walk(r.node);
-    // Prune ghost defs no longer referenced: loading different workspaces
-    // must not grow tabDefs without bound. Host-reconciled ghosts (their
-    // content swapped for a real component) are never pruned.
     for (const id of Object.keys(tabDefs)) {
       if (tabDefs[id].content === BLANK_CONTENT && !live.has(id)) delete tabDefs[id];
     }
@@ -508,8 +362,6 @@ export function useWorkspace(def: WorkspaceDef): WorkspaceApi {
     }
     return ghosts;
   }
-
-  // ── Operations ──────────────────────────────────────────────────────────
 
   const ops: WorkspaceOps = {
     activateTab(tileId, tabId) {
@@ -528,7 +380,6 @@ export function useWorkspace(def: WorkspaceDef): WorkspaceApi {
     },
 
     newTab(tileId) {
-      // Host-app override: the app decides what "+" creates (if anything).
       if (newTabHandler) {
         newTabHandler(tileId);
         return;
@@ -563,9 +414,6 @@ export function useWorkspace(def: WorkspaceDef): WorkspaceApi {
       if (!root) return;
       tabDefs[tab.id] = tab;
 
-      // A split on a root tile (in the root arrangement direction) creates a
-      // new root group; the new tab gets the new half. Mirrors splitTile,
-      // minus the source-tab removal (the tab never existed before).
       const isRootTile = root.node.kind === 'tile' && root.node.id === tileId;
       const createsNewRoot = isRootTile && (state.rootDir === null || state.rootDir === dir);
 
@@ -579,8 +427,6 @@ export function useWorkspace(def: WorkspaceDef): WorkspaceApi {
         state.roots.splice(side === 'start' ? targetIdx : targetIdx + 1, 0, newRoot);
         state.focusedTileId = newTile.id;
       } else {
-        // Insert-then-split: append the tab to the target tile, then split
-        // it — treeSplitTile moves the tab into the new half.
         root.node = treeNewTab(root.node, tileId, tab.id);
         root.node = treeSplitTile(root.node, tileId, dir, side, tab.id);
         const newTile = findTileByTab(root.node, tab.id);
@@ -612,12 +458,10 @@ export function useWorkspace(def: WorkspaceDef): WorkspaceApi {
     },
 
     mergeAll() {
-      // Collect all tabs from all roots in visual order
       const allTabs: string[] = [];
       for (const root of state.roots) allTabs.push(...collectAllTabs(root.node));
       if (allTabs.length === 0) return;
 
-      // Try to keep the currently active tab active
       let activeId = allTabs[0];
       for (const root of state.roots) {
         const tile = findTile(root.node, state.focusedTileId);
@@ -637,45 +481,33 @@ export function useWorkspace(def: WorkspaceDef): WorkspaceApi {
       const root = findRootByTile(tileId);
       if (!root) return;
 
-      // A split on a root tile (root.node IS this tile) creates a new root
-      // group, IF the direction matches the root arrangement direction (or
-      // no direction is set yet - the first split sets it).
-      // Splits in the orthogonal direction, or splits on nested tiles, use
-      // treeSplitTile within the root's tree.
       const isRootTile = root.node.kind === 'tile' && root.node.id === tileId;
       const createsNewRoot = isRootTile && (state.rootDir === null || state.rootDir === dir);
 
       if (createsNewRoot) {
-        // Set root direction on first split
         if (state.rootDir === null) state.rootDir = dir;
 
         const targetRootId = root.id;
         const targetOrigIdx = state.roots.indexOf(root);
 
-        // Remove tab from source
         removeTabFromRoots(tabId);
 
-        // Create new root
         const newTile: TileNode = { kind: 'tile', id: nextId('tile'), tabs: [tabId], activeId: tabId };
         const newRoot: RootGroup = { id: nextId('root'), node: newTile, ratio: 0 };
 
-        // Check if target root still exists
         const targetIdx = state.roots.findIndex((r) => r.id === targetRootId);
         if (targetIdx >= 0) {
           const target = state.roots[targetIdx];
           if (isRootEmpty(target)) {
-            // Target root became empty (had only the dragged tab) - replace it
             newRoot.ratio = target.ratio;
             state.roots.splice(targetIdx, 1, newRoot);
           } else {
-            // Target root still has tabs - take half its ratio
             newRoot.ratio = target.ratio / 2;
             target.ratio /= 2;
             const insertIdx = side === 'start' ? targetIdx : targetIdx + 1;
             state.roots.splice(insertIdx, 0, newRoot);
           }
         } else {
-          // Target root was removed - take half from nearest root or use full ratio
           const fallbackIdx = Math.min(targetOrigIdx, state.roots.length - 1);
           if (state.roots.length > 0 && fallbackIdx >= 0) {
             const fallback = state.roots[fallbackIdx];
@@ -688,14 +520,9 @@ export function useWorkspace(def: WorkspaceDef): WorkspaceApi {
             state.roots.push(newRoot);
           }
         }
-        // removeTabFromRoots may have dropped the LAST other root (and with it
-        // the arrangement direction) before the fallback re-inserted ours —
-        // with two roots again the direction must come back or the root sash
-        // renders degenerate (wrong axis, zero size) and can't be dragged.
         if (state.roots.length > 1) state.rootDir = dir;
         state.focusedTileId = newTile.id;
       } else {
-        // Split within the root's tree (nested tile, or orthogonal direction)
         const sourceRoot = findRootByTab(tabId);
         if (sourceRoot && sourceRoot !== root) {
           sourceRoot.node = treeCloseTab(sourceRoot.node, tabId);
@@ -718,7 +545,6 @@ export function useWorkspace(def: WorkspaceDef): WorkspaceApi {
       if (sourceRoot === targetRoot) {
         sourceRoot.node = treeMoveTab(sourceRoot.node, tabId, targetTileId, index);
       } else {
-        // Cross-root: remove from source, insert into target
         sourceRoot.node = treeCloseTab(sourceRoot.node, tabId);
         if (isRootEmpty(sourceRoot) && state.roots.length > 1) {
           removeRoot(state.roots.indexOf(sourceRoot));
@@ -732,8 +558,6 @@ export function useWorkspace(def: WorkspaceDef): WorkspaceApi {
       state.focusedTileId = tileId;
     },
   };
-
-  // ── Drag-to-tile state ───────────────────────────────────────────────────
 
   const dnd = reactive<DndState>({
     dragging: false,
@@ -796,12 +620,6 @@ export function useWorkspace(def: WorkspaceDef): WorkspaceApi {
     return null;
   }
 
-  // ── Auto-persist: the current (unsaved) layout survives reloads ──────
-  // Every change to the tile structure or spacing is snapshotted into
-  // localStorage (debounced — sash drags emit setRatio per pixel), and the
-  // last layout is restored on startup. Missing windows (tab ids whose
-  // definition the host no longer provides) keep their slot as blank
-  // ghost pages until the host re-registers them.
   let saveTimer: ReturnType<typeof setTimeout> | undefined;
   const scheduleAutoSave = () => {
     if (saveTimer) clearTimeout(saveTimer);
@@ -824,7 +642,6 @@ export function useWorkspace(def: WorkspaceDef): WorkspaceApi {
       return state.focusedTileId;
     },
     get topRightTileId() {
-      // Row-direction: rightmost root (last). Column-direction: topmost root (first).
       const root = state.rootDir === 'column' ? state.roots[0] : state.roots[state.roots.length - 1];
       return root ? findTopRightTileId(root.node) : '';
     },

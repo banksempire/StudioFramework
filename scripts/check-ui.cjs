@@ -1,12 +1,3 @@
-/**
- * Headless UI smoke test for the Studio Framework.
- *
- * Usage:  npm run check
- *
- * - Auto-starts the dev server (port from SF_TEST_PORT, default 7492) if it isn't running
- * - Loads the page in headless Chromium and asserts core interactions
- * - Exits non-zero on any failure; saves a screenshot to scripts/artifacts/
- */
 const fs = require('node:fs');
 const path = require('node:path');
 const { ensureServer, openApp, makeReporter, finish } = require('./lib/ui-test.cjs');
@@ -21,10 +12,8 @@ const ARTIFACT_DIR = path.join(__dirname, 'artifacts');
 
   const visible = (sel) => page.isVisible(sel);
 
-  // ── Load ────────────────────────────────────────────────────────────────
   report('framework renders (menu bar, docker, panels)', true);
 
-  // ── Menu & submenu ──────────────────────────────────────────────────────
   await page.click('text=File');
   await page.waitForTimeout(200);
   report('File menu opens', await visible('.sf-menu-pop'));
@@ -37,8 +26,6 @@ const ARTIFACT_DIR = path.join(__dirname, 'artifacts');
   await page.waitForTimeout(200);
   report('menu closes on leaf click', !(await visible('.sf-menu-pop')));
 
-  // ── Docker panel switching ──────────────────────────────────────────────
-  // (Icons are SVG glyphs now — select apps by their title, not emoji text.)
   await page.click('.sf-docker-app[title="Debug"]');
   await page.waitForTimeout(300);
   report('docker app switches panel', await visible('text=VARIABLES'));
@@ -46,7 +33,6 @@ const ARTIFACT_DIR = path.join(__dirname, 'artifacts');
   await page.click('.sf-docker-app[title="Explorer"]');
   await page.waitForTimeout(300);
 
-  // ── Sub-section collapse/expand height preservation ─────────────────────
   const projectBody = '.sf-subsection-body[data-sub-body="project"]';
   const hBefore = await page.$eval(projectBody, (el) => el.getBoundingClientRect().height).catch(() => null);
 
@@ -64,12 +50,9 @@ const ARTIFACT_DIR = path.join(__dirname, 'artifacts');
     `${hBefore}px → ${hAfter}px`,
   );
 
-  // ── Bars & workspace ────────────────────────────────────────────────────
   report('status bar renders', await visible('.sf-status-bar'));
   report('workspace tabs render', await visible('.sf-tab:has-text("layout.json")'));
 
-  // The welcome page is NOT a tab anymore: it fills the workspace only when
-  // no tab is open (emptyContent). Close every tab and it must appear.
   const closedAll = await page.evaluate(async () => {
     for (let i = 0; i < 8; i++) {
       const btn = document.querySelector('.sf-tab .sf-tab-close');
@@ -84,7 +67,6 @@ const ARTIFACT_DIR = path.join(__dirname, 'artifacts');
 
   report('right panel renders', await visible('.sf-panel--right'));
 
-  // ── Errors ──────────────────────────────────────────────────────────────
   report('no console/page errors', errors.length === 0, errors.slice(0, 3).join(' | '));
 
   const failed = isFailed();

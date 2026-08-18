@@ -4,20 +4,6 @@ import { useWorkspaceContext } from '../composables/useWorkspace';
 import type { WorkspaceSnapshot } from '../workspace/snapshots';
 import SvgIcon from './SvgIcon.vue';
 
-/**
- * Workspace app panel — save / switch / manage named workspaces.
- *
- * Framework-generic: it only talks to the workspace API + localStorage,
- * so any host app can register it (docker app → { type: 'component',
- * key: 'workspace-panel' }) and get workspace management for free.
- *
- * - Save: captures the current tile structure + spacing as a snapshot.
- * - Load: restores structure + spacing exactly; tabs without a definition
- *   (deleted windows) keep their slot and render the built-in blank page.
- * - Manage: rename, delete, search, reorder (↑/↓).
- * - All saved workspaces live in localStorage (survive refresh, no backend).
- */
-
 interface SavedWorkspace {
   id: string;
   name: string;
@@ -35,7 +21,7 @@ function loadSaved(): SavedWorkspace[] {
     const parsed = raw ? JSON.parse(raw) : [];
     return Array.isArray(parsed) ? parsed : [];
   } catch {
-    return []; // storage unavailable / corrupt — start fresh
+    return [];
   }
 }
 
@@ -44,17 +30,13 @@ const saved = ref<SavedWorkspace[]>(loadSaved());
 function persist() {
   try {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(saved.value));
-  } catch {
-    /* storage unavailable */
-  }
+  } catch {}
 }
 
 function newId(): string {
   return `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`;
 }
 
-// Formatted timestamps are cached per item: the list re-renders on every
-// search keystroke, and toLocaleString is far from free.
 const timeCache = new Map<string, string>();
 
 function fmtTime(item: SavedWorkspace): string {
@@ -70,11 +52,8 @@ function fmtTime(item: SavedWorkspace): string {
   return s;
 }
 
-// ── Save current workspace ────────────────────────────────────────────────
-
 const nameInput = ref('');
 const saveError = ref('');
-/** load failures (corrupt stored snapshots) — shown near the list */
 const loadError = ref('');
 
 function autoName(): string {
@@ -98,8 +77,6 @@ function saveCurrent() {
   persist();
 }
 
-// ── Search ────────────────────────────────────────────────────────────────
-
 const query = ref('');
 
 const filtered = computed(() => {
@@ -107,17 +84,12 @@ const filtered = computed(() => {
   return q ? saved.value.filter((s) => s.name.toLowerCase().includes(q)) : saved.value;
 });
 
-// ── Load / rename / delete / reorder ─────────────────────────────────────
-
-/** Number of ghost (blank) windows created by the last load — shown as a
- *  note so missing windows are never silent. */
 const lastGhostCount = ref(0);
 
 function loadWorkspace(item: SavedWorkspace) {
   try {
     lastGhostCount.value = ws.apply(item.snapshot).length;
   } catch {
-    // A hand-edited/corrupt stored snapshot must not take the panel down.
     loadError.value = `Could not load "${item.name}" (corrupt snapshot)`;
   }
 }
@@ -161,7 +133,6 @@ function moveItem(id: string, dir: -1 | 1) {
 
 <template>
   <div class="sf-ws-panel">
-    <!-- Save current workspace -->
     <div class="sf-ws-save">
       <input
         v-model="nameInput"
@@ -175,11 +146,9 @@ function moveItem(id: string, dir: -1 | 1) {
     </div>
     <div v-if="saveError" class="sf-ws-error">{{ saveError }}</div>
 
-    <!-- Search -->
     <input v-model="query" class="sf-ws-input sf-ws-search" placeholder="Search workspaces…" />
     <div v-if="loadError" class="sf-ws-error">{{ loadError }}</div>
 
-    <!-- Saved list -->
     <div v-if="saved.length === 0" class="sf-ws-empty">
       No saved workspaces yet.<br />
       Arrange tiles the way you like, then Save —<br />

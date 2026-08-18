@@ -1,16 +1,8 @@
-/**
- * Shared helpers for the Playwright check scripts.
- */
 const { chromium } = require('playwright');
 const { spawn } = require('node:child_process');
 const http = require('node:http');
 const path = require('node:path');
 
-/**
- * Port the checks run against. Defaults to 7492 (legacy). Set SF_TEST_PORT
- * to point them at a test server on a different port — port 7492 is
- * reserved for the product dev server (pi-agent-studio).
- */
 const PORT = process.env.SF_TEST_PORT || '7492';
 const URL = `http://localhost:${PORT}/`;
 
@@ -28,7 +20,6 @@ function serverUp() {
   });
 }
 
-/** Start the dev server if it isn't running. Returns null when it already was. */
 async function ensureServer() {
   if (await serverUp()) return null;
   console.log(`dev server not running on port ${PORT} — starting it…`);
@@ -44,7 +35,6 @@ async function ensureServer() {
   throw new Error(`dev server did not start on port ${PORT} within 20s`);
 }
 
-/** Open the framework in headless Chromium with error collection. */
 async function openApp({ viewport = { width: 1440, height: 900 } } = {}) {
   const browser = await chromium.launch();
   const page = await browser.newPage({ viewport });
@@ -70,10 +60,9 @@ function makeReporter() {
   return { report, isFailed: () => failed };
 }
 
-/** Clean up and exit with the right code. */
 async function finish(browser, serverProc, failed, label = 'CHECKS') {
   await browser.close();
-  if (serverProc) process.kill(-serverProc.pid, 'SIGTERM'); // stop server we started
+  if (serverProc) process.kill(-serverProc.pid, 'SIGTERM');
   console.log(failed ? `\n${label} FAILED` : `\nALL ${label} PASSED`);
   process.exit(failed ? 1 : 0);
 }

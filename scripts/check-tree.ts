@@ -1,10 +1,3 @@
-/**
- * Unit tests for the pure workspace split-tree (src/workspace/tree.ts).
- * Usage: npm run check:tree   (runs under Node's native TypeScript support)
- *
- * Covers: splits (same-tile, cross-tile, empty-source merge), moves,
- * reorders, closes, min-size composition, ratio clamping, lookups.
- */
 import {
   collectAllTabs,
   findNode,
@@ -23,8 +16,6 @@ import {
   type WorkspaceNode,
 } from '../src/workspace/tree.ts';
 
-// ── Tiny assertion harness (same reporting style as the check-*.cjs suites) ─
-
 let passed = 0;
 let failed = 0;
 const failures: string[] = [];
@@ -37,8 +28,6 @@ function report(name: string, ok: boolean, extra = '') {
     failures.push(`✗ ${name}${extra ? ` — ${extra}` : ''}`);
   }
 }
-
-// ── Helpers ────────────────────────────────────────────────────────────────
 
 function tile(tabs: string[], active = tabs[0] ?? ''): TileNode {
   return { kind: 'tile', id: nextId('tile'), tabs, activeId: active };
@@ -57,10 +46,7 @@ const tabsOf = (n: WorkspaceNode, id: string): string[] => {
   return t ? t.tabs : [];
 };
 
-// ── Splits ─────────────────────────────────────────────────────────────────
-
 {
-  // Same-tile split, side 'end': dragged tab takes the second half (ratio 0.5)
   const root = tile(['a', 'b', 'c'], 'a');
   const r = treeSplitTile(root, root.id, 'row', 'end', 'a');
   report('same-tile split: root becomes a split', r.kind === 'split', r.kind);
@@ -80,7 +66,6 @@ const tabsOf = (n: WorkspaceNode, id: string): string[] => {
 }
 
 {
-  // Same-tile split, side 'start': dragged tab takes the first half
   const root = tile(['a', 'b', 'c'], 'a');
   const r = treeSplitTile(root, root.id, 'column', 'start', 'a');
   report(
@@ -90,7 +75,6 @@ const tabsOf = (n: WorkspaceNode, id: string): string[] => {
 }
 
 {
-  // Cross-tile split: tab moves out of its source tile, source keeps the rest
   const a = tile(['a', 'b']);
   const b = tile(['c', 'd'], 'c');
   const root = row(a, b);
@@ -111,7 +95,6 @@ const tabsOf = (n: WorkspaceNode, id: string): string[] => {
 }
 
 {
-  // Empty-source merge: source tile with only the dragged tab is removed
   const a = tile(['a']);
   const b = tile(['c', 'd'], 'c');
   const root = row(a, b);
@@ -130,7 +113,6 @@ const tabsOf = (n: WorkspaceNode, id: string): string[] => {
 }
 
 {
-  // Single-tab target: splitting away its only tab empties it and merges it away
   const root = tile(['a']);
   const r = treeSplitTile(root, root.id, 'row', 'start', 'a');
   report(
@@ -139,10 +121,7 @@ const tabsOf = (n: WorkspaceNode, id: string): string[] => {
   );
 }
 
-// ── Moves & reorders ───────────────────────────────────────────────────────
-
 {
-  // Reorder within a tile (drag to the front)
   const root = tile(['a', 'b', 'c']);
   const r = treeMoveTab(root, 'c', root.id, 0);
   report(
@@ -154,7 +133,6 @@ const tabsOf = (n: WorkspaceNode, id: string): string[] => {
 }
 
 {
-  // Reorder within a tile (drag to the end)
   const root = tile(['a', 'b', 'c']);
   const r = treeMoveTab(root, 'a', root.id, 2);
   report(
@@ -164,7 +142,6 @@ const tabsOf = (n: WorkspaceNode, id: string): string[] => {
 }
 
 {
-  // Index clamping: out-of-range index appends
   const root = tile(['a', 'b', 'c']);
   const r = treeMoveTab(root, 'a', root.id, 99);
   report(
@@ -174,7 +151,6 @@ const tabsOf = (n: WorkspaceNode, id: string): string[] => {
 }
 
 {
-  // Cross-tile move inserts at index
   const a = tile(['a', 'b']);
   const b = tile(['c', 'd'], 'c');
   const root = row(a, b);
@@ -190,7 +166,6 @@ const tabsOf = (n: WorkspaceNode, id: string): string[] => {
 }
 
 {
-  // Cross-tile move with empty source: source tile removed, split merges
   const a = tile(['a']);
   const b = tile(['c', 'd'], 'c');
   const root = row(a, b);
@@ -202,10 +177,7 @@ const tabsOf = (n: WorkspaceNode, id: string): string[] => {
   );
 }
 
-// ── Closes ─────────────────────────────────────────────────────────────────
-
 {
-  // Close the active middle tab: the tab that slid into its slot activates
   const root = tile(['a', 'b', 'c'], 'b');
   const r = treeCloseTab(root, 'b');
   const t = findTile(r, root.id);
@@ -214,7 +186,6 @@ const tabsOf = (n: WorkspaceNode, id: string): string[] => {
 }
 
 {
-  // Close the active first tab
   const root = tile(['a', 'b', 'c'], 'a');
   const r = treeCloseTab(root, 'a');
   const t = findTile(r, root.id);
@@ -222,7 +193,6 @@ const tabsOf = (n: WorkspaceNode, id: string): string[] => {
 }
 
 {
-  // Close an inactive tab: active tab is kept
   const root = tile(['a', 'b', 'c'], 'a');
   const r = treeCloseTab(root, 'c');
   const t = findTile(r, root.id);
@@ -230,7 +200,6 @@ const tabsOf = (n: WorkspaceNode, id: string): string[] => {
 }
 
 {
-  // Close the last tab of the root tile: it stays as an empty tile
   const root = tile(['a']);
   const r = treeCloseTab(root, 'a');
   report(
@@ -240,7 +209,6 @@ const tabsOf = (n: WorkspaceNode, id: string): string[] => {
 }
 
 {
-  // Close the last tab of a non-root tile: tile removed, split merges away
   const a = tile(['a', 'b']);
   const b = tile(['c'], 'c');
   const root = row(a, b);
@@ -253,7 +221,6 @@ const tabsOf = (n: WorkspaceNode, id: string): string[] => {
 }
 
 {
-  // Nested close-merge: removing a deep tile collapses its parent split
   const c = tile(['c'], 'c');
   const inner = col(tile(['a'], 'a'), c);
   const root = row(inner, tile(['z'], 'z'));
@@ -268,8 +235,6 @@ const tabsOf = (n: WorkspaceNode, id: string): string[] => {
   );
 }
 
-// ── Min-size composition ───────────────────────────────────────────────────
-
 {
   const W = 160,
     H = 100;
@@ -283,8 +248,6 @@ const tabsOf = (n: WorkspaceNode, id: string): string[] => {
   report('nested: width composes row-sum of column-max', subtreeMinSize(nested, 'width', W, H) === 2 * W);
   report('nested: height composes row-max of column-sum', subtreeMinSize(nested, 'height', W, H) === 2 * H);
 }
-
-// ── Ratio clamping ─────────────────────────────────────────────────────────
 
 {
   const root = row(tile(['a']), tile(['b']));
@@ -308,8 +271,6 @@ const tabsOf = (n: WorkspaceNode, id: string): string[] => {
   );
 }
 
-// ── New tabs & inserts ─────────────────────────────────────────────────────
-
 {
   const root = tile(['a'], 'a');
   const r = treeNewTab(root, root.id, 'untitled-1');
@@ -328,8 +289,6 @@ const tabsOf = (n: WorkspaceNode, id: string): string[] => {
   report('inserted tab becomes active', t?.activeId === 'b', t?.activeId);
 }
 
-// ── Lookups & traversal ────────────────────────────────────────────────────
-
 {
   const cTile = tile(['c']);
   const root = row(tile(['a', 'b']), col(cTile, tile(['d', 'e'])));
@@ -343,8 +302,6 @@ const tabsOf = (n: WorkspaceNode, id: string): string[] => {
     JSON.stringify(collectAllTabs(root)) === JSON.stringify(['a', 'b', 'c', 'd', 'e']),
   );
 }
-
-// ── Report ─────────────────────────────────────────────────────────────────
 
 console.log(`\nTREE CHECKS: ${passed} passed, ${failed} failed\n`);
 for (const f of failures) console.log(f);

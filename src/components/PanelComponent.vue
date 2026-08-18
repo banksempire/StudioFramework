@@ -16,11 +16,6 @@ const emit = defineEmits<{
   'content-changed': [];
 }>();
 
-/**
- * Custom components (type: 'component') dispatch actions upward through
- * this injection. The source is set to the component's layout key so the
- * host app can tell which component produced the action.
- */
 provide(kPanelAction, (action: Omit<PanelAction, 'source'>) => {
   if (props.component.type !== 'component') return;
   emit('action', { source: props.component.key, action: action.action, payload: action.payload });
@@ -34,9 +29,6 @@ function emitAction(action?: string, payload?: unknown) {
   emit('action', { source: props.component.type, action, payload });
 }
 
-// ── Tree state ─────────────────────────────────────────────────────────────
-
-// reactive Set: add/delete trigger updates directly (no manual re-assignment)
 const expandedNodes = reactive(new Set<string>());
 
 interface FlatNode {
@@ -80,14 +72,12 @@ function onNodeClick(node: TreeNode) {
 
 <template>
   <div class="sf-pc">
-    <!-- Text -->
     <span
       v-if="component.type === 'text'"
       class="sf-pc-text"
       :class="{ 'sf-pc-text--muted': component.muted }"
     >{{ component.text }}</span>
 
-    <!-- Input -->
     <input
       v-else-if="component.type === 'input'"
       class="sf-pc-input"
@@ -96,7 +86,6 @@ function onNodeClick(node: TreeNode) {
       :placeholder="component.placeholder"
     />
 
-    <!-- Button -->
     <button
       v-else-if="component.type === 'button'"
       class="sf-pc-btn"
@@ -106,7 +95,6 @@ function onNodeClick(node: TreeNode) {
       {{ component.label }}
     </button>
 
-    <!-- Tree -->
     <div v-else-if="component.type === 'tree'" class="sf-pc-tree">
       <div
         v-for="item in flatTree"
@@ -128,10 +116,8 @@ function onNodeClick(node: TreeNode) {
       </div>
     </div>
 
-    <!-- Key-Value List (unified KeyValueList component) -->
     <KeyValueList v-else-if="component.type === 'keyValueList'" :items="component.items" />
 
-    <!-- List -->
     <div v-else-if="component.type === 'list'" class="sf-pc-list">
       <div
         v-for="item in component.items"
@@ -145,7 +131,6 @@ function onNodeClick(node: TreeNode) {
       </div>
     </div>
 
-    <!-- Custom (app-registered) component -->
     <component
       v-else-if="customComp"
       :is="customComp"

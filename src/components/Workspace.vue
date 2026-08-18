@@ -17,11 +17,7 @@ const props = withDefaults(
   defineProps<{
     def: WorkspaceDef;
     rightPanelVisible?: boolean;
-    /** shared workspace api (created by the framework root when provided) */
     api?: WorkspaceApi;
-    /** Mobile layout: the tile TREE is hidden and the workspace presents a
-     *  single flat tile holding every tab (the tree itself is untouched and
-     *  resumes exactly when mobile ends). */
     mobile?: boolean;
   }>(),
   {
@@ -31,12 +27,9 @@ const props = withDefaults(
 );
 const emit = defineEmits<{ 'toggle-right-panel': [] }>();
 
-// Use the shared api when given (single source of truth across panels +
-// tiles); otherwise create a local one (standalone usage).
 const api = props.api ?? useWorkspace(props.def);
 provide(kWorkspace, api);
 
-// Provide right-panel toggle info to tiles
 const rpToggle = reactive({
   visible: props.rightPanelVisible ?? true,
   toggle: () => emit('toggle-right-panel'),
@@ -51,13 +44,6 @@ provide(kRightPanelToggle, rpToggle);
 
 const wsEl = ref<HTMLElement | null>(null);
 
-// ── Mobile flat tile ──────────────────────────────────────────────────────
-// One synthetic tile over the real tree: every tab from every root in
-// visual order, active = the focused tile's active tab. Actions on it are
-// routed back to the real tiles (Tile.vue detects the synthetic id), so
-// switching back to desktop resumes the exact structure. The id can never
-// collide with a real tile (real ids are generated as 'tile-N').
-
 const MOBILE_FLAT_TILE_ID = 'sf-mobile-flat';
 
 const flatNode = computed<TileNode>(() => {
@@ -69,16 +55,10 @@ const flatNode = computed<TileNode>(() => {
   return { kind: 'tile', id: MOBILE_FLAT_TILE_ID, tabs, activeId };
 });
 
-/** Tile seam size (--sf-sash-size); previews must account for it so the
- *  landing box matches the shape the split will actually produce. */
 const GAP = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--sf-sash-size')) || 1;
 
-/** Box corner radius (--sf-radius), for preview corners at the workspace edge. */
 const RADIUS = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--sf-radius')) || 6;
 
-/** Per-corner radius (tl tr br bl): only corners sitting on the workspace's
- *  outer corners round; seams and interior edges stay sharp. When the right
- *  panel is expanded, the workspace's right edge is a seam — never round. */
 function cornerPx(r: DOMRect, ws: DOMRect, rightSeam: boolean): [number, number, number, number] {
   const near = (a: number, b: number) => Math.abs(a - b) < 2;
   const top = near(r.top, ws.top);
@@ -91,7 +71,6 @@ function cornerPx(r: DOMRect, ws: DOMRect, rightSeam: boolean): [number, number,
 
 const radiusStr = (c: [number, number, number, number]) => `${c[0]}px ${c[1]}px ${c[2]}px ${c[3]}px`;
 
-/** Zero out the corners on the seam side of a half-preview. */
 function halfRadius(zone: DropZone, c: [number, number, number, number]): string {
   if (zone === 'left') return radiusStr([c[0], 0, 0, c[3]]);
   if (zone === 'right') return radiusStr([0, c[1], c[2], 0]);
@@ -101,7 +80,6 @@ function halfRadius(zone: DropZone, c: [number, number, number, number]): string
 
 const px = (n: number | undefined) => (n == null ? '0px' : `${n}px`);
 
-/** Shared style builder for the DnD overlay rects (preview, glow, indicator). */
 function rectStyle(r: { x: number; y: number; w?: number; h: number; radius?: string } | null) {
   return {
     left: px(r?.x),
@@ -112,13 +90,10 @@ function rectStyle(r: { x: number; y: number; w?: number; h: number; radius?: st
   };
 }
 
-// ── Drag-to-tile ───────────────────────────────────────────────────────────
-
 function rectToLocal(r: DOMRect, origin: { x: number; y: number }): DndRect {
   return { x: r.left - origin.x, y: r.top - origin.y, w: r.width, h: r.height };
 }
 
-/** Clear hover state (pointer left the workspace or missed all tiles). */
 function clearHover() {
   api.dnd.tileId = '';
   api.dnd.preview = null;
@@ -126,16 +101,13 @@ function clearHover() {
   api.dnd.indicator = null;
 }
 
-/** Per-tile geometry for zone detection, cached per drag. */
 interface TileGeom {
   id: string;
   rect: DOMRect;
   bandW: number;
   bandH: number;
-  /** strip bottom + 6px tolerance — where the split bands start */
   contentTop: number;
   stripR: DOMRect | null;
-  /** strip tab rects — measured once per drag */
   tabRects: DOMRect[];
 }
 
@@ -148,17 +120,10 @@ function tileGeom(id: string, el: HTMLElement): TileGeom {
   const tabRects = (strip ? [...strip.querySelectorAll<HTMLElement>('.sf-tab')] : []).map((t) =>
     t.getBoundingClientRect(),
   );
-  const contentTop = (stripR ? stripR.bottom : rect.top) + 6; // inStrip tolerance
+  const contentTop = (stripR ? stripR.bottom : rect.top) + 6;
   return { id, rect, bandW, bandH, contentTop, stripR, tabRects };
 }
 
-// ── Drag geometry cache ──────────────────────────────────────────────────
-// dragover fires every frame during a drag; reading every tile's and
-// tab's rect per event was the hot path (N tiles × M tabs of forced
-// layout at 60 Hz — a 20-tile × 5-tab workspace ≈ 240 reads/event).
-// Layout cannot change during a drag (the dragged tab only gets an
-// opacity class), so the geometry is measured ONCE per drag and reused.
-// Invalidated when it can: drag start, window resize, and any scroll.
 let geomCache: TileGeom[] | null = null;
 
 function getGeoms(): TileGeom[] {
@@ -172,7 +137,6 @@ function invalidateGeoms() {
   geomCache = null;
 }
 
-// A drag session starts (or ends) → drop the cache from the previous one.
 watch(
   () => [api.dnd.dragging, api.dnd.externalDrop],
   () => {
@@ -189,27 +153,19 @@ onUnmounted(() => {
 });
 
 function onDragOver(e: DragEvent) {
-  // Always prevent default: keeps drop allowed and stops the browser from
-  // navigating when an OS file is dropped onto the workspace.
   e.preventDefault();
-  // External drags (host-app payload, e.g. a panel item) reuse the same
-  // hover zones as tab drags; the app decides what the drop means.
   const external = !api.dnd.dragging && api.acceptsExternal(Array.from(e.dataTransfer?.types ?? []));
   if (!api.dnd.dragging && !external) return;
   if (e.dataTransfer) e.dataTransfer.dropEffect = external ? 'copy' : 'move';
   api.dnd.externalDrop = external;
 
-  // One workspace rect per event; origin + corner detection share it.
   const wsRect = wsEl.value?.getBoundingClientRect() ?? null;
   const origin = { x: wsRect?.left ?? 0, y: wsRect?.top ?? 0 };
   const rightSeam = !!props.rightPanelVisible;
   const dnd = api.dnd;
 
-  // Per-tile geometry for hit testing (cached per drag — see getGeoms).
   const geoms = getGeoms();
 
-  // Hit test: the tile under the cursor, then its zone. Edge bands decide
-  // between split zones (left/right/top/bottom) and the move zone (center).
   const hit = geoms.find(
     (g) =>
       e.clientX >= g.rect.left &&
@@ -224,8 +180,7 @@ function onDragOver(e: DragEvent) {
 
   const dx = e.clientX - hit.rect.left;
   const dy = e.clientY - hit.rect.top;
-  const contentStart = hit.contentTop - hit.rect.top; // below the strip
-  // Cursor-dependent, so computed per event (the strip rect itself is cached).
+  const contentStart = hit.contentTop - hit.rect.top;
   const inStrip =
     !!hit.stripR &&
     hit.stripR.height > 0 &&
@@ -233,7 +188,7 @@ function onDragOver(e: DragEvent) {
     e.clientY <= hit.stripR.bottom + 6;
   let zone: DropZone = 'center';
   if (inStrip) {
-    zone = 'center'; // The tab strip is the reorder zone (VSCode behavior).
+    zone = 'center';
   } else if (dx < hit.bandW) {
     zone = 'left';
   } else if (dx > hit.rect.width - hit.bandW) {
@@ -248,8 +203,6 @@ function onDragOver(e: DragEvent) {
   dnd.zone = zone;
 
   if (zone === 'center') {
-    // Move zone: highlight the tile, and when over its tab strip compute
-    // the insertion index + a reorder indicator between tabs.
     dnd.preview = null;
     const glow = rectToLocal(hit.rect, origin);
     if (wsRect) glow.radius = radiusStr(cornerPx(hit.rect, wsRect, rightSeam));
@@ -265,14 +218,10 @@ function onDragOver(e: DragEvent) {
       const left = idx < hit.tabRects.length ? hit.tabRects[idx].left : hit.stripR.right - 1;
       dnd.indicator = { x: left - origin.x, y: hit.stripR.top - origin.y, h: hit.stripR.height };
     } else {
-      // Over the content area: append.
       dnd.index = tabCount;
       dnd.indicator = null;
     }
   } else {
-    // Split zones: preview the half of the tile the dragged tab will take.
-    // The landing half is inset by half the gap on the seam side so the
-    // box matches the final tile (which is separated by a sash).
     dnd.glow = null;
     dnd.indicator = null;
     dnd.index = 0;
@@ -311,7 +260,6 @@ function onDrop(e: DragEvent) {
   if (!tabId || !tileId) return;
 
   if (zone === 'center') {
-    // Dropping a tab back where it came from is a no-op.
     if (sourceTileId === tileId && (index === fromIndex || index === fromIndex + 1)) return;
     api.ops.moveTab(tabId, tileId, index);
   } else {
@@ -338,8 +286,6 @@ function onDragLeave(e: DragEvent) {
   >
     <div class="sf-workspace-inner" :class="api.rootDir === 'column' ? 'sf-workspace-inner--col' : ''">
       <template v-if="mobile">
-        <!-- Mobile: the whole tree collapses into one flat tile (the real
-             tree stays untouched and resumes when mobile ends). -->
         <WorkspaceNode :node="flatNode" />
       </template>
       <template v-else>
@@ -352,7 +298,6 @@ function onDragLeave(e: DragEvent) {
       </template>
     </div>
 
-    <!-- Visual-only DnD layer (pointer-events: none — events go to the root) -->
     <div v-if="!mobile && (api.dnd.dragging || api.dnd.externalDrop)" class="sf-dnd-layer">
       <div v-if="api.dnd.preview" class="sf-dnd-preview" :style="rectStyle(api.dnd.preview)" />
       <div v-if="api.dnd.glow && !api.dnd.preview" class="sf-dnd-glow" :style="rectStyle(api.dnd.glow)" />

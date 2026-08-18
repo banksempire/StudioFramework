@@ -1,23 +1,49 @@
 <script setup lang="ts">
 import { computed } from 'vue';
 
-/**
- * Inline SVG icons — every glyph is drawn as vector paths so it renders
- * identically on every platform (no font-dependent Unicode characters).
- * Stroke style: 24x24 viewBox, 1.8px round strokes, currentColor.
- * Filled entries (color swatches, the chat cursor) use solid currentColor.
- *
- * The docker app emoji (📁 🔍 📄 🐛 🧩 ⚙️ 🗂 💬) are registered here as
- * vector glyphs too — the dock renders pure SVG everywhere.
- */
 interface IconSpec {
-  paths: Array<{ d: string; filled?: boolean }>;
+  paths?: Array<{ d: string; filled?: boolean; opacity?: number }>;
+  circles?: Array<{
+    cx: number;
+    cy: number;
+    r: number;
+    opacity?: number;
+    opacityAnim?: { values: string; dur: string };
+  }>;
+  animation?: { type: 'rotate'; direction: 1 | -1; duration: string };
 }
 
+const PROFILE = [1, 0.7, 0.45, 0.25, 0.1, 0, 0, 0];
+const KEYTIMES = '0;0.125;0.25;0.375;0.5;0.625;0.75;0.875;1';
+
+function rotateRight(k: number): string {
+  const n = PROFILE.length;
+  k = ((k % n) + n) % n;
+  const shifted = [...PROFILE.slice(n - k), ...PROFILE.slice(0, n - k)];
+  return [...shifted, shifted[0]].join(';');
+}
+
+function cwShift(p: number): number {
+  return (p - 3 + 8) % 8;
+}
+
+function ccwShift(p: number): number {
+  return (5 - p + 8) % 8;
+}
+
+const DOT_POSITIONS: Array<{ cx: number; cy: number }> = [
+  { cx: 12, cy: 4 },
+  { cx: 20, cy: 4 },
+  { cx: 20, cy: 12 },
+  { cx: 20, cy: 20 },
+  { cx: 12, cy: 20 },
+  { cx: 4, cy: 20 },
+  { cx: 4, cy: 12 },
+  { cx: 4, cy: 4 },
+];
+
 const ICONS: Record<string, IconSpec> = {
-  // ── Layout/status-bar glyphs ──────────────────────────────────────────
   '↻': {
-    // refresh-cw
     paths: [
       { d: 'M23 4v6h-6' },
       { d: 'M1 20v-6h6' },
@@ -26,7 +52,6 @@ const ICONS: Record<string, IconSpec> = {
     ],
   },
   '⚠': {
-    // alert-triangle
     paths: [
       { d: 'M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z' },
       { d: 'M12 9v4' },
@@ -34,19 +59,15 @@ const ICONS: Record<string, IconSpec> = {
     ],
   },
   '⚡': {
-    // zap
     paths: [{ d: 'M13 2L3 14h9l-1 8 10-12h-9l1-8z' }],
   },
   '✕': {
-    // x
     paths: [{ d: 'M18 6L6 18' }, { d: 'M6 6l12 12' }],
   },
   '⤢': {
-    // expand diagonal
     paths: [{ d: 'M15 3h6v6' }, { d: 'M9 21H3v-6' }, { d: 'M21 3l-7 7' }, { d: 'M3 21l7-7' }],
   },
   '🎨': {
-    // palette: circle outline + three color dots
     paths: [
       { d: 'M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18z' },
       { d: 'M7.6 9.6m-1.7 0a1.7 1.7 0 1 0 3.4 0a1.7 1.7 0 1 0-3.4 0', filled: true },
@@ -55,15 +76,12 @@ const ICONS: Record<string, IconSpec> = {
     ],
   },
   '☰': {
-    // menu
     paths: [{ d: 'M3 12h18' }, { d: 'M3 6h18' }, { d: 'M3 18h18' }],
   },
   '➕': {
-    // plus
-    paths: [{ d: 'M12 5v14' }, { d: 'M5 12h14' }],
+    paths: [{ d: 'M10 4h4v6h6v4h-6v6h-4v-6H4v-4h6V4z', filled: true }],
   },
   '🖼': {
-    // image: frame + mountain + sun
     paths: [
       { d: 'M3 4h18v16H3z' },
       { d: 'M3 15.5l5-5 4 4 3.5-3.5 5.5 5.5' },
@@ -71,25 +89,19 @@ const ICONS: Record<string, IconSpec> = {
     ],
   },
   '🟨': {
-    // yellow square swatch
     paths: [{ d: 'M4 4h16v16H4z', filled: true }],
   },
   '🟦': {
-    // blue square swatch
     paths: [{ d: 'M4 4h16v16H4z', filled: true }],
   },
   '🟩': {
-    // green square swatch
     paths: [{ d: 'M4 4h16v16H4z', filled: true }],
   },
   '🟢': {
-    // green circle swatch
     paths: [{ d: 'M12 3a9 9 0 1 0 0 18 9 9 0 0 0 0-18z', filled: true }],
   },
 
-  // ── Title-bar / menu chrome ───────────────────────────────────────────
   '⋯': {
-    // more-horizontal: three dots
     paths: [
       { d: 'M5 12m-1.8 0a1.8 1.8 0 1 0 3.6 0a1.8 1.8 0 1 0-3.6 0', filled: true },
       { d: 'M12 12m-1.8 0a1.8 1.8 0 1 0 3.6 0a1.8 1.8 0 1 0-3.6 0', filled: true },
@@ -97,31 +109,19 @@ const ICONS: Record<string, IconSpec> = {
     ],
   },
   '▶': {
-    // play
     paths: [{ d: 'M6 4l14 8-14 8z' }],
   },
   '❯': {
-    // chevron-right
     paths: [{ d: 'M9 18l6-6-6-6' }],
   },
   '⇔': {
-    // evenly-space: two vertical bars (the boundaries) with a
-    // horizontal hollow double-headed arrow between them — reads as
-    // "|<=>|". The arrowhead and the connecting bar are drawn as
-    // a SINGLE continuous closed outline so the junctions have no
-    // overlapping borders (the previous triangle + rectangle
-    // design doubled up the vertical edges at the junctions).
-    // stroke-linejoin="round" smooths the corners at the junction
-    // turns. Bounds (1,1)–(23,23) so the icon fills the viewBox
-    // with 1-unit padding on every side.
     paths: [
-      { d: 'M1 1v22' }, // left bar
-      { d: 'M23 1v22' }, // right bar
-      { d: 'M5 12L9 7L9 10L15 10L15 7L19 12L15 17L15 14L9 14L9 17Z' }, // single hollow arrow outline
+      { d: 'M1 1v22' },
+      { d: 'M23 1v22' },
+      { d: 'M5 12L9 7L9 10L15 10L15 7L19 12L15 17L15 14L9 14L9 17Z' },
     ],
   },
   '□': {
-    // merge all: maximize corners
     paths: [
       { d: 'M8 3H5a2 2 0 0 0-2 2v3' },
       { d: 'M21 8V5a2 2 0 0 0-2-2h-3' },
@@ -130,23 +130,18 @@ const ICONS: Record<string, IconSpec> = {
     ],
   },
   '✎': {
-    // edit
     paths: [{ d: 'M12 20h9' }, { d: 'M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z' }],
   },
   '↑': {
-    // arrow-up
     paths: [{ d: 'M12 19V5' }, { d: 'M5 12l7-7 7 7' }],
   },
   '↓': {
-    // arrow-down
     paths: [{ d: 'M12 5v14' }, { d: 'M19 12l-7 7-7-7' }],
   },
   '←': {
-    // arrow-left (mobile menu sheet back button)
     paths: [{ d: 'M19 12H5' }, { d: 'M12 19l-7-7 7-7' }],
   },
   '🗑': {
-    // trash
     paths: [
       { d: 'M3 6h18' },
       { d: 'M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6' },
@@ -155,52 +150,56 @@ const ICONS: Record<string, IconSpec> = {
       { d: 'M14 11v6' },
     ],
   },
-  // Panel toggles: square with the RIGHT half filled (panel expanded,
-  // ◨) / square bisected by a vertical line (panel collapsed, ◫).
-  // Drawn as SVG paths so every font renders them the same — the
-  // Unicode glyphs themselves vary by device font. The right-half
-  // fill on the expanded state lines up with the panel sitting on
-  // that side of the icon. Used by the non-mobile side-panel toggle
-  // buttons (MenuBar + Tile's top-right tab strip). The mobile
-  // variant draws its own inline SVG in Tile.vue so this only
-  // affects non-mobile.
   '\u25E8': {
     paths: [{ d: 'M4 4h16v16H4z' }, { d: 'M12 4h8v16h-8z', filled: true }],
   },
   '\u25EB': {
     paths: [{ d: 'M4 4h16v16H4z' }, { d: 'M12 4v16' }],
   },
-  // Chat streaming cursor: a solid block bar.
   '▌': {
     paths: [{ d: 'M9 4h2v16H9z', filled: true }],
   },
   '✓': {
-    // check (menu multi-select mark, tree checkbox)
     paths: [{ d: 'M20 6L9 17l-5-5' }],
   },
   '●': {
-    // filled dot (menu single-select mark)
     paths: [{ d: 'M12 12m-3 0a3 3 0 1 0 6 0a3 3 0 1 0-6 0', filled: true }],
   },
   '◉': {
-    // large filled dot — status indicators (16-unit circle so the glyph
-    // fills the viewBox like the other icons)
     paths: [{ d: 'M12 12m-8 0a8 8 0 1 0 16 0a8 8 0 1 0-16 0', filled: true }],
   },
+  '◉-busy': {
+    circles: DOT_POSITIONS.map((pos, p) => {
+      const values = rotateRight(cwShift(p));
+      return {
+        ...pos,
+        r: 2,
+        opacity: parseFloat(values.split(';')[0]),
+        opacityAnim: { values, dur: '0.8s' },
+      };
+    }),
+  },
+  '◉-waiting': {
+    circles: DOT_POSITIONS.map((pos, p) => {
+      const values = rotateRight(ccwShift(p));
+      return {
+        ...pos,
+        r: 2,
+        opacity: parseFloat(values.split(';')[0]),
+        opacityAnim: { values, dur: '3s' },
+      };
+    }),
+  },
   '–': {
-    // dash (tree checkbox mid state)
     paths: [{ d: 'M7 12h10' }],
   },
   '▸': {
-    // chevron-right (tree/group expanders)
     paths: [{ d: 'M9 18l6-6-6-6' }],
   },
   '▾': {
-    // chevron-down (group expanders, open state)
     paths: [{ d: 'M6 9l6 6 6-6' }],
   },
   '⏳': {
-    // hourglass (running session indicator)
     paths: [
       { d: 'M6 3h12' },
       { d: 'M6 21h12' },
@@ -209,21 +208,16 @@ const ICONS: Record<string, IconSpec> = {
     ],
   },
 
-  // ── Docker app icons ──────────────────────────────────────────────────
   '📁': {
-    // folder (Explorer)
     paths: [{ d: 'M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V7z' }],
   },
   '🔍': {
-    // search / magnifier
     paths: [{ d: 'M11 19a8 8 0 1 0 0-16 8 8 0 0 0 0 16z' }, { d: 'M21 21l-4.35-4.35' }],
   },
   '📄': {
-    // file / document (Source Control)
     paths: [{ d: 'M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z' }, { d: 'M14 2v6h6' }],
   },
   '🐛': {
-    // bug (Debug)
     paths: [
       { d: 'M8 2l1.88 1.88' },
       { d: 'M14.12 3.88L16 2' },
@@ -239,7 +233,6 @@ const ICONS: Record<string, IconSpec> = {
     ],
   },
   '🧩': {
-    // puzzle piece (Extensions)
     paths: [
       {
         d: 'M19.439 7.85c-.049.322.059.648.289.878l1.568 1.568c.47.47.706 1.087.706 1.704s-.235 1.233-.706 1.704l-1.611 1.611a.98.98 0 0 1-.837.276c-.47-.07-.802-.48-.968-.925a2.501 2.501 0 1 0-3.214 3.214c.446.166.855.497.925.968a.979.979 0 0 1-.276.837l-1.61 1.61a2.404 2.404 0 0 1-1.705.707 2.402 2.402 0 0 1-1.704-.706l-1.568-1.568a1.026 1.026 0 0 0-.877-.29c-.493.074-.84.504-1.02.968a2.5 2.5 0 1 1-3.237-3.237c.464-.18.894-.527.967-1.02a1.026 1.026 0 0 0-.289-.877l-1.568-1.568A2.402 2.402 0 0 1 1.998 12c0-.617.236-1.234.706-1.704L4.23 8.77c.24-.24.581-.353.917-.303.515.077.877.528 1.073 1.01a2.5 2.5 0 1 0 3.259-3.259c-.482-.196-.933-.558-1.01-1.073-.05-.336.062-.676.303-.917l1.525-1.525A2.402 2.402 0 0 1 12 1.998c.617 0 1.234.236 1.704.706l1.568 1.568c.23.23.556.338.877.29.493-.074.84-.504 1.02-.968a2.5 2.5 0 1 1 3.237 3.237c-.464.18-.894.527-.967 1.02Z',
@@ -247,7 +240,6 @@ const ICONS: Record<string, IconSpec> = {
     ],
   },
   '⚙️': {
-    // gear / settings
     paths: [
       { d: 'M12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6z' },
       {
@@ -256,20 +248,9 @@ const ICONS: Record<string, IconSpec> = {
     ],
   },
   '🗂': {
-    // Windows-style 2×2 grid of four squares (Workspace) — 9×9 squares
-    // with a 4-unit gap between them, bounds (1,1)–(23,23) so the
-    // glyph fills the viewBox with 1-unit padding on every side
-    // (no empty space surrounds the icon body)
     paths: [{ d: 'M1 1h9v9H1z' }, { d: 'M14 1h9v9h-9z' }, { d: 'M14 14h9v9h-9z' }, { d: 'M1 14h9v9H1z' }],
   },
   '💬': {
-    // chat bubble: round-corner box (radius 3) with all four corners
-    // rounded and a tail notch cut into the bottom edge. Single
-    // continuous outline so the box-tail junction has no border.
-    // Designed to fill the 24x24 viewBox tightly — 1-unit padding
-    // on every side. Tail apex at (19,23); line A direction
-    // (-1,+4) = 76° (vs original 77°), line B direction (-7,-4) =
-    // 30° (exact match).
     paths: [
       { d: 'M1 4a3 3 0 0 1 3-3h16a3 3 0 0 1 3 3v12a3 3 0 0 1-3 3L19 23L12 19H4a3 3 0 0 1-3-3V4z' },
       { d: 'M8 10.5m-1.5 0a1.5 1.5 0 1 0 3 0a1.5 1.5 0 1 0-3 0', filled: true },
@@ -286,18 +267,46 @@ const spec = computed(() => ICONS[props.name]);
 
 <template>
   <svg v-if="spec" class="sf-icon sf-icon--svg" viewBox="0 0 24 24" aria-hidden="true">
-    <path
-      v-for="(p, i) in spec.paths"
-      :key="i"
-      :d="p.d"
-      :fill="p.filled ? 'currentColor' : 'none'"
-      :stroke="p.filled ? 'none' : 'currentColor'"
-      stroke-width="1.8"
-      stroke-linecap="round"
-      stroke-linejoin="round"
-    />
+    <g>
+      <path
+        v-for="(p, i) in spec.paths ?? []"
+        :key="`p${i}`"
+        :d="p.d"
+        :fill="p.filled ? 'currentColor' : 'none'"
+        :stroke="p.filled ? 'none' : 'currentColor'"
+        :opacity="p.opacity"
+        stroke-width="1.8"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+      />
+      <circle
+        v-for="(c, i) in spec.circles ?? []"
+        :key="`c${i}`"
+        :cx="c.cx"
+        :cy="c.cy"
+        :r="c.r"
+        fill="currentColor"
+        :opacity="c.opacity"
+      >
+        <animate
+          v-if="c.opacityAnim"
+          attributeName="opacity"
+          :values="c.opacityAnim.values"
+          :keyTimes="KEYTIMES"
+          :dur="c.opacityAnim.dur"
+          repeatCount="indefinite"
+        />
+      </circle>
+      <animateTransform
+        v-if="spec.animation?.type === 'rotate'"
+        attributeName="transform"
+        type="rotate"
+        :from="`0 12 12`"
+        :to="`${spec.animation.direction * 360} 12 12`"
+        :dur="spec.animation.duration"
+        repeatCount="indefinite"
+      />
+    </g>
   </svg>
-  <!-- Unknown glyphs (e.g. the docker emoji, still text until converted)
-       fall back to plain text. -->
   <span v-else class="sf-icon">{{ name }}</span>
 </template>

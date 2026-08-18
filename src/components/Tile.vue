@@ -15,7 +15,6 @@ const rpToggle = inject(kRightPanelToggle, null);
 const titleBarMenus = inject(kTitleBarMenus, null);
 const menuOpen = ref(false);
 
-/** The mobile … button shows the layout's menu tree (desktop MenuBar). */
 function onMobileMenuSelect(item: MenuNodeDef) {
   menuOpen.value = false;
   if (item.action && titleBarMenus) titleBarMenus.onAction(item.action);
@@ -23,13 +22,8 @@ function onMobileMenuSelect(item: MenuNodeDef) {
 
 const el = ref<HTMLElement | null>(null);
 
-/** True for the synthetic mobile flat tile (see Workspace.vue): a view over
- *  the real tree whose id is not backed by a real tile. Actions route to
- *  the real tile holding the tab; DnD is disabled (no drag-to-tile on
- *  mobile) and the element never registers as a drop target. */
 const synthetic = computed(() => ws.findTileGlobal(props.tile.id) === null);
 
-/** Resolve the real tile behind an action on the synthetic flat tile. */
 function resolveTileId(tabId?: string): string {
   if (!synthetic.value) return props.tile.id;
   const byTab = tabId ? ws.findTabGlobal(tabId) : null;
@@ -48,13 +42,6 @@ onBeforeUnmount(() => {
 
 const activeTab = computed(() => (props.tile.activeId ? (ws.tabDefs[props.tile.activeId] ?? null) : null));
 
-// ── Mobile compact bar (synthetic flat tile only) ─────────────────────────
-// The mobile title bar is NOT a tab strip: [⋯ menu | active tab | right-
-// panel expand]. Tapping the active-tab label opens a Menu listing every
-// tab (visual order); selecting routes to the real tile behind the tab.
-// The right-panel button toggles the right panel fullscreen (rpToggle,
-// provided by Workspace.vue).
-
 const tabMenuOpen = ref(false);
 const activeTabLabel = computed(() => activeTab.value?.label ?? '');
 const tabSelectorItems = computed<MenuNodeDef[]>(() =>
@@ -63,8 +50,6 @@ const tabSelectorItems = computed<MenuNodeDef[]>(() =>
     label: ws.tabDefs[id]?.label ?? id,
     icon: ws.tabDefs[id]?.icon,
     selected: id === props.tile.activeId,
-    // Swipeable close: rows expose a swipe-left Close action unless the
-    // tab is not closeable (same rule as the desktop ✕).
     swipeAction: ws.tabDefs[id]?.closeable === false ? undefined : { label: 'Close' },
   })),
 );
@@ -74,14 +59,11 @@ function onTabSelectorSelect(item: MenuNodeDef) {
   onTabClick(item.id);
 }
 
-/** The revealed Close button on a swiped tab row was tapped. */
 function onTabSelectorSwipeAction(item: MenuNodeDef) {
   if (!item.id) return;
   ws.ops.closeTab(item.id);
 }
 
-// The tab-list sheet has nothing to show once the flat tile's LAST tab
-// closes — drop it instead of rendering an empty card.
 watch(tabSelectorItems, (items) => {
   if (items.length === 0) tabMenuOpen.value = false;
 });
@@ -89,12 +71,9 @@ watch(tabSelectorItems, (items) => {
 const contentComp = computed(() => {
   const content = activeTab.value?.content;
   if (!content) return null;
-  // Ghost tabs (missing windows restored from a workspace snapshot) render
-  // the framework's built-in blank page — no host registration needed.
   if (content === 'sf-blank') return BlankTab;
   return getTabContent(content) ?? null;
 });
-/** Registered component for the layout's emptyContent key (if any). */
 const emptyComp = computed(() => (ws.emptyContent ? (getTabContent(ws.emptyContent) ?? null) : null));
 const focused = computed(() => ws.focusedTileId === props.tile.id);
 const isTopRight = computed(() => ws.topRightTileId === props.tile.id);
@@ -112,20 +91,14 @@ function onTabDragStart(e: DragEvent, tabId: string) {
   ws.startDrag(tabId, props.tile.id, props.tile.tabs.indexOf(tabId));
 }
 
-/** Clicking a tab notifies host apps (review/preview semantics) and
- *  activates it. The notification fires only for REAL clicks — programmatic
- *  activation via ops.activateTab is silent. On the synthetic flat tile the
- *  activation lands on the real tile behind the tab. */
 function onTabClick(tabId: string) {
   ws.notifyTabClick(tabId);
   ws.ops.activateTab(resolveTileId(tabId), tabId);
 }
 
-/** Middle-click a tab to close it (VSCode behavior). Closes on mousedown so
- *  the tab is gone before the click event would activate it. */
 function onTabMousedown(e: MouseEvent, tabId: string) {
   if (e.button !== 1) return;
-  e.preventDefault(); // suppress middle-click autoscroll
+  e.preventDefault();
   if (ws.tabDefs[tabId]?.closeable === false) return;
   ws.ops.closeTab(tabId);
 }
@@ -138,15 +111,8 @@ function onTileMousedown() {
 
 <template>
   <div ref="el" class="sf-tile" :class="{ 'sf-tile--focused': focused }" :data-tile="tile.id" @mousedown="onTileMousedown">
-    <!-- Tab strip (desktop) / compact bar (mobile flat tile) -->
     <div class="sf-tile-tabs">
       <template v-if="synthetic">
-        <!-- Mobile: [⋯ menu | active tab (tap opens the tab list) | right
-             panel] — the ⋯ button opens the layout's menu tree (the same
-             menus the desktop MenuBar shows); tapping the active-tab
-             label opens a Menu listing every tab (visual order);
-             selecting routes to the real tile behind the tab; the last
-             button toggles the right panel fullscreen. -->
         <Menu
           v-if="titleBarMenus"
           :items="titleBarMenus.menus"
@@ -170,10 +136,6 @@ function onTileMousedown() {
           @swipe-action="onTabSelectorSwipeAction"
         >
           <template #trigger="{ toggle }">
-            <!-- The label stays a plain span with its original styles —
-                 it is the trigger of the tab-list menu (the anchor is
-                 display:contents, so the span is still the bar's direct
-                 flex item). -->
             <span
               class="sf-mobile-tab-label"
               :class="activeTab?.tabClass"
@@ -193,9 +155,6 @@ function onTileMousedown() {
             :title="rpToggle.visible ? 'Collapse Right Panel' : 'Expand Right Panel'"
             @click="rpToggle.toggle()"
           >
-            <!-- Square with right half filled (expand) / left half filled
-                 (collapse) — drawn as SVG so every font renders it the
-                 same (Unicode ◩/◪ glyphs vary by device font). -->
             <svg class="sf-mobile-rp-icon" viewBox="0 0 16 16" aria-hidden="true">
               <rect x="1" y="1" width="14" height="14" fill="none" stroke="currentColor" />
               <rect v-if="rpToggle.visible" x="1" y="1" width="7" height="14" fill="currentColor" />
@@ -222,9 +181,6 @@ function onTileMousedown() {
           @dragstart="onTabDragStart($event, tabId)"
           @dragend="ws.endDrag"
         >
-          <!-- The icon slot is ALWAYS reserved (16px): tabs line up as
-               [icon|text] even when a tab has no icon, and the slot can
-               host animated indicators (e.g. a pulsing status dot). -->
           <span class="sf-tab-icon-slot">
             <Icon v-if="ws.tabDefs[tabId]?.icon" class="sf-tab-icon" :icon="ws.tabDefs[tabId].icon" />
           </span>
@@ -259,11 +215,8 @@ function onTileMousedown() {
       </template>
     </div>
 
-    <!-- Content -->
     <div class="sf-tile-content">
       <div v-if="!activeTab" class="sf-tile-empty">
-        <!-- Host-app empty content (e.g. a welcome page) when the layout
-             declares emptyContent; generic hint otherwise. -->
         <component v-if="emptyComp" :is="emptyComp" />
         <div v-else class="sf-tile-empty-inner">
           <p>No tab open</p>
@@ -326,14 +279,11 @@ function onTileMousedown() {
   padding: 1px 5px;
 }
 
-/* Ghost tabs (workspace-snapshot windows whose content no longer exists)
-   look dimmed/italic so they read as placeholders, not real windows. */
 .sf-tab--ghost .sf-tab-label {
   font-style: italic;
   opacity: 0.6;
 }
 
-/* Custom content fills the whole tile body; it manages its own layout/scroll */
 .sf-tile-custom {
   height: 100%;
   min-height: 0;

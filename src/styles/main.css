@@ -1,9 +1,3 @@
-/* ═══════════════════════════════════════════════════════════════════════════
-   Studio Framework — VSCode-inspired Theme
-   ═══════════════════════════════════════════════════════════════════════════ */
-
-/* ── Icon (unicode char or image) ─────────────────────────────────────── */
-
 .sf-icon {
   display: inline-flex;
   align-items: center;
@@ -19,10 +13,6 @@
   vertical-align: middle;
 }
 
-/* Vector icons inherit the surrounding font size (16px buttons, 12px
-   tab strips, ...) so they match the text glyphs they replace. Block
-   display: no baseline participation, so flex parents center them
-   exactly (inline svg sits on the text baseline in some engines). */
 .sf-icon--svg {
   display: block;
   width: 1em;
@@ -40,11 +30,7 @@
   --sf-bg-dark: #181818;
   --sf-bg-light: #252526;
   --sf-bg-lighter: #2d2d2d;
-  /* Hover highlight is a TRANSLUCENT layer added on top of the element's
-     own background (selected theme-blue items keep their color) — painted
-     via an inset box-shadow overlay in every :hover rule. */
   --sf-hover-overlay: rgba(255, 255, 255, 0.06);
-  /* L0 — thin segregation lines: borders, tile seams, tab separators. */
   --sf-border: #3a3a3a;
   --sf-text: #cccccc;
   --sf-text-muted: #858585;
@@ -54,34 +40,23 @@
   --sf-accent-dim: rgba(0, 122, 204, 0.65);
   --sf-radius: 6px;
   --sf-gap: 8px;
-  /* seam between tiles: 1px visible border line */
   --sf-sash-size: 1px;
-  /* drag sensing area + blue hover line (centered on the border) */
   --sf-sash-hit: 5px;
-  /* widest a tab may grow; tabs compress (label ellipsis) when the strip is full */
   --sf-tab-max-width: 200px;
-  /* how far the indication glow reaches from an edge inward (DTC + DnD) */
   --sf-edge-glow: 6px;
   --sf-active: #37373d;
   --sf-selection: #264f78;
   --sf-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
   --sf-text-on-accent: #fff;
-  /* L1 — chrome surfaces: docker, menu bar, panel/tile title bars, menu
-     sheet bar, and buttons inside panels all share it. */
   --sf-bar: #292929;
-  /* L2 — panel section selector (bar + tab buttons), raised cards. */
   --sf-control: #212121;
-  /* L3 — panel content area (below the chrome bars) and the mobile menu
-     sheet body. */
   --sf-panel-bg: #101010;
-  /* Semantic colors — theme overrides replace these, everything else
-     derives from them (translucent variants use color-mix). */
-  --sf-danger: #f48771; /* error / destructive text */
-  --sf-status-ok: #4ec9b0; /* success / running */
-  --sf-status-warn: #d7ba7d; /* warning / stopped */
-  --sf-status-err: #e5484d; /* error badges */
-  --sf-link: #4fc1ff; /* hyperlinks */
-  --sf-backdrop: rgba(0, 0, 0, 0.45); /* modal scrims */
+  --sf-danger: #f48771;
+  --sf-status-ok: #4ec9b0;
+  --sf-status-warn: #d7ba7d;
+  --sf-status-err: #e5484d;
+  --sf-link: #4fc1ff;
+  --sf-backdrop: rgba(0, 0, 0, 0.45);
   --sf-radius-sm: 3px;
   --sf-font: "Segoe UI", -apple-system, BlinkMacSystemFont, sans-serif;
   --sf-mono: "Consolas", "Fira Code", "JetBrains Mono", monospace;
@@ -93,31 +68,18 @@
   box-sizing: border-box;
 }
 
-/* The mount element must fill the viewport for .sf-root's height:100% to
-   work. The framework styles html/body; each host app styles its own mount
-   element (the framework demo mounts under #framework, pi-agent-studio
-   declares #app in its app.css). */
 html,
 body,
 #framework {
   height: 100%;
   width: 100%;
   overflow: hidden;
-  /* PURE BLACK document background: on iPhone this is what iOS paints in
-     the notch/status-bar zone (standalone mode with viewport-fit=cover
-     and black-translucent) and in the overscroll rubber-band areas.
-     The .sf-root paints its own theme background over everything else,
-     so only those zones ever show this color. */
   background: #000;
   color: var(--sf-text);
   font-family: var(--sf-font);
   font-size: 16px;
   user-select: none;
 }
-
-/* ═══════════════════════════════════════════════════════════════════════════
-   Root Layout
-   ═══════════════════════════════════════════════════════════════════════════ */
 
 .sf-root {
   display: flex;
@@ -126,16 +88,8 @@ body,
   width: 100%;
   gap: var(--sf-gap);
   padding: var(--sf-gap);
-  /* PURE BLACK background (both modes): the root's background shows in
-     the gaps between the boxes (outer frame and the workbench seams),
-     on iPhone in the notch/signal strip and overscroll zones — black
-     blends into the bezel instead of showing a grey theme color. */
   background: #000;
 }
-
-/* ═══════════════════════════════════════════════════════════════════════════
-   Menu Bar
-   ═══════════════════════════════════════════════════════════════════════════ */
 
 .sf-menu-bar {
   display: flex;
@@ -145,7 +99,6 @@ body,
   flex-shrink: 0;
   -webkit-app-region: drag;
   border-radius: var(--sf-radius);
-  /* L0 outline around the rounded box */
   border: 2px solid var(--sf-border);
 }
 
@@ -167,11 +120,6 @@ body,
   white-space: nowrap;
 }
 
-/* ─── Hover (pointer devices only) ───────────────────────────────────────
-   Every :hover rule is gated behind @media (hover: hover): touch devices
-   have no hover, and after a tap the browser keeps the element in its
-   :hover state ("sticky hover") — gating keeps tapped buttons from
-   staying highlighted. Press feedback (:active) is NOT gated. */
 @media (hover: hover) {
   .sf-menu-item:hover {
     box-shadow: inset 0 0 0 999px var(--sf-hover-overlay);
@@ -181,24 +129,14 @@ body,
   background: var(--sf-active);
 }
 
-/* ─── Unified menu (sf-menu: multi-level flyout, menu-bar style) ────────── */
-
-/* Anchor around the trigger slot: takes no layout space, but its rect
-   positions the popup. */
 .sf-menu-anchor {
   display: contents;
 }
 
-/* The flyout region: the popup + every submenu are fixed-positioned
-   siblings inside it, so outside-click detection (region.contains) covers
-   the whole open menu. Absolutely positioned: it is 0×0 and must not
-   participate in layout — inside a flex row its presence would add a gap
-   slot and shift the trigger. */
 .sf-menu-region {
   position: absolute;
 }
 
-/* One menu box at any level — same theme shape as every framework box. */
 .sf-menu-pop {
   position: fixed;
   z-index: 1000;
@@ -219,7 +157,6 @@ body,
   overflow-x: hidden;
 }
 
-/* One item row: [ icon | label | hint | arrow ] */
 .sf-menu-row {
   display: flex;
   align-items: center;
@@ -240,10 +177,6 @@ body,
   color: var(--sf-text-on-accent);
 }
 
-/* Left accent line marking the currently selected row when the selection
-   is positional (no check/dot mark in the icon cell) — e.g. the mobile
-   tab-list menu marks which session is shown. Absolutely positioned, so
-   it adds no layout drift. */
 .sf-menu-row--selected {
   position: relative;
 }
@@ -268,7 +201,6 @@ body,
   }
 }
 
-/* Icon column: always reserved so rows align; shows icon / check / dot. */
 .sf-menu-cell {
   flex-shrink: 0;
 }
@@ -312,14 +244,11 @@ body,
   }
 }
 
-/* Segregation line between items. */
 .sf-menu-separator {
   height: 1px;
   background: var(--sf-border);
   margin: 4px 8px;
 }
-
-/* ─── Menu Actions (panel toggle buttons) ─────────────────────────────── */
 
 .sf-menu-actions {
   display: flex;
@@ -349,7 +278,6 @@ body,
   }
 }
 
-/* Left toggle button — matches Docker width */
 .sf-menu-actions--left {
   margin-left: 0;
 }
@@ -361,23 +289,15 @@ body,
   border-radius: var(--sf-radius) 0 0 var(--sf-radius);
 }
 
-/* ═══════════════════════════════════════════════════════════════════════════
-   Workbench (Docker + Panel + Workspace + Panel)
-   ═══════════════════════════════════════════════════════════════════════════ */
-
 .sf-workbench {
   display: flex;
   flex: 1;
   min-height: 0;
   overflow: hidden;
   gap: var(--sf-gap);
-  /* The layer behind the workbench boxes: its background shows in the
-     gaps between docker / panels / workspace — pure black like the root
-     (see .sf-root), so every seam is black. */
   background: #000;
 }
 
-/* One rounded box wrapping the workspace + right panel: (tile1|tile2|panel) */
 .sf-center-group {
   display: flex;
   flex: 1;
@@ -388,10 +308,6 @@ body,
   background: var(--sf-bg-dark);
 }
 
-/* ═══════════════════════════════════════════════════════════════════════════
-   Docker (left icon bar)
-   ═══════════════════════════════════════════════════════════════════════════ */
-
 .sf-docker {
   display: flex;
   flex-direction: column;
@@ -401,15 +317,11 @@ body,
   padding-top: 4px;
   gap: 2px;
   border-radius: var(--sf-radius);
-  /* L0 outline around the rounded box (the right edge drops when the
-     left panel shares the box — see the :has rule below) */
   border: 2px solid var(--sf-border);
 }
 
-/* When the left panel is visible, Docker's right corners are square (shared box) */
 .sf-left-group:has(.sf-panel:not(.sf-panel--hidden)) .sf-docker {
   border-radius: var(--sf-radius) 0 0 var(--sf-radius);
-  /* no seam line between docker and panel: one shared outline */
   border-right: none;
 }
 
@@ -471,10 +383,6 @@ body,
   padding: 0 4px;
 }
 
-/* ═══════════════════════════════════════════════════════════════════════════
-   Panel (shared base for DockerPanel and RightPanel)
-   ═══════════════════════════════════════════════════════════════════════════ */
-
 .sf-panel {
   background: var(--sf-panel-bg);
   display: flex;
@@ -483,21 +391,15 @@ body,
   position: relative;
   min-width: 100px;
   border-radius: var(--sf-radius);
-  /* L0 outline around the rounded box (the left panel drops its left
-     edge — the docker shares the box; the right panel keeps its left
-     border as the workspace seam) */
   border: 2px solid var(--sf-border);
 }
 
 .sf-panel--left {
   border-radius: 0 var(--sf-radius) var(--sf-radius) 0;
-  /* no seam line between docker and panel: one shared outline */
   border-left: none;
 }
 
 .sf-panel--right {
-  /* Right corners round to match .sf-center-group's radius, so the
-     outline follows the curve; the left edge stays square (seam). */
   border-radius: 0 var(--sf-radius) var(--sf-radius) 0;
   border-left: 1px solid var(--sf-border);
 }
@@ -535,11 +437,9 @@ body,
 }
 
 .sf-panel--hidden {
-  /* biome-ignore lint/complexity/noImportantStyles: must beat inline styles (hidden panel / drag cursor override) */
   display: none !important;
 }
 
-/* biome-ignore lint/style/noDescendingSpecificity: deliberate section ordering — different properties, not overrides */
 .sf-panel-header {
   display: flex;
   align-items: center;
@@ -565,8 +465,6 @@ body,
   white-space: nowrap;
 }
 
-/* ─── Section tabs ──────────────────────────────────────────────────────── */
-
 .sf-panel-tabs-wrapper {
   position: relative;
   flex-shrink: 0;
@@ -585,8 +483,6 @@ body,
   flex: 1 1 0%;
   min-width: max-content;
   height: 100%;
-  /* Part of the section-selector bar, not a "panel button": stays the
-     same color as the bar. */
   background: var(--sf-control);
   border: none;
   border-bottom: 2px solid transparent;
@@ -606,8 +502,6 @@ body,
 
 @media (hover: hover) {
   .sf-panel-tab:hover {
-    /* Same full-coverage overlay as .sf-tab:hover (background layers
-       paint under the transparent bottom border; inset shadows don't). */
     background: linear-gradient(var(--sf-hover-overlay), var(--sf-hover-overlay)), var(--sf-control);
   }
 }
@@ -624,8 +518,6 @@ body,
   text-align: center;
 }
 
-/* ─── Resize Handles ────────────────────────────────────────────────────── */
-
 .sf-panel-resize-handle {
   position: absolute;
   top: 0;
@@ -636,7 +528,6 @@ body,
   background: transparent;
 }
 
-/* Visual line inside the gap: inset 1px from each edge (--sf-gap - 2px wide) */
 .sf-panel-resize-handle::after {
   content: "";
   position: absolute;
@@ -648,8 +539,6 @@ body,
   transition: background 0.15s;
 }
 
-/* Right panel: 1px border seam; the 3px handle is the sensing area and
-   shows the 3px blue line on hover/drag */
 .sf-panel-resize-handle--left::after {
   left: 0;
   right: 0;
@@ -666,7 +555,6 @@ body,
 }
 
 .sf-panel--will-collapse .sf-panel-resize-handle::after {
-  /* biome-ignore lint/complexity/noImportantStyles: must beat inline styles (hidden panel / drag cursor override) */
   background: transparent !important;
 }
 
@@ -674,15 +562,11 @@ body,
   right: calc(var(--sf-gap) * -1);
 }
 
-/* Right panel: handle straddles the 1px border (3px sensing area) */
 .sf-panel-resize-handle--left {
   left: calc(var(--sf-sash-hit) * -0.5);
   width: var(--sf-sash-hit);
 }
 
-/* ─── Collapse indicator overlay ─────────────────────────────────────────── */
-
-/* biome-ignore lint/style/noDescendingSpecificity: deliberate section ordering — different properties, not overrides */
 .sf-panel-dtc-overlay {
   position: absolute;
   inset: 0;
@@ -691,7 +575,6 @@ body,
   border-radius: var(--sf-radius);
 }
 
-/* Left panel: glow on left (opposite), top, bottom. Handle is on right. */
 .sf-panel-dtc-overlay--left {
   background:
     linear-gradient(to right, var(--sf-accent), transparent var(--sf-edge-glow)),
@@ -699,7 +582,6 @@ body,
     linear-gradient(to top, var(--sf-accent), transparent var(--sf-edge-glow));
 }
 
-/* Right panel: glow on right (opposite), top, bottom. Handle is on left. */
 .sf-panel-dtc-overlay--right {
   background:
     linear-gradient(to left, var(--sf-accent), transparent var(--sf-edge-glow)),
@@ -707,10 +589,6 @@ body,
     linear-gradient(to top, var(--sf-accent), transparent var(--sf-edge-glow));
 }
 
-/* ─── Panel header button (⋯ visibility toggle) ─────────────────────────── */
-
-/* Same color as the title bar it sits on (--sf-bar): the ⋯ reads as a
-   flush part of the bar, not a raised control. */
 .sf-panel-header-btn {
   background: var(--sf-bar);
   border: none;
@@ -731,12 +609,6 @@ body,
   }
 }
 
-/* ─── Panel content buttons (framework-level) ──────────────────────────── */
-
-/* Apps mark their panel-content buttons with .sf-panel-btn: raised
-   chrome-colored controls (L1 --sf-bar) on the panel body. Apps keep
-   their own shape (width, radius, border); the color and hover come
-   from the framework. */
 .sf-panel-btn {
   background: var(--sf-bar);
 }
@@ -747,17 +619,11 @@ body,
   }
 }
 
-/* biome-ignore lint/style/noDescendingSpecificity: deliberate section ordering — different properties, not overrides */
 .sf-panel-empty {
   flex: 1;
   border-radius: 0 0 var(--sf-radius) var(--sf-radius);
 }
 
-/* ═══════════════════════════════════════════════════════════════════════════
-   Sub-sections
-   ═══════════════════════════════════════════════════════════════════════════ */
-
-/* biome-ignore lint/style/noDescendingSpecificity: deliberate section ordering — different properties, not overrides */
 .sf-subsection-body-container {
   flex: 1;
   min-height: 0;
@@ -782,17 +648,12 @@ body,
   font-weight: 600;
   letter-spacing: 0.5px;
   user-select: none;
-  /* Sub-section title bars pin to the top while the panel body scrolls
-     (opaque panel-body background so content never shows through
-     underneath) — desktop and mobile alike. */
   position: sticky;
   top: 0;
   z-index: 1;
   background: var(--sf-panel-bg);
 }
 
-/* The whole title bar is the expand/collapse toggle — hover highlights it
-   like every other clickable control (added layer, never a bg replace). */
 @media (hover: hover) {
   .sf-subsection-header:hover {
     box-shadow: inset 0 0 0 999px var(--sf-hover-overlay);
@@ -823,7 +684,6 @@ body,
   gap: 2px;
 }
 
-/* Show buttons when active OR hovered (any part), but not when collapsed */
 .sf-subsection--active:not(.sf-subsection--collapsed) .sf-subsection-utils {
   display: flex;
 }
@@ -856,19 +716,15 @@ body,
   padding: 4px 0;
 }
 
-/* ─── Drag handle between sub-sections ─────────────────────────────────── */
-
 body.sf-dragging,
 body.sf-dragging *,
 body.sf-dragging-col,
 body.sf-dragging-col * {
-  /* biome-ignore lint/complexity/noImportantStyles: must beat inline styles (hidden panel / drag cursor override) */
   cursor: row-resize !important;
 }
 
 body.sf-dragging-row,
 body.sf-dragging-row * {
-  /* biome-ignore lint/complexity/noImportantStyles: must beat inline styles (hidden panel / drag cursor override) */
   cursor: col-resize !important;
 }
 
@@ -896,10 +752,6 @@ body.sf-dragging-row * {
   }
 }
 
-/* ═══════════════════════════════════════════════════════════════════════════
-   Panel Components
-   ═══════════════════════════════════════════════════════════════════════════ */
-
 .sf-pc {
   padding: 0 8px;
 }
@@ -923,7 +775,7 @@ body.sf-dragging-row * {
   border-radius: 3px;
   color: var(--sf-text);
   font-family: var(--sf-font);
-  font-size: 16px; /* ≥16px: no iOS focus auto-zoom */
+  font-size: 16px;
   outline: none;
 }
 
@@ -931,12 +783,6 @@ body.sf-dragging-row * {
   border-color: var(--sf-accent);
 }
 
-/* Mobile input zoom — universal guard: iOS (and iPadOS) auto-zooms into a
-   focused text field whose font-size is under 16px. That is the only
-   mobile platform with this behavior (Android never zooms on focus), so
-   the rule targets touch-primary devices only: any text entry on a phone
-   or tablet is at least 16px, desktop keeps its compact inputs. This also
-   covers widgets added in the future — new inputs can never regress. */
 @media (pointer: coarse) {
   input,
   textarea,
@@ -964,8 +810,6 @@ body.sf-dragging-row * {
     box-shadow: inset 0 0 0 999px var(--sf-hover-overlay);
   }
 }
-
-/* ─── Tree ──────────────────────────────────────────────────────────────── */
 
 .sf-pc-tree {
   user-select: none;
@@ -1023,8 +867,6 @@ body.sf-dragging-row * {
   padding: 0 4px;
 }
 
-/* ─── KeyValueList (unified key-value rows) ──────────────────────────────── */
-
 .kv-list {
   display: flex;
   flex-direction: column;
@@ -1038,7 +880,6 @@ body.sf-dragging-row * {
   gap: 12px;
   padding: 2px 0;
   font-size: 16px;
-  /* click-to-copy affordance */
   cursor: pointer;
   border-radius: 3px;
 }
@@ -1049,7 +890,6 @@ body.sf-dragging-row * {
   }
 }
 
-/* transient "Copied" feedback after a row click */
 .kv-row--copied .kv-value,
 .kv-row--copied .kv-pill {
   color: var(--sf-accent);
@@ -1060,7 +900,6 @@ body.sf-dragging-row * {
   flex-shrink: 0;
 }
 
-/* biome-ignore lint/style/noDescendingSpecificity: deliberate section ordering — different properties, not overrides */
 .kv-value {
   color: var(--sf-text);
   text-align: right;
@@ -1072,8 +911,6 @@ body.sf-dragging-row * {
   font-size: 16px;
 }
 
-/* Pill (badge) value + generic tones; apps may add their own kv-pill--* tones. */
-/* biome-ignore lint/style/noDescendingSpecificity: deliberate section ordering — different properties, not overrides */
 .kv-pill {
   font-size: 16px;
   text-transform: uppercase;
@@ -1106,8 +943,6 @@ body.sf-dragging-row * {
   background: color-mix(in srgb, var(--sf-status-err) 15%, transparent);
   color: var(--sf-status-err);
 }
-
-/* ─── List ───────────────────────────────────────────────────────────────── */
 
 .sf-pc-list-item {
   display: flex;
@@ -1149,10 +984,6 @@ body.sf-dragging-row * {
   text-align: center;
 }
 
-/* ═══════════════════════════════════════════════════════════════════════════
-   Workspace
-   ═══════════════════════════════════════════════════════════════════════════ */
-
 .sf-workspace {
   position: relative;
   display: flex;
@@ -1161,17 +992,10 @@ body.sf-dragging-row * {
   min-height: 0;
   background: var(--sf-bg-dark);
   overflow: hidden;
-  /* L0 outline around the box (the right edge drops while a right panel
-     shares the box — see the :has rule below). The corners round to
-     match .sf-center-group's own radius, so the outline follows the
-     curve instead of being clipped by the wrapper. */
   border: 2px solid var(--sf-border);
   border-radius: var(--sf-radius);
 }
 
-/* Workspace + right panel share one outline: the right panel's left
-   border is the seam, so the workspace drops its right border and keeps
-   only its left corners rounded while a right panel is visible. */
 .sf-workspace:has(+ .sf-panel:not(.sf-panel--hidden)) {
   border-right: none;
   border-radius: var(--sf-radius) 0 0 var(--sf-radius);
@@ -1195,8 +1019,6 @@ body.sf-dragging-row * {
   min-height: 0;
   flex: 0 1 auto;
 }
-
-/* ─── Split tree ────────────────────────────────────────────────────────── */
 
 .sf-split {
   display: flex;
@@ -1228,8 +1050,6 @@ body.sf-dragging-row * {
   background: var(--sf-border);
 }
 
-/* The seam line between tiles: a 1px border. The ::after overlays it with
-   the 5px sensing/blue hover area (--sf-sash-hit), centered on the border. */
 .sf-sash--row {
   width: var(--sf-sash-size);
   cursor: col-resize;
@@ -1271,16 +1091,12 @@ body.sf-dragging-row * {
   }
 }
 
-/* ─── Tile ────────────────────────────────────────────────────────────── */
-
 .sf-tile-tabs {
   display: flex;
   align-items: center;
   height: 30px;
   background: var(--sf-bar);
   flex-shrink: 0;
-  /* Never scrolls: when tabs don't fit they compress (see .sf-tab), so
-     every tab stays visible and reachable. */
   overflow: hidden;
   border-bottom: 1px solid var(--sf-border);
 }
@@ -1292,8 +1108,6 @@ body.sf-dragging-row * {
   position: relative;
 }
 
-/* ─── DnD layer (drag-to-tile visuals) ──────────────────────────────────── */
-
 .sf-dnd-layer {
   position: absolute;
   inset: 0;
@@ -1301,14 +1115,6 @@ body.sf-dragging-row * {
   z-index: 100;
 }
 
-/*
- * Landing feedback: same edge-glow as the panel's drag-to-collapse overlay,
- * but with all four edges lit — the split lands inside a closed rectangle,
- * whereas DTC opens the edge facing the panel (3 edges). Both the half-tile
- * preview and the whole-tile move glow use it. The per-corner border radius
- * is set inline so seams stay sharp and only the workspace's outer corners
- * round.
- */
 .sf-dnd-preview,
 .sf-dnd-glow {
   position: absolute;
@@ -1334,7 +1140,6 @@ body.sf-dragging-row * {
   padding: 0 12px;
   height: 100%;
   cursor: pointer;
-  /* L3 — tabs sit on the L1 tab strip as darker slots */
   background: var(--sf-panel-bg);
   border-top: 2px solid transparent;
   border-bottom: 2px solid transparent;
@@ -1343,8 +1148,6 @@ body.sf-dragging-row * {
   white-space: nowrap;
   font-size: 16px;
   min-width: 0;
-  /* Compress (down to icon+label ellipsis) when the strip is full instead
-     of overflowing — the strip never scrolls. */
   flex: 0 1 auto;
   max-width: var(--sf-tab-max-width);
   user-select: none;
@@ -1356,10 +1159,6 @@ body.sf-dragging-row * {
 
 @media (hover: hover) {
   .sf-tab:hover {
-    /* Translucent overlay as an extra BACKGROUND layer, not an inset
-       shadow: backgrounds paint under the transparent top/bottom borders,
-       so the highlight covers the whole tab — an inset shadow is clipped
-       to the padding box and leaves 2px strips unlit. */
     background: linear-gradient(var(--sf-hover-overlay), var(--sf-hover-overlay)), var(--sf-panel-bg);
   }
 }
@@ -1369,7 +1168,6 @@ body.sf-dragging-row * {
   border-bottom-color: var(--sf-accent);
 }
 
-/* Dim the active-tab indicator in non-focused tiles (VSCode behavior) */
 .sf-tile:not(.sf-tile--focused) .sf-tab.active {
   border-bottom-color: var(--sf-accent-dim);
 }
@@ -1378,9 +1176,6 @@ body.sf-dragging-row * {
   font-size: 16px;
 }
 
-/* Reserved icon slot: every tab keeps the [icon|text] shape even without
-   an icon — the 16px column is always there (and can host animated
-   indicators, e.g. a pulsing status dot). */
 .sf-tab-icon-slot {
   width: 16px;
   display: inline-flex;
@@ -1419,7 +1214,6 @@ body.sf-dragging-row * {
   }
 }
 
-/* Button group: wraps buttons in one rounded corner box with thin dividers */
 .sf-btn-group {
   display: flex;
   align-items: center;
@@ -1435,7 +1229,6 @@ body.sf-dragging-row * {
   margin-left: 4px;
 }
 
-/* Breathing room at the right edge of the tab strip (after the last group) */
 .sf-btn-group:last-child {
   margin-right: var(--sf-gap);
 }
@@ -1465,8 +1258,6 @@ body.sf-dragging-row * {
     box-shadow: inset 0 0 0 999px var(--sf-hover-overlay);
   }
 }
-
-/* ─── Welcome Panel ──────────────────────────────────────────────────────── */
 
 .sf-welcome {
   display: flex;
@@ -1519,10 +1310,6 @@ body.sf-dragging-row * {
   text-align: center;
 }
 
-/* ═══════════════════════════════════════════════════════════════════════════
-   Status Bar
-   ═══════════════════════════════════════════════════════════════════════════ */
-
 .sf-status-bar {
   display: flex;
   align-items: center;
@@ -1531,8 +1318,6 @@ body.sf-dragging-row * {
   background: var(--sf-accent);
   color: var(--sf-text-on-accent);
   font-size: 16px;
-  /* 25px left inset matches the dock's side padding — items (e.g. the
-     connectivity indicator) keep clear of the rounded corner */
   padding: 0 10px 0 25px;
   flex-shrink: 0;
   border-radius: var(--sf-radius);
@@ -1558,10 +1343,6 @@ body.sf-dragging-row * {
   }
 }
 
-/* ═══════════════════════════════════════════════════════════════════════════
-   Scrollbar styling
-   ═══════════════════════════════════════════════════════════════════════════ */
-
 ::-webkit-scrollbar {
   width: 6px;
   height: 6px;
@@ -1582,55 +1363,25 @@ body.sf-dragging-row * {
   }
 }
 
-/* ═══════════════════════════════════════════════════════════════════════════
-   Selection
-   ═══════════════════════════════════════════════════════════════════════════ */
-
 ::selection {
   background: var(--sf-selection);
 }
 
-/* ═══════════════════════════════════════════════════════════════════════════
-   Mobile mode (window width < 500px)
-   ═══════════════════════════════════════════════════════════════════════════ */
-
-/* Full-bleed root; the bottom dock replaces the left icon rail. The
-   safe-area insets (iPhone notch / home indicator) are exposed as CSS
-   variables so the overlays can reuse them; the root pads its content
-   inside the safe areas while the fullscreen overlays extend into them
-   with their own background. */
 .sf-root--mobile {
   --sf-safe-top: env(safe-area-inset-top, 0px);
   --sf-safe-bottom: env(safe-area-inset-bottom, 0px);
-  /* Mobile boxes get a rounder corner than the desktop 6px — 15px for
-     every rounded box (main area, dock, status bar, menu sheet, panel
-     overlay, menu group cards). */
   --sf-radius: 15px;
-  /* 0..1 — how much of the status bar is revealed; the dock swipe
-     gesture drives it continuously (see .sf-status-bar). */
   --sf-status-reveal: 1;
-  /* Status-bar slot = 8px gap + 30px bar. The bar is 30px tall so its
-     15px corner radius does NOT overlap itself (15+15 > 25 would make
-     the browser scale the corners down to 12.5px, mismatching the
-     main box's true 15px corners and leaving a sliver of the bar
-     visible when the dock covers it). */
   --sf-status-slot: 38px;
   padding: var(--sf-safe-top) 0 var(--sf-safe-bottom);
-  /* The dock shares ONE rounded box with the main area (square seam, see
-     below); only the status bar floats as a separate card below it. */
   gap: 0;
   position: relative;
 }
 
-/* Main area + dock = one rounded box: the top corners round, the seam
-   corners stay square, the dock rounds the bottom. */
 .sf-root--mobile .sf-center-group {
   border-radius: var(--sf-radius) var(--sf-radius) 0 0;
 }
 
-/* Mobile: no L0 box outlines — the shell is full-bleed. The main area
-   drops its border and keeps only the top corners rounded, so it sits
-   flush on the borderless dock; together they read as one box. */
 .sf-root--mobile .sf-workspace {
   border: none;
   border-radius: var(--sf-radius) var(--sf-radius) 0 0;
@@ -1644,25 +1395,12 @@ body.sf-dragging-row * {
   border: none;
 }
 
-/* All title bars share ONE height in mobile: the workspace bar, and the
-   panels' own header + section tabs all use 60px (thumb-friendly,
-   visually consistent). */
 .sf-root--mobile .sf-tile-tabs,
 .sf-root--mobile .sf-panel-header,
 .sf-root--mobile .sf-panel-tabs {
   height: 60px;
 }
 
-/* Mobile compact title bar: [⋯ menu | active tab (tap opens the tab
-   list) | right panel]. The active-tab label is the trigger of a Menu
-   listing every tab (visual order); the last button toggles the right
-   panel fullscreen. */
-/* Title-bar buttons are SQUARE, full bar height: ⋯ / right-panel on the
-   workspace bar, ⋯ / ✕ on the panel header, and ← / ✕ on the menu
-   sheet bar (the sheet lives inside .sf-root--mobile via Teleport).
-   Vertical side lines only (left + right) — no top/bottom borders, so
-   each button reads as a vertical segment and adjacent buttons share a
-   boundary line. */
 .sf-root--mobile .sf-tile-tabs .sf-mobile-menu-btn,
 .sf-root--mobile .sf-tile-tabs .sf-mobile-rp-btn,
 .sf-root--mobile .sf-panel-header-btn,
@@ -1671,46 +1409,27 @@ body.sf-dragging-row * {
 .sf-root--mobile .sf-menu-sheet-close {
   width: 60px;
   height: 60px;
-  /* Explicit flex centering: SVG icons have no ink box, so UA button
-     layout (which centers text glyphs) leaves them off-center — this is
-     what made the icons look misaligned on iPhone/Safari. */
   display: flex;
   align-items: center;
   justify-content: center;
   border: none;
   border-left: 1px solid var(--sf-border);
   border-right: 1px solid var(--sf-border);
-  /* Overlap adjacent buttons by 1px so their side borders coincide —
-     otherwise the line between two buttons would be 2px (both edges).
-     NOTE: no margin-left:auto here — biome folds adjacent margins into
-     a shorthand that would leak auto onto EVERY button in this list
-     (two autos split the free space and float the ⋯ mid-bar). */
   margin: 0 -1px 0 0;
   border-radius: 0;
   background: transparent;
   color: var(--sf-text);
-  /* Icons render at 1em — 30px makes the SVG glyphs larger and easier to
-     hit on touch screens. */
   font-size: 30px;
   cursor: pointer;
   flex-shrink: 0;
 }
 
-/* The last button in each bar keeps margin-right: 0 — otherwise its box
-   (and right border) would land 1px past the bar's edge. The overlap
-   still happens because the PRECEDING button's -1px margin pulls it in. */
 .sf-root--mobile .sf-tile-tabs .sf-mobile-rp-btn,
 .sf-root--mobile .sf-panel-close-btn,
 .sf-root--mobile .sf-menu-sheet-close {
   margin-right: 0;
 }
 
-/* Borders only BETWEEN elements: the first button of a bar drops its
-   left border and the last one its right border, so a bar never paints
-   a line at the main window's edge — only at the internal boundaries
-   between adjacent buttons. (The sheet ✕ keeps its LEFT border: the
-   centered title text precedes it, so that side is an internal
-   boundary.) */
 .sf-root--mobile .sf-tile-tabs .sf-mobile-menu-btn,
 .sf-root--mobile .sf-panel-header-btn,
 .sf-root--mobile .sf-menu-sheet-back {
@@ -1723,8 +1442,6 @@ body.sf-dragging-row * {
   border-right: none;
 }
 
-/* The ⋯ is the first flex item and stays flush LEFT; the ✕ (last flex
-   item) pins itself right with its auto margin. */
 .sf-root--mobile .sf-panel-close-btn {
   margin-left: auto;
 }
@@ -1748,8 +1465,6 @@ body.sf-dragging-row * {
   gap: 6px;
   color: var(--sf-text);
   font-size: 16px;
-  /* Side breathing room for the active-tab text (and its icon) — the
-     label fills the bar's middle, so it needs padding on both sides. */
   padding: 0 12px;
 }
 
@@ -1766,7 +1481,6 @@ body.sf-dragging-row * {
   flex-shrink: 0;
 }
 
-/* Same reserved-icon-slot rule for the mobile title-bar label. */
 .sf-mobile-tab-icon-slot {
   width: 16px;
   display: inline-flex;
@@ -1786,44 +1500,19 @@ body.sf-dragging-row * {
   margin: auto;
 }
 
-/* Mobile menu sheet: every menu opens fullscreen, styled like the
-   panels — same background, same header treatment (border-bottom,
-   bold title) and the bar holds [← back (when nested)] left and
-   [✕ close] right, matching the title-bar look (60px, square side-lined
-   buttons). Like the panels, the sheet stops above the dock + status
-   bar (85px). */
 .sf-menu-sheet {
-  /* Absolute, anchored to the framework root (the Teleport target) — the
-     SAME mechanism as the .sf-mobile-panel overlays, so the top safe-area
-     zone (iPhone time/signal) shows the identical color for menu and
-     panel. (position: fixed would track the visual viewport on iOS and
-     could sit below the URL bar.) */
   position: absolute;
   top: 0;
   left: 0;
   right: 0;
-  /* dock (60px, sharing the main box) + status-bar slot (38px, scaled by
-     the swipe reveal) + gap + bottom safe area stay visible, like the
-     panels */
   bottom: calc(60px + var(--sf-status-slot) * var(--sf-status-reveal, 1) + var(--sf-safe-bottom, 0px));
   z-index: 40;
   display: flex;
   flex-direction: column;
-  /* Same rounded box as the main area: the sheet fills the main box's
-     spot, so it shares its shape — top corners rounded (var(--sf-radius)),
-     square corners at the seam where the dock (rounded below) meets it. */
   border-radius: var(--sf-radius) var(--sf-radius) 0 0;
-  /* Same body color as the panels (--sf-panel-bg): the menu sheet is a
-     transient overlay mirroring the panel look, and the slightly
-     lighter group cards (--sf-control) stand out on it. The notch strip
-     on top is PURE BLACK like the root's — the sheet covers the signal
-     zone with its own background, so it layers a black strip over the
-     top safe inset too. */
   background:
     linear-gradient(#000, #000) top / 100% var(--sf-safe-top, 0px) no-repeat,
     var(--sf-panel-bg);
-  /* The sheet covers the top safe-area zone (notch) with its own
-     background — identical to the panels — while the bar stays below. */
   padding-top: var(--sf-safe-top, 0px);
 }
 
@@ -1834,19 +1523,10 @@ body.sf-dragging-row * {
   flex-shrink: 0;
   border-bottom: 1px solid var(--sf-border);
   position: relative;
-  /* Same rounded top corners as the main window: the bar is the sheet's
-     first child and the sheet doesn't clip (overflow visible), so the
-     bar's own corners must round — otherwise its square corners paint
-     over the sheet's rounded ones. The arc shows the bar color, exactly
-     like the main window's arc shows the tab bar. */
   border-radius: var(--sf-radius) var(--sf-radius) 0 0;
-  /* Same chrome color as the docker (and the panel title bar) */
   background: var(--sf-bar);
 }
 
-/* Center-aligned title between the two square buttons (they reserve
-   60px each side, so the text centers on the bar regardless of whether
-   the back button is present). */
 .sf-menu-sheet-title {
   position: absolute;
   left: 60px;
@@ -1855,7 +1535,6 @@ body.sf-dragging-row * {
   min-width: 0;
   font-size: 16px;
   font-weight: 600;
-  /* First letter of each word uppercase — titles are labels, not shouts. */
   text-transform: capitalize;
   color: var(--sf-text);
   overflow: hidden;
@@ -1864,18 +1543,10 @@ body.sf-dragging-row * {
   pointer-events: none;
 }
 
-/* The close button always pins to the bar's right edge — at the root
-   level the back button is absent, and with a single flex item
-   justify-content can't right-align it. (Button geometry comes from the
-   shared mobile square-button rule above; this needs the same
-   specificity to beat that rule's margin shorthand.) */
 .sf-root--mobile .sf-menu-sheet-close {
   margin-left: auto;
 }
 
-/* The body scrolls; every group renders as one rounded card and the
-   cards stack with a gap between (grouped-list style, like iOS
-   Settings). Side padding leaves a gutter around the cards. */
 .sf-menu-sheet-body {
   flex: 1;
   min-height: 0;
@@ -1886,9 +1557,6 @@ body.sf-dragging-row * {
   padding: 12px;
 }
 
-/* One rounded card per group (the runs of items between separators) —
-   the same theme shape as the status bar and dock boxes, raised with
-   the control color like the section selector bar. */
 .sf-menu-group {
   flex-shrink: 0;
   border-radius: var(--sf-radius);
@@ -1897,24 +1565,12 @@ body.sf-dragging-row * {
   overflow: hidden;
 }
 
-/* Rows fill the card; adjacent rows share a hairline (the menu's own
-   separators became the card boundaries). 44px is the standard
-   touch-row height — larger than the desktop 28px but compact enough
-   that several cards fit the sheet. */
 .sf-menu-sheet .sf-menu-row {
-  /* The side padding now lives INSIDE the sliding body — the row itself
-     is borderless padding so the body can be full-bleed: the whole item
-     block (background + content) slides as one, leaving only the reveal
-     button behind. */
   padding: 0;
   height: 44px;
   border-radius: 0;
   font-size: 16px;
   gap: 10px;
-  /* Swipe-to-reveal: horizontal drags go to the JS pointer handlers,
-     vertical pans scroll the sheet natively (never reach the handlers);
-     the overflow clip keeps the sliding body + reveal button inside the
-     rounded card; relative anchors the absolutely-positioned button. */
   touch-action: pan-y;
   overflow: hidden;
   position: relative;
@@ -1926,11 +1582,6 @@ body.sf-dragging-row * {
   box-shadow: inset 0 0 0 999px var(--sf-hover-overlay);
 }
 
-/* The sliding part of a sheet row: full-bleed (covers the whole row,
-   including the space where the row's side padding used to be) so the
-   ENTIRE item block moves when swiped and only the reveal button is left
-   behind. Its background matches the card so it covers the button while
-   the row is closed. The row's 14px side padding lives here now. */
 .sf-menu-sheet .sf-menu-row-body {
   width: 100%;
   min-width: 0;
@@ -1946,13 +1597,6 @@ body.sf-dragging-row * {
   transition: none;
 }
 
-/* The revealed action (e.g. Close): a destructive button pinned to the
-   row's right edge, invisible while closed — and visible the moment the
-   body starts sliding (the .active class is applied while dragging, so
-   the button is unveiled DURING the swipe, not only after the release).
-   The body is full-bleed and slides exactly 86px (the button's own
-   width) to uncover it entirely — its left edge is then flush with the
-   content's right edge. */
 .sf-menu-swipe-action {
   position: absolute;
   top: 0;
@@ -1965,7 +1609,7 @@ body.sf-dragging-row * {
   gap: 6px;
   padding: 0;
   border: none;
-  background: #c43d2f; /* destructive red — reads as an irreversible action */
+  background: #c43d2f;
   color: #fff;
   font-size: 16px;
   cursor: pointer;
@@ -1990,27 +1634,18 @@ body.sf-dragging-row * {
   color: var(--sf-text-dim);
 }
 
-/* Bottom dock: one horizontal row of app icons. It shares the rounded
-   box with the main area above — square top corners at the seam, rounded
-   bottom corners (the status bar floats below, separated by a gap). */
 .sf-docker--bottom {
   flex-direction: row;
   width: 100%;
   height: 60px;
   flex-shrink: 0;
   align-items: center;
-  /* Full-bleed bar; the side padding shifts the icons inward so rounded
-     iPhone screen corners don't clip them. */
   padding: 0 25px;
   gap: 2px;
   border-radius: 0 0 var(--sf-radius) var(--sf-radius);
-  /* Same chrome color as the desktop docker */
   background: var(--sf-bar);
 }
 
-/* Mobile dock apps are SQUARE buttons matching the dock height (60px) —
-   the full bar is one row of 60×60 touch targets. Their SVG icons render
-   at 30×30 (1em of the 30px font-size; the svg icon scales with it). */
 .sf-docker--bottom .sf-docker-app {
   width: 60px;
   height: 60px;
@@ -2026,30 +1661,18 @@ body.sf-dragging-row * {
   border-bottom-color: var(--sf-accent);
 }
 
-/* Fullscreen app panel opened from the dock: covers everything except the
-   dock and the status bar below it, so the user can switch apps or tap the
-   active icon to close. */
 .sf-mobile-panel {
   position: absolute;
   top: 0;
   left: 0;
   right: 0;
-  /* dock (60px, sharing the main box) + status-bar slot (38px, scaled by
-     the swipe reveal) + bottom safe area stay visible */
   bottom: calc(60px + var(--sf-status-slot) * var(--sf-status-reveal, 1) + var(--sf-safe-bottom, 0px));
   display: flex;
   flex-direction: column;
-  /* Same rounded box as the main area (see .sf-menu-sheet): top corners
-     rounded, square seam where the dock meets it. */
   border-radius: var(--sf-radius) var(--sf-radius) 0 0;
-  /* The overlay covers the top safe-area zone (notch); the panel body
-     fills it, so use the panel color — identical to the menu sheet.
-     The notch strip itself is PURE BLACK (same treatment as the root
-     and the menu sheet). */
   background:
     linear-gradient(#000, #000) top / 100% var(--sf-safe-top, 0px) no-repeat,
     var(--sf-panel-bg);
-  /* Keep the panel header below the notch */
   padding-top: var(--sf-safe-top, 0px);
   z-index: 20;
 }
@@ -2059,25 +1682,14 @@ body.sf-dragging-row * {
   flex: 1;
   min-height: 0;
   border-radius: 0;
-  /* Transparent so the overlay's background shows through: the overlay
-     layers a PURE-BLACK notch strip (env safe-area inset) over the panel
-     color — the panel's own --sf-bg-light would otherwise cover it. */
   background: transparent;
 }
 
-/* The header's [⋯ | ✕] buttons sit flush against BOTH screen edges (⋯
-   left, ✕ right — the title centers between them). */
 .sf-panel--mobile .sf-panel-header {
   padding-left: 0;
   padding-right: 0;
 }
 
-/* Mobile: the panel body insets 10px from each screen edge — the title
-   bar AND the section selector row stay full-bleed (both are chrome
-   rows; their edge-to-edge buttons/tabs are by design). The body uses
-   PADDING, not margin: the scrollbar of the scroll container sits at
-   the container's own edge, so a margin would drag it 10px inward —
-   padding keeps it flush while the content clears it. */
 .sf-root--mobile .sf-panel--mobile .sf-subsection-body-container {
   padding: 0 10px;
 }
@@ -2086,8 +1698,6 @@ body.sf-dragging-row * {
   margin: 0 10px;
 }
 
-/* The mobile panel title centers between the two square buttons, exactly
-   like the menu sheet's title (absolute between the 60px side zones). */
 .sf-root--mobile .sf-panel-title {
   position: absolute;
   left: 60px;
@@ -2096,43 +1706,18 @@ body.sf-dragging-row * {
   pointer-events: none;
 }
 
-/* Mobile: the status bar can be swiped away (dock swipe down) and back
-   (dock swipe up). The reveal (0..1) drives the layout CONTINUOUSLY —
-   the main+dock box slides down over the bar while dragging, and on
-   release the geometry springs to the snapped state (settle transition
-   below). The status bar itself never moves. */
-
-/* The status bar sits at the very bottom of the mobile screen as its own
-   rounded card: the gap above separates it from the shared main+dock
-   box, and the right padding clears the device's rounded screen corner
-   (same 25px as the dock). It keeps a FIXED slot (gap 8px + 30px) — the
-   reveal moves the box ABOVE it, not the bar. The 30px height keeps the
-   15px corner radius true (25px would make the browser shrink it to
-   12.5px — see --sf-status-slot), so the bar's corners match the main
-   box's exactly and the dock covers it flush. */
 .sf-root--mobile .sf-status-bar {
   margin-top: var(--sf-gap);
   padding-right: 25px;
   height: 30px;
 }
 
-/* Hiding = the main+dock box slides DOWN over the status bar: a negative
-   bottom margin shrinks the DOCK's layout slot by (1 - reveal) * 38px,
-   the flex column hands the freed space to the workbench, and the whole
-   box (flush seam included) moves down by exactly that much — the dock's
-   bottom edge sweeps over the bar, covering it. The overlays' bottom
-   calc (60px + slot * reveal + safe-bottom) tracks the same box. */
 .sf-root--mobile .sf-docker--bottom {
   margin-bottom: calc(var(--sf-status-reveal) * var(--sf-status-slot) - var(--sf-status-slot));
-  /* Paint above the status bar it slides over (the bar is a later
-     sibling and would otherwise draw on top of the overlap). */
   position: relative;
   z-index: 2;
 }
 
-/* Settle spring: after a swipe ends, the reveal-driven geometry animates
-   to the snapped state. Disabled while dragging, so the box tracks the
-   finger 1:1. */
 .sf-root--mobile .sf-docker--bottom,
 .sf-root--mobile .sf-menu-sheet,
 .sf-root--mobile .sf-mobile-panel {

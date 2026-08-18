@@ -16,8 +16,6 @@ import type {
 } from '../types/panel';
 import frameworkJson from './framework.layout.json';
 
-// ── Validation helpers ─────────────────────────────────────────────────────
-
 let sourceLabel = 'framework.layout.json';
 
 function fail(path: string, msg: string): never {
@@ -54,8 +52,6 @@ function needId(v: unknown, path: string): string {
   return s;
 }
 
-// ── Icon ───────────────────────────────────────────────────────────────────
-
 function toIcon(v: unknown, path: string): IconDef | undefined {
   if (v === undefined) return undefined;
   if (typeof v === 'string') return v;
@@ -64,8 +60,6 @@ function toIcon(v: unknown, path: string): IconDef | undefined {
   }
   fail(path, 'icon must be a string (unicode char) or { "type": "image", "url": "..." }');
 }
-
-// ── Components / sub-sections / sections ───────────────────────────────────
 
 const COMPONENT_TYPES = ['text', 'input', 'button', 'tree', 'keyValueList', 'list', 'component'] as const;
 
@@ -201,8 +195,6 @@ function toPanelDef(v: unknown, path: string): PanelDef {
   };
 }
 
-// ── Menu (one recursive node class for all levels) ─────────────────────────
-
 function toMenuNode(v: unknown, path: string): MenuNodeDef {
   const r = needRecord(v, path);
   if (r.separator === true) return { separator: true };
@@ -235,7 +227,6 @@ function toStatusItem(v: unknown, path: string): StatusItemDef {
   const component = optString(r.component, `${path}.component`);
   return {
     id: optString(r.id, `${path}.id`),
-    // A component item needs no static label (it renders itself).
     label: component
       ? r.label === undefined
         ? ''
@@ -265,13 +256,6 @@ function optInt(v: unknown, path: string): number | undefined {
   return Math.round(v);
 }
 
-// ── Root ───────────────────────────────────────────────────────────────────
-
-/**
- * Validate a layout definition object and normalize it into the typed
- * LayoutDefinition. `label` is used in error messages only.
- * No argument = the framework's bundled demo layout.
- */
 export function loadLayout(json: unknown = frameworkJson, label = 'framework.layout.json'): LayoutDefinition {
   sourceLabel = label;
   const root = needRecord(json, '<root>');
@@ -317,5 +301,4 @@ export function loadLayout(json: unknown = frameworkJson, label = 'framework.lay
   };
 }
 
-/** The single layout for the framework - loaded once at startup. */
 export const layout: LayoutDefinition = loadLayout();

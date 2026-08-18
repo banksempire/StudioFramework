@@ -4,13 +4,6 @@ import type { MenuNodeDef } from '../types/layout';
 import Menu from './Menu.vue';
 import SvgIcon from './SvgIcon.vue';
 
-// ── Keyboard accelerators ─────────────────────────────────────────────────
-// Menu items can declare `accelerator` in the layout JSON ("Ctrl+N",
-// "Ctrl+K Ctrl+O", ...). A window-level keydown listener matches them and
-// dispatches the same menu action as a click would. Two-part accelerators
-// (chords like "Ctrl+K Ctrl+O") arm on the first key and complete on the
-// second within a short window.
-
 interface AccelKey {
   key: string;
   ctrl: boolean;
@@ -20,12 +13,10 @@ interface AccelKey {
 }
 
 interface AccelBinding {
-  /** 1 = plain shortcut, 2 = chord */
   chord: AccelKey[];
   action: string;
 }
 
-/** Normalize a key name from either an accelerator spec or a KeyboardEvent. */
 function normKey(k: string): string {
   let s = k.trim().toLowerCase();
   if (s === 'space') return ' ';
@@ -39,7 +30,6 @@ function normKey(k: string): string {
   return s;
 }
 
-/** Parse one accelerator string into its key parts (chords separated by space). */
 function parseAccel(spec: string): AccelKey[] | null {
   const chord: AccelKey[] = [];
   for (const part of spec.trim().split(/\s+/)) {
@@ -65,7 +55,6 @@ function keyOf(e: KeyboardEvent): string {
   return normKey(e.key);
 }
 
-/** Exact match: every modifier must be pressed exactly as declared. */
 function matches(e: KeyboardEvent, acc: AccelKey): boolean {
   return (
     !!e.ctrlKey === acc.ctrl &&
@@ -76,7 +65,6 @@ function matches(e: KeyboardEvent, acc: AccelKey): boolean {
   );
 }
 
-/** Flat list of (accelerator → action) from the menu tree (leaf items only). */
 function collectBindings(menus: MenuNodeDef[], acc: AccelBinding[] = []): AccelBinding[] {
   for (const m of menus) {
     if (m.items) collectBindings(m.items, acc);
@@ -94,12 +82,9 @@ let armTimer: number | null = null;
 
 function onKeyDown(e: KeyboardEvent) {
   if (e.repeat) return;
-  // Modifier-only keys (releasing Ctrl after a chord) never match.
   const k = keyOf(e);
   if (k === 'control' || k === 'shift' || k === 'alt' || k === 'meta') return;
 
-  // An armed chord only completes on its second key; anything else cancels
-  // it and is then tested as a fresh shortcut below.
   if (armed) {
     if (matches(e, armed.chord[1])) {
       e.preventDefault();
@@ -126,7 +111,6 @@ function onKeyDown(e: KeyboardEvent) {
       emit('menu-action', b.action);
       return;
     }
-    // Chord: arm the second key for a short window.
     armed = b;
     if (armTimer !== null) window.clearTimeout(armTimer);
     armTimer = window.setTimeout(() => {

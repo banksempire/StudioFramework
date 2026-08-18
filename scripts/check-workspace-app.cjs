@@ -1,13 +1,3 @@
-/**
- * Headless UI check for the Workspace app (docker item "workspace").
- *
- * Usage: SF_TEST_PORT=7494 npm run check:ws   (demo dev server on a test port)
- *
- * Covers: save current layout, load restores structure AND spacing (sash
- * ratios), ghost windows (missing tab ids → built-in blank page + note),
- * rename, delete, search, reorder, and reload survival (localStorage auto
- * snapshot + saved-workspace list).
- */
 const { chromium } = require('playwright');
 const { ensureServer, makeReporter, finish } = require('./lib/ui-test.cjs');
 
@@ -18,7 +8,6 @@ const PANEL = '.sf-ws-panel';
   const serverProc = await ensureServer();
   const browser = await chromium.launch();
   const context = await browser.newContext({ viewport: { width: 1440, height: 900 } });
-  // Clear localStorage on the FIRST navigation only (a reload must keep it).
   await context.addInitScript(() => {
     if (!sessionStorage.getItem('ws-check-cleared')) {
       sessionStorage.setItem('ws-check-cleared', '1');
@@ -45,7 +34,6 @@ const PANEL = '.sf-ws-panel';
   const wsItem = (name) => page.locator('.sf-ws-item', { hasText: name });
   const panelVisible = () => page.locator(PANEL).isVisible();
 
-  // ── App present + panel opens ───────────────────────────────────────────
   const wsApp = page.locator('.sf-docker-app[title="Workspace"]');
   report('Workspace app in the docker bar', (await wsApp.count()) === 1);
   await wsApp.click();
@@ -61,8 +49,6 @@ const PANEL = '.sf-ws-panel';
     (await tileCount()) === 1 && (await tileTabs(0)).length === 4,
   );
 
-  // ── Save a named workspace from a modified layout ───────────────────────
-  // Split right: framework.ts to the right edge → 2 tiles.
   const wb = await wsBox();
   await tab('framework.ts').dragTo(page.locator(WS), {
     targetPosition: { x: wb.width - 10, y: wb.height / 2 },
@@ -70,7 +56,6 @@ const PANEL = '.sf-ws-panel';
   await page.waitForTimeout(400);
   report('split right → 2 tiles', (await tileCount()) === 2);
 
-  // Resize the sash +70px so the left tile is visibly wider (spacing test).
   const sash = page.locator('.sf-sash--row');
   const sashBox = await sash.boundingBox();
   await page.mouse.move(sashBox.x + sashBox.width / 2, sashBox.y + sashBox.height / 2);
@@ -88,7 +73,6 @@ const PANEL = '.sf-ws-panel';
   report('saved workspace appears in the list', (await wsItem('My Layout').count()) === 1);
   report('save input cleared', (await page.inputValue('.sf-ws-save .sf-ws-input')) === '');
 
-  // ── Modify the layout away from the saved one ───────────────────────────
   await tab('framework.ts').hover();
   await tab('framework.ts').locator('.sf-tab-close').click();
   await page.waitForTimeout(350);
@@ -97,7 +81,6 @@ const PANEL = '.sf-ws-panel';
     (await tileCount()) === 1 && (await tileTabs(0)).length === 3,
   );
 
-  // ── Load → structure AND spacing restored ───────────────────────────────
   await wsItem('My Layout').locator('.sf-ws-btn[title="Load this workspace"]').click();
   await page.waitForTimeout(400);
   report('load restores 2 tiles', (await tileCount()) === 2);
@@ -114,9 +97,6 @@ const PANEL = '.sf-ws-panel';
   );
   report('no ghost note for a complete load', (await page.locator('.sf-ws-ghosts').count()) === 0);
 
-  // ── Ghost window: a saved layout referencing a deleted window ───────────
-  // Inject a saved workspace whose snapshot contains a tab id with no
-  // definition (the deleted-session case) and load it through the panel.
   await page.evaluate(() => {
     const saved = JSON.parse(localStorage.getItem('sf.workspaces') || '[]');
     saved.push({
@@ -162,9 +142,6 @@ const PANEL = '.sf-ws-panel';
   );
   report('existing window keeps its content', (await tileTabs(0))[0] === 'framework.ts');
 
-  // ── Ghost pruning: loading a workspace without the missing window must ──
-  //    drop the stale ghost def (tabDefs never grows without bound), and
-  //    loading it back recreates the blank window. ──
   const ghostDefGone = () =>
     page.evaluate(() => {
       const el = document.querySelector('.sf-workspace');
@@ -186,7 +163,6 @@ const PANEL = '.sf-ws-panel';
       (await page.locator('.sf-tab--ghost').count()) === 1,
   );
 
-  // ── Manage: rename, search, reorder, delete ─────────────────────────────
   await wsItem('My Layout').locator('.sf-ws-btn[title="Rename"]').click();
   await page.fill('.sf-ws-rename', 'Renamed Layout');
   await page.keyboard.press('Enter');
@@ -205,7 +181,6 @@ const PANEL = '.sf-ws-panel';
   );
   await page.fill('.sf-ws-search', '');
 
-  // Reorder: move the last item (With Ghost) up.
   const namesBefore = () => page.locator('.sf-ws-item .sf-ws-name').allTextContents();
   const before = await namesBefore();
   await wsItem('With Ghost').locator('.sf-ws-btn[title="Move up"]').click();
@@ -221,10 +196,6 @@ const PANEL = '.sf-ws-panel';
   await page.waitForTimeout(250);
   report('delete removes the item', (await page.locator('.sf-ws-item').count()) === 1);
 
-  // ── Reload survival ─────────────────────────────────────────────────────
-  // Load the 2-tile workspace first (the current layout was left as the
-  // ghost one), then reload: the layout (structure + spacing) auto-restores
-  // from localStorage and the saved-workspaces list survives too.
   await wsItem('Renamed Layout').locator('.sf-ws-btn[title="Load this workspace"]').click();
   await page.waitForTimeout(400);
   report('2-tile layout loaded for the reload test', (await tileCount()) === 2);
@@ -249,12 +220,10 @@ const PANEL = '.sf-ws-panel';
       (await page.locator('.sf-ws-item .sf-ws-name').first().textContent()) === 'Renamed Layout',
   );
 
-  // ── Side-panel visibility is part of a workspace ────────────────────────
   const rightPanel = page.locator('.sf-panel--right');
   const rpBtn = (title) => page.locator(`.sf-tab-panel-toggle[title="${title}"]`);
   report('right panel starts visible', await rightPanel.isVisible());
 
-  // Named workspace: collapse the right panel, save, expand, load back.
   await rpBtn('Collapse Right Panel').click();
   await page.waitForTimeout(400);
   report('right panel collapses', !(await rightPanel.isVisible()));
@@ -270,8 +239,6 @@ const PANEL = '.sf-ws-panel';
   await rpBtn('Expand Right Panel').click();
   await page.waitForTimeout(400);
 
-  // Auto-saved layout: collapse the left panel (menu), let the debounced
-  // auto-save fire, reload — the left panel must come back collapsed.
   await page.click('text=View');
   await page.waitForTimeout(200);
   await page.hover('text=Appearance');
@@ -279,7 +246,7 @@ const PANEL = '.sf-ws-panel';
   await page.click('text="Toggle Left Panel"');
   await page.waitForTimeout(400);
   report('left panel collapses via the menu', !(await page.locator('.sf-left-group').isVisible()));
-  await page.waitForTimeout(800); // debounced auto-save
+  await page.waitForTimeout(800);
   await page.reload({ waitUntil: 'networkidle' });
   await page.waitForTimeout(1000);
   report(
@@ -295,7 +262,6 @@ const PANEL = '.sf-ws-panel';
   await page.waitForTimeout(300);
   report('left panel reopens', await page.locator('.sf-left-group').isVisible());
 
-  // ── Auto-hide is re-enforced after restoring a workspace ────────────────
   const panelDisplayed = (side) =>
     page.evaluate((s) => {
       const el = document.querySelector(`.sf-panel--${s}`);
@@ -307,12 +273,9 @@ const PANEL = '.sf-ws-panel';
     'narrow window auto-hides both panels',
     (await panelDisplayed('left')) === false && (await panelDisplayed('right')) === false,
   );
-  // User override: a docker click opens the left panel on the narrow window.
   await page.locator('.sf-docker-app[title="Explorer"]').click();
   await page.waitForTimeout(400);
   report('docker click overrides auto-hide (left opens)', (await panelDisplayed('left')) === true);
-  // Save (intent = panels visible), then load: the panels must NOT pop open
-  // on a window too narrow for them.
   await page.locator('.sf-docker-app[title="Workspace"]').click();
   await page.waitForTimeout(400);
   await page.fill('.sf-ws-save .sf-ws-input', 'AH');
@@ -324,7 +287,6 @@ const PANEL = '.sf-ws-panel';
     'loading a workspace re-enforces auto-hide',
     (await panelDisplayed('left')) === false && (await panelDisplayed('right')) === false,
   );
-  // Back to a wide window: the panels come back (and stay).
   await page.setViewportSize({ width: 1440, height: 900 });
   await page.waitForTimeout(500);
   report(

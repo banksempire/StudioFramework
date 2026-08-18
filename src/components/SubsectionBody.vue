@@ -7,8 +7,6 @@ const props = withDefaults(
   defineProps<{
     subSections: PanelSubSection[];
     hiddenIds: Set<string>;
-    /** Mobile: variable-height sub-sections show ALL their content (auto
-     *  height, no distribution/drag handles) — see Framework mobile mode. */
     mobile?: boolean;
   }>(),
   {
@@ -21,37 +19,29 @@ const emit = defineEmits<{
   'component-action': [action: PanelAction];
 }>();
 
-const TITLE_BAR_H = 30; // must match .sf-subsection-header height in main.css
-
-// ── State ──────────────────────────────────────────────────────────────────
+const TITLE_BAR_H = 30;
 
 const bodyEl = ref<HTMLElement | null>(null);
-/** Height of the sub-section container, FRACTIONAL-exact (getBoundingClientRect,
- *  not clientHeight which rounds). At non-100% browser/display zoom the layout
- *  viewport is fractional; distributing to a rounded height makes the panel's
- *  scroll container overflow by <1px and show a spurious scrollbar. */
 const bodyHeight = ref(0);
 const ready = ref(false);
 
 interface SubState {
   isExpanded: boolean;
-  height: number; // variable: current ComponentBody height
-  measuredHeight: number; // fixed: measured from DOM
-  savedHeight?: number; // saved when collapsed, restored on expand
+  height: number;
+  measuredHeight: number;
+  savedHeight?: number;
 }
 
 const states = reactive<Record<string, SubState>>({});
 
 const visibleSubSections = computed(() => props.subSections.filter((s) => !props.hiddenIds.has(s.id)));
 
-/** Currently active sub-section id (null = none). Only one active at a time. */
 const activeId = ref<string | null>(null);
 
 function activate(id: string) {
   activeId.value = id;
 }
 
-// Clear active when the active sub-section is hidden or removed
 watch(visibleSubSections, (subs) => {
   if (activeId.value && !subs.some((s) => s.id === activeId.value)) {
     activeId.value = null;
@@ -59,7 +49,6 @@ watch(visibleSubSections, (subs) => {
 });
 
 function isResizeable(sub: PanelSubSection): boolean {
-  // Mobile: no variable heights — every sub-section shows its full content.
   if (props.mobile) return false;
   const st = states[sub.id];
   return !!st && st.isExpanded && !props.hiddenIds.has(sub.id) && sub.isHeightVariable;
@@ -72,17 +61,12 @@ function getBodyHeight(sub: PanelSubSection): number {
   return Math.max(st.height, sub.minHeight ?? 0);
 }
 
-/** What to pass as bodyHeight prop to SubSection (null = auto). */
 function bodyHeightFor(sub: PanelSubSection): number | null {
-  // Mobile: auto height for everything — the panel scrolls as one body and
-  // every sub-section shows all its content.
   if (!sub.isHeightVariable || props.mobile) return null;
   const st = states[sub.id];
   if (!st?.isExpanded) return 0;
   return Math.max(st.height, sub.minHeight ?? 0);
 }
-
-// ── Height distribution ────────────────────────────────────────────────────
 
 function findSub(id: string): PanelSubSection {
   const sub = props.subSections.find((s) => s.id === id);
@@ -90,11 +74,6 @@ function findSub(id: string): PanelSubSection {
   return sub;
 }
 
-/**
- * Reduce the given sub-sections toward their minHeight (top→bottom order).
- * `heights` is the source of heights (live states, or a drag snapshot).
- * Returns the total px freed.
- */
 function squeezeToMin(ids: string[], needed: number, heights?: Record<string, number>): number {
   let freed = 0;
   for (const id of ids) {
@@ -123,15 +102,9 @@ function distributeHeight() {
   const resizeable = visible.filter((s) => isResizeable(s));
 
   if (unallocated > 0 && resizeable.length > 0) {
-    // Give all surplus to the first resizeable sub-section. The fill is
-    // based on the RENDERED body height (getBodyHeight never dips below the
-    // minHeight floor): a freshly-expanded sub-section can start below its
-    // min (expand sets height = squeeze result), and adding raw surplus to
-    // that would double-count the floor and leave a gap at the panel bottom.
     const first = resizeable[0];
     states[first.id].height = getBodyHeight(first) + unallocated;
   } else if (unallocated < 0) {
-    // Squeeze resizeable sub-sections top-to-bottom
     squeezeToMin(
       resizeable.map((s) => s.id),
       -unallocated,
@@ -139,25 +112,18 @@ function distributeHeight() {
   }
 }
 
-// ── Measure fixed sub-sections + set up observers (incremental) ────────────
-// Fixed sub-section bodies are keyed stably by id, so their observers are
-// created once and only dropped when the sub-section leaves the observed
-// set — no disconnect/re-create churn on every refresh.
-
 const fixedObservers = new Map<string, ResizeObserver>();
 
 function measureAndObserve() {
   const body = bodyEl.value;
   if (!body) return;
 
-  // The set of fixed sub-sections that should be observed right now.
   const wanted = new Set(
     props.subSections
       .filter((s) => !s.isHeightVariable && !props.hiddenIds.has(s.id) && states[s.id]?.isExpanded)
       .map((s) => s.id),
   );
 
-  // Drop observers for sub-sections no longer in the set.
   for (const [id, obs] of fixedObservers) {
     if (!wanted.has(id)) {
       obs.disconnect();
@@ -165,7 +131,6 @@ function measureAndObserve() {
     }
   }
 
-  // Refresh measurements; create observers only for missing sub-sections.
   for (const sub of props.subSections) {
     if (!wanted.has(sub.id)) continue;
     const el = body.querySelector(`[data-sub-body="${sub.id}"]`) as HTMLElement | null;
@@ -186,8 +151,6 @@ function measureAndObserve() {
   }
 }
 
-// ── Refresh: measure + distribute ───────────────────────────────────────────
-
 function refresh(defer = false) {
   const run = () => {
     if (bodyHeight.value === 0) return;
@@ -199,9 +162,6 @@ function refresh(defer = false) {
   else run();
 }
 
-// ── React to changes ───────────────────────────────────────────────────────
-
-// Sub-sections change: manage states + refresh (deferred - DOM needs update)
 watch(
   () => props.subSections,
   (subs) => {
@@ -223,31 +183,25 @@ watch(
   { immediate: true },
 );
 
-// Visibility change: refresh (deferred)
 watch(
   () => props.hiddenIds,
   () => refresh(true),
 );
 
-// Body height change: refresh (immediate - DOM already correct)
 watch(bodyHeight, () => refresh(false), { flush: 'sync' });
-
-// ── Body ResizeObserver ────────────────────────────────────────────────────
 
 let bodyObserver: ResizeObserver | null = null;
 
 onMounted(() => {
   const el = bodyEl.value;
   if (!el) return;
-  bodyHeight.value = el.getBoundingClientRect().height; // triggers watch -> refresh(false)
+  bodyHeight.value = el.getBoundingClientRect().height;
   bodyObserver = new ResizeObserver(() => {
     bodyHeight.value = el.getBoundingClientRect().height;
   });
   bodyObserver.observe(el);
-  requestAnimationFrame(() => refresh(false)); // safety net
+  requestAnimationFrame(() => refresh(false));
 });
-
-// ── Expand / collapse ──────────────────────────────────────────────────────
 
 function toggleExpand(subId: string) {
   const st = states[subId];
@@ -256,22 +210,17 @@ function toggleExpand(subId: string) {
   if (!sub) return;
 
   if (st.isExpanded) {
-    // Collapsing: save height for later restore
     st.savedHeight = st.height;
     st.isExpanded = false;
   } else {
-    // Expanding: restore height, take space back from other resizeable sub-sections
     st.isExpanded = true;
     const target = st.savedHeight ?? sub.minHeight ?? 0;
     const others = visibleSubSections.value.filter((s) => s.id !== subId && isResizeable(s)).map((s) => s.id);
-    st.height = squeezeToMin(others, target); // might not get full amount if others at min
+    st.height = squeezeToMin(others, target);
   }
   refresh(true);
 }
 
-// ── Drag handles ───────────────────────────────────────────────────────────
-
-/** Per-boundary flag: can this handle redistribute space? (resizeable above AND below) */
 const handleFlags = computed(() => {
   const visible = visibleSubSections.value;
   const flags: boolean[] = [];
@@ -295,16 +244,12 @@ interface DragState {
   aboveIds: string[];
   belowIds: string[];
   startHeights: Record<string, number>;
-  /** handle element (for pointer-capture release) */
   el: HTMLElement;
   pointerId: number;
 }
 
 let dragState: DragState | null = null;
 
-// Pointer events + capture (like the sashes): the handle keeps receiving
-// moves when the pointer leaves the window — document-level mousemove/
-// mouseup would be lost outside the browser, leaving the drag stuck.
 function startDrag(index: number, e: PointerEvent) {
   e.preventDefault();
   const visible = visibleSubSections.value;
@@ -336,12 +281,10 @@ function onDragMove(e: PointerEvent) {
   const delta = e.clientY - dragState.startY;
 
   if (delta < 0) {
-    // Drag up: squeeze above (bottom→top), give to first below
     const freed = squeezeToMin([...dragState.aboveIds].reverse(), Math.abs(delta), dragState.startHeights);
     const firstBelow = dragState.belowIds[0];
     states[firstBelow].height = dragState.startHeights[firstBelow] + freed;
   } else if (delta > 0) {
-    // Drag down: squeeze below (top→bottom), give to last above
     const freed = squeezeToMin(dragState.belowIds, delta, dragState.startHeights);
     const lastAbove = dragState.aboveIds[dragState.aboveIds.length - 1];
     states[lastAbove].height = dragState.startHeights[lastAbove] + freed;
@@ -355,8 +298,6 @@ function onDragEnd() {
   document.body.classList.remove('sf-dragging');
   document.body.style.userSelect = '';
 }
-
-// ── Cleanup ────────────────────────────────────────────────────────────────
 
 onUnmounted(() => {
   bodyObserver?.disconnect();

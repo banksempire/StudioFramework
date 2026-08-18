@@ -7,7 +7,6 @@ defineProps<{
   subSection: PanelSubSection;
   isExpanded: boolean;
   isActive: boolean;
-  /** null = auto-height (fixed sub-section), number = explicit px (variable) */
   bodyHeight: number | null;
 }>();
 
@@ -25,7 +24,6 @@ const emit = defineEmits<{
     class="sf-subsection"
     :class="{ 'sf-subsection--collapsed': !isExpanded, 'sf-subsection--active': isActive }"
   >
-    <!-- Title bar - click toggles expand/collapse only (does NOT activate) -->
     <div class="sf-subsection-header" @click="emit('toggle-expand')">
       <span class="sf-subsection-arrow" :class="{ 'sf-subsection-arrow--expanded': isExpanded }"><SvgIcon name="❯" /></span>
       <span class="sf-subsection-label">{{ subSection.label }}</span>
@@ -36,11 +34,13 @@ const emit = defineEmits<{
           class="sf-subsection-util"
           :title="util.tooltip"
           @click="emit('utility', util.id)"
-        >{{ util.icon }}</button>
+        >
+          <SvgIcon v-if="typeof util.icon === 'string'" :name="util.icon" />
+          <img v-else :src="util.icon.url" alt="" />
+        </button>
       </div>
     </div>
 
-    <!-- Component body - click activates the sub-section -->
     <div
       v-if="isExpanded"
       class="sf-subsection-body"

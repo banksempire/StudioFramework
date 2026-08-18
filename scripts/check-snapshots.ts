@@ -1,10 +1,3 @@
-/**
- * Unit tests for workspace snapshots (src/workspace/snapshots.ts).
- * Usage: npm run check:snap   (runs under Node's native TypeScript support)
- *
- * Covers: capture/restore round-trip (structure, spacing, tab order),
- * fresh-id regeneration, root-dir preservation, multi-root layouts.
- */
 import {
   captureSnapshot,
   nodeFromSnapshot,
@@ -20,8 +13,6 @@ import {
   type WorkspaceNode,
 } from '../src/workspace/tree.ts';
 
-// ── Tiny assertion harness (same style as check-tree.ts) ──────────────────
-
 let passed = 0;
 let failed = 0;
 const failures: string[] = [];
@@ -35,8 +26,6 @@ function report(name: string, ok: boolean, extra = '') {
   }
 }
 
-// ── Helpers ────────────────────────────────────────────────────────────────
-
 function tile(tabs: string[], active = tabs[0] ?? ''): TileNode {
   return { kind: 'tile', id: nextId('tile'), tabs, activeId: active };
 }
@@ -45,22 +34,17 @@ function split(dir: SplitDir, ratio: number, a: WorkspaceNode, b: WorkspaceNode)
   return { kind: 'split', id: nextId('split'), dir, ratio, children: [a, b] };
 }
 
-/** Count tiles in a snapshot tree. */
 function countTiles(node: WorkspaceNode): number {
   if (node.kind === 'tile') return 1;
   return countTiles(node.children[0]) + countTiles(node.children[1]);
 }
 
-/** Collect all tabs (visual order) from a live tree. */
 function allTabs(node: WorkspaceNode): string[] {
   if (node.kind === 'tile') return [...node.tabs];
   return [...allTabs(node.children[0]), ...allTabs(node.children[1])];
 }
 
-// ── Round-trip: structure + spacing ────────────────────────────────────────
-
 {
-  // A deep mixed tree: row split with a nested column split, odd ratios.
   const tree = split(
     'row',
     0.28,
@@ -84,7 +68,6 @@ function allTabs(node: WorkspaceNode): string[] {
     JSON.stringify(allTabs(root.node)) === JSON.stringify(['a', 'b', 'c', 'd', 'e']),
   );
 
-  // Spacing: split ratios must survive the round-trip exactly.
   const walkRatios = (n: WorkspaceNode, acc: number[]) => {
     if (n.kind === 'split') {
       acc.push(n.ratio);
@@ -107,8 +90,6 @@ function allTabs(node: WorkspaceNode): string[] {
   report('active tab preserved', allTabs(root.node).length === 5);
 }
 
-// ── Fresh ids: no collision with the live tree ─────────────────────────────
-
 {
   const live = tile(['x']);
   const snap = captureSnapshot([{ node: live, ratio: 1 }], null);
@@ -116,8 +97,6 @@ function allTabs(node: WorkspaceNode): string[] {
   report('restore regenerates tile ids', restored[0].node.kind === 'tile' && restored[0].node.id !== live.id);
   report('restore regenerates root ids', restored[0].id !== live.id);
 }
-
-// ── Multi-root layouts ─────────────────────────────────────────────────────
 
 {
   const r1 = { id: nextId('root'), node: tile(['a']), ratio: 0.7 };
@@ -137,12 +116,9 @@ function allTabs(node: WorkspaceNode): string[] {
     restored[1].node.kind === 'split' && restored[1].node.ratio === 0.4,
   );
 
-  // Round-trip again — snapshots are stable (idempotent).
   const again = captureSnapshot(restored, snap.rootDir);
   report('re-capture is stable', JSON.stringify(again) === JSON.stringify(snap), JSON.stringify(again));
 }
-
-// ── Empty tile / empty workspace edge cases ────────────────────────────────
 
 {
   const snap: WorkspaceSnapshot = {
@@ -166,8 +142,6 @@ function allTabs(node: WorkspaceNode): string[] {
   report('empty workspace restores (no roots)', Array.isArray(restored) && restored.length === 0);
 }
 
-// ── Bad input ──────────────────────────────────────────────────────────────
-
 {
   let threw = false;
   try {
@@ -178,11 +152,7 @@ function allTabs(node: WorkspaceNode): string[] {
   report('unsupported version throws', threw);
 }
 
-// ── Transient tabs: excluded from snapshots, tiles collapse ───────────────
-
 {
-  // A transient tab is skipped; the tile keeps the rest and the active id
-  // moves to the first remaining tab when the active one was transient.
   const tree = tile(['a', 'b'], 'a');
   const snap = captureSnapshot([{ node: tree, ratio: 1 }], null, (id) => id === 'a');
   const node = snap.roots[0].node;
@@ -195,8 +165,6 @@ function allTabs(node: WorkspaceNode): string[] {
 }
 
 {
-  // A tile left with no tabs collapses away — the surrounding split merges
-  // to the surviving child (with its internal ratios intact).
   const left = split('row', 0.4, tile(['x']), tile(['y']));
   const tree = split('column', 0.25, tile(['gone']), left);
   const snap = captureSnapshot([{ node: tree, ratio: 1 }], null, (id) => id === 'gone');
@@ -208,8 +176,6 @@ function allTabs(node: WorkspaceNode): string[] {
 }
 
 {
-  // A root left empty is dropped and the surviving roots' ratios are
-  // renormalized so the restored layout fills the workspace.
   const r1 = { node: tile(['gone']), ratio: 0.6 };
   const r2 = { node: tile(['keep']), ratio: 0.4 };
   const snap = captureSnapshot([r1, r2], 'row', (id) => id === 'gone');
@@ -227,8 +193,6 @@ function allTabs(node: WorkspaceNode): string[] {
 }
 
 {
-  // Everything transient → a single empty root persists (the layout
-  // survives as an empty workspace instead of vanishing).
   const snap = captureSnapshot([{ node: tile(['a', 'b']), ratio: 1 }], null, () => true);
   report(
     'all-transient collapses to one empty root',
@@ -240,7 +204,6 @@ function allTabs(node: WorkspaceNode): string[] {
 }
 
 {
-  // No transients → behavior unchanged (structure + spacing preserved).
   const tree = split(
     'row',
     0.28,
@@ -253,7 +216,6 @@ function allTabs(node: WorkspaceNode): string[] {
 }
 
 {
-  // Side-panel visibility is captured with the layout and round-trips.
   const tree = tile(['a']);
   const panels = { left: false, docker: false, right: true };
   const snap = captureSnapshot([{ node: tree, ratio: 1 }], null, undefined, panels);
@@ -263,8 +225,6 @@ function allTabs(node: WorkspaceNode): string[] {
 }
 
 {
-  // Per-window state is captured with the layout (keyed by tab id, opaque
-  // payload) and round-trips through restore → re-capture.
   const tree = tile(['a', 'b']);
   const windows = { a: { composerHeight: 240 }, b: { zoom: 1.5 } };
   const snap = captureSnapshot([{ node: tree, ratio: 1 }], null, undefined, undefined, windows);
@@ -276,8 +236,6 @@ function allTabs(node: WorkspaceNode): string[] {
   report('no windows arg → no windows field', snap2.windows === undefined);
 }
 
-// ── nodeToSnapshot / nodeFromSnapshot symmetry ─────────────────────────────
-
 {
   const tree = split('column', 0.33, tile(['p', 'q'], 'q'), tile(['r']));
   const snap = nodeToSnapshot(tree);
@@ -286,8 +244,6 @@ function allTabs(node: WorkspaceNode): string[] {
   report('node round-trip preserves ratio', back.kind === 'split' && back.ratio === 0.33);
   report('node round-trip preserves dir', back.kind === 'split' && back.dir === 'column');
 }
-
-// ── Report ─────────────────────────────────────────────────────────────────
 
 console.log(`\nSNAPSHOT CHECKS: ${passed} passed, ${failed} failed\n`);
 for (const f of failures) console.log(f);

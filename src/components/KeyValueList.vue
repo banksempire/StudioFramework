@@ -1,21 +1,4 @@
 <script setup lang="ts">
-/**
- * KeyValueList — the framework's generic key-value rows (a label on the
- * left, a right-aligned value on the right). Every panel that shows
- * "fields" (session stats, model info, inspector data, …) renders through
- * this component — including the layout-declared `keyValueList` component
- * type (PanelComponent) — so all of them share one layout.
- *
- * A row can render its value as a pill (badge) instead of plain text:
- * `pill: true` + `tone` (defaults to the value) → class kv-pill--<tone>.
- * Base pill styles and a few generic tones (accent/muted/ok/warn/err) live
- * in the framework; apps add their own tones in their stylesheet.
- *
- * Clicking a row copies "key: value" to the clipboard with a transient
- * inline "Copied" feedback. The Clipboard API only exists in secure
- * contexts (https/localhost), so on http://<hostname> the copy falls back
- * to a hidden-textarea execCommand.
- */
 import { ref } from 'vue';
 import type { KeyValueItem } from '../types/panel';
 
@@ -23,7 +6,6 @@ defineProps<{
   items: KeyValueItem[];
 }>();
 
-/** Index of the row currently showing the "Copied" feedback. */
 const copiedIndex = ref<number | null>(null);
 let copyTimer: number | undefined;
 
@@ -38,9 +20,7 @@ function legacyCopy(text: string, done: () => void) {
     document.execCommand('copy');
     document.body.removeChild(ta);
     done();
-  } catch {
-    /* clipboard unavailable */
-  }
+  } catch {}
 }
 
 function copyRow(item: KeyValueItem, index: number) {
@@ -60,9 +40,7 @@ function copyRow(item: KeyValueItem, index: number) {
         .catch(() => legacyCopy(text, done));
       return;
     }
-  } catch {
-    /* fall through to legacy */
-  }
+  } catch {}
   legacyCopy(text, done);
 }
 </script>

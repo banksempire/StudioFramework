@@ -38,7 +38,6 @@ function onPointerMove(e: PointerEvent) {
   const pos = (isRow ? e.clientX : e.clientY) - (isRow ? parentRect.left : parentRect.top);
   const minRatio = minA / size;
   const maxRatio = maxPos / size;
-  // If the container is smaller than both mins, fall back to a fair share.
   const ratio = maxRatio > minRatio ? Math.min(Math.max(pos / size, minRatio), maxRatio) : 0.5;
   ws.ops.setRatio(props.split.id, ratio);
 }
