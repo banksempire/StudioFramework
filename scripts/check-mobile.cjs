@@ -332,6 +332,13 @@ const WS = '.sf-workspace';
     'list items are 60px tall',
     (await page.locator('.sf-tab-dropdown-row').first().boundingBox()).height === 60,
   );
+  report(
+    'the list is ALWAYS a scroll container (even when the 5 rows fit)',
+    (await page.evaluate(() => {
+      const b = document.querySelector('.sf-tab-dropdown-body');
+      return b && getComputedStyle(b).overflowY === 'scroll';
+    })) === true,
+  );
   report('active tab is layout.json', (await mobileBarLabel()) === 'layout.json');
 
   const cdp = await context.newCDPSession(page);

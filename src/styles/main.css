@@ -1654,7 +1654,7 @@ body.sf-dragging-row * {
 .sf-tab-dropdown-body {
   flex: 1;
   min-height: 0;
-  overflow-y: auto;
+  overflow-y: scroll;
 }
 
 .sf-tab-dropdown-row {
