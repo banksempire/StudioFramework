@@ -100,6 +100,15 @@ const { ensureServer, makeReporter, finish } = require('./lib/ui-test.cjs');
     }),
   );
   report(
+    'overcrowded tabs get even widths',
+    await page.evaluate(() => {
+      const widths = Array.from(document.querySelectorAll('.sf-tab')).map((t) =>
+        Math.round(t.getBoundingClientRect().width),
+      );
+      return widths.length > 0 && Math.max(...widths) - Math.min(...widths) <= 1;
+    }),
+  );
+  report(
     'icon mode when very crowded',
     (await page.locator(".sf-tile-tabs-inner[data-tabfit='icon']").count()) === 1 &&
       (await closeHidden()) &&
