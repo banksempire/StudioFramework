@@ -1,4 +1,5 @@
 import { createApp } from 'vue';
+import SingleMenuDemo from './components/SingleMenuDemo.vue';
 import WelcomeContent from './components/WelcomeContent.vue';
 import WorkspacePanel from './components/WorkspacePanel.vue';
 import type { WorkspaceApi } from './composables/useWorkspace';
@@ -8,6 +9,8 @@ import { registerPanelComponent, registerTabContent } from './registry';
 registerTabContent('welcome', WelcomeContent);
 
 registerPanelComponent('workspace-panel', WorkspacePanel);
+
+registerPanelComponent('single-menu-demo', SingleMenuDemo);
 
 declare global {
   interface Window {

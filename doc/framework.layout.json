@@ -373,6 +373,17 @@
                 ]
               },
               {
+                "id": "recent",
+                "label": "Recent",
+                "height": "fixed",
+                "components": [
+                  {
+                    "type": "component",
+                    "key": "single-menu-demo"
+                  }
+                ]
+              },
+              {
                 "id": "project",
                 "label": "Project",
                 "height": "variable",

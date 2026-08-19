@@ -1115,6 +1115,7 @@ body.sf-dragging-row * {
   min-width: 0;
   overflow-x: auto;
   overflow-y: hidden;
+  scrollbar-width: thin;
   height: 100%;
 }
 
@@ -1609,18 +1610,6 @@ body.sf-dragging-row * {
   color: var(--sf-text-dim);
 }
 
-/* Tab-selection dropdown (mobile): a standalone sheet listing the
-   workspace tabs. Each row is swipeable LEFT to reveal a Close button;
-   the ENTIRE row block (background + content) slides as one unit because
-   the sliding layer is the absolutely-positioned slide that fills the
-   whole row (inset: 0) and carries the row's background, press overlay
-   and selected marker — nothing of the item is left behind. */
-/* Tab-selection dropdown (mobile): a standalone sheet listing the
-   workspace tabs. Each row is swipeable LEFT to reveal a Close button;
-   the ENTIRE row block (background + content) slides as one unit because
-   the sliding layer is the absolutely-positioned slide that fills the
-   whole row (inset: 0) and carries the row's background, press overlay
-   and selected marker — nothing of the item is left behind. */
 .sf-tab-dropdown {
   position: absolute;
   top: 0;
@@ -1860,4 +1849,160 @@ body.sf-dragging-row * {
 .sf-root--mobile.sf-status-dragging .sf-menu-sheet,
 .sf-root--mobile.sf-status-dragging .sf-mobile-panel {
   transition: none;
+}
+
+.sf-sm {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.sf-sm-row {
+  position: relative;
+  overflow: hidden;
+}
+
+.sf-sm-under {
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  width: 86px;
+  display: flex;
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 150ms ease;
+}
+.sf-sm-under--revealed,
+.sf-sm-under--active {
+  opacity: 1;
+  visibility: visible;
+}
+
+.sf-sm-act {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  border: none;
+  background: var(--sf-accent);
+  color: var(--sf-text-on-accent);
+  font-size: 16px;
+  cursor: pointer;
+  padding: 0;
+  touch-action: none;
+  -webkit-tap-highlight-color: transparent;
+}
+.sf-sm-act--danger {
+  background: #c43d2f;
+  color: #fff;
+}
+.sf-sm-act--more {
+  cursor: default;
+}
+
+.sf-sm-slide {
+  position: relative;
+  background: var(--sf-panel-bg);
+  transition: transform 180ms ease;
+  will-change: transform;
+  touch-action: pan-y;
+}
+.sf-sm-slide--swiping {
+  transition: none;
+}
+
+.sf-sm-menu {
+  position: fixed;
+  z-index: 1001;
+  min-width: 180px;
+  background: var(--sf-bg-lighter);
+  border: 1px solid var(--sf-border);
+  border-radius: var(--sf-radius);
+  box-shadow: var(--sf-shadow);
+  padding: 4px;
+  font-size: 16px;
+}
+
+.sf-sm-menu-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding: 6px 10px;
+  border: none;
+  border-radius: 3px;
+  background: none;
+  color: var(--sf-text);
+  font-size: 16px;
+  text-align: left;
+  cursor: pointer;
+  white-space: nowrap;
+}
+@media (hover: hover) {
+  .sf-sm-menu-row:hover {
+    box-shadow: inset 0 0 0 999px var(--sf-hover-overlay);
+  }
+}
+.sf-sm-menu-row--danger {
+  color: #e5534b;
+}
+.sf-sm-menu-row--disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+
+.sf-sm-dialog-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 1200;
+  background: rgba(0, 0, 0, 0.55);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+}
+
+.sf-sm-dialog {
+  width: min(320px, 86vw);
+  background: var(--sf-bg-lighter);
+  border: 1px solid var(--sf-border);
+  border-radius: var(--sf-radius);
+  box-shadow: var(--sf-shadow);
+  padding: 4px;
+  font-size: 16px;
+}
+
+.sf-sm-dialog-title {
+  text-align: center;
+  font-weight: 600;
+  padding: 10px 12px 8px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--sf-text);
+}
+
+.sf-sm-dialog-row {
+  padding: 12px 14px;
+}
+
+.sf-sm-dialog-cancel {
+  width: 100%;
+  margin-top: 6px;
+  padding: 12px 14px;
+  border: none;
+  border-top: 1px solid var(--sf-border);
+  background: none;
+  color: var(--sf-text-muted);
+  font-size: 16px;
+  cursor: pointer;
+  border-radius: 0 0 var(--sf-radius) var(--sf-radius);
+}
+@media (hover: hover) {
+  .sf-sm-dialog-cancel:hover {
+    color: var(--sf-text);
+    box-shadow: inset 0 0 0 999px var(--sf-hover-overlay);
+  }
 }
