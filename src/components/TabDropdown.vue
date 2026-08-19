@@ -1,5 +1,6 @@
 <script setup lang="ts">
-import { onMounted, reactive, ref, watch } from 'vue';
+import { onMounted, ref, watch } from 'vue';
+import { useSwipeReveal } from '../composables/useSwipeReveal';
 import type { IconDef } from '../types/panel';
 import Icon from './Icon.vue';
 import SvgIcon from './SvgIcon.vue';
@@ -28,98 +29,23 @@ const emit = defineEmits<{
 
 const SWIPE_REVEAL = 86;
 
-interface SwipeState {
-  startX: number;
-  startY: number;
-  dx: number;
-  dy: number;
-  active: boolean;
-  revealed: boolean;
-}
+const swipe = useSwipeReveal({ revealWidth: () => SWIPE_REVEAL });
+const { styleOf: slideStyle, isSwiping, isRevealed, isLayerVisible: isBtnVisible } = swipe;
 
-const rows = reactive<Record<string, SwipeState>>({});
-const suppressedClick = ref<string | null>(null);
-
-function stateOf(id: string): SwipeState {
-  if (!rows[id]) rows[id] = { startX: 0, startY: 0, dx: 0, dy: 0, active: false, revealed: false };
-  return rows[id];
-}
-
-function clampSwipe(v: number): number {
-  return Math.max(-SWIPE_REVEAL, Math.min(0, v));
-}
-
-function swipeOffset(id: string): number {
-  const s = rows[id];
-  if (!s) return 0;
-  if (s.active) {
-    const base = s.revealed ? -SWIPE_REVEAL : 0;
-    return clampSwipe(base + s.dx);
-  }
-  return s.revealed ? -SWIPE_REVEAL : 0;
-}
-
-function slideStyle(id: string) {
-  const s = rows[id];
-  if (!s || (!s.active && !s.revealed)) return undefined;
-  return { transform: `translate3d(${swipeOffset(id)}px, 0, 0)` };
-}
-
-function onDown(e: PointerEvent, id: string) {
-  const item = props.items.find((t) => t.id === id);
-  if (!item || item.closeable === false) return;
+function onDown(e: PointerEvent, tab: TabDropdownItem) {
+  if (tab.closeable === false) return;
   if (e.pointerType === 'mouse' && e.button !== 0) return;
-  const s = stateOf(id);
-  s.startX = e.clientX;
-  s.startY = e.clientY;
-  s.dx = 0;
-  s.dy = 0;
-  s.active = false;
-}
-
-function onMove(e: PointerEvent, id: string) {
-  const s = rows[id];
-  if (!s) return;
-  s.dx = e.clientX - s.startX;
-  s.dy = e.clientY - s.startY;
-  if (!s.active) {
-    if (Math.abs(s.dx) < 6 || Math.abs(s.dx) < Math.abs(s.dy)) return;
-    s.active = true;
-    (e.currentTarget as HTMLElement).setPointerCapture?.(e.pointerId);
-    for (const k of Object.keys(rows)) {
-      if (k !== id) rows[k].revealed = false;
-    }
-  }
-}
-
-function onTouchMove(e: TouchEvent, id: string) {
-  if (rows[id]?.active) e.preventDefault();
-}
-
-function onUp(id: string) {
-  const s = rows[id];
-  if (!s) return;
-  if (s.active) {
-    const base = s.revealed ? -SWIPE_REVEAL : 0;
-    const off = clampSwipe(base + s.dx);
-    s.revealed = off < -SWIPE_REVEAL / 2;
-    suppressedClick.value = id;
-  }
-  s.active = false;
+  swipe.begin(tab.id, e);
 }
 
 function onSlideClick(id: string) {
-  if (suppressedClick.value === id) {
-    suppressedClick.value = null;
-    return;
-  }
+  if (swipe.consumeClick(id)) return;
   emit('select', id);
   emit('update:open', false);
 }
 
 function onClose(id: string) {
-  const s = rows[id];
-  if (s) s.revealed = false;
+  swipe.hide(id);
   emit('close', id);
 }
 
@@ -127,31 +53,11 @@ function closeSheet() {
   emit('update:open', false);
 }
 
-function isSwiping(id: string): boolean {
-  return rows[id]?.active ?? false;
-}
-
-function isRevealed(id: string): boolean {
-  return rows[id]?.revealed ?? false;
-}
-
-function isBtnVisible(id: string): boolean {
-  const s = rows[id];
-  if (!s) return false;
-  if (s.revealed) return true;
-  return s.active && swipeOffset(id) < -4;
-}
-
 watch(
   () => props.open,
   (o) => {
     if (o) return;
-    for (const k of Object.keys(rows)) {
-      rows[k].active = false;
-      rows[k].revealed = false;
-      rows[k].dx = 0;
-    }
-    suppressedClick.value = null;
+    swipe.reset();
   },
 );
 
@@ -195,11 +101,11 @@ onMounted(() => {
               class="sf-tab-dropdown-slide"
               :class="{ 'sf-tab-dropdown-slide--swiping': isSwiping(tab.id) }"
               :style="slideStyle(tab.id)"
-              @pointerdown="onDown($event, tab.id)"
-              @pointermove="onMove($event, tab.id)"
-              @pointerup="onUp(tab.id)"
-              @pointercancel="onUp(tab.id)"
-              @touchmove="onTouchMove($event, tab.id)"
+              @pointerdown="onDown($event, tab)"
+              @pointermove="swipe.move($event, tab.id)"
+              @pointerup="swipe.end(tab.id)"
+              @pointercancel="swipe.end(tab.id)"
+              @touchmove="swipe.touchMove($event, tab.id)"
               @click="onSlideClick(tab.id)"
             >
               <span v-if="tab.id === activeId" class="sf-tab-dropdown-mark" />

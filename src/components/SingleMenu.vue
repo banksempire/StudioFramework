@@ -1,5 +1,6 @@
 <script setup lang="ts" generic="T">
-import { computed, nextTick, onMounted, onUnmounted, type Ref, reactive, ref, watch } from 'vue';
+import { computed, nextTick, onMounted, onUnmounted, type Ref, ref, watch } from 'vue';
+import { useSwipeReveal } from '../composables/useSwipeReveal';
 import type { SingleMenuOption } from '../types/singleMenu';
 import Icon from './Icon.vue';
 import SvgIcon from './SvgIcon.vue';
@@ -50,117 +51,49 @@ const rowViews = computed<RowView<T>[]>(() =>
   })),
 );
 
+const optsByItem = computed(() => new Map(rowViews.value.map((r) => [r.item, r.opts])));
+const rowByKey = computed(() => new Map(rowViews.value.map((r) => [r.key, r])));
+
 function optsOf(item: T): SingleMenuOption[] {
-  const row = rowViews.value.find((r) => r.item === item);
-  return row ? row.opts : (props.options(item) ?? []);
+  return optsByItem.value.get(item) ?? [];
 }
 
-interface SwipeState {
-  startX: number;
-  startY: number;
-  dx: number;
-  dy: number;
-  active: boolean;
-  revealed: boolean;
-}
+const underStyle = computed(() => ({ width: `${props.revealWidth}px` }));
 
-const rows = reactive<Record<string, SwipeState>>({});
-const suppressedClick = ref<string | null>(null);
+const dialogItem = ref(null) as Ref<T | null>;
+const dialogTitle = computed(() => {
+  const item = dialogItem.value;
+  return item !== null && props.titleOf ? String(props.titleOf(item) ?? '') : '';
+});
 
-function stateOf(key: string): SwipeState {
-  if (!rows[key]) rows[key] = { startX: 0, startY: 0, dx: 0, dy: 0, active: false, revealed: false };
-  return rows[key];
-}
-
-function clampSwipe(v: number): number {
-  return Math.max(-props.revealWidth, Math.min(0, v));
-}
-
-function swipeOffset(key: string): number {
-  const s = rows[key];
-  if (!s) return 0;
-  if (s.active) return clampSwipe((s.revealed ? -props.revealWidth : 0) + s.dx);
-  return s.revealed ? -props.revealWidth : 0;
-}
-
-function slideStyle(key: string) {
-  const s = rows[key];
-  if (!s || (!s.active && !s.revealed)) return undefined;
-  return { transform: `translate3d(${swipeOffset(key)}px, 0, 0)` };
-}
-
-function isSwiping(key: string): boolean {
-  return rows[key]?.active ?? false;
-}
-
-function isRevealed(key: string): boolean {
-  return rows[key]?.revealed ?? false;
-}
-
-function isUnderVisible(key: string): boolean {
-  const s = rows[key];
-  if (!s) return false;
-  if (s.revealed) return true;
-  return s.active && swipeOffset(key) < -4;
-}
+const swipe = useSwipeReveal({
+  revealWidth: () => props.revealWidth,
+  onRelease: (opened, key) => {
+    const row = rowByKey.value.get(key);
+    if (opened && row && row.opts.length > 1) dialogItem.value = row.item;
+  },
+});
+const { styleOf: slideStyle, isSwiping, isRevealed, isLayerVisible: isUnderVisible } = swipe;
 
 let lastPointerType = '';
 
 function onDown(e: PointerEvent, row: RowView<T>) {
   lastPointerType = e.pointerType;
   if (e.pointerType === 'mouse' || e.button !== 0 || row.opts.length === 0) return;
-  const s = stateOf(row.key);
-  s.startX = e.clientX;
-  s.startY = e.clientY;
-  s.dx = 0;
-  s.dy = 0;
-  s.active = false;
-}
-
-function onMove(e: PointerEvent, key: string) {
-  const s = rows[key];
-  if (!s) return;
-  s.dx = e.clientX - s.startX;
-  s.dy = e.clientY - s.startY;
-  if (!s.active) {
-    if (Math.abs(s.dx) < 6 || Math.abs(s.dx) < Math.abs(s.dy)) return;
-    s.active = true;
-    (e.currentTarget as HTMLElement).setPointerCapture?.(e.pointerId);
-    for (const k of Object.keys(rows)) {
-      if (k !== key) rows[k].revealed = false;
-    }
-  }
-}
-
-function onTouchMove(e: TouchEvent, key: string) {
-  if (rows[key]?.active) e.preventDefault();
+  swipe.begin(row.key, e);
 }
 
 function onUp(row: RowView<T>) {
-  const s = rows[row.key];
-  if (!s) return;
-  if (s.active) {
-    const base = s.revealed ? -props.revealWidth : 0;
-    const off = clampSwipe(base + s.dx);
-    const opened = off < -props.revealWidth / 2;
-    s.revealed = opened && row.opts.length === 1;
-    if (opened && row.opts.length > 1) dialogItem.value = row.item;
-    suppressedClick.value = row.key;
-  }
-  s.active = false;
+  swipe.end(row.key, (opened) => opened && row.opts.length === 1);
 }
 
 function onSlideClick(row: RowView<T>) {
-  if (suppressedClick.value === row.key) {
-    suppressedClick.value = null;
-    return;
-  }
+  if (swipe.consumeClick(row.key)) return;
   emit('activate', row.item);
 }
 
 function onUnderTap(row: RowView<T>) {
-  const s = rows[row.key];
-  if (s) s.revealed = false;
+  swipe.hide(row.key);
   const opt = row.opts[0];
   if (opt) emit('select', row.item, opt);
 }
@@ -195,12 +128,6 @@ watch(ctxItem, async (v) => {
   menuStyle.value = { left: `${left}px`, top: `${top}px` };
 });
 
-const dialogItem = ref(null) as Ref<T | null>;
-const dialogTitle = computed(() => {
-  const item = dialogItem.value;
-  return item !== null && props.titleOf ? String(props.titleOf(item) ?? '') : '';
-});
-
 function closeAll() {
   ctxItem.value = null;
   dialogItem.value = null;
@@ -223,13 +150,9 @@ function onDocKey(e: KeyboardEvent) {
 }
 
 watch(rowViews, (views) => {
-  const keys = new Set(views.map((v) => v.key));
-  for (const k of Object.keys(rows)) {
-    if (!keys.has(k)) delete rows[k];
-  }
+  swipe.dropMissing(new Set(views.map((v) => v.key)));
   if (ctxItem.value !== null && !props.items.includes(ctxItem.value)) ctxItem.value = null;
   if (dialogItem.value !== null && !props.items.includes(dialogItem.value)) dialogItem.value = null;
-  if (suppressedClick.value && !keys.has(suppressedClick.value)) suppressedClick.value = null;
 });
 
 const sheetTarget = ref<HTMLElement | 'body'>('body');
@@ -257,7 +180,7 @@ if (typeof window !== 'undefined') {
           'sf-sm-under--revealed': isRevealed(row.key),
           'sf-sm-under--active': isUnderVisible(row.key),
         }"
-        :style="{ width: `${revealWidth}px` }"
+        :style="underStyle"
       >
         <button
           v-if="row.opts.length === 1"
@@ -280,10 +203,10 @@ if (typeof window !== 'undefined') {
         :style="slideStyle(row.key)"
         :draggable="draggable"
         @pointerdown="onDown($event, row)"
-        @pointermove="onMove($event, row.key)"
+        @pointermove="swipe.move($event, row.key)"
         @pointerup="onUp(row)"
         @pointercancel="onUp(row)"
-        @touchmove="onTouchMove($event, row.key)"
+        @touchmove="swipe.touchMove($event, row.key)"
         @click="onSlideClick(row)"
         @contextmenu="onCtx($event, row)"
         @dragstart="emit('dragstart', row.item, $event)"
