@@ -51,6 +51,18 @@ const WS = '.sf-workspace';
     (await page.locator('.sf-docker').count()) === 1 &&
       (await page.locator('.sf-panel--right').count()) === 1,
   );
+  const desktopUtils = await page.evaluate(() => {
+    const utils = Array.from(document.querySelectorAll('.sf-panel--right .sf-subsection-utils'));
+    return {
+      count: utils.length,
+      allHidden: utils.every((u) => getComputedStyle(u).display === 'none'),
+    };
+  });
+  report(
+    'desktop: subsection utility buttons hidden until hover/activate',
+    desktopUtils.count > 0 && desktopUtils.allHidden,
+    `count=${desktopUtils.count}`,
+  );
   report(
     'desktop: single tile with 4 demo tabs',
     (await tileCount()) === 1 && (await tileTabs(0)).length === 4,
@@ -258,6 +270,31 @@ const WS = '.sf-workspace';
       panelTitle.closeRight === panelTitle.barRight &&
       panelTitle.ellipsisLeft,
   );
+  const mobileSubUtils = await page.evaluate(() => {
+    const utils = Array.from(document.querySelectorAll('.sf-mobile-panel .sf-subsection-utils'));
+    return {
+      count: utils.length,
+      allShown: utils.every((u) => getComputedStyle(u).display === 'flex'),
+    };
+  });
+  report(
+    'mobile: subsection utility buttons always visible',
+    mobileSubUtils.count > 0 && mobileSubUtils.allShown,
+    `count=${mobileSubUtils.count}`,
+  );
+  await page.locator('.sf-mobile-panel .sf-subsection-header').first().click();
+  await page.waitForTimeout(200);
+  report(
+    'mobile: utility buttons stay visible on a collapsed subsection',
+    (await page.evaluate(
+      () =>
+        getComputedStyle(
+          document.querySelector('.sf-mobile-panel .sf-subsection--collapsed .sf-subsection-utils'),
+        ).display,
+    )) === 'flex',
+  );
+  await page.locator('.sf-mobile-panel .sf-subsection-header').first().click();
+  await page.waitForTimeout(200);
   await page.evaluate(() => {
     const root = document.querySelector('.sf-root--mobile');
     root.style.setProperty('--sf-safe-top', '44px');
@@ -509,7 +546,8 @@ const WS = '.sf-workspace';
   );
   report(
     'drifting swipe still reveals Close and keeps the list scroll frozen',
-    (await driftSheetRow.locator('.sf-tab-dropdown-close-btn.revealed').count()) === 1 && sheetScrollTop === 0,
+    (await driftSheetRow.locator('.sf-tab-dropdown-close-btn.revealed').count()) === 1 &&
+      sheetScrollTop === 0,
     `scrollTop=${sheetScrollTop}`,
   );
 

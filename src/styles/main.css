@@ -1413,6 +1413,10 @@ body.sf-dragging-row * {
   border: none;
 }
 
+.sf-root--mobile .sf-subsection-utils {
+  display: flex;
+}
+
 .sf-root--mobile .sf-tile-tabs,
 .sf-root--mobile .sf-panel-header,
 .sf-root--mobile .sf-panel-tabs {
