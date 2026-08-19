@@ -1,5 +1,5 @@
 <script setup lang="ts" generic="T">
-import { computed, nextTick, onMounted, onUnmounted, reactive, type Ref, ref, watch } from 'vue';
+import { computed, nextTick, onMounted, onUnmounted, type Ref, reactive, ref, watch } from 'vue';
 import type { SingleMenuOption } from '../types/singleMenu';
 import Icon from './Icon.vue';
 import SvgIcon from './SvgIcon.vue';
@@ -130,6 +130,10 @@ function onMove(e: PointerEvent, key: string) {
       if (k !== key) rows[k].revealed = false;
     }
   }
+}
+
+function onTouchMove(e: TouchEvent, key: string) {
+  if (rows[key]?.active) e.preventDefault();
 }
 
 function onUp(row: RowView<T>) {
@@ -279,6 +283,7 @@ if (typeof window !== 'undefined') {
         @pointermove="onMove($event, row.key)"
         @pointerup="onUp(row)"
         @pointercancel="onUp(row)"
+        @touchmove="onTouchMove($event, row.key)"
         @click="onSlideClick(row)"
         @contextmenu="onCtx($event, row)"
         @dragstart="emit('dragstart', row.item, $event)"

@@ -254,6 +254,76 @@ const { ensureServer, makeReporter, finish } = require('./lib/ui-test.cjs');
     (await page.locator('.sf-sm-menu').count()) === 1,
   );
 
+  await page.keyboard.press('Escape');
+
+  const panelScroll = () =>
+    page.evaluate(
+      () => document.querySelector('.sf-mobile-panel .sf-subsection-body-container')?.scrollTop ?? -1,
+    );
+
+  await cdp.send('Emulation.setDeviceMetricsOverride', {
+    width: 450,
+    height: 640,
+    deviceScaleFactor: 1,
+    mobile: true,
+    screenWidth: 450,
+    screenHeight: 640,
+  });
+  await page.setViewportSize({ width: 450, height: 640 });
+  await page.waitForTimeout(300);
+  report(
+    'mobile: list overflows its scroller at the smaller viewport',
+    await page.evaluate(() => {
+      const el = document.querySelector('.sf-mobile-panel .sf-subsection-body-container');
+      return !!el && el.scrollHeight > el.clientHeight;
+    }),
+  );
+
+  const driftRow = row('SingleMenu.vue');
+  await driftRow.locator('.sf-sm-slide').evaluate((el) => {
+    window.__smTouchLog = [];
+    el.addEventListener('touchmove', (e) => {
+      window.__smTouchLog.push({ c: e.cancelable, p: e.defaultPrevented });
+    });
+  });
+  const driftBox = await driftRow.boundingBox();
+  const dx0 = driftBox.x + driftBox.width - 18;
+  const dy0 = driftBox.y + driftBox.height / 2;
+  await touch('touchStart', [{ x: dx0, y: dy0 }]);
+  for (let i = 1; i <= 8; i += 1) {
+    await touch('touchMove', [{ x: dx0 - (110 * i) / 8, y: dy0 - (40 * i) / 8 }]);
+    await page.waitForTimeout(16);
+  }
+  await touch('touchEnd', []);
+  await page.waitForTimeout(350);
+  const log = await page.evaluate(() => window.__smTouchLog ?? []);
+  const lock = log.findIndex((m) => m.c && m.p);
+  const unclaimedAfterLock = log.filter((m, i) => m.c && !m.p && lock >= 0 && i > lock).length;
+  report(
+    'swipe left with vertical drift claims the touch (touchmove defaults prevented after lock)',
+    lock >= 0 && unclaimedAfterLock === 0,
+    JSON.stringify(log),
+  );
+  report(
+    'drifting swipe still opens the dialog and does not scroll the list',
+    (await page.locator('.sf-sm-dialog').count()) === 1 && (await panelScroll()) === 0,
+  );
+  await tapEl(page.locator('.sf-sm-dialog-cancel'));
+  await page.waitForTimeout(200);
+
+  const panRow = row('notes.txt');
+  const pbox = await panRow.boundingBox();
+  const px = pbox.x + pbox.width / 2;
+  const py = pbox.y + pbox.height / 2;
+  await touch('touchStart', [{ x: px, y: py }]);
+  for (let i = 1; i <= 6; i += 1) {
+    await touch('touchMove', [{ x: px, y: py - i * 24 }]);
+    await page.waitForTimeout(16);
+  }
+  await touch('touchEnd', []);
+  await page.waitForTimeout(250);
+  report('a plain vertical pan still scrolls the list', (await panelScroll()) > 0);
+
   report('no page errors during the run', errors.length === 0, errors.join(' | '));
 
   await finish(browser, serverProc, isFailed() || errors.length > 0, 'SINGLE-MENU CHECKS');
