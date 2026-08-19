@@ -92,6 +92,10 @@ function onMove(e: PointerEvent, id: string) {
   }
 }
 
+function onTouchMove(e: TouchEvent, id: string) {
+  if (rows[id]?.active) e.preventDefault();
+}
+
 function onUp(id: string) {
   const s = rows[id];
   if (!s) return;
@@ -195,6 +199,7 @@ onMounted(() => {
               @pointermove="onMove($event, tab.id)"
               @pointerup="onUp(tab.id)"
               @pointercancel="onUp(tab.id)"
+              @touchmove="onTouchMove($event, tab.id)"
               @click="onSlideClick(tab.id)"
             >
               <span v-if="tab.id === activeId" class="sf-tab-dropdown-mark" />

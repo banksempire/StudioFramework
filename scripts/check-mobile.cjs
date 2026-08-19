@@ -381,9 +381,6 @@ const WS = '.sf-workspace';
     await page.waitForTimeout(250);
   };
 
-  // Vertical pan on a row must be owned by the BROWSER (native scroll +
-  // inertia): the JS swipe handlers never capture the pointer for vertical
-  // drags, so the list scrolls even with only a few rows.
   const vrow = sheetRow('styles.css');
   const vb = await vrow.boundingBox();
   const vx = vb.x + vb.width / 2;
@@ -479,6 +476,41 @@ const WS = '.sf-workspace';
   report(
     'selection marker follows the new active tab',
     (await page.locator('.sf-tab-dropdown-mark').count()) === 1 && markedMatches,
+  );
+
+  const driftLabel = rowsC.find((l) => !l.includes('framework.t'));
+  const driftSheetRow = sheetRow(driftLabel);
+  await driftSheetRow.locator('.sf-tab-dropdown-slide').evaluate((el) => {
+    window.__tdTouchLog = [];
+    el.addEventListener('touchmove', (e) => {
+      window.__tdTouchLog.push({ c: e.cancelable, p: e.defaultPrevented });
+    });
+  });
+  await page.evaluate(() => {
+    const b = document.querySelector('.sf-tab-dropdown-body');
+    if (b) b.scrollTop = 0;
+  });
+  const dpt = await swipeStart(driftSheetRow);
+  for (let i = 1; i <= 8; i += 1) {
+    await touch('touchMove', [{ x: dpt.x0 - (110 * i) / 8, y: dpt.y - (40 * i) / 8 }]);
+    await page.waitForTimeout(16);
+  }
+  await swipeEnd();
+  const tdLog = await page.evaluate(() => window.__tdTouchLog ?? []);
+  const tdLock = tdLog.findIndex((m) => m.c && m.p);
+  const tdUnclaimed = tdLog.filter((m, i) => m.c && !m.p && tdLock >= 0 && i > tdLock).length;
+  report(
+    'swipe left with vertical drift claims the touch (touchmove defaults prevented after lock)',
+    tdLock >= 0 && tdUnclaimed === 0,
+    JSON.stringify(tdLog),
+  );
+  const sheetScrollTop = await page.evaluate(
+    () => document.querySelector('.sf-tab-dropdown-body')?.scrollTop ?? -1,
+  );
+  report(
+    'drifting swipe still reveals Close and keeps the list scroll frozen',
+    (await driftSheetRow.locator('.sf-tab-dropdown-close-btn.revealed').count()) === 1 && sheetScrollTop === 0,
+    `scrollTop=${sheetScrollTop}`,
   );
 
   await tapEl(sheetRow('framework.t'));
