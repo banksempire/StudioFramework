@@ -1867,7 +1867,6 @@ body.sf-dragging-row * {
   top: 0;
   right: 0;
   bottom: 0;
-  width: 86px;
   display: flex;
   opacity: 0;
   visibility: hidden;

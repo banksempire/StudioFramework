@@ -1,5 +1,5 @@
 <script setup lang="ts" generic="T">
-import { nextTick, onMounted, onUnmounted, type Ref, reactive, ref, watch } from 'vue';
+import { computed, nextTick, onMounted, onUnmounted, reactive, type Ref, ref, watch } from 'vue';
 import type { SingleMenuOption } from '../types/singleMenu';
 import Icon from './Icon.vue';
 import SvgIcon from './SvgIcon.vue';
@@ -34,8 +34,25 @@ function rowKey(item: T, index: number): string {
   return String(item ?? index);
 }
 
+interface RowView<TItem> {
+  key: string;
+  item: TItem;
+  index: number;
+  opts: SingleMenuOption[];
+}
+
+const rowViews = computed<RowView<T>[]>(() =>
+  props.items.map((item, index) => ({
+    key: rowKey(item, index),
+    item,
+    index,
+    opts: props.options(item) ?? [],
+  })),
+);
+
 function optsOf(item: T): SingleMenuOption[] {
-  return props.options(item) ?? [];
+  const row = rowViews.value.find((r) => r.item === item);
+  return row ? row.opts : (props.options(item) ?? []);
 }
 
 interface SwipeState {
@@ -89,12 +106,10 @@ function isUnderVisible(key: string): boolean {
 
 let lastPointerType = '';
 
-function onDown(e: PointerEvent, item: T, key: string) {
+function onDown(e: PointerEvent, row: RowView<T>) {
   lastPointerType = e.pointerType;
-  if (e.pointerType === 'mouse') return;
-  if (e.button !== 0) return;
-  if (optsOf(item).length === 0) return;
-  const s = stateOf(key);
+  if (e.pointerType === 'mouse' || e.button !== 0 || row.opts.length === 0) return;
+  const s = stateOf(row.key);
   s.startX = e.clientX;
   s.startY = e.clientY;
   s.dx = 0;
@@ -117,46 +132,33 @@ function onMove(e: PointerEvent, key: string) {
   }
 }
 
-function onUp(item: T, key: string) {
-  const s = rows[key];
+function onUp(row: RowView<T>) {
+  const s = rows[row.key];
   if (!s) return;
   if (s.active) {
     const base = s.revealed ? -props.revealWidth : 0;
     const off = clampSwipe(base + s.dx);
-    if (off < -props.revealWidth / 2) {
-      if (optsOf(item).length === 1) {
-        s.revealed = true;
-      } else {
-        s.revealed = false;
-        dialogItem.value = item;
-      }
-    } else {
-      s.revealed = false;
-    }
-    suppressedClick.value = key;
+    const opened = off < -props.revealWidth / 2;
+    s.revealed = opened && row.opts.length === 1;
+    if (opened && row.opts.length > 1) dialogItem.value = row.item;
+    suppressedClick.value = row.key;
   }
   s.active = false;
 }
 
-function onSlideClick(item: T, key: string) {
-  if (suppressedClick.value === key) {
+function onSlideClick(row: RowView<T>) {
+  if (suppressedClick.value === row.key) {
     suppressedClick.value = null;
     return;
   }
-  emit('activate', item);
+  emit('activate', row.item);
 }
 
-function onUnderTap(item: T, key: string) {
-  const s = rows[key];
+function onUnderTap(row: RowView<T>) {
+  const s = rows[row.key];
   if (s) s.revealed = false;
-  const opt = optsOf(item)[0];
-  if (opt) emit('select', item, opt);
-}
-
-function openDialog(item: T, key: string) {
-  const s = rows[key];
-  if (s) s.revealed = false;
-  dialogItem.value = item;
+  const opt = row.opts[0];
+  if (opt) emit('select', row.item, opt);
 }
 
 const ctxItem = ref(null) as Ref<T | null>;
@@ -165,15 +167,14 @@ const ctxY = ref(0);
 const menuEl = ref<HTMLElement | null>(null);
 const menuStyle = ref<{ left: string; top: string }>({ left: '0px', top: '0px' });
 
-function onCtx(e: MouseEvent, item: T) {
-  const opts = optsOf(item);
-  if (opts.length === 0) return;
+function onCtx(e: MouseEvent, row: RowView<T>) {
+  if (row.opts.length === 0) return;
   e.preventDefault();
   const fromTouch = lastPointerType !== '' && lastPointerType !== 'mouse';
   lastPointerType = '';
   if (fromTouch) return;
   dialogItem.value = null;
-  ctxItem.value = item;
+  ctxItem.value = row.item;
   ctxX.value = e.clientX;
   ctxY.value = e.clientY;
 }
@@ -191,10 +192,9 @@ watch(ctxItem, async (v) => {
 });
 
 const dialogItem = ref(null) as Ref<T | null>;
-const dialogTitle = ref('');
-
-watch(dialogItem, (item) => {
-  dialogTitle.value = item !== null && props.titleOf ? String(props.titleOf(item) ?? '') : '';
+const dialogTitle = computed(() => {
+  const item = dialogItem.value;
+  return item !== null && props.titleOf ? String(props.titleOf(item) ?? '') : '';
 });
 
 function closeAll() {
@@ -202,15 +202,7 @@ function closeAll() {
   dialogItem.value = null;
 }
 
-function pickCtx(opt: SingleMenuOption) {
-  const item = ctxItem.value;
-  if (item === null || opt.disabled) return;
-  closeAll();
-  emit('select', item, opt);
-}
-
-function pickDialog(opt: SingleMenuOption) {
-  const item = dialogItem.value;
+function pick(item: T | null, opt: SingleMenuOption) {
   if (item === null || opt.disabled) return;
   closeAll();
   emit('select', item, opt);
@@ -226,18 +218,15 @@ function onDocKey(e: KeyboardEvent) {
   if (e.key === 'Escape') closeAll();
 }
 
-watch(
-  () => props.items,
-  (list) => {
-    const keys = new Set(list.map((it, i) => rowKey(it, i)));
-    for (const k of Object.keys(rows)) {
-      if (!keys.has(k)) delete rows[k];
-    }
-    if (ctxItem.value !== null && !list.includes(ctxItem.value)) ctxItem.value = null;
-    if (dialogItem.value !== null && !list.includes(dialogItem.value)) dialogItem.value = null;
-    if (suppressedClick.value && !keys.has(suppressedClick.value)) suppressedClick.value = null;
-  },
-);
+watch(rowViews, (views) => {
+  const keys = new Set(views.map((v) => v.key));
+  for (const k of Object.keys(rows)) {
+    if (!keys.has(k)) delete rows[k];
+  }
+  if (ctxItem.value !== null && !props.items.includes(ctxItem.value)) ctxItem.value = null;
+  if (dialogItem.value !== null && !props.items.includes(dialogItem.value)) dialogItem.value = null;
+  if (suppressedClick.value && !keys.has(suppressedClick.value)) suppressedClick.value = null;
+});
 
 const sheetTarget = ref<HTMLElement | 'body'>('body');
 
@@ -256,24 +245,25 @@ if (typeof window !== 'undefined') {
 
 <template>
   <div class="sf-sm" v-bind="$attrs">
-    <div v-for="(item, i) in items" :key="rowKey(item, i)" class="sf-sm-row">
+    <div v-for="row in rowViews" :key="row.key" class="sf-sm-row">
       <div
-        v-if="optsOf(item).length > 0"
+        v-if="row.opts.length > 0"
         class="sf-sm-under"
         :class="{
-          'sf-sm-under--revealed': isRevealed(rowKey(item, i)),
-          'sf-sm-under--active': isUnderVisible(rowKey(item, i)),
+          'sf-sm-under--revealed': isRevealed(row.key),
+          'sf-sm-under--active': isUnderVisible(row.key),
         }"
+        :style="{ width: `${revealWidth}px` }"
       >
         <button
-          v-if="optsOf(item).length === 1"
+          v-if="row.opts.length === 1"
           class="sf-sm-act"
-          :class="{ 'sf-sm-act--danger': optsOf(item)[0].danger }"
-          :title="optsOf(item)[0].label ?? optsOf(item)[0].id"
-          @click.stop="onUnderTap(item, rowKey(item, i))"
+          :class="{ 'sf-sm-act--danger': row.opts[0].danger }"
+          :title="row.opts[0].label ?? row.opts[0].id"
+          @click.stop="onUnderTap(row)"
         >
-          <Icon :icon="optsOf(item)[0].icon" />
-          <span>{{ optsOf(item)[0].label ?? optsOf(item)[0].id }}</span>
+          <Icon :icon="row.opts[0].icon" />
+          <span>{{ row.opts[0].label ?? row.opts[0].id }}</span>
         </button>
         <div v-else class="sf-sm-act sf-sm-act--more" title="More">
           <SvgIcon name="⋯" />
@@ -282,19 +272,19 @@ if (typeof window !== 'undefined') {
       </div>
       <div
         class="sf-sm-slide"
-        :class="{ 'sf-sm-slide--swiping': isSwiping(rowKey(item, i)) }"
-        :style="slideStyle(rowKey(item, i))"
+        :class="{ 'sf-sm-slide--swiping': isSwiping(row.key) }"
+        :style="slideStyle(row.key)"
         :draggable="draggable"
-        @pointerdown="onDown($event, item, rowKey(item, i))"
-        @pointermove="onMove($event, rowKey(item, i))"
-        @pointerup="onUp(item, rowKey(item, i))"
-        @pointercancel="onUp(item, rowKey(item, i))"
-        @click="onSlideClick(item, rowKey(item, i))"
-        @contextmenu="onCtx($event, item)"
-        @dragstart="emit('dragstart', item, $event)"
+        @pointerdown="onDown($event, row)"
+        @pointermove="onMove($event, row.key)"
+        @pointerup="onUp(row)"
+        @pointercancel="onUp(row)"
+        @click="onSlideClick(row)"
+        @contextmenu="onCtx($event, row)"
+        @dragstart="emit('dragstart', row.item, $event)"
         @dragend="emit('dragend', $event)"
       >
-        <slot name="item" :item="item" :index="i" />
+        <slot name="item" :item="row.item" :index="row.index" />
       </div>
     </div>
   </div>
@@ -311,18 +301,14 @@ if (typeof window !== 'undefined') {
         }"
         role="menuitem"
         :disabled="opt.disabled"
-        @click="pickCtx(opt)"
+        @click="pick(ctxItem, opt)"
       >
         <Icon :icon="opt.icon" />
         <span>{{ opt.label ?? opt.id }}</span>
       </button>
     </div>
 
-    <div
-      v-if="dialogItem !== null"
-      class="sf-sm-dialog-backdrop"
-      @click.self="dialogItem = null"
-    >
+    <div v-if="dialogItem !== null" class="sf-sm-dialog-backdrop" @click.self="dialogItem = null">
       <div class="sf-sm-dialog" role="dialog">
         <div v-if="dialogTitle" class="sf-sm-dialog-title">{{ dialogTitle }}</div>
         <button
@@ -334,7 +320,7 @@ if (typeof window !== 'undefined') {
             'sf-sm-menu-row--disabled': opt.disabled,
           }"
           :disabled="opt.disabled"
-          @click="pickDialog(opt)"
+          @click="pick(dialogItem, opt)"
         >
           <Icon :icon="opt.icon" />
           <span>{{ opt.label ?? opt.id }}</span>
