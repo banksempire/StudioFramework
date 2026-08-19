@@ -35,18 +35,8 @@ function resolveTileId(tabId?: string): string {
 onMounted(() => {
   if (synthetic.value) return;
   ws.registerTileEl(props.tile.id, el.value);
-  const bar = tabsInnerEl.value;
-  if (bar) {
-    tabFitObserver = new ResizeObserver(measureTabFit);
-    tabFitObserver.observe(bar);
-    if (document.fonts?.status === 'loading') {
-      document.fonts.ready.then(measureTabFit).catch(() => undefined);
-    }
-  }
 });
 onBeforeUnmount(() => {
-  tabFitObserver?.disconnect();
-  tabFitObserver = null;
   if (synthetic.value) return;
   ws.registerTileEl(props.tile.id, null);
 });
@@ -54,44 +44,6 @@ onBeforeUnmount(() => {
 const activeTab = computed(() => (props.tile.activeId ? (ws.tabDefs[props.tile.activeId] ?? null) : null));
 
 const tabMenuOpen = ref(false);
-const tabsInnerEl = ref<HTMLElement | null>(null);
-let tabFitObserver: ResizeObserver | null = null;
-
-function setTabFit(bar: HTMLElement, mode: 'full' | 'compact' | 'icon') {
-  if (mode === 'full') bar.removeAttribute('data-tabfit');
-  else bar.setAttribute('data-tabfit', mode);
-}
-
-function measureTabFit() {
-  const bar = tabsInnerEl.value;
-  if (!bar) return;
-  const tabs = Array.from(bar.children) as HTMLElement[];
-  const available = bar.clientWidth;
-  let natural = 0;
-  for (const t of tabs) {
-    const label = t.querySelector('.sf-tab-label');
-    const close = t.querySelector('.sf-tab-close');
-    natural += 40 + (label ? label.scrollWidth : 0) + (close ? 32 : 6);
-  }
-  if (natural <= available && bar.getAttribute('data-tabfit') !== 'icon') {
-    if (bar.style.getPropertyValue('--sf-tab-basis')) {
-      bar.style.removeProperty('--sf-tab-basis');
-      setTabFit(bar, 'full');
-    }
-    return;
-  }
-  bar.style.removeProperty('--sf-tab-basis');
-  setTabFit(bar, 'full');
-  bar.style.setProperty('--sf-tab-shrink', '0');
-  void bar.clientWidth;
-  natural = 0;
-  for (const t of tabs) natural += t.scrollWidth;
-  bar.style.removeProperty('--sf-tab-shrink');
-  if (natural <= available) return;
-  const basis = Math.max(22, Math.floor(available / tabs.length));
-  bar.style.setProperty('--sf-tab-basis', `${basis}px`);
-  setTabFit(bar, basis < 64 ? 'icon' : basis < 110 ? 'compact' : 'full');
-}
 const activeTabLabel = computed(() => activeTab.value?.label ?? '');
 const tabList = computed(() =>
   props.tile.tabs.map((id) => ({
@@ -106,7 +58,6 @@ watch(
   tabList,
   (items) => {
     if (items.length === 0) tabMenuOpen.value = false;
-    measureTabFit();
   },
   { flush: 'post' },
 );
@@ -205,7 +156,7 @@ function onTileMousedown() {
         </div>
       </template>
       <template v-else>
-        <div ref="tabsInnerEl" class="sf-tile-tabs-inner">
+        <div class="sf-tile-tabs-inner">
         <div
           v-for="tabId in tile.tabs"
           :key="tabId"

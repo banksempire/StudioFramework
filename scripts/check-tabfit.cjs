@@ -23,40 +23,45 @@ const { ensureServer, makeReporter, finish } = require('./lib/ui-test.cjs');
   });
   const { report, isFailed } = makeReporter();
 
+  const cssVar = (name) =>
+    page.evaluate((n) => parseFloat(getComputedStyle(document.documentElement).getPropertyValue(n)), name);
+  const minW = await cssVar('--sf-tab-min-width');
+  const maxW = await cssVar('--sf-tab-max-width');
+
   const tabCount = () => page.locator('.sf-tab').count();
-  const basisVar = () =>
-    page.evaluate(() => {
-      const el = document.querySelector('.sf-tile-tabs-inner');
-      return el ? el.style.getPropertyValue('--sf-tab-basis') : '';
-    });
-  const tabOverflowsBar = () =>
+  const barInfo = () =>
     page.evaluate(() => {
       const bar = document.querySelector('.sf-tile-tabs-inner');
-      if (!bar) return true;
-      const br = bar.getBoundingClientRect();
-      return Array.from(document.querySelectorAll('.sf-tab')).some((t) => {
-        const r = t.getBoundingClientRect();
-        return r.right > br.right + 1 || r.left < br.left - 1;
-      });
+      if (!bar) return null;
+      const widths = Array.from(bar.children)
+        .filter((t) => t.classList.contains('sf-tab'))
+        .map((t) => t.getBoundingClientRect().width);
+      return { cw: bar.clientWidth, sw: bar.scrollWidth, ox: getComputedStyle(bar).overflowX, widths };
     });
-  const closeHidden = () =>
-    page.evaluate(() => {
-      const el = document.querySelector('.sf-tab-close');
-      return el ? getComputedStyle(el).display === 'none' : false;
-    });
-  const labelHidden = () =>
-    page.evaluate(() => {
-      const el = document.querySelector('.sf-tab-label');
-      return el ? getComputedStyle(el).display === 'none' : false;
-    });
-  const tileId = () =>
-    page.evaluate(() => {
-      const api = window.__sfWorkspace;
-      const walk = (node) => (node.kind === 'tile' ? node.id : walk(node.children[0]));
-      return walk(api.roots[0].node);
-    });
+  const widthOfLabel = (label) =>
+    page.evaluate((l) => {
+      const tabs = Array.from(document.querySelectorAll('.sf-tile-tabs-inner .sf-tab'));
+      const t = tabs.find((x) => x.querySelector('.sf-tab-label')?.textContent === l);
+      return t ? t.getBoundingClientRect().width : 0;
+    }, label);
+  const inRange = (widths) =>
+    widths.length > 0 && widths.every((w) => w >= minW - 0.5 && w <= maxW + 0.5);
 
-  report('baseline: 4 tabs, no squeeze', (await tabCount()) === 4 && (await basisVar()) === '');
+  report('css vars: min <= max, min wide enough for icon + close', minW > 0 && maxW > 0 && minW <= maxW);
+
+  const base = await barInfo();
+  report(
+    'baseline: 4 tabs, natural widths differ, no scroll, all within [min, max]',
+    (await tabCount()) === 4 &&
+      base !== null &&
+      base.sw <= base.cw + 1 &&
+      new Set(base.widths.map((w) => Math.round(w))).size > 1 &&
+      inRange(base.widths),
+  );
+  report(
+    'baseline: longer title claims more width',
+    (await widthOfLabel('framework.ts')) > (await widthOfLabel('utils.ts')),
+  );
   report(
     'baseline: active tab close button visible',
     await page.evaluate(() => {
@@ -65,7 +70,11 @@ const { ensureServer, makeReporter, finish } = require('./lib/ui-test.cjs');
     }),
   );
 
-  const tid = await tileId();
+  const tid = await page.evaluate(() => {
+    const api = window.__sfWorkspace;
+    const walk = (node) => (node.kind === 'tile' ? node.id : walk(node.children[0]));
+    return walk(api.roots[0].node);
+  });
   await page.evaluate((id) => {
     const api = window.__sfWorkspace;
     api.ops.openTab(id, { id: 'mix-short', label: 's', icon: '📄' });
@@ -76,34 +85,24 @@ const { ensureServer, makeReporter, finish } = require('./lib/ui-test.cjs');
     });
   }, tid);
   await page.waitForTimeout(300);
+  const mix = await barInfo();
   report(
-    'moderate mix of short and long tabs squeezes evenly',
-    await page.evaluate(() => {
-      const bar = document.querySelector('.sf-tile-tabs-inner');
-      if (!bar || bar.style.getPropertyValue('--sf-tab-basis') === '') return false;
-      const widths = Array.from(bar.children)
-        .filter((t) => t.classList.contains('sf-tab'))
-        .map((t) => Math.round(t.getBoundingClientRect().width));
-      return (
-        widths.length === 6 &&
-        Math.max(...widths) - Math.min(...widths) <= 1 &&
-        bar.style.getPropertyValue('--sf-tab-basis') !== ''
-      );
-    }),
+    'mix: short tab floors at min, long tab wider, no scroll, all in range',
+    mix !== null &&
+      mix.sw <= mix.cw + 1 &&
+      inRange(mix.widths) &&
+      (await widthOfLabel('s')) >= minW - 0.5 &&
+      (await widthOfLabel('a-rather-long-label-that-refuses-to-shrink.ts')) >
+        (await widthOfLabel('utils.ts')),
   );
-  await page.evaluate(() => {
+
+  page.evaluate(() => {
     const api = window.__sfWorkspace;
     api.ops.closeTab('mix-short');
     api.ops.closeTab('mix-long');
   });
-  await page.waitForFunction(
-    () => {
-      const el = document.querySelector('.sf-tile-tabs-inner');
-      return el && el.style.getPropertyValue('--sf-tab-basis') === '';
-    },
-    null,
-    { timeout: 5000 },
-  );
+  await page.waitForTimeout(200);
+
   await page.evaluate((id) => {
     const api = window.__sfWorkspace;
     for (let i = 0; i < 24; i++) {
@@ -114,91 +113,74 @@ const { ensureServer, makeReporter, finish } = require('./lib/ui-test.cjs');
       });
     }
   }, tid);
-  await page.waitForFunction(
-    () => {
-      const el = document.querySelector('.sf-tile-tabs-inner');
-      return el && el.style.getPropertyValue('--sf-tab-basis') !== '';
-    },
-    null,
-    { timeout: 5000 },
-  );
+  await page.waitForFunction(() => document.querySelectorAll('.sf-tile-tabs-inner .sf-tab').length === 28, null, {
+    timeout: 5000,
+  });
   await page.waitForTimeout(100);
-
+  const crowd = await barInfo();
   report(
-    '28 tabs all kept inside the selection bar',
-    (await tabCount()) === 28 && !(await tabOverflowsBar()),
+    '28 tabs: bar overflows into horizontal scroll, every tab floored at min',
+    crowd !== null &&
+      crowd.sw > crowd.cw + 1 &&
+      crowd.ox === 'auto' &&
+      crowd.widths.every((w) => w <= minW + 0.5),
   );
   report(
-    'tabs shrink below the max width',
+    '28 tabs: bar actually scrolls sideways',
     await page.evaluate(() => {
-      const widths = Array.from(document.querySelectorAll('.sf-tab')).map(
-        (t) => t.getBoundingClientRect().width,
-      );
-      return widths.length > 0 && Math.max(...widths) < 200;
+      const bar = document.querySelector('.sf-tile-tabs-inner');
+      if (!bar) return false;
+      bar.scrollLeft = 9999;
+      const moved = bar.scrollLeft > 0;
+      bar.scrollLeft = 0;
+      return moved;
     }),
   );
   report(
-    'overcrowded tabs get even widths',
+    '28 tabs: close button still rendered inside the floored tab',
     await page.evaluate(() => {
-      const widths = Array.from(document.querySelectorAll('.sf-tab')).map((t) =>
-        Math.round(t.getBoundingClientRect().width),
-      );
-      return widths.length > 0 && Math.max(...widths) - Math.min(...widths) <= 1;
+      const tab = document.querySelector('.sf-tab.active');
+      const btn = tab?.querySelector('.sf-tab-close');
+      if (!tab || !btn) return false;
+      const tr = tab.getBoundingClientRect();
+      const br = btn.getBoundingClientRect();
+      return getComputedStyle(btn).visibility === 'visible' && br.right <= tr.right + 0.5 && br.left >= tr.left;
     }),
-  );
-  report(
-    'icon mode when very crowded',
-    (await page.locator(".sf-tile-tabs-inner[data-tabfit='icon']").count()) === 1 &&
-      (await closeHidden()) &&
-      (await labelHidden()) &&
-      parseFloat(await basisVar()) < 64,
   );
 
   await page.setViewportSize({ width: 3200, height: 900 });
   await page.waitForTimeout(400);
+  const wide = await barInfo();
   report(
-    'widening the window eases the squeeze, still no overflow',
-    !(await tabOverflowsBar()) &&
-      (await basisVar()) !== '' &&
-      (await page.locator(".sf-tile-tabs-inner[data-tabfit='compact']").count()) === 1 &&
-      (await labelHidden()) === false,
+    'wide window: scroll released, tabs un-floored but still shrunk below max (proportional squeeze)',
+    wide !== null &&
+      wide.sw <= wide.cw + 1 &&
+      inRange(wide.widths) &&
+      Math.max(...wide.widths) < maxW - 1 &&
+      (await widthOfLabel('bulk-file-0-with-a-rather-long-name-that-refuses-to-shrink.ts')) >
+        (await widthOfLabel('utils.ts')) + 1,
   );
+
   await page.setViewportSize({ width: 1440, height: 900 });
   await page.waitForTimeout(400);
+  const narrow = await barInfo();
   report(
-    'narrowing again re-tightens to icon mode',
-    !(await tabOverflowsBar()) &&
-      (await page.locator(".sf-tile-tabs-inner[data-tabfit='icon']").count()) === 1 &&
-      parseFloat(await basisVar()) < 64,
+    'narrowing again re-floors all tabs and restores horizontal scroll',
+    narrow !== null && narrow.sw > narrow.cw + 1 && narrow.widths.every((w) => w <= minW + 0.5),
   );
 
   await page.evaluate(() => {
     const api = window.__sfWorkspace;
-    for (let i = 0; i < 16; i++) api.ops.closeTab(`bulk-${i}`);
+    for (let i = 0; i < 24; i++) api.ops.closeTab(`bulk-${i}`);
   });
   await page.waitForTimeout(300);
+  const done = await barInfo();
   report(
-    'compact mode at 12 tabs: labels kept, close hidden',
-    (await tabCount()) === 12 &&
-      (await page.locator(".sf-tile-tabs-inner[data-tabfit='compact']").count()) === 1 &&
-      (await page.locator(".sf-tile-tabs-inner[data-tabfit='icon']").count()) === 0 &&
-      (await labelHidden()) === false &&
-      (await closeHidden()) &&
-      !(await tabOverflowsBar()),
-  );
-
-  await page.evaluate(() => {
-    const api = window.__sfWorkspace;
-    for (let i = 16; i < 24; i++) api.ops.closeTab(`bulk-${i}`);
-  });
-  await page.waitForTimeout(300);
-  report(
-    'back to 4 tabs: squeeze released, close button returns',
+    'back to 4 tabs: widths recover to natural, no scroll, close button visible',
     (await tabCount()) === 4 &&
-      (await basisVar()) === '' &&
-      (await page
-        .locator(".sf-tile-tabs-inner[data-tabfit='compact'], .sf-tile-tabs-inner[data-tabfit='icon']")
-        .count()) === 0 &&
+      done !== null &&
+      done.sw <= done.cw + 1 &&
+      new Set(done.widths.map((w) => Math.round(w))).size > 1 &&
       (await page.evaluate(() => {
         const el = document.querySelector('.sf-tab.active .sf-tab-close');
         return el ? getComputedStyle(el).visibility === 'visible' : false;

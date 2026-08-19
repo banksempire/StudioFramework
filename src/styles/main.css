@@ -43,6 +43,7 @@
   --sf-sash-size: 1px;
   --sf-sash-hit: 5px;
   --sf-tab-max-width: 200px;
+  --sf-tab-min-width: 80px;
   --sf-edge-glow: 6px;
   --sf-active: #37373d;
   --sf-selection: #264f78;
@@ -1112,28 +1113,9 @@ body.sf-dragging-row * {
   align-items: center;
   flex: 1;
   min-width: 0;
-  overflow: hidden;
+  overflow-x: auto;
+  overflow-y: hidden;
   height: 100%;
-}
-
-.sf-tile-tabs-inner[data-tabfit="compact"] .sf-tab {
-  padding: 0 8px;
-  gap: 4px;
-}
-
-.sf-tile-tabs-inner[data-tabfit="compact"] .sf-tab-close {
-  display: none;
-}
-
-.sf-tile-tabs-inner[data-tabfit="icon"] .sf-tab {
-  padding: 0 3px;
-  gap: 0;
-  justify-content: center;
-}
-
-.sf-tile-tabs-inner[data-tabfit="icon"] .sf-tab-close,
-.sf-tile-tabs-inner[data-tabfit="icon"] .sf-tab-label {
-  display: none;
 }
 
 .sf-tile-content {
@@ -1182,8 +1164,8 @@ body.sf-dragging-row * {
   color: var(--sf-text);
   white-space: nowrap;
   font-size: 16px;
-  min-width: 0;
-  flex: 0 var(--sf-tab-shrink, 1) var(--sf-tab-basis, auto);
+  min-width: var(--sf-tab-min-width);
+  flex: 0 1 auto;
   max-width: var(--sf-tab-max-width);
   user-select: none;
 }
