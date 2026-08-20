@@ -1,6 +1,5 @@
 <script setup lang="ts">
 import { onMounted, ref, watch } from 'vue';
-import { useSwipeReveal } from '../composables/useSwipeReveal';
 import type { IconDef } from '../types/panel';
 import Icon from './Icon.vue';
 import SvgIcon from './SvgIcon.vue';
@@ -27,44 +26,18 @@ const emit = defineEmits<{
   close: [id: string];
 }>();
 
-const SWIPE_REVEAL = 86;
+const menuTab = ref<TabDropdownItem | null>(null);
 
-const listEl = ref<HTMLElement | null>(null);
-
-const swipe = useSwipeReveal({
-  revealWidth: () => SWIPE_REVEAL,
-  rowWidth: () => listEl.value?.offsetWidth ?? 0,
-  onCommit: (id) => emit('close', id),
-});
-const {
-  styleOf: slideStyle,
-  underWidth,
-  isSwiping,
-  isRevealed,
-  isLayerVisible: isBtnVisible,
-  isArmed,
-} = swipe;
-
-function onDown(e: PointerEvent, tab: TabDropdownItem) {
-  if (tab.closeable === false) return;
-  if (e.pointerType === 'mouse' && e.button !== 0) return;
-  swipe.begin(tab.id, e);
-}
-
-function onSlideClick(id: string) {
-  if (swipe.consumeClick(id)) return;
-  if (swipe.isRevealed(id)) {
-    swipe.hide(id);
-    return;
-  }
+function onRowClick(id: string) {
   emit('select', id);
   emit('update:open', false);
 }
 
-function onClose(id: string) {
-  if (swipe.consumeClick(id)) return;
-  swipe.hide(id);
-  emit('close', id);
+function doClose() {
+  const tab = menuTab.value;
+  if (!tab) return;
+  menuTab.value = null;
+  emit('close', tab.id);
 }
 
 function closeSheet() {
@@ -74,8 +47,7 @@ function closeSheet() {
 watch(
   () => props.open,
   (o) => {
-    if (o) return;
-    swipe.reset();
+    if (!o) menuTab.value = null;
   },
 );
 
@@ -95,55 +67,40 @@ onMounted(() => {
         </button>
       </div>
       <div class="sf-tab-dropdown-body">
-        <div ref="listEl" class="sf-tab-dropdown-list">
+        <div class="sf-tab-dropdown-list">
           <div
             v-for="tab in items"
             :key="tab.id"
             class="sf-tab-dropdown-row"
-            :class="{ 'sf-tab-dropdown-row--revealed': isRevealed(tab.id) }"
+            @click="onRowClick(tab.id)"
           >
+            <span v-if="tab.id === activeId" class="sf-tab-dropdown-mark" />
+            <span class="sf-tab-dropdown-icon">
+              <Icon v-if="tab.icon" :icon="tab.icon" />
+            </span>
+            <span class="sf-tab-dropdown-label">{{ tab.label }}</span>
             <button
               v-if="tab.closeable !== false"
-              class="sf-tab-dropdown-close-btn"
-              :class="{
-                revealed: isRevealed(tab.id),
-                active: isBtnVisible(tab.id),
-                armed: isArmed(tab.id),
-              }"
-              :style="{ width: `${underWidth(tab.id)}px` }"
-              title="Close tab"
-              @pointerdown="onDown($event, tab)"
-              @pointermove="swipe.move($event, tab.id)"
-              @pointerup="swipe.end(tab.id, $event)"
-              @pointercancel="swipe.cancel(tab.id, $event)"
-              @touchmove="swipe.touchMove($event, tab.id)"
-              @click.stop="onClose(tab.id)"
+              class="sf-tab-dropdown-more"
+              title="More"
+              aria-label="More actions"
+              @click.stop="menuTab = tab"
             >
-              <SvgIcon name="✕" />
-              <span>Close</span>
+              <SvgIcon name="⋮" />
             </button>
-            <div
-              class="sf-tab-dropdown-slide"
-              :class="{
-                'sf-tab-dropdown-slide--swiping': isSwiping(tab.id),
-                'sf-tab-dropdown-slide--armed': isArmed(tab.id),
-              }"
-              :style="slideStyle(tab.id)"
-              @pointerdown="onDown($event, tab)"
-              @pointermove="swipe.move($event, tab.id)"
-              @pointerup="swipe.end(tab.id, $event)"
-              @pointercancel="swipe.cancel(tab.id, $event)"
-              @touchmove="swipe.touchMove($event, tab.id)"
-              @click="onSlideClick(tab.id)"
-            >
-              <span v-if="tab.id === activeId" class="sf-tab-dropdown-mark" />
-              <span class="sf-tab-dropdown-icon">
-                <Icon v-if="tab.icon" :icon="tab.icon" />
-              </span>
-              <span class="sf-tab-dropdown-label">{{ tab.label }}</span>
-            </div>
           </div>
         </div>
+      </div>
+    </div>
+
+    <div v-if="menuTab" class="sf-sm-dialog-backdrop" @click.self="menuTab = null">
+      <div class="sf-sm-dialog" role="dialog">
+        <div class="sf-sm-dialog-title">{{ menuTab.label }}</div>
+        <button class="sf-sm-menu-row sf-sm-dialog-row" @click="doClose">
+          <SvgIcon name="✕" />
+          <span>Close</span>
+        </button>
+        <button class="sf-sm-dialog-cancel" @click="menuTab = null">Cancel</button>
       </div>
     </div>
   </Teleport>

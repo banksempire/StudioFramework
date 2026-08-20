@@ -133,23 +133,6 @@ const { ensureServer, makeReporter, finish } = require('./lib/ui-test.cjs');
   );
 
   const touch = (type, touchPoints) => cdp.send('Input.dispatchTouchEvent', { type, touchPoints });
-  const swipeStart = async (locator) => {
-    const b = await locator.boundingBox();
-    const y = b.y + b.height / 2;
-    const x0 = b.x + b.width - 18;
-    await touch('touchStart', [{ x: x0, y }]);
-    return { x0, y };
-  };
-  const swipeMoveTo = async (x, y, steps = 1) => {
-    for (let i = 1; i <= steps; i += 1) {
-      await touch('touchMove', [{ x, y }]);
-      await page.waitForTimeout(16);
-    }
-  };
-  const swipeEnd = async () => {
-    await touch('touchEnd', []);
-    await page.waitForTimeout(320);
-  };
   const tapEl = async (locator) => {
     const b = await locator.boundingBox();
     const x = b.x + b.width / 2;
@@ -159,34 +142,20 @@ const { ensureServer, makeReporter, finish } = require('./lib/ui-test.cjs');
     await page.waitForTimeout(250);
   };
 
-  const txOf = (tf) => {
-    const m = /^matrix\(1, 0, 0, 1, (-?[\d.]+)/.exec(tf);
-    return m ? Number(m[1]) : null;
-  };
+  report(
+    'mobile: every row shows an always-visible ⋮ button',
+    (await page.locator('.sf-sm-row .sf-sm-more').count()) === 5,
+  );
 
   const st0 = await status();
-  const wpt = await swipeStart(row('welcome.md'));
-  await swipeMoveTo(wpt.x0 - 110, wpt.y, 14);
-  await swipeEnd();
-  report(
-    'stage 1: swipe left reveals the action layer without opening the popup',
-    (await page.locator('.sf-sm-dialog').count()) === 0 &&
-      (await row('welcome.md').locator('.sf-sm-under--revealed').count()) === 1,
-  );
-  report(
-    'stage 1: the multi-option layer shows a More button',
-    /More/.test((await row('welcome.md').locator('.sf-sm-act--more').textContent()) ?? ''),
-  );
-  report('the swipe itself does not activate the row (suppressed click)', (await status()) === st0);
-
-  await tapEl(row('welcome.md').locator('.sf-sm-act--more'));
+  await tapEl(row('welcome.md').locator('.sf-sm-more'));
   await page.waitForTimeout(250);
   report(
-    'tapping More opens the centered popup dialog',
-    (await page.locator('.sf-sm-dialog').count()) === 1 && (await page.locator('.sf-sm-menu').count()) === 0,
+    'tapping ⋮ opens the popup dialog without activating the row',
+    (await page.locator('.sf-sm-dialog').count()) === 1 && (await status()) === st0,
   );
   report(
-    'dialog shows the item title + its options + cancel',
+    'popup shows the item title + its options + cancel',
     (await page.locator('.sf-sm-dialog-title').textContent()) === 'welcome.md' &&
       JSON.stringify(await page.locator('.sf-sm-dialog .sf-sm-menu-row').allTextContents()) ===
         JSON.stringify(['Open', 'Rename', 'Delete']) &&
@@ -194,26 +163,22 @@ const { ensureServer, makeReporter, finish } = require('./lib/ui-test.cjs');
   );
   const dbox = await page.locator('.sf-sm-dialog').boundingBox();
   report(
-    'dialog is centered in the viewport',
+    'popup is centered in the viewport',
     Math.abs(dbox.x + dbox.width / 2 - 225) <= 4 && Math.abs(dbox.y + dbox.height / 2 - 450) <= 80,
   );
-
   await tapEl(page.locator('.sf-sm-dialog-cancel'));
   await page.waitForTimeout(200);
   report(
-    'Cancel closes the dialog without acting',
+    'Cancel closes the popup without acting',
     (await page.locator('.sf-sm-dialog').count()) === 0 && (await status()) === st0,
   );
 
-  const wpt2 = await swipeStart(row('welcome.md'));
-  await swipeMoveTo(wpt2.x0 - 110, wpt2.y, 14);
-  await swipeEnd();
-  await tapEl(row('welcome.md').locator('.sf-sm-act--more'));
+  await tapEl(row('welcome.md').locator('.sf-sm-more'));
   await page.waitForTimeout(250);
   await tapEl(page.locator('.sf-sm-dialog .sf-sm-menu-row', { hasText: 'Rename' }));
   await page.waitForTimeout(200);
   report(
-    'choosing Rename in the dialog starts inline rename',
+    'choosing Rename in the popup starts inline rename',
     (await page.locator('.sf-sm-dialog').count()) === 0 &&
       (await page.locator('.single-menu-demo-input').count()) === 1,
   );
@@ -221,64 +186,27 @@ const { ensureServer, makeReporter, finish } = require('./lib/ui-test.cjs');
   await page.keyboard.type('welcome2.md');
   await page.keyboard.press('Enter');
   await page.waitForTimeout(100);
-  report('rename from the dialog commits', (await row('welcome2.md').count()) === 1);
+  report('rename from the popup commits', (await row('welcome2.md').count()) === 1);
 
-  const npt = await swipeStart(row('scratch.txt'));
-  await swipeMoveTo(npt.x0 - 60, npt.y, 8);
-  await swipeEnd();
-  report(
-    'single-option item reveals the option directly (no dialog)',
-    (await page.locator('.sf-sm-dialog').count()) === 0 &&
-      (await row('scratch.txt').locator('.sf-sm-under--revealed').count()) === 1 &&
-      /Delete/.test((await row('scratch.txt').locator('.sf-sm-act--danger').textContent()) ?? ''),
-  );
-  await tapEl(row('scratch.txt').locator('.sf-sm-act'));
-  await page.waitForTimeout(200);
-  report(
-    'tapping the revealed option deletes the row',
-    (await row('scratch.txt').count()) === 0 && /delete scratch\.txt/.test(await status()),
-  );
-
-  const vrow = row('framework.layout.json');
-  const vb = await vrow.boundingBox();
-  const vx = vb.x + vb.width / 2;
-  const vy0 = vb.y + vb.height / 2;
-  await touch('touchStart', [{ x: vx, y: vy0 }]);
-  for (let i = 1; i <= 6; i += 1) {
-    await touch('touchMove', [{ x: vx, y: vy0 - i * 24 }]);
+  const stDrag = await status();
+  const drow = row('framework.layout.json');
+  const db = await drow.boundingBox();
+  const dy = db.y + db.height / 2;
+  const dx = db.x + db.width - 18;
+  await touch('touchStart', [{ x: dx, y: dy }]);
+  for (let i = 1; i <= 8; i += 1) {
+    await touch('touchMove', [{ x: dx - i * 20, y: dy }]);
     await page.waitForTimeout(16);
   }
   await touch('touchEnd', []);
-  await page.waitForTimeout(250);
+  await page.waitForTimeout(300);
   report(
-    'a vertical pan never reveals the actions layer',
-    (await page.locator('.sf-sm-under--revealed, .sf-sm-under--active').count()) === 0,
+    'swipe gestures are fully removed: a leftward drag moves nothing and shows no action layer',
+    (await page.locator('.sf-sm-under, .sf-sm-act').count()) === 0 &&
+      (await drow.locator('.sf-sm-slide').evaluate((el) => getComputedStyle(el).transform)) === 'none' &&
+      (await page.locator('.sf-sm-dialog').count()) === 0 &&
+      (await status()) === stDrag,
   );
-
-  await tapEl(row('framework.layout.json'));
-  await page.waitForTimeout(200);
-  await row('framework.layout.json')
-    .locator('.sf-sm-slide')
-    .evaluate((el) => el.dispatchEvent(new MouseEvent('contextmenu', { bubbles: true, cancelable: true })));
-  await page.waitForTimeout(200);
-  report(
-    'long-press contextmenu is suppressed on touch (no option menu)',
-    (await page.locator('.sf-sm-menu').count()) === 0,
-  );
-  const rcb = await row('framework.layout.json').boundingBox();
-  await page.mouse.click(rcb.x + 40, rcb.y + rcb.height / 2, { button: 'right' });
-  await page.waitForTimeout(200);
-  report(
-    'mouse right-click still opens the menu after touch interaction',
-    (await page.locator('.sf-sm-menu').count()) === 1,
-  );
-
-  await page.keyboard.press('Escape');
-
-  const panelScroll = () =>
-    page.evaluate(
-      () => document.querySelector('.sf-mobile-panel .sf-subsection-body-container')?.scrollTop ?? -1,
-    );
 
   await cdp.send('Emulation.setDeviceMetricsOverride', {
     width: 450,
@@ -298,39 +226,7 @@ const { ensureServer, makeReporter, finish } = require('./lib/ui-test.cjs');
     }),
   );
 
-  const driftRow = row('SingleMenu.vue');
-  await driftRow.locator('.sf-sm-slide').evaluate((el) => {
-    window.__smTouchLog = [];
-    el.addEventListener('touchmove', (e) => {
-      window.__smTouchLog.push({ c: e.cancelable, p: e.defaultPrevented });
-    });
-  });
-  const driftBox = await driftRow.boundingBox();
-  const dx0 = driftBox.x + driftBox.width - 18;
-  const dy0 = driftBox.y + driftBox.height / 2;
-  await touch('touchStart', [{ x: dx0, y: dy0 }]);
-  for (let i = 1; i <= 8; i += 1) {
-    await touch('touchMove', [{ x: dx0 - (110 * i) / 8, y: dy0 - (40 * i) / 8 }]);
-    await page.waitForTimeout(16);
-  }
-  await touch('touchEnd', []);
-  await page.waitForTimeout(350);
-  const log = await page.evaluate(() => window.__smTouchLog ?? []);
-  const lock = log.findIndex((m) => m.c && m.p);
-  const unclaimedAfterLock = log.filter((m, i) => m.c && !m.p && lock >= 0 && i > lock).length;
-  report(
-    'swipe left with vertical drift claims the touch (touchmove defaults prevented after lock)',
-    lock >= 0 && unclaimedAfterLock === 0,
-    JSON.stringify(log),
-  );
-  report(
-    'drifting swipe still reveals the actions and does not scroll the list',
-    (await driftRow.locator('.sf-sm-under--revealed').count()) === 1 &&
-      (await page.locator('.sf-sm-dialog').count()) === 0 &&
-      (await panelScroll()) === 0,
-  );
-
-  const panRow = row('notes.txt');
+  const panRow = row('SingleMenu.vue');
   const pbox = await panRow.boundingBox();
   const px = pbox.x + pbox.width / 2;
   const py = pbox.y + pbox.height / 2;
@@ -341,133 +237,49 @@ const { ensureServer, makeReporter, finish } = require('./lib/ui-test.cjs');
   }
   await touch('touchEnd', []);
   await page.waitForTimeout(250);
+  const panelScroll = () =>
+    page.evaluate(
+      () => document.querySelector('.sf-mobile-panel .sf-subsection-body-container')?.scrollTop ?? -1,
+    );
   report('a plain vertical pan still scrolls the list', (await panelScroll()) > 0);
-
   await page.evaluate(() => {
     const el = document.querySelector('.sf-mobile-panel .sf-subsection-body-container');
     if (el) el.scrollTop = 0;
   });
-  await page.waitForTimeout(150);
 
-  const rb = await swipeStart(row('framework.layout.json'));
-  await swipeMoveTo(rb.x0 - 200, rb.y, 10);
-  const rbTx = txOf(
-    await row('framework.layout.json')
-      .locator('.sf-sm-slide')
-      .evaluate((el) => getComputedStyle(el).transform),
-  );
-  const rbUnderW = await row('framework.layout.json')
-    .locator('.sf-sm-under')
-    .evaluate((el) => el.getBoundingClientRect().width);
+  await tapEl(row('notes.txt').locator('.sf-sm-more'));
+  await page.waitForTimeout(250);
   report(
-    'overdrag rubber-bands: the row lags the finger and the action button stretches wider',
-    rbTx !== null && rbTx > -198 && rbTx < -140 && rbUnderW >= 140,
-    `tx=${rbTx} underW=${rbUnderW}`,
+    'single-option item popup lists exactly one option',
+    JSON.stringify(await page.locator('.sf-sm-dialog .sf-sm-menu-row').allTextContents()) ===
+      JSON.stringify(['Delete']),
   );
-  await swipeEnd();
+  await tapEl(page.locator('.sf-sm-dialog .sf-sm-menu-row', { hasText: 'Delete' }));
+  await page.waitForTimeout(300);
   report(
-    'a slow overdrag short of the threshold holds at stage 1 (no commit)',
-    (await page.locator('.sf-sm-dialog').count()) === 0 &&
-      (await row('framework.layout.json').locator('.sf-sm-under--revealed').count()) === 1,
-  );
-  await tapEl(row('framework.layout.json').locator('.sf-sm-slide'));
-  await page.waitForTimeout(350);
-  report(
-    'tapping the revealed row content dismisses the actions',
-    (await row('framework.layout.json').locator('.sf-sm-under--revealed').count()) === 0,
+    'choosing Delete removes the row',
+    (await row('notes.txt').count()) === 0 && /delete notes\.txt/.test(await status()),
   );
 
-  const fj = await swipeStart(row('notes.txt'));
-  await swipeMoveTo(fj.x0 - 130, fj.y, 2);
-  await swipeEnd();
-  report(
-    'a fast flick executes the single action immediately (no tap, no dialog)',
-    (await row('notes.txt').count()) === 0 &&
-      /delete notes\.txt/.test(await status()) &&
-      (await page.locator('.sf-sm-dialog').count()) === 0,
-  );
-
-  const fm = await swipeStart(row('SingleMenu.vue'));
-  await swipeMoveTo(fm.x0 - 130, fm.y, 2);
-  await swipeEnd();
-  report(
-    'a fast flick on a multi-option row opens the popup',
-    (await page.locator('.sf-sm-dialog').count()) === 1 &&
-      (await page.locator('.sf-sm-dialog-title').textContent()) === 'SingleMenu.vue',
-  );
-  await tapEl(page.locator('.sf-sm-dialog-cancel'));
+  await tapEl(row('framework.layout.json'));
   await page.waitForTimeout(200);
-
-  const dm = await swipeStart(row('framework.layout.json'));
-  await swipeMoveTo(dm.x0 - 250, dm.y, 20);
-  await swipeEnd();
-  report(
-    'a slow deliberate full swipe past the threshold commits (popup for multi-option)',
-    (await page.locator('.sf-sm-dialog').count()) === 1 &&
-      (await page.locator('.sf-sm-dialog-title').textContent()) === 'framework.layout.json',
-  );
-  await tapEl(page.locator('.sf-sm-dialog-cancel'));
+  report('a plain tap on the row still activates it', /open framework\.layout\.json/.test(await status()));
+  await row('framework.layout.json')
+    .locator('.sf-sm-slide')
+    .evaluate((el) => el.dispatchEvent(new MouseEvent('contextmenu', { bubbles: true, cancelable: true })));
   await page.waitForTimeout(200);
-
-  const mtRow = row('framework.layout.json');
-  const mtb = await mtRow.boundingBox();
-  const mty = mtb.y + mtb.height / 2;
-  await touch('touchStart', [{ x: mtb.x + 150, y: mty, id: 1 }]);
-  await touch('touchStart', [{ x: mtb.x + 320, y: mty, id: 2 }]);
-  await touch('touchMove', [
-    { x: mtb.x + 135, y: mty, id: 1 },
-    { x: mtb.x + 320, y: mty, id: 2 },
-  ]);
-  await page.waitForTimeout(90);
-  await touch('touchMove', [
-    { x: mtb.x + 120, y: mty, id: 1 },
-    { x: mtb.x + 320, y: mty, id: 2 },
-  ]);
-  await touch('touchEnd', []);
-  await page.waitForTimeout(320);
   report(
-    'a second finger landing on the row does not turn a small swipe into a commit',
-    (await page.locator('.sf-sm-dialog').count()) === 0 &&
-      (await mtRow.locator('.sf-sm-under--revealed').count()) === 0,
+    'long-press contextmenu is suppressed on touch (no option menu)',
+    (await page.locator('.sf-sm-menu').count()) === 0,
   );
-
-  const rv1 = await swipeStart(row('SingleMenu.vue'));
-  await swipeMoveTo(rv1.x0 - 110, rv1.y, 14);
-  await swipeEnd();
-  const rv2 = await swipeStart(row('SingleMenu.vue'));
-  await swipeMoveTo(rv2.x0 - 40, rv2.y, 6);
-  await swipeEnd();
-  report(
-    'already-revealed row: a small further swipe neither commits nor closes the layer',
-    (await page.locator('.sf-sm-dialog').count()) === 0 &&
-      (await row('SingleMenu.vue').locator('.sf-sm-under--revealed').count()) === 1,
-  );
-  const rvBox = await row('SingleMenu.vue').boundingBox();
-  const rvy = rvBox.y + rvBox.height / 2;
-  const rvx = rvBox.x + 40;
-  await touch('touchStart', [{ x: rvx, y: rvy }]);
-  for (let i = 1; i <= 6; i += 1) {
-    await touch('touchMove', [{ x: rvx + (100 * i) / 6, y: rvy }]);
-    await page.waitForTimeout(16);
-  }
-  await touch('touchEnd', []);
-  await page.waitForTimeout(320);
-  report(
-    'swiping right on a revealed row dismisses the actions',
-    (await row('SingleMenu.vue').locator('.sf-sm-under--revealed').count()) === 0,
-  );
-  const rvAgain = await swipeStart(row('SingleMenu.vue'));
-  await swipeMoveTo(rvAgain.x0 - 110, rvAgain.y, 14);
-  await swipeEnd();
-  const rv3 = await swipeStart(row('SingleMenu.vue'));
-  await swipeMoveTo(rv3.x0 - 130, rv3.y, 2);
-  await swipeEnd();
-  report(
-    'already-revealed row: a fast further swipe commits (popup opens)',
-    (await page.locator('.sf-sm-dialog').count()) === 1,
-  );
-  await tapEl(page.locator('.sf-sm-dialog-cancel'));
+  const rcb = await row('framework.layout.json').boundingBox();
+  await page.mouse.click(rcb.x + 40, rcb.y + rcb.height / 2, { button: 'right' });
   await page.waitForTimeout(200);
+  report(
+    'mouse right-click still opens the menu after touch interaction',
+    (await page.locator('.sf-sm-menu').count()) === 1,
+  );
+  await page.keyboard.press('Escape');
 
   report('no page errors during the run', errors.length === 0, errors.join(' | '));
 

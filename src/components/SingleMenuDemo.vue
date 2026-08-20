@@ -90,7 +90,7 @@ function onActivate(f: RecentFile) {
         </div>
       </template>
     </SingleMenu>
-    <div class="single-menu-demo-status">{{ lastAction || 'right-click a row (mouse) — swipe left (touch)' }}</div>
+    <div class="single-menu-demo-status">{{ lastAction || 'right-click a row (mouse) — tap ⋮ (touch)' }}</div>
   </div>
 </template>
 

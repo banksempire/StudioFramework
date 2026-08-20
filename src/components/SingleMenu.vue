@@ -1,6 +1,6 @@
 <script setup lang="ts" generic="T">
-import { computed, nextTick, onMounted, onUnmounted, type Ref, ref, watch } from 'vue';
-import { useSwipeReveal } from '../composables/useSwipeReveal';
+import { computed, inject, nextTick, onMounted, onUnmounted, type Ref, ref, watch } from 'vue';
+import { kIsMobile } from '../composables/useWorkspace';
 import type { SingleMenuOption } from '../types/singleMenu';
 import Icon from './Icon.vue';
 import SvgIcon from './SvgIcon.vue';
@@ -14,11 +14,9 @@ const props = withDefaults(
     keyOf?: (item: T) => string;
     titleOf?: (item: T) => string;
     draggable?: boolean;
-    revealWidth?: number;
   }>(),
   {
     draggable: false,
-    revealWidth: 86,
   },
 );
 
@@ -28,6 +26,9 @@ const emit = defineEmits<{
   dragstart: [item: T, event: DragEvent];
   dragend: [event: DragEvent];
 }>();
+
+const injectedMobile = inject(kIsMobile, null);
+const isMobile = computed(() => injectedMobile?.value ?? false);
 
 function rowKey(item: T, index: number): string {
   if (props.keyOf) return props.keyOf(item);
@@ -58,69 +59,17 @@ function optsOf(item: T): SingleMenuOption[] {
   return optsByItem.value.get(item) ?? [];
 }
 
-const underStyleOf = (key: string) => ({ width: `${underWidth(key)}px` });
-
 const dialogItem = ref(null) as Ref<T | null>;
 const dialogTitle = computed(() => {
   const item = dialogItem.value;
   return item !== null && props.titleOf ? String(props.titleOf(item) ?? '') : '';
 });
 
-const listEl = ref<HTMLElement | null>(null);
-
-const swipe = useSwipeReveal({
-  revealWidth: () => props.revealWidth,
-  rowWidth: () => listEl.value?.offsetWidth ?? 0,
-  commitStyle: (key) => ((rowByKey.value.get(key)?.opts.length ?? 0) === 1 ? 'execute' : 'menu'),
-  onCommit: (key) => {
-    const row = rowByKey.value.get(key);
-    if (!row || row.opts.length === 0) return;
-    if (row.opts.length === 1) emit('select', row.item, row.opts[0]);
-    else dialogItem.value = row.item;
-  },
-});
-const {
-  styleOf: slideStyle,
-  underWidth,
-  isSwiping,
-  isRevealed,
-  isLayerVisible: isUnderVisible,
-  isArmed,
-} = swipe;
-
-let lastPointerType = '';
-
-function onDown(e: PointerEvent, row: RowView<T>) {
-  lastPointerType = e.pointerType;
-  if (e.pointerType === 'mouse' || e.button !== 0 || row.opts.length === 0) return;
-  swipe.begin(row.key, e);
-}
-
-function onUp(e: PointerEvent, row: RowView<T>) {
-  swipe.end(row.key, e);
-}
-
-function onSlideClick(row: RowView<T>) {
-  if (swipe.consumeClick(row.key)) return;
-  if (swipe.isRevealed(row.key)) {
-    swipe.hide(row.key);
-    return;
-  }
-  emit('activate', row.item);
-}
-
-function onUnderTap(row: RowView<T>) {
-  if (swipe.consumeClick(row.key)) return;
-  swipe.hide(row.key);
-  const opt = row.opts[0];
-  if (opt) emit('select', row.item, opt);
-}
-
-function onMoreTap(row: RowView<T>) {
-  if (swipe.consumeClick(row.key)) return;
-  swipe.hide(row.key);
+function onMore(row: RowView<T>) {
   dialogItem.value = row.item;
 }
+
+let lastPointerType = '';
 
 const ctxItem = ref(null) as Ref<T | null>;
 const ctxX = ref(0);
@@ -173,8 +122,7 @@ function onDocKey(e: KeyboardEvent) {
   if (e.key === 'Escape') closeAll();
 }
 
-watch(rowViews, (views) => {
-  swipe.dropMissing(new Set(views.map((v) => v.key)));
+watch(rowViews, () => {
   if (ctxItem.value !== null && !props.items.includes(ctxItem.value)) ctxItem.value = null;
   if (dialogItem.value !== null && !props.items.includes(dialogItem.value)) dialogItem.value = null;
 });
@@ -195,59 +143,29 @@ if (typeof window !== 'undefined') {
 </script>
 
 <template>
-  <div ref="listEl" class="sf-sm" v-bind="$attrs">
+  <div class="sf-sm" v-bind="$attrs">
     <div v-for="row in rowViews" :key="row.key" class="sf-sm-row">
       <div
-        v-if="row.opts.length > 0"
-        class="sf-sm-under"
-        :class="{
-          'sf-sm-under--revealed': isRevealed(row.key),
-          'sf-sm-under--active': isUnderVisible(row.key),
-          'sf-sm-under--armed': isArmed(row.key),
-        }"
-        :style="underStyleOf(row.key)"
-        @pointerdown="onDown($event, row)"
-        @pointermove="swipe.move($event, row.key)"
-        @pointerup="onUp($event, row)"
-        @pointercancel="swipe.cancel(row.key, $event)"
-        @touchmove="swipe.touchMove($event, row.key)"
-      >
-        <button
-          v-if="row.opts.length === 1"
-          class="sf-sm-act"
-          :class="{ 'sf-sm-act--danger': row.opts[0].danger }"
-          :title="row.opts[0].label ?? row.opts[0].id"
-          @click.stop="onUnderTap(row)"
-        >
-          <Icon :icon="row.opts[0].icon" />
-          <span>{{ row.opts[0].label ?? row.opts[0].id }}</span>
-        </button>
-        <button
-          v-else
-          class="sf-sm-act sf-sm-act--more"
-          title="More"
-          @click.stop="onMoreTap(row)"
-        >
-          <SvgIcon name="⋯" />
-          <span>More</span>
-        </button>
-      </div>
-      <div
         class="sf-sm-slide"
-        :class="{ 'sf-sm-slide--swiping': isSwiping(row.key), 'sf-sm-slide--armed': isArmed(row.key) }"
-        :style="slideStyle(row.key)"
         :draggable="draggable"
-        @pointerdown="onDown($event, row)"
-        @pointermove="swipe.move($event, row.key)"
-        @pointerup="onUp($event, row)"
-        @pointercancel="swipe.cancel(row.key, $event)"
-        @touchmove="swipe.touchMove($event, row.key)"
-        @click="onSlideClick(row)"
+        @pointerdown="lastPointerType = $event.pointerType"
+        @click="emit('activate', row.item)"
         @contextmenu="onCtx($event, row)"
         @dragstart="emit('dragstart', row.item, $event)"
         @dragend="emit('dragend', $event)"
       >
-        <slot name="item" :item="row.item" :index="row.index" />
+        <div class="sf-sm-content">
+          <slot name="item" :item="row.item" :index="row.index" />
+        </div>
+        <button
+          v-if="isMobile && row.opts.length > 0"
+          class="sf-sm-more"
+          title="More"
+          aria-label="More actions"
+          @click.stop="onMore(row)"
+        >
+          <SvgIcon name="⋮" />
+        </button>
       </div>
     </div>
   </div>

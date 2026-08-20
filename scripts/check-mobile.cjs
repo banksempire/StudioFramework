@@ -389,26 +389,7 @@ const WS = '.sf-workspace';
   });
   await cdp.send('Emulation.setTouchEmulationEnabled', { enabled: true, maxTouchPoints: 5 });
   const sheetRow = (label) => page.locator('.sf-tab-dropdown-row', { hasText: label });
-  const isRowRevealed = async (label) =>
-    (await sheetRow(label).locator('.sf-tab-dropdown-close-btn.revealed').count()) === 1;
   const touch = (type, touchPoints) => cdp.send('Input.dispatchTouchEvent', { type, touchPoints });
-  const swipeStart = async (locator) => {
-    const b = await locator.boundingBox();
-    const y = b.y + b.height / 2;
-    const x0 = b.x + b.width - 18;
-    await touch('touchStart', [{ x: x0, y }]);
-    return { x0, y };
-  };
-  const swipeMoveTo = async (x, y, steps = 1) => {
-    for (let i = 1; i <= steps; i += 1) {
-      await touch('touchMove', [{ x, y }]);
-      await page.waitForTimeout(16);
-    }
-  };
-  const swipeEnd = async () => {
-    await touch('touchEnd', []);
-    await page.waitForTimeout(320);
-  };
   const tapEl = async (locator) => {
     const b = await locator.boundingBox();
     const x = b.x + b.width / 2;
@@ -434,73 +415,43 @@ const WS = '.sf-workspace';
   await touch('touchEnd', []);
   await page.waitForTimeout(250);
   report('vertical pan on a row scrolls the list natively (no JS scroll)', scrolledMidDrag);
-  report('a vertical pan does not reveal the Close button', !(await isRowRevealed('styles.css')));
 
-  const mid = await swipeStart(sheetRow('styles.css'));
-  await swipeMoveTo(mid.x0 - 110, mid.y, 14);
-  const midBody = sheetRow('styles.css').locator('.sf-tab-dropdown-slide');
-  const midTransform = await midBody.evaluate((el) => getComputedStyle(el).transform);
-  const txOf = (tf) => {
-    const m = /^matrix\(1, 0, 0, 1, (-?[\d.]+)/.exec(tf);
-    return m ? Number(m[1]) : null;
-  };
-  const midTx = txOf(midTransform);
-  const fullBleed = await page.evaluate(() => {
-    const row = Array.from(document.querySelectorAll('.sf-tab-dropdown-row')).find((r) =>
-      r.textContent?.includes('styles.css'),
-    );
-    const slide = row?.querySelector('.sf-tab-dropdown-slide');
-    const rb = row.getBoundingClientRect();
-    const sb = slide.getBoundingClientRect();
-    return {
-      w: rb.width - sb.width <= 2.5,
-      h: rb.height - sb.height <= 1.5,
-      rowW: rb.width,
-      slideW: sb.width,
-      rowH: rb.height,
-      slideH: sb.height,
-    };
-  });
-  const midBtn = sheetRow('styles.css').locator('.sf-tab-dropdown-close-btn');
-  const midBtnActive = sheetRow('styles.css').locator('.sf-tab-dropdown-close-btn.active');
   report(
-    'mid-drag: the WHOLE row block slides (full width + height), button already visible',
-    fullBleed.w && fullBleed.h && midTx !== null && midTx < 0 && (await midBtn.isVisible()),
-    `row=${fullBleed.rowW}x${fullBleed.rowH} slide=${fullBleed.slideW}x${fullBleed.slideH} tf=${midTransform}`,
-  );
-  report('mid-drag: button carries the active (unveiled) class', (await midBtnActive.count()) === 1);
-  await swipeEnd();
-  const rowBody = sheetRow('styles.css').locator('.sf-tab-dropdown-slide');
-  const closeBtn1 = sheetRow('styles.css').locator('.sf-tab-dropdown-close-btn');
-  const bodyTransform = await rowBody.evaluate((el) => getComputedStyle(el).transform);
-  const settleTx = txOf(bodyTransform);
-  report(
-    'released: row springs open to the reveal offset, Close button revealed',
-    (await closeBtn1.isVisible()) && settleTx !== null && Math.abs(settleTx + 86) <= 3,
-    `tx=${settleTx}`,
-  );
-  report(
-    'only the swiped row is revealed',
-    (await page.locator('.sf-tab-dropdown-close-btn.revealed').count()) === 1,
+    'every tab row shows an always-visible ⋮ button',
+    (await page.locator('.sf-tab-dropdown-row .sf-tab-dropdown-more').count()) === 5,
   );
 
-  await tapEl(closeBtn1);
+  const moreStyles = sheetRow('styles.css').locator('.sf-tab-dropdown-more');
+  await tapEl(moreStyles);
+  await page.waitForTimeout(250);
+  report(
+    'tapping ⋮ opens the popup with the tab title + Close + Cancel',
+    (await page.locator('.sf-sm-dialog').count()) === 1 &&
+      (await page.locator('.sf-sm-dialog-title').textContent()) === 'styles.css' &&
+      JSON.stringify(await page.locator('.sf-sm-dialog .sf-sm-menu-row').allTextContents()) ===
+        JSON.stringify(['Close']) &&
+      (await page.locator('.sf-sm-dialog-cancel').count()) === 1,
+  );
+  await tapEl(page.locator('.sf-sm-dialog-cancel'));
+  await page.waitForTimeout(200);
+  report(
+    'Cancel keeps the tab and closes the popup',
+    (await page.locator('.sf-sm-dialog').count()) === 0 && (await sheetRow('styles.css').count()) === 1,
+  );
+
+  await tapEl(moreStyles);
+  await page.waitForTimeout(200);
+  await tapEl(page.locator('.sf-sm-dialog .sf-sm-menu-row', { hasText: 'Close' }));
   await page.waitForTimeout(200);
   const rowsB = await page.locator('.sf-tab-dropdown-label').allTextContents();
   report(
-    'Close removes the tab (4 left), active tab untouched',
+    'Close from the popup removes the tab (4 left), active tab untouched',
     rowsB.length === 4 && !rowsB.includes('styles.css') && (await mobileBarLabel()) === 'layout.json',
   );
 
-  const act = await swipeStart(sheetRow('layout.json'));
-  for (let i = 1; i <= 14; i += 1) {
-    await touch('touchMove', [{ x: act.x0 - (110 * i) / 14, y: act.y }]);
-    await page.waitForTimeout(16);
-  }
-  await swipeEnd();
-  const closeBtn2 = sheetRow('layout.json').locator('.sf-tab-dropdown-close-btn');
-  report('the active row is also swipeable', await closeBtn2.isVisible());
-  await tapEl(closeBtn2);
+  await tapEl(sheetRow('layout.json').locator('.sf-tab-dropdown-more'));
+  await page.waitForTimeout(200);
+  await tapEl(page.locator('.sf-sm-dialog .sf-sm-menu-row', { hasText: 'Close' }));
   await page.waitForTimeout(200);
   const newActive = await mobileBarLabel();
   const rowsC = await page.locator('.sf-tab-dropdown-label').allTextContents();
@@ -517,107 +468,23 @@ const WS = '.sf-workspace';
     (await page.locator('.sf-tab-dropdown-mark').count()) === 1 && markedMatches,
   );
 
-  const driftLabel = rowsC.find((l) => !l.includes('framework.t'));
-  const driftSheetRow = sheetRow(driftLabel);
-  await driftSheetRow.locator('.sf-tab-dropdown-slide').evaluate((el) => {
-    window.__tdTouchLog = [];
-    el.addEventListener('touchmove', (e) => {
-      window.__tdTouchLog.push({ c: e.cancelable, p: e.defaultPrevented });
-    });
-  });
-  await page.evaluate(() => {
-    const b = document.querySelector('.sf-tab-dropdown-body');
-    if (b) b.scrollTop = 0;
-  });
-  const dpt = await swipeStart(driftSheetRow);
-  for (let i = 1; i <= 14; i += 1) {
-    await touch('touchMove', [{ x: dpt.x0 - (110 * i) / 14, y: dpt.y - (40 * i) / 14 }]);
+  const drow = sheetRow(rowsC.find((l) => !l.includes('framework.t')));
+  const db = await drow.boundingBox();
+  const dy = db.y + db.height / 2;
+  const dx = db.x + db.width - 18;
+  await touch('touchStart', [{ x: dx, y: dy }]);
+  for (let i = 1; i <= 8; i += 1) {
+    await touch('touchMove', [{ x: dx - i * 20, y: dy }]);
     await page.waitForTimeout(16);
   }
-  await swipeEnd();
-  const tdLog = await page.evaluate(() => window.__tdTouchLog ?? []);
-  const tdLock = tdLog.findIndex((m) => m.c && m.p);
-  const tdUnclaimed = tdLog.filter((m, i) => m.c && !m.p && tdLock >= 0 && i > tdLock).length;
-  report(
-    'swipe left with vertical drift claims the touch (touchmove defaults prevented after lock)',
-    tdLock >= 0 && tdUnclaimed === 0,
-    JSON.stringify(tdLog),
-  );
-  const sheetScrollTop = await page.evaluate(
-    () => document.querySelector('.sf-tab-dropdown-body')?.scrollTop ?? -1,
-  );
-  report(
-    'drifting swipe still reveals Close and keeps the list scroll frozen',
-    (await driftSheetRow.locator('.sf-tab-dropdown-close-btn.revealed').count()) === 1 &&
-      sheetScrollTop === 0,
-    `scrollTop=${sheetScrollTop}`,
-  );
-
-  const far = await swipeStart(driftSheetRow);
-  await swipeMoveTo(far.x0 - 200, far.y, 10);
-  const farTx = txOf(
-    await driftSheetRow.locator('.sf-tab-dropdown-slide').evaluate((el) => getComputedStyle(el).transform),
-  );
-  const farBtnW = await driftSheetRow
-    .locator('.sf-tab-dropdown-close-btn')
-    .evaluate((el) => el.getBoundingClientRect().width);
-  report(
-    'overdrag rubber-bands: the row lags the finger and the Close button stretches wider',
-    farTx !== null && farTx > -250 && farTx < -180 && farBtnW >= 180,
-    `tx=${farTx} w=${farBtnW}`,
-  );
-  await swipeMoveTo(far.x0 - 250, far.y, 6);
-  await swipeEnd();
-  report(
-    'stage 2: a slow deliberate full swipe past the threshold closes the tab immediately (no tap)',
-    (await sheetRow(driftLabel).count()) === 0 &&
-      (await page.locator('.sf-tab-dropdown-label').count()) === 2,
-  );
-
-  const remainLabels = await page.locator('.sf-tab-dropdown-label').allTextContents();
-  const stickyLabel = remainLabels.find((l) => !l.includes('framework.t'));
-  const stickyRowEl = sheetRow(stickyLabel);
-  const sbox = await stickyRowEl.boundingBox();
-  const sy = sbox.y + sbox.height / 2;
-  await touch('touchStart', [{ x: sbox.x + 150, y: sy, id: 1 }]);
-  await touch('touchStart', [{ x: sbox.x + 320, y: sy, id: 2 }]);
-  await touch('touchMove', [
-    { x: sbox.x + 135, y: sy, id: 1 },
-    { x: sbox.x + 320, y: sy, id: 2 },
-  ]);
-  await page.waitForTimeout(90);
-  await touch('touchMove', [
-    { x: sbox.x + 120, y: sy, id: 1 },
-    { x: sbox.x + 320, y: sy, id: 2 },
-  ]);
   await touch('touchEnd', []);
-  await page.waitForTimeout(320);
+  await page.waitForTimeout(300);
   report(
-    'a second finger landing on the row does not turn a small swipe into an instant close',
-    (await stickyRowEl.count()) === 1 &&
-      (await page.locator('.sf-tab-dropdown-label').count()) === 2 &&
-      (await stickyRowEl.locator('.sf-tab-dropdown-close-btn.revealed').count()) === 0,
+    'swipe gestures are fully removed: a leftward drag on a tab row does nothing',
+    (await drow.count()) === 1 &&
+      (await page.locator('.sf-tab-dropdown-close-btn, .sf-tab-dropdown-slide').count()) === 0 &&
+      (await page.locator('.sf-sm-dialog').count()) === 0,
   );
-
-  const rv1 = await swipeStart(stickyRowEl);
-  await swipeMoveTo(rv1.x0 - 110, rv1.y, 14);
-  await swipeEnd();
-  report(
-    'swipe reveals Close and it stays revealed',
-    (await stickyRowEl.locator('.sf-tab-dropdown-close-btn.revealed').count()) === 1,
-  );
-  const rv2 = await swipeStart(stickyRowEl);
-  await swipeMoveTo(rv2.x0 - 40, rv2.y, 6);
-  await swipeEnd();
-  report(
-    'already-revealed row: a small further swipe does NOT close the tab',
-    (await stickyRowEl.count()) === 1 &&
-      (await stickyRowEl.locator('.sf-tab-dropdown-close-btn.revealed').count()) === 1,
-  );
-  const rv3 = await swipeStart(stickyRowEl);
-  await swipeMoveTo(rv3.x0 - 130, rv3.y, 2);
-  await swipeEnd();
-  report('already-revealed row: a fast further swipe closes the tab', (await stickyRowEl.count()) === 0);
 
   await tapEl(sheetRow('framework.t'));
   await page.waitForTimeout(250);

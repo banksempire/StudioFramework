@@ -101,6 +101,13 @@ const ICONS: Record<string, IconSpec> = {
     paths: [{ d: 'M12 3a9 9 0 1 0 0 18 9 9 0 0 0 0-18z', filled: true }],
   },
 
+  '⋮': {
+    paths: [
+      { d: 'M12 5m-1.8 0a1.8 1.8 0 1 0 3.6 0a1.8 1.8 0 1 0-3.6 0', filled: true },
+      { d: 'M12 12m-1.8 0a1.8 1.8 0 1 0 3.6 0a1.8 1.8 0 1 0-3.6 0', filled: true },
+      { d: 'M12 19m-1.8 0a1.8 1.8 0 1 0 3.6 0a1.8 1.8 0 1 0-3.6 0', filled: true },
+    ],
+  },
   '⋯': {
     paths: [
       { d: 'M5 12m-1.8 0a1.8 1.8 0 1 0 3.6 0a1.8 1.8 0 1 0-3.6 0', filled: true },
