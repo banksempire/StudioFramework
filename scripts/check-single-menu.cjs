@@ -113,6 +113,37 @@ const { ensureServer, makeReporter, finish } = require('./lib/ui-test.cjs');
     (await rowCount()) === before - 1 && (await row('scratch.txt').count()) === 0,
   );
 
+  await page.setViewportSize({ width: 450, height: 900 });
+  await page.waitForTimeout(400);
+  await page.locator('.sf-docker--bottom .sf-docker-app').first().click();
+  await page.waitForTimeout(300);
+  const hoverBtn = row('welcome.md').locator('.sf-sm-more');
+  const idle = await hoverBtn.evaluate((el) => {
+    const cs = getComputedStyle(el);
+    return { bw: cs.borderTopWidth, br: cs.borderTopLeftRadius, shadow: cs.boxShadow, bc: cs.borderTopColor };
+  });
+  report(
+    '⋮ button is wrapped in a visible box (border + radius + fill)',
+    parseFloat(idle.bw) >= 1 && idle.br !== '0px',
+    JSON.stringify(idle),
+  );
+  await hoverBtn.hover();
+  await page.waitForTimeout(150);
+  const hovered = await hoverBtn.evaluate((el) => {
+    const cs = getComputedStyle(el);
+    return { shadow: cs.boxShadow, bc: cs.borderTopColor };
+  });
+  report(
+    '⋮ button highlights on mouse hover (overlay + accent border)',
+    hovered.shadow !== 'none' && hovered.bc !== idle.bc,
+    JSON.stringify({ idle, hovered }),
+  );
+  await page.mouse.move(0, 0);
+  await page.locator('.sf-panel-close-btn').first().click();
+  await page.waitForTimeout(300);
+  await page.setViewportSize({ width: 1300, height: 900 });
+  await page.waitForTimeout(400);
+
   const cdp = await context.newCDPSession(page);
   await cdp.send('Emulation.setDeviceMetricsOverride', {
     width: 450,
@@ -145,6 +176,17 @@ const { ensureServer, makeReporter, finish } = require('./lib/ui-test.cjs');
   report(
     'mobile: every row shows an always-visible ⋮ button',
     (await page.locator('.sf-sm-row .sf-sm-more').count()) === 5,
+  );
+  const touchBox = await row('welcome.md')
+    .locator('.sf-sm-more')
+    .evaluate((el) => {
+      const cs = getComputedStyle(el);
+      return { bw: cs.borderTopWidth, br: cs.borderTopLeftRadius, bg: cs.backgroundColor };
+    });
+  report(
+    '⋮ button keeps its box in touch mode (border + radius + fill)',
+    parseFloat(touchBox.bw) >= 1 && touchBox.br !== '0px' && touchBox.bg !== 'rgba(0, 0, 0, 0)',
+    JSON.stringify(touchBox),
   );
 
   const st0 = await status();

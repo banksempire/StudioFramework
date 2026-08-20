@@ -420,6 +420,17 @@ const WS = '.sf-workspace';
     'every tab row shows an always-visible ⋮ button',
     (await page.locator('.sf-tab-dropdown-row .sf-tab-dropdown-more').count()) === 5,
   );
+  const tabBox = await sheetRow('styles.css')
+    .locator('.sf-tab-dropdown-more')
+    .evaluate((el) => {
+      const cs = getComputedStyle(el);
+      return { bw: cs.borderTopWidth, br: cs.borderTopLeftRadius, bg: cs.backgroundColor };
+    });
+  report(
+    'tab ⋮ button is wrapped in a visible box (border + radius + fill)',
+    parseFloat(tabBox.bw) >= 1 && tabBox.br !== '0px' && tabBox.bg !== 'rgba(0, 0, 0, 0)',
+    JSON.stringify(tabBox),
+  );
 
   const moreStyles = sheetRow('styles.css').locator('.sf-tab-dropdown-more');
   await tapEl(moreStyles);
