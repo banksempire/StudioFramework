@@ -7,6 +7,7 @@ export interface SwipeRevealOptions {
 }
 
 interface SwipeState {
+  pointerId: number;
   startX: number;
   startY: number;
   dx: number;
@@ -24,7 +25,8 @@ export function useSwipeReveal({ revealWidth, commitTravel = 64, onCommit }: Swi
   const suppressedClick = ref<string | null>(null);
 
   function stateOf(key: string): SwipeState {
-    if (!rows[key]) rows[key] = { startX: 0, startY: 0, dx: 0, dy: 0, active: false, revealed: false };
+    if (!rows[key])
+      rows[key] = { pointerId: -1, startX: 0, startY: 0, dx: 0, dy: 0, active: false, revealed: false };
     return rows[key];
   }
 
@@ -32,8 +34,10 @@ export function useSwipeReveal({ revealWidth, commitTravel = 64, onCommit }: Swi
     return Math.max(-(revealWidth() + commitTravel), Math.min(0, v));
   }
 
-  function commitAt(): number {
-    return revealWidth() + commitTravel * COMMIT_FRACTION;
+  function commitOffset(key: string): number {
+    const s = rows[key];
+    const extra = s?.revealed ? commitTravel : commitTravel * COMMIT_FRACTION;
+    return -(revealWidth() + extra);
   }
 
   function offset(key: string): number {
@@ -70,12 +74,14 @@ export function useSwipeReveal({ revealWidth, commitTravel = 64, onCommit }: Swi
 
   function isArmed(key: string): boolean {
     const s = rows[key];
-    return !!s?.active && offset(key) <= -commitAt();
+    return !!s?.active && offset(key) <= commitOffset(key);
   }
 
   function begin(key: string, e: PointerEvent) {
     const s = stateOf(key);
+    if (s.pointerId !== -1 && s.pointerId !== e.pointerId) return;
     if (suppressedClick.value === key) suppressedClick.value = null;
+    s.pointerId = e.pointerId;
     s.startX = e.clientX;
     s.startY = e.clientY;
     s.dx = 0;
@@ -86,6 +92,12 @@ export function useSwipeReveal({ revealWidth, commitTravel = 64, onCommit }: Swi
   function move(e: PointerEvent, key: string) {
     const s = rows[key];
     if (!s) return;
+    if (s.pointerId !== -1 && s.pointerId !== e.pointerId) return;
+    if (s.pointerId === -1) {
+      s.pointerId = e.pointerId;
+      s.startX = e.clientX;
+      s.startY = e.clientY;
+    }
     s.dx = e.clientX - s.startX;
     s.dy = e.clientY - s.startY;
     if (!s.active) {
@@ -102,14 +114,15 @@ export function useSwipeReveal({ revealWidth, commitTravel = 64, onCommit }: Swi
     if (rows[key]?.active) e.preventDefault();
   }
 
-  function end(key: string) {
+  function end(key: string, e?: PointerEvent) {
     const s = rows[key];
     if (!s) return;
+    if (e && s.pointerId !== -1 && e.pointerId !== s.pointerId) return;
     if (s.active) {
       const base = s.revealed ? -revealWidth() : 0;
       const cur = clamp(base + s.dx);
       suppressedClick.value = key;
-      if (cur <= -commitAt()) {
+      if (cur <= commitOffset(key)) {
         s.revealed = false;
         onCommit?.(key);
       } else {
@@ -117,6 +130,7 @@ export function useSwipeReveal({ revealWidth, commitTravel = 64, onCommit }: Swi
       }
     }
     s.active = false;
+    s.pointerId = -1;
   }
 
   function hide(key: string) {
@@ -142,6 +156,7 @@ export function useSwipeReveal({ revealWidth, commitTravel = 64, onCommit }: Swi
       rows[k].active = false;
       rows[k].revealed = false;
       rows[k].dx = 0;
+      rows[k].pointerId = -1;
     }
     suppressedClick.value = null;
   }

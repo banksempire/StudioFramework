@@ -92,8 +92,8 @@ function onDown(e: PointerEvent, row: RowView<T>) {
   swipe.begin(row.key, e);
 }
 
-function onUp(row: RowView<T>) {
-  swipe.end(row.key);
+function onUp(e: PointerEvent, row: RowView<T>) {
+  swipe.end(row.key, e);
 }
 
 function onSlideClick(row: RowView<T>) {
@@ -204,8 +204,8 @@ if (typeof window !== 'undefined') {
         :style="underStyleOf(row.key)"
         @pointerdown="onDown($event, row)"
         @pointermove="swipe.move($event, row.key)"
-        @pointerup="onUp(row)"
-        @pointercancel="onUp(row)"
+        @pointerup="onUp($event, row)"
+        @pointercancel="onUp($event, row)"
         @touchmove="swipe.touchMove($event, row.key)"
       >
         <button
@@ -235,8 +235,8 @@ if (typeof window !== 'undefined') {
         :draggable="draggable"
         @pointerdown="onDown($event, row)"
         @pointermove="swipe.move($event, row.key)"
-        @pointerup="onUp(row)"
-        @pointercancel="onUp(row)"
+        @pointerup="onUp($event, row)"
+        @pointercancel="onUp($event, row)"
         @touchmove="swipe.touchMove($event, row.key)"
         @click="onSlideClick(row)"
         @contextmenu="onCtx($event, row)"

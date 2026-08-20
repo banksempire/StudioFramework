@@ -560,6 +560,49 @@ const WS = '.sf-workspace';
       (await page.locator('.sf-tab-dropdown-label').count()) === 2,
   );
 
+  const remainLabels = await page.locator('.sf-tab-dropdown-label').allTextContents();
+  const stickyLabel = remainLabels.find((l) => !l.includes('framework.t'));
+  const stickyRowEl = sheetRow(stickyLabel);
+  const sbox = await stickyRowEl.boundingBox();
+  const sy = sbox.y + sbox.height / 2;
+  await touch('touchStart', [{ x: sbox.x + 150, y: sy, id: 1 }]);
+  await touch('touchStart', [{ x: sbox.x + 320, y: sy, id: 2 }]);
+  await touch('touchMove', [
+    { x: sbox.x + 120, y: sy, id: 1 },
+    { x: sbox.x + 320, y: sy, id: 2 },
+  ]);
+  await touch('touchEnd', []);
+  await page.waitForTimeout(320);
+  report(
+    'a second finger landing on the row does not turn a small swipe into an instant close',
+    (await stickyRowEl.count()) === 1 &&
+      (await page.locator('.sf-tab-dropdown-label').count()) === 2 &&
+      (await stickyRowEl.locator('.sf-tab-dropdown-close-btn.revealed').count()) === 0,
+  );
+
+  const rv1 = await swipeStart(stickyRowEl);
+  await swipeMoveTo(rv1.x0 - 110, rv1.y, 4);
+  await swipeEnd();
+  report(
+    'swipe reveals Close and it stays revealed',
+    (await stickyRowEl.locator('.sf-tab-dropdown-close-btn.revealed').count()) === 1,
+  );
+  const rv2 = await swipeStart(stickyRowEl);
+  await swipeMoveTo(rv2.x0 - 40, rv2.y, 3);
+  await swipeEnd();
+  report(
+    'already-revealed row: a small further swipe does NOT close the tab',
+    (await stickyRowEl.count()) === 1 &&
+      (await stickyRowEl.locator('.sf-tab-dropdown-close-btn.revealed').count()) === 1,
+  );
+  const rv3 = await swipeStart(stickyRowEl);
+  await swipeMoveTo(rv3.x0 - 80, rv3.y, 4);
+  await swipeEnd();
+  report(
+    'already-revealed row: a full further swipe past the threshold closes the tab',
+    (await stickyRowEl.count()) === 0,
+  );
+
   await tapEl(sheetRow('framework.t'));
   await page.waitForTimeout(250);
   report(

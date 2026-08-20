@@ -111,8 +111,8 @@ onMounted(() => {
               title="Close tab"
               @pointerdown="onDown($event, tab)"
               @pointermove="swipe.move($event, tab.id)"
-              @pointerup="swipe.end(tab.id)"
-              @pointercancel="swipe.end(tab.id)"
+              @pointerup="swipe.end(tab.id, $event)"
+              @pointercancel="swipe.end(tab.id, $event)"
               @touchmove="swipe.touchMove($event, tab.id)"
               @click.stop="onClose(tab.id)"
             >
@@ -125,8 +125,8 @@ onMounted(() => {
               :style="slideStyle(tab.id)"
               @pointerdown="onDown($event, tab)"
               @pointermove="swipe.move($event, tab.id)"
-              @pointerup="swipe.end(tab.id)"
-              @pointercancel="swipe.end(tab.id)"
+              @pointerup="swipe.end(tab.id, $event)"
+              @pointercancel="swipe.end(tab.id, $event)"
               @touchmove="swipe.touchMove($event, tab.id)"
               @click="onSlideClick(tab.id)"
             >

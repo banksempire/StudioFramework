@@ -365,6 +365,44 @@ const { ensureServer, makeReporter, finish } = require('./lib/ui-test.cjs');
   await tapEl(page.locator('.sf-sm-dialog-cancel'));
   await page.waitForTimeout(200);
 
+  const mtRow = row('framework.layout.json');
+  const mtb = await mtRow.boundingBox();
+  const mty = mtb.y + mtb.height / 2;
+  await touch('touchStart', [{ x: mtb.x + 150, y: mty, id: 1 }]);
+  await touch('touchStart', [{ x: mtb.x + 320, y: mty, id: 2 }]);
+  await touch('touchMove', [
+    { x: mtb.x + 120, y: mty, id: 1 },
+    { x: mtb.x + 320, y: mty, id: 2 },
+  ]);
+  await touch('touchEnd', []);
+  await page.waitForTimeout(320);
+  report(
+    'a second finger landing on the row does not turn a small swipe into a commit',
+    (await page.locator('.sf-sm-dialog').count()) === 0 &&
+      (await mtRow.locator('.sf-sm-under--revealed').count()) === 0,
+  );
+
+  const rv1 = await swipeStart(row('SingleMenu.vue'));
+  await swipeMoveTo(rv1.x0 - 110, rv1.y, 4);
+  await swipeEnd();
+  const rv2 = await swipeStart(row('SingleMenu.vue'));
+  await swipeMoveTo(rv2.x0 - 40, rv2.y, 3);
+  await swipeEnd();
+  report(
+    'already-revealed row: a small further swipe neither commits nor closes the layer',
+    (await page.locator('.sf-sm-dialog').count()) === 0 &&
+      (await row('SingleMenu.vue').locator('.sf-sm-under--revealed').count()) === 1,
+  );
+  const rv3 = await swipeStart(row('SingleMenu.vue'));
+  await swipeMoveTo(rv3.x0 - 80, rv3.y, 4);
+  await swipeEnd();
+  report(
+    'already-revealed row: a full further swipe commits (popup opens)',
+    (await page.locator('.sf-sm-dialog').count()) === 1,
+  );
+  await tapEl(page.locator('.sf-sm-dialog-cancel'));
+  await page.waitForTimeout(200);
+
   report('no page errors during the run', errors.length === 0, errors.join(' | '));
 
   await finish(browser, serverProc, isFailed() || errors.length > 0, 'SINGLE-MENU CHECKS');
