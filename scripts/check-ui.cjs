@@ -34,14 +34,16 @@ const ARTIFACT_DIR = path.join(__dirname, 'artifacts');
   await page.waitForTimeout(300);
 
   const projectBody = '.sf-subsection-body[data-sub-body="project"]';
+  const headerArrow = (label) =>
+    page.click(`.sf-subsection-header:has-text("${label}") .sf-subsection-arrow`);
   const hBefore = await page.$eval(projectBody, (el) => el.getBoundingClientRect().height).catch(() => null);
 
-  await page.click('.sf-subsection-header:has-text("PROJECT")');
+  await headerArrow('PROJECT');
   await page.waitForTimeout(300);
   const collapsed = !(await visible(projectBody));
   report('sub-section collapses', collapsed);
 
-  await page.click('.sf-subsection-header:has-text("PROJECT")');
+  await headerArrow('PROJECT');
   await page.waitForTimeout(300);
   const hAfter = await page.$eval(projectBody, (el) => el.getBoundingClientRect().height).catch(() => null);
   report(
@@ -49,6 +51,40 @@ const ARTIFACT_DIR = path.join(__dirname, 'artifacts');
     hBefore !== null && Math.abs(hBefore - hAfter) < 1,
     `${hBefore}px → ${hAfter}px`,
   );
+
+  const filterBtn = '.sf-subsection-util[title="Filter (demo)"]';
+  await page.hover('.sf-subsection-header:has-text("OPEN EDITORS")');
+  await page.waitForTimeout(100);
+  report('utility menu button reveals on hover', await visible(filterBtn));
+  await page.click(filterBtn);
+  await page.waitForTimeout(200);
+  report('utility menu opens a dropdown', await visible('.sf-menu-pop'));
+  const menuLabels = await page.locator('.sf-menu-pop .sf-menu-cell--label').allTextContents();
+  report(
+    'utility menu lists the provider items',
+    JSON.stringify(menuLabels) === JSON.stringify(['Sources', 'Assets']),
+    JSON.stringify(menuLabels),
+  );
+  const checksOf = () =>
+    page.locator('.sf-menu-pop .sf-menu-mark svg, .sf-menu-pop .sf-menu-mark .sf-icon').count();
+  report('both filter items start checked', (await checksOf()) === 2);
+  await page.click('.sf-menu-pop .sf-menu-row:has-text("Sources")');
+  await page.waitForTimeout(200);
+  report(
+    'selecting an item toggles its checkmark and keeps the menu open',
+    (await checksOf()) === 1 && (await visible('.sf-menu-pop')),
+  );
+  await page.click('.sf-menu-pop .sf-menu-row:has-text("Sources")');
+  await page.waitForTimeout(200);
+  report('selecting again restores the checkmark', (await checksOf()) === 2);
+  await page.keyboard.press('Escape');
+  await page.waitForTimeout(200);
+  report('Escape closes the utility menu', !(await visible('.sf-menu-pop')));
+  await page.click(filterBtn);
+  await page.waitForTimeout(200);
+  await page.click('.sf-subsection-header:has-text("PROJECT") .sf-subsection-arrow');
+  await page.waitForTimeout(200);
+  report('outside click closes the utility menu', !(await visible('.sf-menu-pop')));
 
   report('status bar renders', await visible('.sf-status-bar'));
   report('workspace tabs render', await visible('.sf-tab:has-text("layout.json")'));

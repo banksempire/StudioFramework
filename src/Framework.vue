@@ -271,8 +271,8 @@ function onMenuAction(actionId: string) {
   }
 }
 
-function onPanelUtility(subId: string, utilityId: string) {
-  emit('action', { source: 'utility', subId, action: utilityId });
+function onPanelUtility(subId: string, utilityId: string, itemId?: string) {
+  emit('action', { source: 'utility', subId, action: utilityId, payload: itemId });
 }
 
 function onPanelAction(a: PanelAction) {

@@ -347,6 +347,11 @@
                     "id": "close-all",
                     "icon": "✕",
                     "tooltip": "Close All"
+                  },
+                  {
+                    "id": "demo-filter",
+                    "icon": "▾",
+                    "tooltip": "Filter (demo)"
                   }
                 ],
                 "components": [

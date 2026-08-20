@@ -15,7 +15,7 @@ const props = withDefaults(
 );
 
 const emit = defineEmits<{
-  utility: [subId: string, utilityId: string];
+  utility: [subId: string, utilityId: string, itemId?: string];
   'component-action': [action: PanelAction];
 }>();
 
@@ -318,7 +318,7 @@ onUnmounted(() => {
         :body-height="bodyHeightFor(sub)"
         @toggle-expand="toggleExpand(sub.id)"
         @activate="activate(sub.id)"
-        @utility="emit('utility', sub.id, $event)"
+        @utility="(utilityId, itemId) => emit('utility', sub.id, utilityId, itemId)"
         @content-changed="refresh(true)"
         @component-action="(a) => emit('component-action', a)"
       />

@@ -25,7 +25,7 @@ const emit = defineEmits<{
   close: [];
   'select-section': [sectionId: string];
   resize: [width: number];
-  utility: [subId: string, utilityId: string];
+  utility: [subId: string, utilityId: string, itemId?: string];
   'component-action': [action: PanelAction];
 }>();
 
@@ -294,7 +294,7 @@ onUnmounted(() => observer?.disconnect());
       :sub-sections="activeSubSections"
       :hidden-ids="activeHiddenIds"
       :mobile="position === 'mobile'"
-      @utility="(subId, utilityId) => emit('utility', subId, utilityId)"
+      @utility="(subId, utilityId, itemId) => emit('utility', subId, utilityId, itemId)"
       @component-action="(a) => emit('component-action', a)"
     />
     <div v-else class="sf-panel-empty" />
