@@ -208,6 +208,10 @@ const ICONS: Record<string, IconSpec> = {
     ],
   },
 
+  filter: {
+    paths: [{ d: 'M4 5h16l-6 6v8h-4v-8z' }],
+  },
+
   '📁': {
     paths: [{ d: 'M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V7z' }],
   },
