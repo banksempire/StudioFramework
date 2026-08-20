@@ -117,26 +117,39 @@ const { ensureServer, makeReporter, finish } = require('./lib/ui-test.cjs');
   await page.waitForTimeout(400);
   await page.locator('.sf-docker--bottom .sf-docker-app').first().click();
   await page.waitForTimeout(300);
+  const boxOf = (loc) =>
+    loc.evaluate((el) => {
+      const cs = getComputedStyle(el);
+      const hex = cs.getPropertyValue('--sf-text').trim();
+      const m = /^#([0-9a-f]{6})$/i.exec(hex);
+      const want = m ? `rgb(${[1, 3, 5].map((i) => parseInt(hex.substr(i, 2), 16)).join(', ')})` : null;
+      return {
+        bw: cs.borderTopWidth,
+        br: cs.borderTopLeftRadius,
+        bg: cs.backgroundColor,
+        color: cs.color,
+        shadow: cs.boxShadow,
+        want,
+      };
+    });
   const hoverBtn = row('welcome.md').locator('.sf-sm-more');
-  const idle = await hoverBtn.evaluate((el) => {
-    const cs = getComputedStyle(el);
-    return { bw: cs.borderTopWidth, br: cs.borderTopLeftRadius, shadow: cs.boxShadow, bc: cs.borderTopColor };
-  });
+  const idle = await boxOf(hoverBtn);
   report(
-    '⋮ button is wrapped in a visible box (border + radius + fill)',
-    parseFloat(idle.bw) >= 1 && idle.br !== '0px',
+    '⋮ button box: #292929 fill + border + radius, dots not dimmed',
+    parseFloat(idle.bw) >= 1 &&
+      idle.br !== '0px' &&
+      idle.bg === 'rgb(41, 41, 41)' &&
+      idle.color === idle.want,
     JSON.stringify(idle),
   );
+  report('⋮ button carries no highlight layer at rest', idle.shadow === 'none', idle.shadow);
   await hoverBtn.hover();
   await page.waitForTimeout(150);
-  const hovered = await hoverBtn.evaluate((el) => {
-    const cs = getComputedStyle(el);
-    return { shadow: cs.boxShadow, bc: cs.borderTopColor };
-  });
+  const hovered = await hoverBtn.evaluate((el) => getComputedStyle(el).boxShadow);
   report(
-    '⋮ button highlights on mouse hover (overlay + accent border)',
-    hovered.shadow !== 'none' && hovered.bc !== idle.bc,
-    JSON.stringify({ idle, hovered }),
+    '⋮ button gains the standard inset highlight layer on hover',
+    hovered.includes('999px') && hovered.includes('inset'),
+    hovered,
   );
   await page.mouse.move(0, 0);
   await page.locator('.sf-panel-close-btn').first().click();
@@ -177,15 +190,13 @@ const { ensureServer, makeReporter, finish } = require('./lib/ui-test.cjs');
     'mobile: every row shows an always-visible ⋮ button',
     (await page.locator('.sf-sm-row .sf-sm-more').count()) === 5,
   );
-  const touchBox = await row('welcome.md')
-    .locator('.sf-sm-more')
-    .evaluate((el) => {
-      const cs = getComputedStyle(el);
-      return { bw: cs.borderTopWidth, br: cs.borderTopLeftRadius, bg: cs.backgroundColor };
-    });
+  const touchBox = await boxOf(row('welcome.md').locator('.sf-sm-more'));
   report(
-    '⋮ button keeps its box in touch mode (border + radius + fill)',
-    parseFloat(touchBox.bw) >= 1 && touchBox.br !== '0px' && touchBox.bg !== 'rgba(0, 0, 0, 0)',
+    '⋮ button keeps its #292929 box with undimmed dots in touch mode',
+    parseFloat(touchBox.bw) >= 1 &&
+      touchBox.br !== '0px' &&
+      touchBox.bg === 'rgb(41, 41, 41)' &&
+      touchBox.color === touchBox.want,
     JSON.stringify(touchBox),
   );
 

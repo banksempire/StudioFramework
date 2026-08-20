@@ -424,11 +424,23 @@ const WS = '.sf-workspace';
     .locator('.sf-tab-dropdown-more')
     .evaluate((el) => {
       const cs = getComputedStyle(el);
-      return { bw: cs.borderTopWidth, br: cs.borderTopLeftRadius, bg: cs.backgroundColor };
+      const hex = cs.getPropertyValue('--sf-text').trim();
+      const m = /^#([0-9a-f]{6})$/i.exec(hex);
+      const want = m ? `rgb(${[1, 3, 5].map((i) => parseInt(hex.substr(i, 2), 16)).join(', ')})` : null;
+      return {
+        bw: cs.borderTopWidth,
+        br: cs.borderTopLeftRadius,
+        bg: cs.backgroundColor,
+        color: cs.color,
+        want,
+      };
     });
   report(
-    'tab ⋮ button is wrapped in a visible box (border + radius + fill)',
-    parseFloat(tabBox.bw) >= 1 && tabBox.br !== '0px' && tabBox.bg !== 'rgba(0, 0, 0, 0)',
+    'tab ⋮ button box: #292929 fill + border + radius, dots not dimmed',
+    parseFloat(tabBox.bw) >= 1 &&
+      tabBox.br !== '0px' &&
+      tabBox.bg === 'rgb(41, 41, 41)' &&
+      tabBox.color === tabBox.want,
     JSON.stringify(tabBox),
   );
 
