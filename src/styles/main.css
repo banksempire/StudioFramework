@@ -1693,14 +1693,13 @@ body.sf-dragging-row * {
   background: var(--sf-panel-bg);
   cursor: pointer;
   touch-action: pan-y;
-  transition: transform 180ms ease;
   will-change: transform;
 }
 .sf-tab-dropdown-slide:active {
   box-shadow: inset 0 0 0 999px var(--sf-hover-overlay);
 }
-.sf-tab-dropdown-slide--swiping {
-  transition: none;
+.sf-tab-dropdown-slide--armed {
+  opacity: 0.45;
 }
 
 .sf-tab-dropdown-mark {
@@ -1748,9 +1747,7 @@ body.sf-dragging-row * {
   cursor: pointer;
   opacity: 0;
   visibility: hidden;
-  transition:
-    opacity 150ms ease,
-    width 180ms ease;
+  transition: opacity 150ms ease;
   touch-action: none;
   -webkit-tap-highlight-color: transparent;
 }
@@ -1882,9 +1879,7 @@ body.sf-dragging-row * {
   display: flex;
   opacity: 0;
   visibility: hidden;
-  transition:
-    opacity 150ms ease,
-    width 180ms ease;
+  transition: opacity 150ms ease;
 }
 .sf-sm-under--revealed,
 .sf-sm-under--active {
@@ -1924,12 +1919,11 @@ body.sf-dragging-row * {
 .sf-sm-slide {
   position: relative;
   background: var(--sf-panel-bg);
-  transition: transform 180ms ease;
   will-change: transform;
   touch-action: pan-y;
 }
-.sf-sm-slide--swiping {
-  transition: none;
+.sf-sm-slide--armed {
+  opacity: 0.45;
 }
 
 .sf-sm-menu {

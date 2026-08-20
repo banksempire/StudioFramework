@@ -66,8 +66,12 @@ const dialogTitle = computed(() => {
   return item !== null && props.titleOf ? String(props.titleOf(item) ?? '') : '';
 });
 
+const listEl = ref<HTMLElement | null>(null);
+
 const swipe = useSwipeReveal({
   revealWidth: () => props.revealWidth,
+  rowWidth: () => listEl.value?.offsetWidth ?? 0,
+  commitStyle: (key) => ((rowByKey.value.get(key)?.opts.length ?? 0) === 1 ? 'execute' : 'menu'),
   onCommit: (key) => {
     const row = rowByKey.value.get(key);
     if (!row || row.opts.length === 0) return;
@@ -191,7 +195,7 @@ if (typeof window !== 'undefined') {
 </script>
 
 <template>
-  <div class="sf-sm" v-bind="$attrs">
+  <div ref="listEl" class="sf-sm" v-bind="$attrs">
     <div v-for="row in rowViews" :key="row.key" class="sf-sm-row">
       <div
         v-if="row.opts.length > 0"
@@ -205,7 +209,7 @@ if (typeof window !== 'undefined') {
         @pointerdown="onDown($event, row)"
         @pointermove="swipe.move($event, row.key)"
         @pointerup="onUp($event, row)"
-        @pointercancel="onUp($event, row)"
+        @pointercancel="swipe.cancel(row.key, $event)"
         @touchmove="swipe.touchMove($event, row.key)"
       >
         <button
@@ -230,13 +234,13 @@ if (typeof window !== 'undefined') {
       </div>
       <div
         class="sf-sm-slide"
-        :class="{ 'sf-sm-slide--swiping': isSwiping(row.key) }"
+        :class="{ 'sf-sm-slide--swiping': isSwiping(row.key), 'sf-sm-slide--armed': isArmed(row.key) }"
         :style="slideStyle(row.key)"
         :draggable="draggable"
         @pointerdown="onDown($event, row)"
         @pointermove="swipe.move($event, row.key)"
         @pointerup="onUp($event, row)"
-        @pointercancel="onUp($event, row)"
+        @pointercancel="swipe.cancel(row.key, $event)"
         @touchmove="swipe.touchMove($event, row.key)"
         @click="onSlideClick(row)"
         @contextmenu="onCtx($event, row)"

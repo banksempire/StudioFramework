@@ -29,8 +29,11 @@ const emit = defineEmits<{
 
 const SWIPE_REVEAL = 86;
 
+const listEl = ref<HTMLElement | null>(null);
+
 const swipe = useSwipeReveal({
   revealWidth: () => SWIPE_REVEAL,
+  rowWidth: () => listEl.value?.offsetWidth ?? 0,
   onCommit: (id) => emit('close', id),
 });
 const {
@@ -92,7 +95,7 @@ onMounted(() => {
         </button>
       </div>
       <div class="sf-tab-dropdown-body">
-        <div class="sf-tab-dropdown-list">
+        <div ref="listEl" class="sf-tab-dropdown-list">
           <div
             v-for="tab in items"
             :key="tab.id"
@@ -112,7 +115,7 @@ onMounted(() => {
               @pointerdown="onDown($event, tab)"
               @pointermove="swipe.move($event, tab.id)"
               @pointerup="swipe.end(tab.id, $event)"
-              @pointercancel="swipe.end(tab.id, $event)"
+              @pointercancel="swipe.cancel(tab.id, $event)"
               @touchmove="swipe.touchMove($event, tab.id)"
               @click.stop="onClose(tab.id)"
             >
@@ -121,12 +124,15 @@ onMounted(() => {
             </button>
             <div
               class="sf-tab-dropdown-slide"
-              :class="{ 'sf-tab-dropdown-slide--swiping': isSwiping(tab.id) }"
+              :class="{
+                'sf-tab-dropdown-slide--swiping': isSwiping(tab.id),
+                'sf-tab-dropdown-slide--armed': isArmed(tab.id),
+              }"
               :style="slideStyle(tab.id)"
               @pointerdown="onDown($event, tab)"
               @pointermove="swipe.move($event, tab.id)"
               @pointerup="swipe.end(tab.id, $event)"
-              @pointercancel="swipe.end(tab.id, $event)"
+              @pointercancel="swipe.cancel(tab.id, $event)"
               @touchmove="swipe.touchMove($event, tab.id)"
               @click="onSlideClick(tab.id)"
             >

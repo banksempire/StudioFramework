@@ -437,7 +437,7 @@ const WS = '.sf-workspace';
   report('a vertical pan does not reveal the Close button', !(await isRowRevealed('styles.css')));
 
   const mid = await swipeStart(sheetRow('styles.css'));
-  await swipeMoveTo(mid.x0 - 110, mid.y, 3);
+  await swipeMoveTo(mid.x0 - 110, mid.y, 14);
   const midBody = sheetRow('styles.css').locator('.sf-tab-dropdown-slide');
   const midTransform = await midBody.evaluate((el) => getComputedStyle(el).transform);
   const txOf = (tf) => {
@@ -473,9 +473,11 @@ const WS = '.sf-workspace';
   const rowBody = sheetRow('styles.css').locator('.sf-tab-dropdown-slide');
   const closeBtn1 = sheetRow('styles.css').locator('.sf-tab-dropdown-close-btn');
   const bodyTransform = await rowBody.evaluate((el) => getComputedStyle(el).transform);
+  const settleTx = txOf(bodyTransform);
   report(
-    'released: row snaps open (-86px), Close button revealed',
-    (await closeBtn1.isVisible()) && /-86/.test(bodyTransform) && bodyTransform !== 'none',
+    'released: row springs open to the reveal offset, Close button revealed',
+    (await closeBtn1.isVisible()) && settleTx !== null && Math.abs(settleTx + 86) <= 3,
+    `tx=${settleTx}`,
   );
   report(
     'only the swiped row is revealed',
@@ -491,8 +493,8 @@ const WS = '.sf-workspace';
   );
 
   const act = await swipeStart(sheetRow('layout.json'));
-  for (let i = 1; i <= 8; i += 1) {
-    await touch('touchMove', [{ x: act.x0 - (110 * i) / 8, y: act.y }]);
+  for (let i = 1; i <= 14; i += 1) {
+    await touch('touchMove', [{ x: act.x0 - (110 * i) / 14, y: act.y }]);
     await page.waitForTimeout(16);
   }
   await swipeEnd();
@@ -528,8 +530,8 @@ const WS = '.sf-workspace';
     if (b) b.scrollTop = 0;
   });
   const dpt = await swipeStart(driftSheetRow);
-  for (let i = 1; i <= 8; i += 1) {
-    await touch('touchMove', [{ x: dpt.x0 - (110 * i) / 8, y: dpt.y - (40 * i) / 8 }]);
+  for (let i = 1; i <= 14; i += 1) {
+    await touch('touchMove', [{ x: dpt.x0 - (110 * i) / 14, y: dpt.y - (40 * i) / 14 }]);
     await page.waitForTimeout(16);
   }
   await swipeEnd();
@@ -552,10 +554,22 @@ const WS = '.sf-workspace';
   );
 
   const far = await swipeStart(driftSheetRow);
-  await swipeMoveTo(far.x0 - 170, far.y, 6);
+  await swipeMoveTo(far.x0 - 200, far.y, 10);
+  const farTx = txOf(
+    await driftSheetRow.locator('.sf-tab-dropdown-slide').evaluate((el) => getComputedStyle(el).transform),
+  );
+  const farBtnW = await driftSheetRow
+    .locator('.sf-tab-dropdown-close-btn')
+    .evaluate((el) => el.getBoundingClientRect().width);
+  report(
+    'overdrag rubber-bands: the row lags the finger and the Close button stretches wider',
+    farTx !== null && farTx > -250 && farTx < -180 && farBtnW >= 180,
+    `tx=${farTx} w=${farBtnW}`,
+  );
+  await swipeMoveTo(far.x0 - 250, far.y, 6);
   await swipeEnd();
   report(
-    'stage 2: swiping past the threshold closes the tab immediately (no tap)',
+    'stage 2: a slow deliberate full swipe past the threshold closes the tab immediately (no tap)',
     (await sheetRow(driftLabel).count()) === 0 &&
       (await page.locator('.sf-tab-dropdown-label').count()) === 2,
   );
@@ -567,6 +581,11 @@ const WS = '.sf-workspace';
   const sy = sbox.y + sbox.height / 2;
   await touch('touchStart', [{ x: sbox.x + 150, y: sy, id: 1 }]);
   await touch('touchStart', [{ x: sbox.x + 320, y: sy, id: 2 }]);
+  await touch('touchMove', [
+    { x: sbox.x + 135, y: sy, id: 1 },
+    { x: sbox.x + 320, y: sy, id: 2 },
+  ]);
+  await page.waitForTimeout(90);
   await touch('touchMove', [
     { x: sbox.x + 120, y: sy, id: 1 },
     { x: sbox.x + 320, y: sy, id: 2 },
@@ -581,14 +600,14 @@ const WS = '.sf-workspace';
   );
 
   const rv1 = await swipeStart(stickyRowEl);
-  await swipeMoveTo(rv1.x0 - 110, rv1.y, 4);
+  await swipeMoveTo(rv1.x0 - 110, rv1.y, 14);
   await swipeEnd();
   report(
     'swipe reveals Close and it stays revealed',
     (await stickyRowEl.locator('.sf-tab-dropdown-close-btn.revealed').count()) === 1,
   );
   const rv2 = await swipeStart(stickyRowEl);
-  await swipeMoveTo(rv2.x0 - 40, rv2.y, 3);
+  await swipeMoveTo(rv2.x0 - 40, rv2.y, 6);
   await swipeEnd();
   report(
     'already-revealed row: a small further swipe does NOT close the tab',
@@ -596,12 +615,9 @@ const WS = '.sf-workspace';
       (await stickyRowEl.locator('.sf-tab-dropdown-close-btn.revealed').count()) === 1,
   );
   const rv3 = await swipeStart(stickyRowEl);
-  await swipeMoveTo(rv3.x0 - 80, rv3.y, 4);
+  await swipeMoveTo(rv3.x0 - 130, rv3.y, 2);
   await swipeEnd();
-  report(
-    'already-revealed row: a full further swipe past the threshold closes the tab',
-    (await stickyRowEl.count()) === 0,
-  );
+  report('already-revealed row: a fast further swipe closes the tab', (await stickyRowEl.count()) === 0);
 
   await tapEl(sheetRow('framework.t'));
   await page.waitForTimeout(250);

@@ -159,9 +159,14 @@ const { ensureServer, makeReporter, finish } = require('./lib/ui-test.cjs');
     await page.waitForTimeout(250);
   };
 
+  const txOf = (tf) => {
+    const m = /^matrix\(1, 0, 0, 1, (-?[\d.]+)/.exec(tf);
+    return m ? Number(m[1]) : null;
+  };
+
   const st0 = await status();
   const wpt = await swipeStart(row('welcome.md'));
-  await swipeMoveTo(wpt.x0 - 110, wpt.y, 4);
+  await swipeMoveTo(wpt.x0 - 110, wpt.y, 14);
   await swipeEnd();
   report(
     'stage 1: swipe left reveals the action layer without opening the popup',
@@ -201,7 +206,7 @@ const { ensureServer, makeReporter, finish } = require('./lib/ui-test.cjs');
   );
 
   const wpt2 = await swipeStart(row('welcome.md'));
-  await swipeMoveTo(wpt2.x0 - 110, wpt2.y, 4);
+  await swipeMoveTo(wpt2.x0 - 110, wpt2.y, 14);
   await swipeEnd();
   await tapEl(row('welcome.md').locator('.sf-sm-act--more'));
   await page.waitForTimeout(250);
@@ -219,7 +224,7 @@ const { ensureServer, makeReporter, finish } = require('./lib/ui-test.cjs');
   report('rename from the dialog commits', (await row('welcome2.md').count()) === 1);
 
   const npt = await swipeStart(row('scratch.txt'));
-  await swipeMoveTo(npt.x0 - 60, npt.y, 3);
+  await swipeMoveTo(npt.x0 - 60, npt.y, 8);
   await swipeEnd();
   report(
     'single-option item reveals the option directly (no dialog)',
@@ -344,23 +349,62 @@ const { ensureServer, makeReporter, finish } = require('./lib/ui-test.cjs');
   });
   await page.waitForTimeout(150);
 
-  const s2 = await swipeStart(row('notes.txt'));
-  await swipeMoveTo(s2.x0 - 170, s2.y, 6);
+  const rb = await swipeStart(row('framework.layout.json'));
+  await swipeMoveTo(rb.x0 - 200, rb.y, 10);
+  const rbTx = txOf(
+    await row('framework.layout.json')
+      .locator('.sf-sm-slide')
+      .evaluate((el) => getComputedStyle(el).transform),
+  );
+  const rbUnderW = await row('framework.layout.json')
+    .locator('.sf-sm-under')
+    .evaluate((el) => el.getBoundingClientRect().width);
+  report(
+    'overdrag rubber-bands: the row lags the finger and the action button stretches wider',
+    rbTx !== null && rbTx > -198 && rbTx < -140 && rbUnderW >= 140,
+    `tx=${rbTx} underW=${rbUnderW}`,
+  );
   await swipeEnd();
   report(
-    'stage 2: single-option row swiped past the threshold fires the action immediately (no tap, no dialog)',
+    'a slow overdrag short of the threshold holds at stage 1 (no commit)',
+    (await page.locator('.sf-sm-dialog').count()) === 0 &&
+      (await row('framework.layout.json').locator('.sf-sm-under--revealed').count()) === 1,
+  );
+  await tapEl(row('framework.layout.json').locator('.sf-sm-slide'));
+  await page.waitForTimeout(350);
+  report(
+    'tapping the revealed row content dismisses the actions',
+    (await row('framework.layout.json').locator('.sf-sm-under--revealed').count()) === 0,
+  );
+
+  const fj = await swipeStart(row('notes.txt'));
+  await swipeMoveTo(fj.x0 - 130, fj.y, 2);
+  await swipeEnd();
+  report(
+    'a fast flick executes the single action immediately (no tap, no dialog)',
     (await row('notes.txt').count()) === 0 &&
       /delete notes\.txt/.test(await status()) &&
       (await page.locator('.sf-sm-dialog').count()) === 0,
   );
 
-  const m2 = await swipeStart(row('SingleMenu.vue'));
-  await swipeMoveTo(m2.x0 - 170, m2.y, 6);
+  const fm = await swipeStart(row('SingleMenu.vue'));
+  await swipeMoveTo(fm.x0 - 130, fm.y, 2);
   await swipeEnd();
   report(
-    'stage 2: multi-option row swiped past the threshold opens the popup immediately',
+    'a fast flick on a multi-option row opens the popup',
     (await page.locator('.sf-sm-dialog').count()) === 1 &&
       (await page.locator('.sf-sm-dialog-title').textContent()) === 'SingleMenu.vue',
+  );
+  await tapEl(page.locator('.sf-sm-dialog-cancel'));
+  await page.waitForTimeout(200);
+
+  const dm = await swipeStart(row('framework.layout.json'));
+  await swipeMoveTo(dm.x0 - 250, dm.y, 20);
+  await swipeEnd();
+  report(
+    'a slow deliberate full swipe past the threshold commits (popup for multi-option)',
+    (await page.locator('.sf-sm-dialog').count()) === 1 &&
+      (await page.locator('.sf-sm-dialog-title').textContent()) === 'framework.layout.json',
   );
   await tapEl(page.locator('.sf-sm-dialog-cancel'));
   await page.waitForTimeout(200);
@@ -370,6 +414,11 @@ const { ensureServer, makeReporter, finish } = require('./lib/ui-test.cjs');
   const mty = mtb.y + mtb.height / 2;
   await touch('touchStart', [{ x: mtb.x + 150, y: mty, id: 1 }]);
   await touch('touchStart', [{ x: mtb.x + 320, y: mty, id: 2 }]);
+  await touch('touchMove', [
+    { x: mtb.x + 135, y: mty, id: 1 },
+    { x: mtb.x + 320, y: mty, id: 2 },
+  ]);
+  await page.waitForTimeout(90);
   await touch('touchMove', [
     { x: mtb.x + 120, y: mty, id: 1 },
     { x: mtb.x + 320, y: mty, id: 2 },
@@ -383,21 +432,38 @@ const { ensureServer, makeReporter, finish } = require('./lib/ui-test.cjs');
   );
 
   const rv1 = await swipeStart(row('SingleMenu.vue'));
-  await swipeMoveTo(rv1.x0 - 110, rv1.y, 4);
+  await swipeMoveTo(rv1.x0 - 110, rv1.y, 14);
   await swipeEnd();
   const rv2 = await swipeStart(row('SingleMenu.vue'));
-  await swipeMoveTo(rv2.x0 - 40, rv2.y, 3);
+  await swipeMoveTo(rv2.x0 - 40, rv2.y, 6);
   await swipeEnd();
   report(
     'already-revealed row: a small further swipe neither commits nor closes the layer',
     (await page.locator('.sf-sm-dialog').count()) === 0 &&
       (await row('SingleMenu.vue').locator('.sf-sm-under--revealed').count()) === 1,
   );
+  const rvBox = await row('SingleMenu.vue').boundingBox();
+  const rvy = rvBox.y + rvBox.height / 2;
+  const rvx = rvBox.x + 40;
+  await touch('touchStart', [{ x: rvx, y: rvy }]);
+  for (let i = 1; i <= 6; i += 1) {
+    await touch('touchMove', [{ x: rvx + (100 * i) / 6, y: rvy }]);
+    await page.waitForTimeout(16);
+  }
+  await touch('touchEnd', []);
+  await page.waitForTimeout(320);
+  report(
+    'swiping right on a revealed row dismisses the actions',
+    (await row('SingleMenu.vue').locator('.sf-sm-under--revealed').count()) === 0,
+  );
+  const rvAgain = await swipeStart(row('SingleMenu.vue'));
+  await swipeMoveTo(rvAgain.x0 - 110, rvAgain.y, 14);
+  await swipeEnd();
   const rv3 = await swipeStart(row('SingleMenu.vue'));
-  await swipeMoveTo(rv3.x0 - 80, rv3.y, 4);
+  await swipeMoveTo(rv3.x0 - 130, rv3.y, 2);
   await swipeEnd();
   report(
-    'already-revealed row: a full further swipe commits (popup opens)',
+    'already-revealed row: a fast further swipe commits (popup opens)',
     (await page.locator('.sf-sm-dialog').count()) === 1,
   );
   await tapEl(page.locator('.sf-sm-dialog-cancel'));
