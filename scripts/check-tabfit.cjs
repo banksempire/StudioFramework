@@ -44,8 +44,7 @@ const { ensureServer, makeReporter, finish } = require('./lib/ui-test.cjs');
       const t = tabs.find((x) => x.querySelector('.sf-tab-label')?.textContent === l);
       return t ? t.getBoundingClientRect().width : 0;
     }, label);
-  const inRange = (widths) =>
-    widths.length > 0 && widths.every((w) => w >= minW - 0.5 && w <= maxW + 0.5);
+  const inRange = (widths) => widths.length > 0 && widths.every((w) => w >= minW - 0.5 && w <= maxW + 0.5);
 
   report('css vars: min <= max, min wide enough for icon + close', minW > 0 && maxW > 0 && minW <= maxW);
 
@@ -113,9 +112,13 @@ const { ensureServer, makeReporter, finish } = require('./lib/ui-test.cjs');
       });
     }
   }, tid);
-  await page.waitForFunction(() => document.querySelectorAll('.sf-tile-tabs-inner .sf-tab').length === 28, null, {
-    timeout: 5000,
-  });
+  await page.waitForFunction(
+    () => document.querySelectorAll('.sf-tile-tabs-inner .sf-tab').length === 28,
+    null,
+    {
+      timeout: 5000,
+    },
+  );
   await page.waitForTimeout(100);
   const crowd = await barInfo();
   report(
@@ -136,6 +139,21 @@ const { ensureServer, makeReporter, finish } = require('./lib/ui-test.cjs');
       return moved;
     }),
   );
+  await page.evaluate((id) => {
+    window.__sfWorkspace.ops.activateTab(id, 'bulk-0');
+  }, tid);
+  await page.waitForTimeout(200);
+  await page.evaluate((id) => {
+    window.__sfWorkspace.ops.activateTab(id, 'bulk-23');
+  }, tid);
+  await page.waitForTimeout(200);
+  report(
+    'activating an off-screen tab scrolls it into view',
+    await page.evaluate(() => {
+      const bar = document.querySelector('.sf-tile-tabs-inner');
+      return bar ? bar.scrollLeft > 0 : false;
+    }),
+  );
   report(
     '28 tabs: close button still rendered inside the floored tab',
     await page.evaluate(() => {
@@ -144,7 +162,9 @@ const { ensureServer, makeReporter, finish } = require('./lib/ui-test.cjs');
       if (!tab || !btn) return false;
       const tr = tab.getBoundingClientRect();
       const br = btn.getBoundingClientRect();
-      return getComputedStyle(btn).visibility === 'visible' && br.right <= tr.right + 0.5 && br.left >= tr.left;
+      return (
+        getComputedStyle(btn).visibility === 'visible' && br.right <= tr.right + 0.5 && br.left >= tr.left
+      );
     }),
   );
 

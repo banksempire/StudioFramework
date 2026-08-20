@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, inject, onBeforeUnmount, onMounted, ref, watch } from 'vue';
+import { computed, inject, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue';
 import { kRightPanelToggle, kTitleBarMenus, useWorkspaceContext } from '../composables/useWorkspace';
 import { getTabContent } from '../registry';
 import type { MenuNodeDef } from '../types/layout';
@@ -35,6 +35,7 @@ function resolveTileId(tabId?: string): string {
 onMounted(() => {
   if (synthetic.value) return;
   ws.registerTileEl(props.tile.id, el.value);
+  scrollActiveTabIntoView();
 });
 onBeforeUnmount(() => {
   if (synthetic.value) return;
@@ -44,6 +45,17 @@ onBeforeUnmount(() => {
 const activeTab = computed(() => (props.tile.activeId ? (ws.tabDefs[props.tile.activeId] ?? null) : null));
 
 const tabMenuOpen = ref(false);
+const tabsInnerEl = ref<HTMLElement | null>(null);
+
+async function scrollActiveTabIntoView() {
+  const id = props.tile.activeId;
+  if (!id) return;
+  await nextTick();
+  const tab = tabsInnerEl.value?.querySelector(`[data-tab-id="${CSS.escape(id)}"]`);
+  tab?.scrollIntoView({ block: 'nearest', inline: 'nearest' });
+}
+
+watch(() => props.tile.activeId, scrollActiveTabIntoView);
 const activeTabLabel = computed(() => activeTab.value?.label ?? '');
 const tabList = computed(() =>
   props.tile.tabs.map((id) => ({
@@ -156,11 +168,12 @@ function onTileMousedown() {
         </div>
       </template>
       <template v-else>
-        <div class="sf-tile-tabs-inner">
+        <div ref="tabsInnerEl" class="sf-tile-tabs-inner">
         <div
           v-for="tabId in tile.tabs"
           :key="tabId"
           class="sf-tab"
+          :data-tab-id="tabId"
           :class="[
             ws.tabDefs[tabId]?.tabClass,
             {
