@@ -2,7 +2,8 @@ import { reactive, ref } from 'vue';
 
 export interface SwipeRevealOptions {
   revealWidth: () => number;
-  onRelease?: (opened: boolean, key: string) => void;
+  commitTravel?: number;
+  onCommit?: (key: string) => void;
 }
 
 interface SwipeState {
@@ -16,8 +17,9 @@ interface SwipeState {
 
 const LOCK_THRESHOLD = 6;
 const LAYER_EPSILON = 4;
+const COMMIT_FRACTION = 0.55;
 
-export function useSwipeReveal({ revealWidth, onRelease }: SwipeRevealOptions) {
+export function useSwipeReveal({ revealWidth, commitTravel = 64, onCommit }: SwipeRevealOptions) {
   const rows = reactive<Record<string, SwipeState>>({});
   const suppressedClick = ref<string | null>(null);
 
@@ -27,7 +29,11 @@ export function useSwipeReveal({ revealWidth, onRelease }: SwipeRevealOptions) {
   }
 
   function clamp(v: number): number {
-    return Math.max(-revealWidth(), Math.min(0, v));
+    return Math.max(-(revealWidth() + commitTravel), Math.min(0, v));
+  }
+
+  function commitAt(): number {
+    return revealWidth() + commitTravel * COMMIT_FRACTION;
   }
 
   function offset(key: string): number {
@@ -41,6 +47,10 @@ export function useSwipeReveal({ revealWidth, onRelease }: SwipeRevealOptions) {
     const s = rows[key];
     if (!s || (!s.active && !s.revealed)) return undefined;
     return { transform: `translate3d(${offset(key)}px, 0, 0)` };
+  }
+
+  function underWidth(key: string): number {
+    return Math.max(revealWidth(), -offset(key));
   }
 
   function isSwiping(key: string): boolean {
@@ -58,8 +68,14 @@ export function useSwipeReveal({ revealWidth, onRelease }: SwipeRevealOptions) {
     return s.active && offset(key) < -LAYER_EPSILON;
   }
 
+  function isArmed(key: string): boolean {
+    const s = rows[key];
+    return !!s?.active && offset(key) <= -commitAt();
+  }
+
   function begin(key: string, e: PointerEvent) {
     const s = stateOf(key);
+    if (suppressedClick.value === key) suppressedClick.value = null;
     s.startX = e.clientX;
     s.startY = e.clientY;
     s.dx = 0;
@@ -86,15 +102,19 @@ export function useSwipeReveal({ revealWidth, onRelease }: SwipeRevealOptions) {
     if (rows[key]?.active) e.preventDefault();
   }
 
-  function end(key: string, settle: (opened: boolean) => boolean = (o) => o) {
+  function end(key: string) {
     const s = rows[key];
     if (!s) return;
     if (s.active) {
       const base = s.revealed ? -revealWidth() : 0;
-      const opened = clamp(base + s.dx) < -revealWidth() / 2;
-      s.revealed = settle(opened);
+      const cur = clamp(base + s.dx);
       suppressedClick.value = key;
-      onRelease?.(opened, key);
+      if (cur <= -commitAt()) {
+        s.revealed = false;
+        onCommit?.(key);
+      } else {
+        s.revealed = cur < -revealWidth() / 2;
+      }
     }
     s.active = false;
   }
@@ -131,9 +151,11 @@ export function useSwipeReveal({ revealWidth, onRelease }: SwipeRevealOptions) {
     suppressedClick,
     offset,
     styleOf,
+    underWidth,
     isSwiping,
     isRevealed,
     isLayerVisible,
+    isArmed,
     begin,
     move,
     touchMove,

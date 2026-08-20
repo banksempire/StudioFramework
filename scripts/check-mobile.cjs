@@ -551,6 +551,15 @@ const WS = '.sf-workspace';
     `scrollTop=${sheetScrollTop}`,
   );
 
+  const far = await swipeStart(driftSheetRow);
+  await swipeMoveTo(far.x0 - 170, far.y, 6);
+  await swipeEnd();
+  report(
+    'stage 2: swiping past the threshold closes the tab immediately (no tap)',
+    (await sheetRow(driftLabel).count()) === 0 &&
+      (await page.locator('.sf-tab-dropdown-label').count()) === 2,
+  );
+
   await tapEl(sheetRow('framework.t'));
   await page.waitForTimeout(250);
   report(

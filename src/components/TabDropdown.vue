@@ -29,8 +29,18 @@ const emit = defineEmits<{
 
 const SWIPE_REVEAL = 86;
 
-const swipe = useSwipeReveal({ revealWidth: () => SWIPE_REVEAL });
-const { styleOf: slideStyle, isSwiping, isRevealed, isLayerVisible: isBtnVisible } = swipe;
+const swipe = useSwipeReveal({
+  revealWidth: () => SWIPE_REVEAL,
+  onCommit: (id) => emit('close', id),
+});
+const {
+  styleOf: slideStyle,
+  underWidth,
+  isSwiping,
+  isRevealed,
+  isLayerVisible: isBtnVisible,
+  isArmed,
+} = swipe;
 
 function onDown(e: PointerEvent, tab: TabDropdownItem) {
   if (tab.closeable === false) return;
@@ -40,11 +50,16 @@ function onDown(e: PointerEvent, tab: TabDropdownItem) {
 
 function onSlideClick(id: string) {
   if (swipe.consumeClick(id)) return;
+  if (swipe.isRevealed(id)) {
+    swipe.hide(id);
+    return;
+  }
   emit('select', id);
   emit('update:open', false);
 }
 
 function onClose(id: string) {
+  if (swipe.consumeClick(id)) return;
   swipe.hide(id);
   emit('close', id);
 }
@@ -90,8 +105,15 @@ onMounted(() => {
               :class="{
                 revealed: isRevealed(tab.id),
                 active: isBtnVisible(tab.id),
+                armed: isArmed(tab.id),
               }"
+              :style="{ width: `${underWidth(tab.id)}px` }"
               title="Close tab"
+              @pointerdown="onDown($event, tab)"
+              @pointermove="swipe.move($event, tab.id)"
+              @pointerup="swipe.end(tab.id)"
+              @pointercancel="swipe.end(tab.id)"
+              @touchmove="swipe.touchMove($event, tab.id)"
               @click.stop="onClose(tab.id)"
             >
               <SvgIcon name="✕" />

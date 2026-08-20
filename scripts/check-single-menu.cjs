@@ -164,7 +164,20 @@ const { ensureServer, makeReporter, finish } = require('./lib/ui-test.cjs');
   await swipeMoveTo(wpt.x0 - 110, wpt.y, 4);
   await swipeEnd();
   report(
-    'swipe left on a multi-option item opens the centered popup dialog',
+    'stage 1: swipe left reveals the action layer without opening the popup',
+    (await page.locator('.sf-sm-dialog').count()) === 0 &&
+      (await row('welcome.md').locator('.sf-sm-under--revealed').count()) === 1,
+  );
+  report(
+    'stage 1: the multi-option layer shows a More button',
+    /More/.test((await row('welcome.md').locator('.sf-sm-act--more').textContent()) ?? ''),
+  );
+  report('the swipe itself does not activate the row (suppressed click)', (await status()) === st0);
+
+  await tapEl(row('welcome.md').locator('.sf-sm-act--more'));
+  await page.waitForTimeout(250);
+  report(
+    'tapping More opens the centered popup dialog',
     (await page.locator('.sf-sm-dialog').count()) === 1 && (await page.locator('.sf-sm-menu').count()) === 0,
   );
   report(
@@ -174,7 +187,6 @@ const { ensureServer, makeReporter, finish } = require('./lib/ui-test.cjs');
         JSON.stringify(['Open', 'Rename', 'Delete']) &&
       (await page.locator('.sf-sm-dialog-cancel').count()) === 1,
   );
-  report('the swipe itself does not activate the row (suppressed click)', (await status()) === st0);
   const dbox = await page.locator('.sf-sm-dialog').boundingBox();
   report(
     'dialog is centered in the viewport',
@@ -191,6 +203,8 @@ const { ensureServer, makeReporter, finish } = require('./lib/ui-test.cjs');
   const wpt2 = await swipeStart(row('welcome.md'));
   await swipeMoveTo(wpt2.x0 - 110, wpt2.y, 4);
   await swipeEnd();
+  await tapEl(row('welcome.md').locator('.sf-sm-act--more'));
+  await page.waitForTimeout(250);
   await tapEl(page.locator('.sf-sm-dialog .sf-sm-menu-row', { hasText: 'Rename' }));
   await page.waitForTimeout(200);
   report(
@@ -305,11 +319,11 @@ const { ensureServer, makeReporter, finish } = require('./lib/ui-test.cjs');
     JSON.stringify(log),
   );
   report(
-    'drifting swipe still opens the dialog and does not scroll the list',
-    (await page.locator('.sf-sm-dialog').count()) === 1 && (await panelScroll()) === 0,
+    'drifting swipe still reveals the actions and does not scroll the list',
+    (await driftRow.locator('.sf-sm-under--revealed').count()) === 1 &&
+      (await page.locator('.sf-sm-dialog').count()) === 0 &&
+      (await panelScroll()) === 0,
   );
-  await tapEl(page.locator('.sf-sm-dialog-cancel'));
-  await page.waitForTimeout(200);
 
   const panRow = row('notes.txt');
   const pbox = await panRow.boundingBox();
@@ -323,6 +337,33 @@ const { ensureServer, makeReporter, finish } = require('./lib/ui-test.cjs');
   await touch('touchEnd', []);
   await page.waitForTimeout(250);
   report('a plain vertical pan still scrolls the list', (await panelScroll()) > 0);
+
+  await page.evaluate(() => {
+    const el = document.querySelector('.sf-mobile-panel .sf-subsection-body-container');
+    if (el) el.scrollTop = 0;
+  });
+  await page.waitForTimeout(150);
+
+  const s2 = await swipeStart(row('notes.txt'));
+  await swipeMoveTo(s2.x0 - 170, s2.y, 6);
+  await swipeEnd();
+  report(
+    'stage 2: single-option row swiped past the threshold fires the action immediately (no tap, no dialog)',
+    (await row('notes.txt').count()) === 0 &&
+      /delete notes\.txt/.test(await status()) &&
+      (await page.locator('.sf-sm-dialog').count()) === 0,
+  );
+
+  const m2 = await swipeStart(row('SingleMenu.vue'));
+  await swipeMoveTo(m2.x0 - 170, m2.y, 6);
+  await swipeEnd();
+  report(
+    'stage 2: multi-option row swiped past the threshold opens the popup immediately',
+    (await page.locator('.sf-sm-dialog').count()) === 1 &&
+      (await page.locator('.sf-sm-dialog-title').textContent()) === 'SingleMenu.vue',
+  );
+  await tapEl(page.locator('.sf-sm-dialog-cancel'));
+  await page.waitForTimeout(200);
 
   report('no page errors during the run', errors.length === 0, errors.join(' | '));
 

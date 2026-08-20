@@ -1748,7 +1748,9 @@ body.sf-dragging-row * {
   cursor: pointer;
   opacity: 0;
   visibility: hidden;
-  transition: opacity 150ms ease;
+  transition:
+    opacity 150ms ease,
+    width 180ms ease;
   touch-action: none;
   -webkit-tap-highlight-color: transparent;
 }
@@ -1756,6 +1758,12 @@ body.sf-dragging-row * {
 .sf-tab-dropdown-close-btn.active {
   opacity: 1;
   visibility: visible;
+}
+.sf-tab-dropdown-close-btn.active {
+  transition: opacity 150ms ease;
+}
+.sf-tab-dropdown-close-btn.armed {
+  filter: brightness(1.3);
 }
 
 .sf-docker--bottom {
@@ -1874,12 +1882,20 @@ body.sf-dragging-row * {
   display: flex;
   opacity: 0;
   visibility: hidden;
-  transition: opacity 150ms ease;
+  transition:
+    opacity 150ms ease,
+    width 180ms ease;
 }
 .sf-sm-under--revealed,
 .sf-sm-under--active {
   opacity: 1;
   visibility: visible;
+}
+.sf-sm-under--active {
+  transition: opacity 150ms ease;
+}
+.sf-sm-under--armed .sf-sm-act {
+  filter: brightness(1.3);
 }
 
 .sf-sm-act {
@@ -1902,7 +1918,7 @@ body.sf-dragging-row * {
   color: #fff;
 }
 .sf-sm-act--more {
-  cursor: default;
+  cursor: pointer;
 }
 
 .sf-sm-slide {

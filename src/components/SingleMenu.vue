@@ -58,7 +58,7 @@ function optsOf(item: T): SingleMenuOption[] {
   return optsByItem.value.get(item) ?? [];
 }
 
-const underStyle = computed(() => ({ width: `${props.revealWidth}px` }));
+const underStyleOf = (key: string) => ({ width: `${underWidth(key)}px` });
 
 const dialogItem = ref(null) as Ref<T | null>;
 const dialogTitle = computed(() => {
@@ -68,12 +68,21 @@ const dialogTitle = computed(() => {
 
 const swipe = useSwipeReveal({
   revealWidth: () => props.revealWidth,
-  onRelease: (opened, key) => {
+  onCommit: (key) => {
     const row = rowByKey.value.get(key);
-    if (opened && row && row.opts.length > 1) dialogItem.value = row.item;
+    if (!row || row.opts.length === 0) return;
+    if (row.opts.length === 1) emit('select', row.item, row.opts[0]);
+    else dialogItem.value = row.item;
   },
 });
-const { styleOf: slideStyle, isSwiping, isRevealed, isLayerVisible: isUnderVisible } = swipe;
+const {
+  styleOf: slideStyle,
+  underWidth,
+  isSwiping,
+  isRevealed,
+  isLayerVisible: isUnderVisible,
+  isArmed,
+} = swipe;
 
 let lastPointerType = '';
 
@@ -84,18 +93,29 @@ function onDown(e: PointerEvent, row: RowView<T>) {
 }
 
 function onUp(row: RowView<T>) {
-  swipe.end(row.key, (opened) => opened && row.opts.length === 1);
+  swipe.end(row.key);
 }
 
 function onSlideClick(row: RowView<T>) {
   if (swipe.consumeClick(row.key)) return;
+  if (swipe.isRevealed(row.key)) {
+    swipe.hide(row.key);
+    return;
+  }
   emit('activate', row.item);
 }
 
 function onUnderTap(row: RowView<T>) {
+  if (swipe.consumeClick(row.key)) return;
   swipe.hide(row.key);
   const opt = row.opts[0];
   if (opt) emit('select', row.item, opt);
+}
+
+function onMoreTap(row: RowView<T>) {
+  if (swipe.consumeClick(row.key)) return;
+  swipe.hide(row.key);
+  dialogItem.value = row.item;
 }
 
 const ctxItem = ref(null) as Ref<T | null>;
@@ -179,8 +199,14 @@ if (typeof window !== 'undefined') {
         :class="{
           'sf-sm-under--revealed': isRevealed(row.key),
           'sf-sm-under--active': isUnderVisible(row.key),
+          'sf-sm-under--armed': isArmed(row.key),
         }"
-        :style="underStyle"
+        :style="underStyleOf(row.key)"
+        @pointerdown="onDown($event, row)"
+        @pointermove="swipe.move($event, row.key)"
+        @pointerup="onUp(row)"
+        @pointercancel="onUp(row)"
+        @touchmove="swipe.touchMove($event, row.key)"
       >
         <button
           v-if="row.opts.length === 1"
@@ -192,10 +218,15 @@ if (typeof window !== 'undefined') {
           <Icon :icon="row.opts[0].icon" />
           <span>{{ row.opts[0].label ?? row.opts[0].id }}</span>
         </button>
-        <div v-else class="sf-sm-act sf-sm-act--more" title="More">
+        <button
+          v-else
+          class="sf-sm-act sf-sm-act--more"
+          title="More"
+          @click.stop="onMoreTap(row)"
+        >
           <SvgIcon name="⋯" />
           <span>More</span>
-        </div>
+        </button>
       </div>
       <div
         class="sf-sm-slide"

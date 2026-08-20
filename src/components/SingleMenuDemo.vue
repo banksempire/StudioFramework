@@ -20,7 +20,8 @@ const files = ref<RecentFile[]>([
 const lastAction = ref('');
 
 function optionsOf(f: RecentFile): SingleMenuOption[] {
-  if (f.id === 'scratch') return [{ id: 'delete', label: 'Delete', icon: '🗑', danger: true }];
+  if (f.id === 'scratch' || f.id === 'notes')
+    return [{ id: 'delete', label: 'Delete', icon: '🗑', danger: true }];
   return [
     { id: 'open', label: 'Open', icon: '📄' },
     { id: 'rename', label: 'Rename', icon: '✎' },
