@@ -1492,10 +1492,16 @@ body.sf-dragging-row * {
   color: var(--sf-text);
   font-size: 16px;
   padding: 0 12px;
+}
+
+.sf-root--mobile .sf-tile-tabs {
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-touch-callout: none;
   transition: background 120ms;
 }
 
-.sf-root--mobile .sf-mobile-tab-label--holding {
+.sf-root--mobile .sf-tile-tabs.sf-mobile-tab-bar--holding {
   background: var(--sf-hover-overlay);
 }
 

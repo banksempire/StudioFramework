@@ -163,7 +163,7 @@ function onTileMousedown() {
 
 <template>
   <div ref="el" class="sf-tile" :class="{ 'sf-tile--focused': focused }" :data-tile="tile.id" @mousedown="onTileMousedown">
-    <div class="sf-tile-tabs">
+    <div class="sf-tile-tabs" :class="{ 'sf-mobile-tab-bar--holding': labelHold }">
       <template v-if="synthetic">
         <Menu
           v-if="titleBarMenus"
@@ -190,7 +190,7 @@ function onTileMousedown() {
         />
         <span
           class="sf-mobile-tab-label"
-          :class="[activeTab?.tabClass, { 'sf-mobile-tab-label--holding': labelHold }]"
+          :class="activeTab?.tabClass"
           @pointerdown="onLabelPointerDown"
           @pointermove="onLabelPointerMove"
           @pointerup="cancelLabelHold"
