@@ -70,13 +70,23 @@ export function readUiStringArray(key: string): string[] | undefined {
   return v.every((item) => typeof item === 'string') ? (v as string[]) : undefined;
 }
 
-export function writeUiValue(key: string, value: unknown): void {
-  loadValues()[key] = value;
+function scheduleFlush() {
   if (flushTimer) return;
   flushTimer = setTimeout(() => {
     flushTimer = null;
     flush();
   }, FLUSH_DELAY_MS);
+}
+
+export function writeUiValue(key: string, value: unknown): void {
+  loadValues()[key] = value;
+  scheduleFlush();
+}
+
+export function removeUiValue(key: string): void {
+  if (!(key in loadValues())) return;
+  delete loadValues()[key];
+  scheduleFlush();
 }
 
 export function readAllUiValues(): Record<string, unknown> {
