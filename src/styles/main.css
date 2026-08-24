@@ -44,6 +44,7 @@
   --sf-sash-hit: 5px;
   --sf-tab-max-width: 200px;
   --sf-tab-min-width: 80px;
+  --sf-tab-chrome: 72px;
   --sf-edge-glow: 6px;
   --sf-active: #37373d;
   --sf-selection: #264f78;
@@ -1206,11 +1207,16 @@ body.sf-dragging-row * {
   min-width: 0;
   overflow: hidden;
   text-overflow: ellipsis;
+  max-width: calc(var(--sf-tab-max-width) - var(--sf-tab-chrome));
 }
 
 .sf-tab-close {
   font-size: 16px;
   padding: 2px;
+  width: 20px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   border-radius: 3px;
   visibility: hidden;
 }

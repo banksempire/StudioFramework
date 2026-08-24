@@ -104,6 +104,67 @@ const { ensureServer, makeReporter, finish } = require('./lib/ui-test.cjs');
 
   await page.evaluate((id) => {
     const api = window.__sfWorkspace;
+    const walk = (node) => (node.kind === 'tile' ? node : walk(node.children[0]));
+    const tile = walk(api.roots[0].node);
+    window.__sqSavedTabs = tile.tabs.map((t) => api.tabDefs[t]);
+    window.__sqSavedActive = tile.activeId;
+    for (const t of tile.tabs) api.ops.closeTab(t);
+    api.ops.openTab(id, {
+      id: 'sq-long-1',
+      label: 'squeeze-me-a-rather-long-label-number-one.tsx',
+      icon: '📄',
+    });
+    api.ops.openTab(id, {
+      id: 'sq-long-2',
+      label: 'squeeze-me-a-rather-long-label-number-two.tsx',
+      icon: '📄',
+    });
+    api.ops.openTab(id, {
+      id: 'sq-long-3',
+      label: 'squeeze-me-a-rather-long-label-number-three.tsx',
+      icon: '📄',
+    });
+    api.ops.openTab(id, { id: 'sq-short', label: 'New Chat', icon: '💬' });
+  }, tid);
+  await page.waitForTimeout(300);
+  const squeezeStates = [];
+  for (let vw = 1440; vw >= 820; vw -= 15) {
+    await page.setViewportSize({ width: vw, height: 900 });
+    await page.waitForTimeout(40);
+    squeezeStates.push(
+      await page.evaluate(() => {
+        const bar = document.querySelector('.sf-tile-tabs-inner');
+        const w = {};
+        for (const t of bar.querySelectorAll('.sf-tab')) {
+          if (t.dataset.tabId.startsWith('sq-')) w[t.dataset.tabId] = t.getBoundingClientRect().width;
+        }
+        return { cw: bar.clientWidth, sw: bar.scrollWidth, w };
+      }),
+    );
+  }
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await page.waitForTimeout(200);
+  await page.evaluate((id) => {
+    const api = window.__sfWorkspace;
+    for (const [i, def] of window.__sqSavedTabs.entries()) api.ops.insertTab(id, i, def);
+    api.ops.activateTab(id, window.__sqSavedActive);
+    for (const t of ['sq-long-1', 'sq-long-2', 'sq-long-3', 'sq-short']) api.ops.closeTab(t);
+  }, tid);
+  await page.waitForTimeout(200);
+  const sqShort = (s) => s.w['sq-short'];
+  const sqLongMax = (s) => Math.max(s.w['sq-long-1'], s.w['sq-long-2'], s.w['sq-long-3']);
+  const fitted = squeezeStates.filter((s) => s.sw <= s.cw + 1);
+  report(
+    'squeeze: short tab never floors while long siblings still sit at max (uniform shrink)',
+    fitted.length > 0 && fitted.every((s) => sqShort(s) > minW - 0.5 || sqLongMax(s) < maxW - 0.5),
+  );
+  report(
+    'squeeze: long tabs leave the cap while the short tab is still above the floor',
+    fitted.some((s) => sqLongMax(s) < maxW - 0.5 && sqShort(s) > minW + 0.5),
+  );
+
+  await page.evaluate((id) => {
+    const api = window.__sfWorkspace;
     for (let i = 0; i < 24; i++) {
       api.ops.openTab(id, {
         id: `bulk-${i}`,
