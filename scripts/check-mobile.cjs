@@ -584,8 +584,13 @@ const WS = '.sf-workspace';
   await touch('touchStart', [{ x: lx, y: ly }]);
   await page.waitForTimeout(200);
   report(
-    'long press: holding feedback while pressed',
-    (await page.locator('.sf-mobile-tab-label--holding').count()) === 1,
+    'long press: holding feedback covers the whole selection bar',
+    (await page.locator('.sf-tile-tabs.sf-mobile-tab-bar--holding').count()) === 1,
+  );
+  report(
+    'long press: text selection disabled on the bar',
+    (await page.evaluate(() => getComputedStyle(document.querySelector('.sf-tile-tabs')).userSelect)) ===
+      'none',
   );
   await page.waitForTimeout(600);
   await touch('touchEnd', []);

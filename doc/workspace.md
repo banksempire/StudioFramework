@@ -276,5 +276,7 @@ Below 500px window width the framework switches to a phone-style chrome
 - The mobile tab selection bar (the centered active-tab label) supports a
   **long press** (≥500ms hold, ≤10px drift): the framework fires
   `notifyTabLongPress(activeTabId)` (see `setTabLongPressHandler`) and
-  suppresses the tap, so the tab list does not open. Hosts use it as the
-  mobile equivalent of clicking a tab (e.g. pinning a transient view).
+  suppresses the tap, so the tab list does not open. The whole bar
+  highlights while held and native text selection is disabled on it.
+  Hosts use it as the mobile equivalent of clicking a tab (e.g. pinning
+  a transient view).
