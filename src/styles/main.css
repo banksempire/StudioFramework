@@ -1492,6 +1492,11 @@ body.sf-dragging-row * {
   color: var(--sf-text);
   font-size: 16px;
   padding: 0 12px;
+  transition: background 120ms;
+}
+
+.sf-root--mobile .sf-mobile-tab-label--holding {
+  background: var(--sf-hover-overlay);
 }
 
 .sf-root--mobile .sf-mobile-tab-text {

@@ -107,6 +107,8 @@ export interface WorkspaceApi {
   findTabGlobal(tabId: string): TileNode | null;
   setTabClickHandler(handler: ((tabId: string) => void) | null): void;
   notifyTabClick(tabId: string): void;
+  setTabLongPressHandler(handler: ((tabId: string) => void) | null): void;
+  notifyTabLongPress(tabId: string): void;
   setExternalDropHandler(
     accepts: ((types: string[]) => boolean) | null,
     handler: ((e: DragEvent, target: ExternalDropTarget) => void) | null,
@@ -214,6 +216,16 @@ export function useWorkspace(def: WorkspaceDef): WorkspaceApi {
 
   function notifyTabClick(tabId: string) {
     tabClickHandler?.(tabId);
+  }
+
+  let tabLongPressHandler: ((tabId: string) => void) | null = null;
+
+  function setTabLongPressHandler(handler: ((tabId: string) => void) | null) {
+    tabLongPressHandler = handler;
+  }
+
+  function notifyTabLongPress(tabId: string) {
+    tabLongPressHandler?.(tabId);
   }
 
   const tabDefs = reactive<Record<string, WorkspaceTabDef>>({});
@@ -660,6 +672,8 @@ export function useWorkspace(def: WorkspaceDef): WorkspaceApi {
     deliverExternalDrop,
     setTabClickHandler,
     notifyTabClick,
+    setTabLongPressHandler,
+    notifyTabLongPress,
     get newTabTitle() {
       return state.newTabTitle;
     },

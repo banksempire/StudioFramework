@@ -38,6 +38,7 @@ onMounted(() => {
   scrollActiveTabIntoView();
 });
 onBeforeUnmount(() => {
+  cancelLabelHold();
   if (synthetic.value) return;
   ws.registerTileEl(props.tile.id, null);
 });
@@ -46,6 +47,51 @@ const activeTab = computed(() => (props.tile.activeId ? (ws.tabDefs[props.tile.a
 
 const tabMenuOpen = ref(false);
 const tabsInnerEl = ref<HTMLElement | null>(null);
+
+const LONG_PRESS_MS = 500;
+const labelHold = ref(false);
+let holdTimer: ReturnType<typeof setTimeout> | null = null;
+let holdStart = { x: 0, y: 0 };
+let holdFired = false;
+
+function cancelLabelHold() {
+  if (holdTimer) clearTimeout(holdTimer);
+  holdTimer = null;
+  labelHold.value = false;
+}
+
+function onLabelPointerDown(e: PointerEvent) {
+  if (e.button !== 0) return;
+  holdStart = { x: e.clientX, y: e.clientY };
+  holdFired = false;
+  labelHold.value = true;
+  try {
+    (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId);
+  } catch {}
+  holdTimer = setTimeout(() => {
+    holdTimer = null;
+    holdFired = true;
+    labelHold.value = false;
+    if (props.tile.activeId) ws.notifyTabLongPress(props.tile.activeId);
+    navigator.vibrate?.(12);
+  }, LONG_PRESS_MS);
+}
+
+function onLabelPointerMove(e: PointerEvent) {
+  if (!holdTimer) return;
+  const dx = e.clientX - holdStart.x;
+  const dy = e.clientY - holdStart.y;
+  if (dx * dx + dy * dy > 100) cancelLabelHold();
+}
+
+function onLabelClick(e: MouseEvent) {
+  if (holdFired) {
+    holdFired = false;
+    e.preventDefault();
+    return;
+  }
+  tabMenuOpen.value = !tabMenuOpen.value;
+}
 
 async function scrollActiveTabIntoView() {
   const id = props.tile.activeId;
@@ -144,8 +190,13 @@ function onTileMousedown() {
         />
         <span
           class="sf-mobile-tab-label"
-          :class="activeTab?.tabClass"
-          @click.stop="tabMenuOpen = !tabMenuOpen"
+          :class="[activeTab?.tabClass, { 'sf-mobile-tab-label--holding': labelHold }]"
+          @pointerdown="onLabelPointerDown"
+          @pointermove="onLabelPointerMove"
+          @pointerup="cancelLabelHold"
+          @pointercancel="cancelLabelHold"
+          @contextmenu.prevent
+          @click.stop="onLabelClick"
         >
           <span class="sf-mobile-tab-icon-slot">
             <Icon v-if="activeTab?.icon" class="sf-mobile-tab-icon" :icon="activeTab.icon" />
