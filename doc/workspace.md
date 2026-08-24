@@ -162,6 +162,8 @@ via the `kWorkspace` injection key:
 | `registerTileEl(id, el)` / `tileEls` | | Tile element registry for hit testing |
 | `newTabTitle` | `string` | Tooltip for hosts that render their own new-tab control (default "New file"; the framework's strip shows no "+") |
 | `setNewTabHandler(handler, title?)` | | Override tab creation: the handler (tile id) runs instead of creating an "Untitled" tab; `null` restores the default |
+| `setTabClickHandler(handler)` / `notifyTabClick(tabId)` | | App-level tab-click hook: `Tile.vue` notifies on every tab activation click (dropdown rows included); `null` unbinds |
+| `setTabLongPressHandler(handler)` / `notifyTabLongPress(tabId)` | | App-level tab long-press hook: fired when the mobile tab selection bar is pressed & held (≥500ms, ≤10px drift) — the tap that follows is suppressed; `null` unbinds |
 | `findTileGlobal(tileId)` | | Find a tile across all roots |
 | `capture()` | `WorkspaceSnapshot` | Capture structure + spacing (split + root ratios) as a plain JSON object (no node ids) — includes side-panel visibility and per-window state when providers are registered |
 | `apply(snapshot)` | `string[]` | Replace the whole workspace with a snapshot; returns the ids of tabs that had no definition (now blank ghost windows) |
@@ -271,3 +273,8 @@ Below 500px window width the framework switches to a phone-style chrome
   `+` / focus back to the real tiles, so the structure resumes exactly
   when the window widens again. DnD is disabled on the flat tile (no
   drag-to-tile on mobile).
+- The mobile tab selection bar (the centered active-tab label) supports a
+  **long press** (≥500ms hold, ≤10px drift): the framework fires
+  `notifyTabLongPress(activeTabId)` (see `setTabLongPressHandler`) and
+  suppresses the tap, so the tab list does not open. Hosts use it as the
+  mobile equivalent of clicking a tab (e.g. pinning a transient view).

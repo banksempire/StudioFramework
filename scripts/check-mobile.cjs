@@ -573,6 +573,56 @@ const WS = '.sf-workspace';
   );
   await tapEl(explorer);
   await page.waitForTimeout(300);
+  await page.evaluate(() => {
+    window.__lpFired = [];
+    window.__sfWorkspace.setTabLongPressHandler((tabId) => window.__lpFired.push(tabId));
+  });
+  const labelEl = page.locator('.sf-mobile-tab-label');
+  const lbl = await labelEl.boundingBox();
+  const lx = lbl.x + lbl.width / 2;
+  const ly = lbl.y + lbl.height / 2;
+  await touch('touchStart', [{ x: lx, y: ly }]);
+  await page.waitForTimeout(200);
+  report(
+    'long press: holding feedback while pressed',
+    (await page.locator('.sf-mobile-tab-label--holding').count()) === 1,
+  );
+  await page.waitForTimeout(600);
+  await touch('touchEnd', []);
+  await page.waitForTimeout(250);
+  const lp1 = await page.evaluate(() => window.__lpFired);
+  const activeId = await page.evaluate(() => {
+    const api = window.__sfWorkspace;
+    return Object.values(api.tabDefs).find((t) => t.label === 'framework.ts')?.id ?? '';
+  });
+  report(
+    'long press: fires the tab long-press hook with the active tab id',
+    JSON.stringify(lp1) === JSON.stringify([activeId]),
+    JSON.stringify(lp1),
+  );
+  report(
+    'long press: the tap is suppressed (tab list stays closed)',
+    (await page.locator('.sf-tab-dropdown').count()) === 0,
+  );
+  await touch('touchStart', [{ x: lx, y: ly }]);
+  for (let i = 1; i <= 4; i += 1) {
+    await touch('touchMove', [{ x: lx + i * 15, y: ly }]);
+    await page.waitForTimeout(16);
+  }
+  await page.waitForTimeout(600);
+  await touch('touchEnd', []);
+  await page.waitForTimeout(250);
+  const lp2 = await page.evaluate(() => window.__lpFired);
+  report('long press: cancelled by finger drift', lp2.length === 1, JSON.stringify(lp2));
+  if ((await page.locator('.sf-tab-dropdown').count()) === 1) {
+    await tapEl(page.locator('.sf-tab-dropdown-close'));
+    await page.waitForTimeout(200);
+  }
+  await tapEl(labelEl);
+  await page.waitForTimeout(250);
+  report('short tap still opens the tab list', (await page.locator('.sf-tab-dropdown').count()) === 1);
+  await tapEl(page.locator('.sf-tab-dropdown-close'));
+  await page.waitForTimeout(200);
 
   report('no console/page errors', errors.length === 0, errors.join('; '));
 
