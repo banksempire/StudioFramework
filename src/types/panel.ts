@@ -4,6 +4,7 @@ export interface PanelUtility {
   id: string;
   icon: IconDef;
   tooltip?: string;
+  closeMobilePanel?: boolean;
 }
 
 export interface TreeNode {

@@ -20,7 +20,7 @@ import Docker from './components/Docker.vue';
 import Panel from './components/Panel.vue';
 import Workspace from './components/Workspace.vue';
 import StatusBar from './components/StatusBar.vue';
-import { kIsMobile, kTitleBarMenus, kWorkspace, useWorkspace } from './composables/useWorkspace';
+import { kIsMobile, kMobilePanelDismiss, kTitleBarMenus, kWorkspace, useWorkspace } from './composables/useWorkspace';
 
 const props = withDefaults(defineProps<{
   layout?: LayoutDefinition;
@@ -52,6 +52,11 @@ const isMobile = ref(window.innerWidth < MOBILE_BREAKPOINT);
 provide(kIsMobile, isMobile);
 const mobilePanelOpen = ref(false);
 const mobileRightOpen = ref(false);
+provide(kMobilePanelDismiss, () => {
+  if (!isMobile.value) return;
+  mobilePanelOpen.value = false;
+  mobileRightOpen.value = false;
+});
 const STATUS_SLOT = 38; 
 const statusReveal = ref(1);
 const statusDragging = ref(false);
@@ -271,7 +276,23 @@ function onMenuAction(actionId: string) {
   }
 }
 
+function utilityClosesMobilePanel(subId: string, utilityId: string): boolean {
+  for (const panel of [dockerDef.value, L.right]) {
+    for (const section of panel?.sections ?? []) {
+      for (const sub of section.subSections) {
+        if (sub.id !== subId) continue;
+        if (sub.utilities?.some((u) => u.id === utilityId && u.closeMobilePanel)) return true;
+      }
+    }
+  }
+  return false;
+}
+
 function onPanelUtility(subId: string, utilityId: string, itemId?: string) {
+  if (utilityClosesMobilePanel(subId, utilityId)) {
+    mobilePanelOpen.value = false;
+    mobileRightOpen.value = false;
+  }
   emit('action', { source: 'utility', subId, action: utilityId, payload: itemId });
 }
 
