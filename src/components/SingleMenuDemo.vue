@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref } from 'vue';
+import { onUnmounted, ref, watch } from 'vue';
 import type { SingleMenuOption } from '../types/singleMenu';
 import SingleMenu from './SingleMenu.vue';
 
@@ -60,6 +60,30 @@ function onSelect(f: RecentFile, opt: SingleMenuOption) {
 function onActivate(f: RecentFile) {
   lastAction.value = `open ${f.name}`;
 }
+
+const autoRefresh = ref(false);
+const dropInTicks = ref(0);
+let refreshTimer: number | null = null;
+
+function stopAutoRefresh() {
+  if (refreshTimer !== null) {
+    window.clearInterval(refreshTimer);
+    refreshTimer = null;
+  }
+}
+
+watch(autoRefresh, (on) => {
+  stopAutoRefresh();
+  if (!on) return;
+  refreshTimer = window.setInterval(() => {
+    files.value = files.value.map((f) => ({ ...f }));
+    if (dropInTicks.value > 0) {
+      dropInTicks.value -= 1;
+      if (dropInTicks.value === 0) files.value = files.value.slice(0, -1);
+    }
+  }, 1000);
+});
+onUnmounted(stopAutoRefresh);
 </script>
 
 <template>
@@ -91,6 +115,22 @@ function onActivate(f: RecentFile) {
       </template>
     </SingleMenu>
     <div class="single-menu-demo-status">{{ lastAction || 'right-click a row (mouse) — tap ⋮ (touch)' }}</div>
+    <div class="single-menu-demo-sync">
+      <button
+        class="single-menu-demo-refresh"
+        :class="{ 'single-menu-demo-refresh--on': autoRefresh }"
+        @click="autoRefresh = !autoRefresh"
+      >
+        sync churn: {{ autoRefresh ? 'on' : 'off' }}
+      </button>
+      <button
+        class="single-menu-demo-drop-next"
+        :class="{ 'single-menu-demo-drop-next--on': dropInTicks > 0 }"
+        @click="dropInTicks = 2"
+      >
+        drop last via sync: {{ dropInTicks > 0 ? 'armed' : 'off' }}
+      </button>
+    </div>
   </div>
 </template>
 
@@ -154,5 +194,32 @@ function onActivate(f: RecentFile) {
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+}
+
+.single-menu-demo-sync {
+  display: flex;
+  gap: 6px;
+  padding: 2px 6px;
+}
+
+.single-menu-demo-sync button {
+  font-size: 13px;
+  font-family: var(--sf-mono);
+  color: var(--sf-text-muted);
+  background: var(--sf-bg);
+  border: 1px solid var(--sf-border);
+  border-radius: var(--sf-radius-sm);
+  padding: 2px 8px;
+  cursor: pointer;
+}
+
+.single-menu-demo-sync button:hover {
+  color: var(--sf-text);
+}
+
+.single-menu-demo-refresh--on,
+.single-menu-demo-drop-next--on {
+  color: var(--sf-accent);
+  border-color: var(--sf-accent);
 }
 </style>

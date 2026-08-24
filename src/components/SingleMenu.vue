@@ -30,10 +30,17 @@ const emit = defineEmits<{
 const injectedMobile = inject(kIsMobile, null);
 const isMobile = computed(() => injectedMobile?.value ?? false);
 
-function rowKey(item: T, index: number): string {
+function stableKey(item: T): string | null {
   if (props.keyOf) return props.keyOf(item);
-  if (item !== null && typeof item === 'object' && 'id' in item) return String((item as { id: unknown }).id);
-  return String(item ?? index);
+  if (item !== null && typeof item === 'object') {
+    return 'id' in item ? String((item as { id: unknown }).id) : null;
+  }
+  if (item === null || item === undefined) return null;
+  return String(item);
+}
+
+function rowKey(item: T, index: number): string {
+  return stableKey(item) ?? String(item ?? index);
 }
 
 interface RowView<TItem> {
@@ -122,9 +129,17 @@ function onDocKey(e: KeyboardEvent) {
   if (e.key === 'Escape') closeAll();
 }
 
-watch(rowViews, () => {
-  if (ctxItem.value !== null && !props.items.includes(ctxItem.value)) ctxItem.value = null;
-  if (dialogItem.value !== null && !props.items.includes(dialogItem.value)) dialogItem.value = null;
+watch(rowViews, (rows) => {
+  const rebind = (item: T | null): T | null => {
+    if (item === null) return null;
+    if (rows.some((r) => r.item === item)) return item;
+    const key = stableKey(item);
+    if (key === null) return null;
+    const hit = rows.find((r) => r.key === key);
+    return hit ? hit.item : null;
+  };
+  ctxItem.value = rebind(ctxItem.value);
+  dialogItem.value = rebind(dialogItem.value);
 });
 
 const sheetTarget = ref<HTMLElement | 'body'>('body');
