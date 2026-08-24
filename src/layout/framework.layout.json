@@ -397,7 +397,8 @@
                   {
                     "id": "new-file",
                     "icon": "📄",
-                    "tooltip": "New File"
+                    "tooltip": "New File",
+                    "closeMobilePanel": true
                   },
                   {
                     "id": "new-folder",

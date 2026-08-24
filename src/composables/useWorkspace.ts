@@ -148,6 +148,8 @@ export const kTitleBarMenus: InjectionKey<TitleBarMenusApi> = Symbol('sf.titleBa
 
 export const kIsMobile: InjectionKey<Ref<boolean>> = Symbol('sf.isMobile');
 
+export const kMobilePanelDismiss: InjectionKey<() => void> = Symbol('sf.mobilePanelDismiss');
+
 export function useWorkspaceContext(): WorkspaceContext {
   const api = inject(kWorkspace);
   if (!api) throw new Error('useWorkspaceContext: workspace context not provided');

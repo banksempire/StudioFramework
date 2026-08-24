@@ -627,6 +627,35 @@ const WS = '.sf-workspace';
   await page.waitForTimeout(250);
   report('short tap still opens the tab list', (await page.locator('.sf-tab-dropdown').count()) === 1);
   await tapEl(page.locator('.sf-tab-dropdown-close'));
+
+  await page.locator('.sf-docker-app[title="Explorer"]').click();
+  await page.waitForTimeout(300);
+  report(
+    'utility-dismiss: Explorer panel reopens fullscreen',
+    (await page.locator('.sf-mobile-panel .sf-panel-title').textContent()) === 'Files',
+  );
+  const projSub = page.locator('.sf-mobile-panel .sf-subsection', { hasText: 'Project' });
+  report(
+    'utility-dismiss: Project subsection shows its 4 utility buttons',
+    (await projSub.locator('.sf-subsection-util').count()) === 4,
+  );
+  await projSub.locator('.sf-subsection-util[title="New File"]').click();
+  await page.waitForTimeout(300);
+  report(
+    'utility-dismiss: a closeMobilePanel utility fires AND dismisses the panel',
+    (await page.locator('.sf-mobile-panel').count()) === 0,
+  );
+
+  await page.locator('.sf-docker-app[title="Explorer"]').click();
+  await page.waitForTimeout(300);
+  const projSub2 = page.locator('.sf-mobile-panel .sf-subsection', { hasText: 'Project' });
+  await projSub2.locator('.sf-subsection-util[title="Collapse All"]').click();
+  await page.waitForTimeout(300);
+  report(
+    'utility-dismiss: an unflagged utility keeps the panel open',
+    (await page.locator('.sf-mobile-panel').count()) === 1,
+  );
+  await page.locator('.sf-panel-close-btn').click();
   await page.waitForTimeout(200);
 
   report('no console/page errors', errors.length === 0, errors.join('; '));
