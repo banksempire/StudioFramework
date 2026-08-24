@@ -26,6 +26,17 @@ const { ensureServer, makeReporter, finish } = require('./lib/ui-test.cjs');
   const row = (label) => page.locator('.sf-sm-row', { hasText: label }).first();
   const status = () => page.locator('.single-menu-demo-status').textContent();
   const rowCount = () => page.locator('.sf-sm-row').count();
+  const churnToggle = page.locator('.single-menu-demo-refresh');
+  const dropArm = page.locator('.single-menu-demo-drop-next');
+  const isOn = (loc) => loc.evaluate((el) => el.classList.contains('single-menu-demo-refresh--on'));
+  const churnOn = async () => {
+    await churnToggle.evaluate((el) => el.click());
+    if (!(await isOn(churnToggle))) throw new Error('churn toggle failed to turn on');
+  };
+  const churnOff = async () => {
+    await churnToggle.evaluate((el) => el.click());
+    if (await isOn(churnToggle)) throw new Error('churn toggle failed to turn off');
+  };
 
   report(
     'demo list renders 5 rows with custom content',
@@ -112,6 +123,26 @@ const { ensureServer, makeReporter, finish } = require('./lib/ui-test.cjs');
     'deleting from the menu removes the row',
     (await rowCount()) === before - 1 && (await row('scratch.txt').count()) === 0,
   );
+
+  await churnOn();
+  const churnPoint = await row('SingleMenu2.vue').boundingBox();
+  await page.mouse.click(churnPoint.x + 40, churnPoint.y + churnPoint.height / 2, { button: 'right' });
+  await page.waitForTimeout(2600);
+  report(
+    'ctx menu stays open when the list re-syncs and replaces item objects',
+    (await page.locator('.sf-sm-menu').count()) === 1,
+  );
+  await page.locator('.sf-sm-menu .sf-sm-menu-row', { hasText: 'Open' }).click();
+  await page.waitForTimeout(200);
+  const churnStatus = await status();
+  report(
+    're-synced menu still dispatches select for the right item',
+    (await page.locator('.sf-sm-menu').count()) === 0 &&
+      churnStatus.includes('open ') &&
+      churnStatus.includes('SingleMenu2.vue'),
+    churnStatus,
+  );
+  await churnOff();
 
   await page.setViewportSize({ width: 450, height: 900 });
   await page.waitForTimeout(400);
@@ -241,6 +272,29 @@ const { ensureServer, makeReporter, finish } = require('./lib/ui-test.cjs');
   await page.waitForTimeout(100);
   report('rename from the popup commits', (await row('welcome2.md').count()) === 1);
 
+  await churnToggle.evaluate((el) => el.click());
+  if (!(await isOn(churnToggle))) throw new Error('mobile churn toggle failed to turn on');
+  await tapEl(row('framework.layout.json').locator('.sf-sm-more'));
+  await page.waitForTimeout(250);
+  report('churn: ⋮ popup open before the re-sync lands', (await page.locator('.sf-sm-dialog').count()) === 1);
+  await page.waitForTimeout(2400);
+  report(
+    '⋮ popup stays open by itself while the list re-syncs underneath (mobile menu vanishing bug)',
+    (await page.locator('.sf-sm-dialog').count()) === 1,
+  );
+  report(
+    'churned popup still shows the right item',
+    (await page.locator('.sf-sm-dialog-title').textContent()) === 'framework.layout.json',
+  );
+  await tapEl(page.locator('.sf-sm-dialog .sf-sm-menu-row', { hasText: 'Open' }));
+  await page.waitForTimeout(200);
+  report(
+    'churned popup still dispatches select for the right item',
+    (await page.locator('.sf-sm-dialog').count()) === 0 && (await status()) === 'open framework.layout.json',
+  );
+  await churnToggle.evaluate((el) => el.click());
+  if (await isOn(churnToggle)) throw new Error('mobile churn toggle failed to turn off');
+
   const stDrag = await status();
   const drow = row('framework.layout.json');
   const db = await drow.boundingBox();
@@ -333,6 +387,38 @@ const { ensureServer, makeReporter, finish } = require('./lib/ui-test.cjs');
     (await page.locator('.sf-sm-menu').count()) === 1,
   );
   await page.keyboard.press('Escape');
+
+  const lastRow = row('scratch.txt');
+  await dropArm.evaluate((el) => el.click());
+  await churnOn();
+  const dropPoint = await lastRow.boundingBox();
+  await page.mouse.click(dropPoint.x + 40, dropPoint.y + dropPoint.height / 2, { button: 'right' });
+  await page.waitForTimeout(500);
+  report(
+    'removal setup: ctx menu open on the row about to vanish',
+    (await page.locator('.sf-sm-menu').count()) === 1,
+  );
+  await page.waitForTimeout(2500);
+  report(
+    'ctx menu closes when its row is removed by an external sync',
+    (await page.locator('.sf-sm-menu').count()) === 0 && (await lastRow.count()) === 0,
+  );
+  await churnOff();
+
+  await dropArm.evaluate((el) => el.click());
+  await churnOn();
+  await tapEl(row('SingleMenu.vue').locator('.sf-sm-more'));
+  await page.waitForTimeout(500);
+  report(
+    'removal setup: ⋮ popup open on the row about to vanish',
+    (await page.locator('.sf-sm-dialog').count()) === 1,
+  );
+  await page.waitForTimeout(2500);
+  report(
+    '⋮ popup closes when its row is removed by an external sync',
+    (await page.locator('.sf-sm-dialog').count()) === 0 && (await row('SingleMenu.vue').count()) === 0,
+  );
+  await churnOff();
 
   report('no page errors during the run', errors.length === 0, errors.join(' | '));
 
