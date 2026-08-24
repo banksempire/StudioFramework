@@ -178,8 +178,11 @@ epoch and re-hydrate, so loading a saved workspace restores widths, tabs,
 hidden/collapsed sub-sections and heights in place. The key-set is exhaustive:
 anything in `sf.ui.state` rides, including host-app keys (`app.*`) written
 through `src/uiState.ts` by the embedding app — e.g. pi-agent-studio stores
-its session-status filter, composer prefs and drafts there so they ride in
-saved workspaces too.
+its session-status filter and composer prefs there so they ride in saved
+workspaces too. Host apps may deliberately keep a value out of the store when
+it must NOT ride: pi-agent-studio keeps composer drafts in the separate
+device-local key `sf-chat:drafts`, so a page refresh restores them but
+loading a saved workspace never clobbers in-progress typing.
 
 ## Docker app bar
 
