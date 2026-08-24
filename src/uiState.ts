@@ -1,3 +1,5 @@
+import { ref } from 'vue';
+
 const STORAGE_KEY = 'sf.ui.state';
 const STATE_VERSION = 1;
 const FLUSH_DELAY_MS = 300;
@@ -9,6 +11,8 @@ interface UiStateFile {
 
 let values: Record<string, unknown> | null = null;
 let flushTimer: ReturnType<typeof setTimeout> | null = null;
+
+export const uiEpoch = ref(0);
 
 function loadValues(): Record<string, unknown> {
   if (values) return values;
@@ -73,6 +77,33 @@ export function writeUiValue(key: string, value: unknown): void {
     flushTimer = null;
     flush();
   }, FLUSH_DELAY_MS);
+}
+
+export function readAllUiValues(): Record<string, unknown> {
+  return { ...loadValues() };
+}
+
+export function applyUiValues(map: Record<string, unknown>): void {
+  const next = loadValues();
+  for (const key of Object.keys(next)) delete next[key];
+  for (const [key, value] of Object.entries(map)) {
+    if (
+      typeof value === 'string' ||
+      typeof value === 'number' ||
+      typeof value === 'boolean' ||
+      Array.isArray(value)
+    ) {
+      next[key] = value;
+      continue;
+    }
+    if (typeof value === 'object' && value !== null) {
+      try {
+        next[key] = JSON.parse(JSON.stringify(value));
+      } catch {}
+    }
+  }
+  flush();
+  uiEpoch.value += 1;
 }
 
 if (typeof window !== 'undefined') {
