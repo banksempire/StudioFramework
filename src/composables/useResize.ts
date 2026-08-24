@@ -1,8 +1,13 @@
 import { ref } from 'vue';
 
+export const PANEL_MIN_WIDTH = 150;
+export const PANEL_MAX_WIDTH = 500;
+export const DEFAULT_PANEL_WIDTH = 260;
+
 export interface ResizeOptions {
   min?: number;
   max?: number;
+  initial?: number;
   direction?: 'left' | 'right';
   onCollapse?: () => void;
   onResize?: (width: number) => void;
@@ -13,6 +18,7 @@ export function useResize(options: ResizeOptions) {
   const {
     min = 180,
     max = 500,
+    initial = 260,
     direction = 'right',
     onCollapse,
     onResize,
@@ -21,13 +27,13 @@ export function useResize(options: ResizeOptions) {
 
   const sign = direction === 'left' ? -1 : 1;
 
-  const width = ref(260);
+  const width = ref(Math.min(max, Math.max(min, initial)));
   const dragging = ref(false);
   const willCollapse = ref(false);
 
   let startX = 0;
   let startWidth = 0;
-  let rawWidth = 260;
+  let rawWidth = initial;
   let handleEl: HTMLElement | null = null;
   let pointerId = 0;
 

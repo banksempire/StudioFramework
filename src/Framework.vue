@@ -12,7 +12,7 @@ export interface FrameworkAction {
 </script>
 
 <script setup lang="ts">
-import { computed, nextTick, onMounted, onUnmounted, provide, ref } from 'vue';
+import { computed, nextTick, onMounted, onUnmounted, provide, ref, watch } from 'vue';
 import { loadLayout } from './layout/loadLayout';
 import type { LayoutDefinition } from './types/layout';
 import MenuBar from './components/MenuBar.vue';
@@ -20,6 +20,12 @@ import Docker from './components/Docker.vue';
 import Panel from './components/Panel.vue';
 import Workspace from './components/Workspace.vue';
 import StatusBar from './components/StatusBar.vue';
+import {
+  DEFAULT_PANEL_WIDTH,
+  PANEL_MAX_WIDTH,
+  PANEL_MIN_WIDTH,
+} from './composables/useResize';
+import { readUiNumber, readUiString, writeUiValue } from './uiState';
 import { kIsMobile, kTitleBarMenus, kWorkspace, useWorkspace } from './composables/useWorkspace';
 
 const props = withDefaults(defineProps<{
@@ -40,7 +46,11 @@ provide(kWorkspace, api);
 provide(kTitleBarMenus, { menus: L.menu, onAction: onMenuAction });
 onMounted(() => emit('workspace-ready', api));
 
-const activeDockerApp = ref(L.docker[0]?.id ?? '');
+const persistedApp = readUiString('panel.activeApp');
+const activeDockerApp = ref(
+  persistedApp && L.docker.some((d) => d.id === persistedApp) ? persistedApp : (L.docker[0]?.id ?? ''),
+);
+watch(activeDockerApp, (id) => writeUiValue('panel.activeApp', id));
 const leftPanelVisible = ref(true);
 const dockerPanelVisible = ref(true);
 const savedPanelState = ref(true);
@@ -90,8 +100,14 @@ const DOCKER_WIDTH = 48;
 const leftAutoHidden = ref(false);
 const rightAutoHidden = ref(false);
 
-const leftPanelWidth = ref(260);
-const rightPanelWidth = ref(260);
+function restorePanelWidth(key: string): number {
+  const v = readUiNumber(key);
+  if (v === undefined) return DEFAULT_PANEL_WIDTH;
+  return Math.min(PANEL_MAX_WIDTH, Math.max(PANEL_MIN_WIDTH, v));
+}
+
+const leftPanelWidth = ref(restorePanelWidth('panel.width.left'));
+const rightPanelWidth = ref(restorePanelWidth('panel.width.right'));
 
 let panelResizeTriggered = false;
 
@@ -139,6 +155,7 @@ function onPanelResize(side: 'left' | 'right', newWidth: number) {
   const prev = side === 'left' ? leftPanelWidth.value : rightPanelWidth.value;
   if (side === 'left') leftPanelWidth.value = newWidth;
   else rightPanelWidth.value = newWidth;
+  writeUiValue(`panel.width.${side}`, newWidth);
 
   if (newWidth > prev && !panelResizeTriggered) {
     if (calcWorkspaceWidth(false) < MIN_WORKSPACE_WIDTH) {
@@ -311,6 +328,8 @@ function onPanelAction(a: PanelAction) {
           :title="dockerDef.title"
           :sections="dockerDef.sections"
           :visible="effDockerPanelVisible"
+          :width="leftPanelWidth"
+          :state-key="'docker:' + activeDockerApp"
           position="left"
           @collapse="dockerPanelVisible = false"
           @resize="onPanelResize('left', $event)"
@@ -333,6 +352,8 @@ function onPanelAction(a: PanelAction) {
           :title="L.right.title"
           :sections="L.right.sections"
           :visible="effRightPanelVisible"
+          :width="rightPanelWidth"
+          state-key="right"
           position="right"
           @collapse="rightPanelVisible = false"
           @resize="onPanelResize('right', $event)"
@@ -357,6 +378,7 @@ function onPanelAction(a: PanelAction) {
           :title="dockerDef.title"
           :sections="dockerDef.sections"
           :visible="true"
+          :state-key="'docker:' + activeDockerApp"
           position="mobile"
           @close="mobilePanelOpen = false"
           @utility="onPanelUtility"
@@ -368,6 +390,7 @@ function onPanelAction(a: PanelAction) {
           :title="L.right.title"
           :sections="L.right.sections"
           :visible="true"
+          state-key="right"
           position="mobile"
           @close="mobileRightOpen = false"
           @utility="onPanelUtility"

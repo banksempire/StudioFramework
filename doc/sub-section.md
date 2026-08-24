@@ -149,8 +149,11 @@ Each sub-section has three independent states:
 A sub-section is **resizeable** when all three are true:
 `is_visible && is_expanded && is_height_variable`
 
-Visibility (`is_visible`) is persisted per panel + section. Expand/collapse
-(`is_expanded`) resets when switching sections (component is re-keyed).
+Visibility (`is_visible`) is kept per panel + section in memory and, together
+with `is_expanded` and the body height, persisted across page refreshes in
+`localStorage` (`sf.ui.state`, see [Panel.md](./Panel.md)). Expand/collapse
+(`is_expanded`) resets when switching sections (component is re-keyed), but the
+persisted value restores it on the next visit of that section.
 
 ## Height distribution
 
@@ -267,6 +270,7 @@ When a component's content changes (e.g., tree node expanded), it emits
 | `src/components/SubSection.vue` | Title bar (expand indicator, label, utilities) + ComponentBody wrapper |
 | `src/components/PanelComponent.vue` | Renders 6 component types; tree has expand/collapse with `content-changed` emit |
 | `src/components/Panel.vue` | ⋯ visibility dropdown, passes `subSections` + `hiddenIds` to `SubsectionBody` |
+| `src/uiState.ts` | Persisted UI-state store behind `localStorage` key `sf.ui.state` |
 
 ## CSS notes
 

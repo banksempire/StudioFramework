@@ -15,6 +15,8 @@ Both the left Docker panel and the right Properties panel use the same
 | `visible` | `boolean` | `true` | Show or hide the panel |
 | `position` | `'left' \| 'right'` | - | Which side. Drives border, resize-handle, and collapse-glow side |
 | `sections` | `PanelSection[]` | `[]` | Section tabs + sub-sections below the title bar |
+| `width` | `number` | `260` | Initial width (clamped to min/max). Framework passes the persisted width |
+| `stateKey` | `string` | - | Stable identity keying persisted panel state (see below) |
 
 Types are defined in [`src/types/panel.ts`](../src/types/panel.ts):
 
@@ -148,6 +150,27 @@ distribution, drag handles, expand/collapse, and component types.
   the panel.
 - On release above 100px, the panel snaps back to the 150px minimum.
 
+## Persisted UI state
+
+Panel sizing/layout state survives page refreshes. It is stored in
+`localStorage` under the versioned key **`sf.ui.state`** (`{ version, values }`),
+written through `src/uiState.ts` (debounced ~300 ms, flushed on `beforeunload`).
+
+| State | Storage key | Scope |
+|:---|:---|:---|
+| Panel width | `panel.width.left` / `panel.width.right` | Physical left/right panel |
+| Active docker app | `panel.activeApp` | Framework |
+| Active section tab | `panel.tab.<stateKey>::<sectionsKey>` | Panel + section set |
+| Hidden sub-sections | `panel.hidden.<stateKey>::<sectionsKey>::<sectionId>` | Panel + section |
+| Sub-section expanded + height | `panel.sub.<stateKey>::<sectionId>::<subId>` | Panel + section + sub-section |
+
+`stateKey` is assigned by `Framework.vue`: `docker:<appId>` for the docker
+panel, `right` for the right panel. Sub-section heights restore exactly when
+the window is the same size; otherwise the distribution engine absorbs the
+difference. Mobile panels never record sub-section heights. Panel visibility
+(left/docker/right booleans) persists separately in the workspace snapshot
+(`sf.workspace.layout`, see [workspace.md](./workspace.md)).
+
 ## Docker app bar
 
 Managed by `Framework.vue`, not `Panel.vue`. Each icon on the docker bar is an
@@ -169,6 +192,7 @@ No double-click - single click toggles.
 const { width, dragging, willCollapse, onMouseDown } = useResize({
   min: 150,              // Hard visual floor (px)
   max: 500,              // Maximum width (px)
+  initial: 260,          // Starting width (clamped to min/max)
   direction: 'right',    // 'left' | 'right' - which edge the handle is on
   collapseThreshold: 100,// Width below which DTC triggers on mouseup
   onCollapse: () => { … },
@@ -180,6 +204,7 @@ const { width, dragging, willCollapse, onMouseDown } = useResize({
 |:---|:---|:---|:---|
 | `min` | `number` | `180` | Minimum visible width (px) |
 | `max` | `number` | `500` | Maximum width (px) |
+| `initial` | `number` | `260` | Starting width, clamped into `[min, max]` |
 | `direction` | `'left' \| 'right'` | `'right'` | Which edge the handle is on |
 | `collapseThreshold` | `number` | `min * 0.45` | Width below which DTC triggers on mouseup |
 | `onCollapse` | `() => void` | - | Called on mouseup when width falls below the threshold |

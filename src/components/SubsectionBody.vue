@@ -1,15 +1,18 @@
 <script setup lang="ts">
 import { computed, nextTick, onMounted, onUnmounted, reactive, ref, watch } from 'vue';
 import type { PanelAction, PanelSubSection } from '../types/panel';
+import { readUiValue, writeUiValue } from '../uiState';
 import SubSection from './SubSection.vue';
 
 const props = withDefaults(
   defineProps<{
     subSections: PanelSubSection[];
     hiddenIds: Set<string>;
+    stateKey?: string;
     mobile?: boolean;
   }>(),
   {
+    stateKey: '',
     mobile: false,
   },
 );
@@ -33,6 +36,36 @@ interface SubState {
 }
 
 const states = reactive<Record<string, SubState>>({});
+
+interface PersistedSubState {
+  expanded: boolean;
+  height: number;
+}
+
+function subStateId(subId: string): string {
+  return props.stateKey ? `${props.stateKey}::${subId}` : subId;
+}
+
+function readPersistedSub(subId: string): PersistedSubState | null {
+  const v = readUiValue(`panel.sub.${subStateId(subId)}`);
+  if (typeof v !== 'object' || v === null || Array.isArray(v)) return null;
+  const r = v as Record<string, unknown>;
+  if (typeof r.expanded !== 'boolean') return null;
+  const height = typeof r.height === 'number' && Number.isFinite(r.height) ? r.height : 0;
+  return { expanded: r.expanded, height };
+}
+
+function persistSubState() {
+  if (props.mobile || !props.stateKey) return;
+  for (const sub of props.subSections) {
+    const st = states[sub.id];
+    if (!st) continue;
+    writeUiValue(`panel.sub.${subStateId(sub.id)}`, {
+      expanded: st.isExpanded,
+      height: st.savedHeight ?? st.height,
+    });
+  }
+}
 
 const visibleSubSections = computed(() => props.subSections.filter((s) => !props.hiddenIds.has(s.id)));
 
@@ -110,6 +143,7 @@ function distributeHeight() {
       -unallocated,
     );
   }
+  persistSubState();
 }
 
 const fixedObservers = new Map<string, ResizeObserver>();
@@ -168,7 +202,13 @@ watch(
     const ids = new Set(subs.map((s) => s.id));
     for (const sub of subs) {
       if (!states[sub.id]) {
-        states[sub.id] = { isExpanded: true, height: sub.minHeight ?? 0, measuredHeight: 0 };
+        const persisted = readPersistedSub(sub.id);
+        const minHeight = sub.minHeight ?? 0;
+        states[sub.id] = {
+          isExpanded: persisted?.expanded ?? true,
+          height: Math.max(persisted?.height ?? minHeight, minHeight),
+          measuredHeight: 0,
+        };
       }
     }
     for (const key of Object.keys(states)) {
@@ -218,6 +258,7 @@ function toggleExpand(subId: string) {
     const others = visibleSubSections.value.filter((s) => s.id !== subId && isResizeable(s)).map((s) => s.id);
     st.height = squeezeToMin(others, target);
   }
+  persistSubState();
   refresh(true);
 }
 
@@ -297,6 +338,7 @@ function onDragEnd() {
   dragState = null;
   document.body.classList.remove('sf-dragging');
   document.body.style.userSelect = '';
+  persistSubState();
 }
 
 onUnmounted(() => {
