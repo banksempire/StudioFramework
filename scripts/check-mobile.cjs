@@ -516,6 +516,64 @@ const WS = '.sf-workspace';
     (await mobileBarLabel()) === 'framework.ts' && (await page.locator('.sf-tab-dropdown').count()) === 0,
   );
 
+  const rootReveal = () =>
+    page.evaluate(() =>
+      document.querySelector('.sf-root').style.getPropertyValue('--sf-status-reveal').trim(),
+    );
+  const dockerBox = () => page.locator('.sf-docker--bottom').boundingBox();
+  const dockerBottom = async () => {
+    const b = await page.locator('.sf-docker--bottom').boundingBox();
+    return b.y + b.height;
+  };
+  const statusBottom = async () => {
+    const b = await page.locator('.sf-status-bar').boundingBox();
+    return b.y + b.height;
+  };
+  const dockerSwipe = async (step) => {
+    const b = await dockerBox();
+    const x = b.x + b.width / 2;
+    const y = b.y + b.height / 2;
+    await touch('touchStart', [{ x, y }]);
+    for (let i = 1; i <= 6; i += 1) {
+      await touch('touchMove', [{ x, y: y + step * i }]);
+      await page.waitForTimeout(16);
+    }
+    await touch('touchEnd', []);
+    await page.waitForTimeout(350);
+  };
+
+  report('status swipe: bar starts shown', (await rootReveal()) === '1');
+  await dockerSwipe(24);
+  report(
+    'swipe down on the dock hides the status bar (dock slides over it)',
+    (await rootReveal()) === '0' && (await dockerBottom()) >= (await statusBottom()) - 1,
+  );
+  await tapEl(explorer);
+  await page.waitForTimeout(300);
+  report(
+    'tapping a dock icon keeps the hidden status bar hidden (panel still opens)',
+    (await rootReveal()) === '0' && (await page.locator('.sf-mobile-panel').isVisible()),
+  );
+  await tapEl(explorer);
+  await page.waitForTimeout(300);
+  report(
+    'closing the panel keeps it hidden too',
+    (await rootReveal()) === '0' && (await page.locator('.sf-mobile-panel').count()) === 0,
+  );
+  await dockerSwipe(-24);
+  report(
+    'swipe up on the dock shows the status bar again',
+    (await rootReveal()) === '1' && (await dockerBottom()) < (await statusBottom()) - 20,
+  );
+  await tapEl(explorer);
+  await page.waitForTimeout(300);
+  report(
+    'tapping a dock icon keeps the shown status bar shown',
+    (await rootReveal()) === '1' && (await page.locator('.sf-mobile-panel').isVisible()),
+  );
+  await tapEl(explorer);
+  await page.waitForTimeout(300);
+
   report('no console/page errors', errors.length === 0, errors.join('; '));
 
   await finish(browser, serverProc, isFailed(), 'MOBILE CHECKS');
