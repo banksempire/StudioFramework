@@ -3,7 +3,7 @@ const { spawn } = require('node:child_process');
 const http = require('node:http');
 const path = require('node:path');
 
-const PORT = process.env.SF_TEST_PORT || '7492';
+const PORT = process.env.SF_TEST_PORT || '7493';
 const URL = `http://localhost:${PORT}/`;
 
 function serverUp() {

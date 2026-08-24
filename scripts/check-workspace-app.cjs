@@ -17,7 +17,7 @@ const PANEL = '.sf-ws-panel';
   const page = await context.newPage();
   const errors = [];
   page.on('pageerror', (e) => errors.push(`pageerror: ${e.message}`));
-  await page.goto(`http://localhost:${process.env.SF_TEST_PORT || '7492'}/`, {
+  await page.goto(`http://localhost:${process.env.SF_TEST_PORT || '7493'}/`, {
     waitUntil: 'networkidle',
     timeout: 15000,
   });

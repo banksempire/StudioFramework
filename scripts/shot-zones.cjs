@@ -1,5 +1,5 @@
 const { chromium } = require('playwright');
-const PORT = process.env.SF_TEST_PORT || '7492';
+const PORT = process.env.SF_TEST_PORT || '7493';
 (async () => {
   const browser = await chromium.launch();
   const page = await browser.newPage({ viewport: { width: 1440, height: 900 } });
