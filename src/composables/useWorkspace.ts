@@ -86,6 +86,11 @@ export interface WindowStateProvider {
   apply: (state: Record<string, unknown>) => void;
 }
 
+export interface UiStateProvider {
+  read: () => Record<string, unknown> | null;
+  apply: (values: Record<string, unknown>) => void;
+}
+
 export interface WorkspaceApi {
   roots: RootGroup[];
   rootDir: SplitDir | null;
@@ -117,6 +122,7 @@ export interface WorkspaceApi {
   apply(snapshot: WorkspaceSnapshot): string[];
   setPanelStateProvider(provider: PanelStateProvider | null): void;
   setWindowStateProvider(provider: WindowStateProvider | null): void;
+  setUiStateProvider(provider: UiStateProvider | null): void;
   persistNow(): void;
 }
 
@@ -292,13 +298,14 @@ export function useWorkspace(def: WorkspaceDef): WorkspaceApi {
   }
 
   let lastAutoJson: string | null = null;
-  function currentSnapshot(): WorkspaceSnapshot {
+  function currentSnapshot(withUi = false): WorkspaceSnapshot {
     return captureSnapshot(
       state.roots,
       state.rootDir,
       (id) => !!tabDefs[id]?.transient,
       panelProvider?.read() ?? undefined,
       windowProvider?.read() ?? undefined,
+      withUi ? (uiProvider?.read() ?? undefined) : undefined,
     );
   }
   function saveAutoSnapshot() {
@@ -319,6 +326,9 @@ export function useWorkspace(def: WorkspaceDef): WorkspaceApi {
 
   let windowProvider: WindowStateProvider | null = null;
   let pendingWindows: Record<string, unknown> | null = null;
+
+  let uiProvider: UiStateProvider | null = null;
+  let pendingUi: Record<string, unknown> | null = null;
 
   function applySnapshot(snap: WorkspaceSnapshot): string[] {
     const restored = restoreSnapshot(snap);
@@ -359,6 +369,10 @@ export function useWorkspace(def: WorkspaceDef): WorkspaceApi {
     if (snap.windows) {
       if (windowProvider) windowProvider.apply(snap.windows);
       else pendingWindows = snap.windows;
+    }
+    if (snap.ui) {
+      if (uiProvider) uiProvider.apply(snap.ui);
+      else pendingUi = snap.ui;
     }
     return ghosts;
   }
@@ -666,7 +680,7 @@ export function useWorkspace(def: WorkspaceDef): WorkspaceApi {
     setNewTabHandler,
     findTileGlobal,
     findTabGlobal,
-    capture: () => currentSnapshot(),
+    capture: () => currentSnapshot(true),
     apply: applySnapshot,
     setPanelStateProvider(provider: PanelStateProvider | null) {
       panelProvider = provider;
@@ -680,6 +694,13 @@ export function useWorkspace(def: WorkspaceDef): WorkspaceApi {
       if (provider && pendingWindows) {
         provider.apply(pendingWindows);
         pendingWindows = null;
+      }
+    },
+    setUiStateProvider(provider: UiStateProvider | null) {
+      uiProvider = provider;
+      if (provider && pendingUi) {
+        provider.apply(pendingUi);
+        pendingUi = null;
       }
     },
     persistNow: saveAutoSnapshot,

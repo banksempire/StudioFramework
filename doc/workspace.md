@@ -196,6 +196,16 @@ unit-tested via `npm run check:snap`):
   panels). The framework never inspects the payload — the host decides what
   its windows need (e.g. a chat composer's drag-resized height). Host state
   changes the framework can't observe are persisted via `persistNow()`.
+- **UI state**: every `localStorage['sf.ui.state']` value rides in every
+  saved workspace. `capture()` merges the whole ui-state values map into the
+  snapshot (`snapshot.ui`); `apply()` replaces the live store with it,
+  bumps the ui epoch (see [Panel.md](./Panel.md)) and re-applies it through
+  the mounted components. The rule is exhaustive by design — anything that
+  survives a refresh must survive a workspace round-trip, including
+  host-app keys the framework never reads (namespaced `app.*`). The
+  auto-save slot (`sf.workspace.layout`) intentionally omits `ui` (refresh
+  restore reads `sf.ui.state` directly) so a stale auto-snapshot can never
+  clobber fresher ui values.
 
 ## Workspace app (saved workspaces)
 

@@ -3,7 +3,7 @@ import { computed, nextTick, onUnmounted, ref, watch } from 'vue';
 import { DEFAULT_PANEL_WIDTH, PANEL_MAX_WIDTH, PANEL_MIN_WIDTH, useResize } from '../composables/useResize';
 import type { MenuNodeDef } from '../types/layout';
 import type { PanelAction, PanelSection } from '../types/panel';
-import { readUiNumber, readUiStringArray, writeUiValue } from '../uiState';
+import { readUiNumber, readUiStringArray, uiEpoch, writeUiValue } from '../uiState';
 import Menu from './Menu.vue';
 import SubsectionBody from './SubsectionBody.vue';
 import SvgIcon from './SvgIcon.vue';
@@ -47,6 +47,13 @@ const { width, dragging, willCollapse, onPointerDown, onPointerMove, onPointerUp
   onCollapse: () => emit('collapse'),
   onResize: (w: number) => emit('resize', w),
 });
+
+watch(
+  () => props.width,
+  (w) => {
+    width.value = Math.min(PANEL_MAX_WIDTH, Math.max(MIN_WIDTH, w));
+  },
+);
 
 const activeIndex = ref(0);
 const overflowOpen = ref(false);
@@ -102,6 +109,12 @@ function selectSection(idx: number) {
   writeUiValue(tabStateKey(lastKey), idx);
   emit('select-section', props.sections[idx].id);
 }
+
+watch(uiEpoch, () => {
+  savedIndex.clear();
+  restoreSectionState(lastKey, props.sections);
+  nextTick(() => recompute());
+});
 
 function selectOverflowSection(sectionId: string) {
   const i = props.sections.findIndex((s) => s.id === sectionId);

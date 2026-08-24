@@ -25,7 +25,7 @@ import {
   PANEL_MAX_WIDTH,
   PANEL_MIN_WIDTH,
 } from './composables/useResize';
-import { readUiNumber, readUiString, writeUiValue } from './uiState';
+import { readUiNumber, readUiString, writeUiValue, applyUiValues, readAllUiValues, uiEpoch } from './uiState';
 import { kIsMobile, kTitleBarMenus, kWorkspace, useWorkspace } from './composables/useWorkspace';
 
 const props = withDefaults(defineProps<{
@@ -92,6 +92,19 @@ api.setPanelStateProvider({
     rightPanelVisible.value = panels.right;
     void nextTick(() => onWindowResize(true));
   },
+});
+
+watch(uiEpoch, () => {
+  leftPanelWidth.value = restorePanelWidth('panel.width.left');
+  rightPanelWidth.value = restorePanelWidth('panel.width.right');
+  const app = readUiString('panel.activeApp');
+  if (app && L.docker.some((d) => d.id === app)) activeDockerApp.value = app;
+  void nextTick(() => onWindowResize(true));
+});
+
+api.setUiStateProvider({
+  read: () => readAllUiValues(),
+  apply: (values) => applyUiValues(values),
 });
 
 

@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed, nextTick, onMounted, onUnmounted, reactive, ref, watch } from 'vue';
 import type { PanelAction, PanelSubSection } from '../types/panel';
-import { readUiValue, writeUiValue } from '../uiState';
+import { readUiValue, uiEpoch, writeUiValue } from '../uiState';
 import SubSection from './SubSection.vue';
 
 const props = withDefaults(
@@ -222,6 +222,18 @@ watch(
   },
   { immediate: true },
 );
+
+watch(uiEpoch, () => {
+  for (const sub of props.subSections) {
+    const persisted = readPersistedSub(sub.id);
+    const st = states[sub.id];
+    if (!persisted || !st) continue;
+    st.isExpanded = persisted.expanded;
+    st.height = Math.max(persisted.height, sub.minHeight ?? 0);
+    st.savedHeight = undefined;
+  }
+  refresh(true);
+});
 
 watch(
   () => props.hiddenIds,

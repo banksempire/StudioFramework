@@ -32,6 +32,7 @@ export interface WorkspaceSnapshot {
   roots: RootSnapshot[];
   panels?: SnapshotPanels;
   windows?: Record<string, unknown>;
+  ui?: Record<string, unknown>;
 }
 
 export function nodeToSnapshot(
@@ -70,6 +71,7 @@ export function captureSnapshot(
   skipTab?: (tabId: string) => boolean,
   panels?: SnapshotPanels,
   windows?: Record<string, unknown>,
+  ui?: Record<string, unknown>,
 ): WorkspaceSnapshot {
   const kept: RootSnapshot[] = [];
   for (const r of roots) {
@@ -86,6 +88,7 @@ export function captureSnapshot(
   const snap: WorkspaceSnapshot = { version: 1, rootDir, roots: kept };
   if (panels) snap.panels = { ...panels };
   if (windows) snap.windows = { ...windows };
+  if (ui) snap.ui = { ...ui };
   return snap;
 }
 

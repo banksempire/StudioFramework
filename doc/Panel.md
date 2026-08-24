@@ -171,6 +171,16 @@ difference. Mobile panels never record sub-section heights. Panel visibility
 (left/docker/right booleans) persists separately in the workspace snapshot
 (`sf.workspace.layout`, see [workspace.md](./workspace.md)).
 
+**Saved workspaces carry all of it.** Every `capture()` merges the whole
+values map into `snapshot.ui`, and `apply()` replaces the live store and
+bumps a ui **epoch** — mounted `Panel`/`SubsectionBody` instances watch the
+epoch and re-hydrate, so loading a saved workspace restores widths, tabs,
+hidden/collapsed sub-sections and heights in place. The key-set is exhaustive:
+anything in `sf.ui.state` rides, including host-app keys (`app.*`) written
+through `src/uiState.ts` by the embedding app — e.g. pi-agent-studio stores
+its session-status filter, composer prefs and drafts there so they ride in
+saved workspaces too.
+
 ## Docker app bar
 
 Managed by `Framework.vue`, not `Panel.vue`. Each icon on the docker bar is an

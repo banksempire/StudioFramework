@@ -237,6 +237,22 @@ function allTabs(node: WorkspaceNode): string[] {
 }
 
 {
+  const ui = { 'panel.width.left': 320, 'panel.activeApp': 'explorer' };
+  const snap = captureSnapshot(
+    [{ node: tile(['a'], 'a'), ratio: 1 }],
+    null,
+    undefined,
+    undefined,
+    undefined,
+    ui,
+  );
+  report('capture stores ui state', JSON.stringify(snap.ui) === JSON.stringify(ui));
+  report('capture copies the ui map (no shared reference)', snap.ui !== ui);
+  const bare = captureSnapshot([{ node: tile(['a'], 'a'), ratio: 1 }], null, undefined, undefined, undefined);
+  report('no ui arg → no ui field', bare.ui === undefined);
+}
+
+{
   const tree = split('column', 0.33, tile(['p', 'q'], 'q'), tile(['r']));
   const snap = nodeToSnapshot(tree);
   const back = nodeFromSnapshot(snap);
