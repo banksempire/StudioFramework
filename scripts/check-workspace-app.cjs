@@ -33,6 +33,12 @@ const PANEL = '.sf-ws-panel';
   const wsBox = () => page.locator(WS).boundingBox();
   const wsItem = (name) => page.locator('.sf-ws-item', { hasText: name });
   const panelVisible = () => page.locator(PANEL).isVisible();
+  const openWsPanel = async () => {
+    for (let i = 0; i < 2 && !(await panelVisible()); i++) {
+      await page.locator('.sf-docker-app[title="Workspace"]').click();
+      await page.waitForTimeout(300);
+    }
+  };
 
   const wsApp = page.locator('.sf-docker-app[title="Workspace"]');
   report('Workspace app in the docker bar', (await wsApp.count()) === 1);
@@ -118,8 +124,7 @@ const PANEL = '.sf-ws-panel';
   });
   await page.reload({ waitUntil: 'networkidle' });
   await page.waitForTimeout(600);
-  await page.locator('.sf-docker-app[title="Workspace"]').click();
-  await page.waitForTimeout(300);
+  await openWsPanel();
   await wsItem('With Ghost').locator('.sf-ws-btn[title="Load this workspace"]').click();
   await page.waitForTimeout(400);
   report(
@@ -212,8 +217,7 @@ const PANEL = '.sf-ws-panel';
     Math.abs(sL - sR - (wL - wR)) < 24,
     `Δ ${(sL - sR).toFixed(0)} vs ${(wL - wR).toFixed(0)}`,
   );
-  await page.locator('.sf-docker-app[title="Workspace"]').click();
-  await page.waitForTimeout(300);
+  await openWsPanel();
   report(
     'saved workspaces survive reload',
     (await page.locator('.sf-ws-item').count()) === 1 &&

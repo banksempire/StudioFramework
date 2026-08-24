@@ -17,6 +17,7 @@
     "check:snap": "node scripts/check-snapshots.ts",
     "check:tabfit": "node scripts/check-tabfit.cjs",
     "check:ws": "node scripts/check-workspace-app.cjs",
+    "check:persist": "node scripts/check-persist.cjs",
     "typecheck": "vue-tsc --noEmit",
     "lint": "biome check .",
     "format": "biome format --write ."

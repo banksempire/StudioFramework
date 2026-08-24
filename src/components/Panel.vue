@@ -1,8 +1,9 @@
 <script setup lang="ts">
 import { computed, nextTick, onUnmounted, ref, watch } from 'vue';
-import { useResize } from '../composables/useResize';
+import { DEFAULT_PANEL_WIDTH, PANEL_MAX_WIDTH, PANEL_MIN_WIDTH, useResize } from '../composables/useResize';
 import type { MenuNodeDef } from '../types/layout';
 import type { PanelAction, PanelSection } from '../types/panel';
+import { readUiNumber, readUiStringArray, writeUiValue } from '../uiState';
 import Menu from './Menu.vue';
 import SubsectionBody from './SubsectionBody.vue';
 import SvgIcon from './SvgIcon.vue';
@@ -13,10 +14,13 @@ const props = withDefaults(
     visible: boolean;
     position: 'left' | 'right' | 'mobile';
     sections?: PanelSection[];
+    width?: number;
+    stateKey?: string;
   }>(),
   {
     visible: true,
     sections: () => [],
+    width: DEFAULT_PANEL_WIDTH,
   },
 );
 
@@ -33,10 +37,11 @@ const resizable = computed(() => props.position !== 'mobile');
 const resizeDir = computed(() => (props.position === 'left' ? 'right' : 'left'));
 const oppositeEdge = computed(() => (props.position === 'left' ? 'left' : 'right'));
 
-const MIN_WIDTH = 150;
+const MIN_WIDTH = PANEL_MIN_WIDTH;
 const { width, dragging, willCollapse, onPointerDown, onPointerMove, onPointerUp } = useResize({
   min: MIN_WIDTH,
-  max: 500,
+  max: PANEL_MAX_WIDTH,
+  initial: props.width,
   direction: resizeDir.value,
   collapseThreshold: Math.round((MIN_WIDTH * 2) / 3),
   onCollapse: () => emit('collapse'),
@@ -62,12 +67,29 @@ function panelKey(sections: PanelSection[]) {
 
 lastKey = panelKey(props.sections);
 
+const statePrefix = computed(() => (props.stateKey ? `${props.stateKey}::` : ''));
+const tabStateKey = (sectionsKey: string) => `panel.tab.${statePrefix.value}${sectionsKey}`;
+const hiddenStateKey = (mapKey: string) => `panel.hidden.${statePrefix.value}${mapKey}`;
+
+function restoreSectionState(sectionsKey: string, sections: PanelSection[]) {
+  const saved = savedIndex.get(sectionsKey);
+  const persisted = readUiNumber(tabStateKey(sectionsKey));
+  let idx = saved ?? persisted ?? 0;
+  if (!Number.isInteger(idx) || idx < 0 || idx >= sections.length) idx = 0;
+  activeIndex.value = idx;
+  for (const sec of sections) {
+    const key = `${sectionsKey}::${sec.id}`;
+    hiddenSubSections.value.set(key, new Set(readUiStringArray(hiddenStateKey(key)) ?? []));
+  }
+  hiddenSubSections.value = new Map(hiddenSubSections.value);
+}
+
 watch(
   () => props.sections,
   (sections, _old) => {
     if (lastKey) savedIndex.set(lastKey, activeIndex.value);
     lastKey = panelKey(sections);
-    activeIndex.value = savedIndex.get(lastKey) ?? 0;
+    restoreSectionState(lastKey, sections);
     visibleCount.value = 100;
     overflowOpen.value = false;
     visibilityMenuOpen.value = false;
@@ -77,6 +99,7 @@ watch(
 
 function selectSection(idx: number) {
   activeIndex.value = idx;
+  writeUiValue(tabStateKey(lastKey), idx);
   emit('select-section', props.sections[idx].id);
 }
 
@@ -167,6 +190,12 @@ const activeSectionId = computed(() => activeSection.value?.id ?? '');
 const activeSubSections = computed(() => activeSection.value?.subSections ?? []);
 const hasSubSections = computed(() => activeSubSections.value.length > 0);
 
+const subStateKey = computed(() =>
+  props.stateKey ? `${props.stateKey}::${activeSectionId.value}` : activeSectionId.value,
+);
+
+restoreSectionState(lastKey, props.sections);
+
 const activeHiddenIds = computed(() => {
   const sec = activeSection.value;
   if (!sec) return new Set<string>();
@@ -182,6 +211,7 @@ function toggleSubVisible(subId: string) {
   else hidden.add(subId);
   hiddenSubSections.value.set(key, hidden);
   hiddenSubSections.value = new Map(hiddenSubSections.value);
+  writeUiValue(hiddenStateKey(key), Array.from(hidden));
 }
 
 const visibilityItems = computed<MenuNodeDef[]>(() =>
@@ -293,6 +323,7 @@ onUnmounted(() => observer?.disconnect());
       :key="activeSectionId"
       :sub-sections="activeSubSections"
       :hidden-ids="activeHiddenIds"
+      :state-key="subStateKey"
       :mobile="position === 'mobile'"
       @utility="(subId, utilityId, itemId) => emit('utility', subId, utilityId, itemId)"
       @component-action="(a) => emit('component-action', a)"
