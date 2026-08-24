@@ -22,6 +22,7 @@ const emit = defineEmits<{
 }>();
 
 const STATUS_SLOT = 38;
+const DRAG_START = 6;
 const VELOCITY_WINS = 0.4;
 const FLICK_VELOCITY = 0.6;
 const swipe = { x: 0, y: 0, t: 0, active: false, moved: false, anchor: 0 };
@@ -40,10 +41,12 @@ function onTouchStart(e: TouchEvent) {
 function onTouchMove(e: TouchEvent) {
   if (!swipe.active) return;
   const t = e.touches[0];
-  const now = performance.now();
   const raw = t.clientY - swipe.y;
+  const dx = t.clientX - swipe.x;
   if (!swipe.moved) {
+    if (Math.abs(raw) < DRAG_START || Math.abs(dx) > Math.abs(raw)) return;
     swipe.moved = true;
+    const now = performance.now();
     const v0 = now > swipe.t ? raw / (now - swipe.t) : 0;
     swipe.anchor = Math.abs(v0) > FLICK_VELOCITY ? 0 : raw;
   }
@@ -53,10 +56,9 @@ function onTouchMove(e: TouchEvent) {
 function onTouchEnd(e: TouchEvent) {
   if (!swipe.active) return;
   swipe.active = false;
+  if (!swipe.moved) return;
   const t = e.changedTouches[0];
   const dy = t.clientY - swipe.y - swipe.anchor;
-  const dx = t.clientX - swipe.x;
-  if (Math.abs(dx) > Math.abs(dy)) return;
   const elapsed = performance.now() - swipe.t;
   const velocity = elapsed > 0 ? (t.clientY - swipe.y) / elapsed : 0;
   const show = velocity < -VELOCITY_WINS ? true : velocity > VELOCITY_WINS ? false : dy < STATUS_SLOT / 2;
