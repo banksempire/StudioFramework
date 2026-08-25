@@ -120,6 +120,14 @@ watch(
   { flush: 'post' },
 );
 
+watch(
+  () => ws.mobileSheetEpoch,
+  () => {
+    menuOpen.value = false;
+    tabMenuOpen.value = false;
+  },
+);
+
 const contentComp = computed(() => {
   const content = activeTab.value?.content;
   if (!content) return null;

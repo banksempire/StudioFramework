@@ -225,6 +225,7 @@ function showAutoHiddenRight() {
 
 function onAppSelected(appId: string) {
   if (isMobile.value) {
+    api.dismissMobileSheets();
     if (appId === activeDockerApp.value && mobilePanelOpen.value) {
       mobilePanelOpen.value = false;
     } else {
