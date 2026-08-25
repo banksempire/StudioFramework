@@ -18,6 +18,7 @@
     "check:tabfit": "node scripts/check-tabfit.cjs",
     "check:ws": "node scripts/check-workspace-app.cjs",
     "check:persist": "node scripts/check-persist.cjs",
+    "check:corners": "node scripts/check-corners.cjs",
     "typecheck": "vue-tsc --noEmit",
     "lint": "biome check .",
     "format": "biome format --write ."
