@@ -136,9 +136,6 @@ const ICONS: Record<string, IconSpec> = {
       { d: 'M16 21h3a2 2 0 0 0 2-2v-3' },
     ],
   },
-  '■': {
-    paths: [{ d: 'M6.5 6.5h11v11h-11z', filled: true }],
-  },
   '✎': {
     paths: [{ d: 'M12 20h9' }, { d: 'M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z' }],
   },
