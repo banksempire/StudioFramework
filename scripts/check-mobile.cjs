@@ -55,12 +55,12 @@ const WS = '.sf-workspace';
     const utils = Array.from(document.querySelectorAll('.sf-panel--right .sf-subsection-utils'));
     return {
       count: utils.length,
-      allHidden: utils.every((u) => getComputedStyle(u).display === 'none'),
+      allVisible: utils.every((u) => u.offsetWidth > 0),
     };
   });
   report(
-    'desktop: subsection utility buttons hidden until hover/activate',
-    desktopUtils.count > 0 && desktopUtils.allHidden,
+    'desktop: subsection utility buttons always visible',
+    desktopUtils.count > 0 && desktopUtils.allVisible,
     `count=${desktopUtils.count}`,
   );
   report(

@@ -9,13 +9,11 @@ import SvgIcon from './SvgIcon.vue';
 defineProps<{
   subSection: PanelSubSection;
   isExpanded: boolean;
-  isActive: boolean;
   bodyHeight: number | null;
 }>();
 
 const emit = defineEmits<{
   'toggle-expand': [];
-  activate: [];
   utility: [utilityId: string, itemId?: string];
   'content-changed': [];
   'component-action': [action: PanelAction];
@@ -31,12 +29,12 @@ function menuItemsOf(utilId: string) {
 <template>
   <div
     class="sf-subsection"
-    :class="{ 'sf-subsection--collapsed': !isExpanded, 'sf-subsection--active': isActive }"
+    :class="{ 'sf-subsection--collapsed': !isExpanded }"
   >
     <div class="sf-subsection-header" @click="emit('toggle-expand')">
       <span class="sf-subsection-arrow" :class="{ 'sf-subsection-arrow--expanded': isExpanded }"><SvgIcon name="❯" /></span>
       <span class="sf-subsection-label">{{ subSection.label }}</span>
-      <div v-if="subSection.utilities?.length" class="sf-subsection-utils" @click.stop="emit('activate')">
+      <div v-if="subSection.utilities?.length" class="sf-subsection-utils" @click.stop>
         <template v-for="util in subSection.utilities" :key="util.id">
           <Menu
             v-if="menuItemsOf(util.id)"
@@ -72,7 +70,6 @@ function menuItemsOf(utilId: string) {
       class="sf-subsection-body"
       :data-sub-body="subSection.id"
       :style="bodyHeight !== null ? { height: bodyHeight + 'px', overflowY: 'auto' } : {}"
-      @click="emit('activate')"
     >
       <PanelComponent
         v-for="(comp, i) in subSection.components"

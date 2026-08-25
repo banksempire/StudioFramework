@@ -69,18 +69,6 @@ function persistSubState() {
 
 const visibleSubSections = computed(() => props.subSections.filter((s) => !props.hiddenIds.has(s.id)));
 
-const activeId = ref<string | null>(null);
-
-function activate(id: string) {
-  activeId.value = id;
-}
-
-watch(visibleSubSections, (subs) => {
-  if (activeId.value && !subs.some((s) => s.id === activeId.value)) {
-    activeId.value = null;
-  }
-});
-
 function isResizeable(sub: PanelSubSection): boolean {
   if (props.mobile) return false;
   const st = states[sub.id];
@@ -368,10 +356,8 @@ onUnmounted(() => {
       <SubSection
         :sub-section="sub"
         :is-expanded="states[sub.id]?.isExpanded ?? true"
-        :is-active="activeId === sub.id"
         :body-height="bodyHeightFor(sub)"
         @toggle-expand="toggleExpand(sub.id)"
-        @activate="activate(sub.id)"
         @utility="(utilityId, itemId) => emit('utility', sub.id, utilityId, itemId)"
         @content-changed="refresh(true)"
         @component-action="(a) => emit('component-action', a)"
