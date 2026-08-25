@@ -101,6 +101,28 @@ const { ensureServer, openApp, makeReporter, finish } = require('./lib/ui-test.c
       `shown=${allUtils.shown}/${allUtils.count}`,
     );
 
+    const filterIcon = await page.evaluate(() => {
+      const btn = document.querySelector('.sf-subsection-util[title="Filter (demo)"]');
+      const path = btn?.querySelector('svg.sf-icon--svg path');
+      if (!path) return null;
+      const bb = path.getBBox();
+      return { x: bb.x, y: bb.y, width: bb.width, height: bb.height };
+    });
+    report(
+      'filter funnel icon fills the 24x24 viewBox (no surrounding padding)',
+      filterIcon !== null && filterIcon.width >= 18 && filterIcon.height >= 16,
+      filterIcon ? `bbox ${filterIcon.width.toFixed(1)}x${filterIcon.height.toFixed(1)}` : 'not found',
+    );
+    report(
+      'filter funnel icon is centered in the viewBox',
+      filterIcon !== null &&
+        Math.abs(filterIcon.x + filterIcon.width / 2 - 12) <= 0.1 &&
+        Math.abs(filterIcon.y + filterIcon.height / 2 - 12) <= 0.1,
+      filterIcon
+        ? `center (${(filterIcon.x + filterIcon.width / 2).toFixed(1)}, ${(filterIcon.y + filterIcon.height / 2).toFixed(1)})`
+        : 'not found',
+    );
+
     report('no console/page errors', errors.length === 0, errors.join('; '));
   } catch (e) {
     await page.screenshot({ path: 'scripts/artifacts/utils-subsection-fail.png' });

@@ -216,16 +216,11 @@ const ICONS: Record<string, IconSpec> = {
   },
 
   filter: {
-    paths: [{ d: 'M4 5h16l-6 6v8h-4v-8z' }],
+    paths: [{ d: 'M2 3h20l-7.5 8.5V21h-5V11.5z' }],
   },
 
   sort: {
-    paths: [
-      { d: 'M8 6L5 3L2 6' },
-      { d: 'M5 3v18' },
-      { d: 'M16 18l3 3l3-3' },
-      { d: 'M19 21V3' },
-    ],
+    paths: [{ d: 'M8 6L5 3L2 6' }, { d: 'M5 3v18' }, { d: 'M16 18l3 3l3-3' }, { d: 'M19 21V3' }],
   },
 
   '⏰': {

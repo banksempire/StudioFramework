@@ -350,7 +350,7 @@
                   },
                   {
                     "id": "demo-filter",
-                    "icon": "▾",
+                    "icon": "filter",
                     "tooltip": "Filter (demo)"
                   }
                 ],
