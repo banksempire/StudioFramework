@@ -349,10 +349,19 @@ const { ensureServer, makeReporter, finish } = require('./lib/ui-test.cjs');
       () => document.querySelector('.sf-mobile-panel .sf-subsection-body-container')?.scrollTop ?? -1,
     );
   report('a plain vertical pan still scrolls the list', (await panelScroll()) > 0);
-  await page.evaluate(() => {
-    const el = document.querySelector('.sf-mobile-panel .sf-subsection-body-container');
-    if (el) el.scrollTop = 0;
-  });
+  await page.waitForFunction(
+    () => {
+      const el = document.querySelector('.sf-mobile-panel .sf-subsection-body-container');
+      if (!el) return false;
+      el.scrollTop = 0;
+      return new Promise((resolve) => {
+        setTimeout(() => resolve(el.scrollTop === 0), 150);
+      });
+    },
+    undefined,
+    { timeout: 5000 },
+  );
+  await page.waitForTimeout(150);
 
   await tapEl(row('notes.txt').locator('.sf-sm-more'));
   await page.waitForTimeout(250);
