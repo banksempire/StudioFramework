@@ -55,6 +55,50 @@ const PANEL = '.sf-ws-panel';
     (await tileCount()) === 1 && (await tileTabs(0)).length === 4,
   );
 
+  await page.evaluate(() => {
+    const dt = new DataTransfer();
+    document
+      .querySelector('.sf-tab')
+      .dispatchEvent(new DragEvent('dragstart', { bubbles: true, cancelable: true, dataTransfer: dt }));
+  });
+  await page.evaluate(() => {
+    const ws = document.querySelector('.sf-workspace');
+    const r = document.querySelector('.sf-tile').getBoundingClientRect();
+    const strip = document.querySelector('.sf-tile-tabs').getBoundingClientRect();
+    const dt = new DataTransfer();
+    ws.dispatchEvent(
+      new DragEvent('dragover', {
+        bubbles: true,
+        cancelable: true,
+        clientX: r.left + r.width / 2,
+        clientY: strip.bottom + (r.bottom - strip.bottom) / 2,
+        dataTransfer: dt,
+      }),
+    );
+  });
+  await page.waitForSelector('.sf-dnd-glow', { timeout: 3000 });
+  const glowRadius = await page.evaluate(
+    () => getComputedStyle(document.querySelector('.sf-dnd-glow')).borderRadius,
+  );
+  report('drop glow matches the rounded workspace edge', glowRadius === '6px 0px 0px 6px', glowRadius);
+  const gb = await page.locator('.sf-dnd-glow').boundingBox();
+  const tb = await tileBox(0);
+  report(
+    'drop glow covers the hovered tile exactly',
+    Math.abs(gb.x - tb.x) <= 1 &&
+      Math.abs(gb.y - tb.y) <= 1 &&
+      Math.abs(gb.width - tb.width) <= 1 &&
+      Math.abs(gb.height - tb.height) <= 1,
+    `glow ${gb.x.toFixed(1)},${gb.y.toFixed(1)} ${gb.width.toFixed(1)}x${gb.height.toFixed(1)} vs tile ${tb.x.toFixed(1)},${tb.y.toFixed(1)} ${tb.width.toFixed(1)}x${tb.height.toFixed(1)}`,
+  );
+  await page.evaluate(() => {
+    const ws = document.querySelector('.sf-workspace');
+    ws.dispatchEvent(new DragEvent('dragleave', { bubbles: true }));
+    document.querySelector('.sf-tab').dispatchEvent(new DragEvent('dragend', { bubbles: true }));
+  });
+  await page.waitForTimeout(150);
+  report('synthetic drag cleans up the overlay', (await page.locator('.sf-dnd-layer').count()) === 0);
+
   const wb = await wsBox();
   await tab('framework.ts').dragTo(page.locator(WS), {
     targetPosition: { x: wb.width - 10, y: wb.height / 2 },

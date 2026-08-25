@@ -59,8 +59,15 @@ const GAP = parseFloat(getComputedStyle(document.documentElement).getPropertyVal
 
 const RADIUS = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--sf-radius')) || 6;
 
+function wsInnerRect(): DOMRect | null {
+  const el = wsEl.value;
+  if (!el) return null;
+  const r = el.getBoundingClientRect();
+  return new DOMRect(r.left + el.clientLeft, r.top + el.clientTop, el.clientWidth, el.clientHeight);
+}
+
 function cornerPx(r: DOMRect, ws: DOMRect, rightSeam: boolean): [number, number, number, number] {
-  const near = (a: number, b: number) => Math.abs(a - b) < 2;
+  const near = (a: number, b: number) => Math.abs(a - b) < 1;
   const top = near(r.top, ws.top);
   const bottom = near(r.bottom, ws.bottom);
   const left = near(r.left, ws.left);
@@ -159,7 +166,7 @@ function onDragOver(e: DragEvent) {
   if (e.dataTransfer) e.dataTransfer.dropEffect = external ? 'copy' : 'move';
   api.dnd.externalDrop = external;
 
-  const wsRect = wsEl.value?.getBoundingClientRect() ?? null;
+  const wsRect = wsInnerRect();
   const origin = { x: wsRect?.left ?? 0, y: wsRect?.top ?? 0 };
   const rightSeam = !!props.rightPanelVisible;
   const dnd = api.dnd;
