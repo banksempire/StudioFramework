@@ -114,6 +114,8 @@ export interface WorkspaceApi {
   notifyTabClick(tabId: string): void;
   setTabLongPressHandler(handler: ((tabId: string) => void) | null): void;
   notifyTabLongPress(tabId: string): void;
+  readonly mobileSheetEpoch: number;
+  dismissMobileSheets(): void;
   setExternalDropHandler(
     accepts: ((types: string[]) => boolean) | null,
     handler: ((e: DragEvent, target: ExternalDropTarget) => void) | null,
@@ -171,6 +173,7 @@ export function useWorkspace(def: WorkspaceDef): WorkspaceApi {
     focusedTileId: string;
     rootDir: SplitDir | null;
     newTabTitle: string;
+    mobileSheetEpoch: number;
   }>({
     roots: [
       {
@@ -187,6 +190,7 @@ export function useWorkspace(def: WorkspaceDef): WorkspaceApi {
     focusedTileId: initialTileId,
     rootDir: null,
     newTabTitle: 'New file',
+    mobileSheetEpoch: 0,
   });
 
   let newTabHandler: ((tileId: string) => void) | null = null;
@@ -234,6 +238,10 @@ export function useWorkspace(def: WorkspaceDef): WorkspaceApi {
 
   function notifyTabLongPress(tabId: string) {
     tabLongPressHandler?.(tabId);
+  }
+
+  function dismissMobileSheets() {
+    state.mobileSheetEpoch += 1;
   }
 
   const tabDefs = reactive<Record<string, WorkspaceTabDef>>({});
@@ -690,6 +698,10 @@ export function useWorkspace(def: WorkspaceDef): WorkspaceApi {
     notifyTabClick,
     setTabLongPressHandler,
     notifyTabLongPress,
+    get mobileSheetEpoch() {
+      return state.mobileSheetEpoch;
+    },
+    dismissMobileSheets,
     get newTabTitle() {
       return state.newTabTitle;
     },

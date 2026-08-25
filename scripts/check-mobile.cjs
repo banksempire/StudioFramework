@@ -224,6 +224,34 @@ const WS = '.sf-workspace';
   await page.waitForTimeout(200);
   report('activation survives (layout.json active)', (await mobileBarLabel()) === 'layout.json');
 
+  await page.locator('.sf-mobile-tab-label').click();
+  await page.waitForTimeout(200);
+  report('tab list open (dock-dismiss setup)', (await page.locator('.sf-tab-dropdown').count()) === 1);
+  await page.locator('.sf-docker-app[title="Explorer"]').click();
+  await page.waitForTimeout(300);
+  report(
+    'dock tap while the tab list is open closes it and opens the app panel',
+    (await page.locator('.sf-tab-dropdown').count()) === 0 &&
+      (await page.locator('.sf-mobile-panel').isVisible()) &&
+      (await page.locator('.sf-mobile-panel .sf-panel-title').textContent()) === 'Files',
+  );
+  await page.locator('.sf-panel-close-btn').click();
+  await page.waitForTimeout(300);
+
+  await page.locator('.sf-mobile-menu-btn').click();
+  await page.waitForTimeout(200);
+  report('⋯ menu sheet open (dock-dismiss setup)', (await page.locator('.sf-menu-sheet').count()) === 1);
+  await page.locator('.sf-docker-app[title="Search"]').click();
+  await page.waitForTimeout(300);
+  report(
+    'dock tap while the ⋯ menu sheet is open closes it and opens the app panel',
+    (await page.locator('.sf-menu-sheet').count()) === 0 &&
+      (await page.locator('.sf-mobile-panel').isVisible()) &&
+      (await page.locator('.sf-mobile-panel .sf-panel-title').textContent()) === 'Search',
+  );
+  await page.locator('.sf-panel-close-btn').click();
+  await page.waitForTimeout(300);
+
   await page.locator('.sf-mobile-rp-btn').click();
   await page.waitForTimeout(300);
   report(
