@@ -66,13 +66,24 @@ function wsInnerRect(): DOMRect | null {
   return new DOMRect(r.left + el.clientLeft, r.top + el.clientTop, el.clientWidth, el.clientHeight);
 }
 
-function cornerPx(r: DOMRect, ws: DOMRect, rightSeam: boolean): [number, number, number, number] {
+function wsEdgeRadius(): number {
+  const el = wsEl.value;
+  if (!el) return RADIUS;
+  return Math.max(0, RADIUS - Math.max(el.clientTop, el.clientLeft));
+}
+
+function cornerPx(
+  r: DOMRect,
+  ws: DOMRect,
+  rightSeam: boolean,
+  edgeR: number,
+): [number, number, number, number] {
   const near = (a: number, b: number) => Math.abs(a - b) < 1;
   const top = near(r.top, ws.top);
   const bottom = near(r.bottom, ws.bottom);
   const left = near(r.left, ws.left);
   const right = !rightSeam && near(r.right, ws.right);
-  const px = (b: boolean) => (b ? RADIUS : 0);
+  const px = (b: boolean) => (b ? edgeR : 0);
   return [px(top && left), px(top && right), px(bottom && right), px(bottom && left)];
 }
 
@@ -167,6 +178,7 @@ function onDragOver(e: DragEvent) {
   api.dnd.externalDrop = external;
 
   const wsRect = wsInnerRect();
+  const edgeR = wsEdgeRadius();
   const origin = { x: wsRect?.left ?? 0, y: wsRect?.top ?? 0 };
   const rightSeam = !!props.rightPanelVisible;
   const dnd = api.dnd;
@@ -212,7 +224,7 @@ function onDragOver(e: DragEvent) {
   if (zone === 'center') {
     dnd.preview = null;
     const glow = rectToLocal(hit.rect, origin);
-    if (wsRect) glow.radius = radiusStr(cornerPx(hit.rect, wsRect, rightSeam));
+    if (wsRect) glow.radius = radiusStr(cornerPx(hit.rect, wsRect, rightSeam, edgeR));
     dnd.glow = glow;
     const tile = api.findTileGlobal(hit.id);
     const tabCount = tile ? tile.tabs.length : 0;
@@ -234,7 +246,7 @@ function onDragOver(e: DragEvent) {
     dnd.index = 0;
     const r = hit.rect;
     const corners = wsRect
-      ? cornerPx(r, wsRect, rightSeam)
+      ? cornerPx(r, wsRect, rightSeam, edgeR)
       : ([0, 0, 0, 0] as [number, number, number, number]);
     const radius = halfRadius(zone, corners);
     const isRow = zone === 'left' || zone === 'right';

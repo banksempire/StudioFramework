@@ -80,7 +80,18 @@ const PANEL = '.sf-ws-panel';
   const glowRadius = await page.evaluate(
     () => getComputedStyle(document.querySelector('.sf-dnd-glow')).borderRadius,
   );
-  report('drop glow matches the rounded workspace edge', glowRadius === '6px 0px 0px 6px', glowRadius);
+  const expRadius = await page.evaluate(() => {
+    const cs = getComputedStyle(document.querySelector('.sf-workspace'));
+    const rad = (side) => parseFloat(cs[`border${side}Radius`]) || 0;
+    const bw = Math.max(parseFloat(cs.borderTopWidth) || 0, parseFloat(cs.borderLeftWidth) || 0);
+    const inner = (v) => `${Math.max(0, v - bw)}px`;
+    return `${inner(rad('TopLeft'))} 0px 0px ${inner(rad('BottomLeft'))}`;
+  });
+  report(
+    'drop glow matches the rounded workspace edge',
+    glowRadius === expRadius,
+    `${glowRadius} vs clip ${expRadius}`,
+  );
   const gb = await page.locator('.sf-dnd-glow').boundingBox();
   const tb = await tileBox(0);
   report(
