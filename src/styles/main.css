@@ -690,17 +690,8 @@ body,
 }
 
 .sf-subsection-utils {
-  display: none;
-  gap: 2px;
-}
-
-.sf-subsection--active:not(.sf-subsection--collapsed) .sf-subsection-utils {
   display: flex;
-}
-@media (hover: hover) {
-  .sf-subsection:not(.sf-subsection--collapsed):hover .sf-subsection-utils {
-    display: flex;
-  }
+  gap: 2px;
 }
 
 .sf-subsection-util {
@@ -1420,10 +1411,6 @@ body.sf-dragging-row * {
 
 .sf-root--mobile .sf-panel {
   border: none;
-}
-
-.sf-root--mobile .sf-subsection-utils {
-  display: flex;
 }
 
 .sf-root--mobile .sf-tile-tabs,
