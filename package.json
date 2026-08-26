@@ -20,6 +20,7 @@
     "check:persist": "node scripts/check-persist.cjs",
     "check:corners": "node scripts/check-corners.cjs",
     "check:seam": "node scripts/check-seam.cjs",
+    "check:selectors": "node scripts/check-selectors.cjs",
     "typecheck": "vue-tsc --noEmit",
     "lint": "biome check .",
     "format": "biome format --write ."

@@ -1,4 +1,5 @@
 import { createApp, reactive } from 'vue';
+import SelectorDemo from './components/SelectorDemo.vue';
 import SingleMenuDemo from './components/SingleMenuDemo.vue';
 import WelcomeContent from './components/WelcomeContent.vue';
 import WorkspacePanel from './components/WorkspacePanel.vue';
@@ -11,6 +12,8 @@ registerTabContent('welcome', WelcomeContent);
 registerPanelComponent('workspace-panel', WorkspacePanel);
 
 registerPanelComponent('single-menu-demo', SingleMenuDemo);
+
+registerPanelComponent('selector-demo', SelectorDemo);
 
 const demoFilter = reactive({ sources: true, assets: true });
 registerUtilityMenu('demo-filter', () => [

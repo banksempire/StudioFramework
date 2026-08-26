@@ -49,7 +49,7 @@ const near = (a, b, tol = 2) => a !== null && b !== null && Math.abs(a - b) <= t
 
 (async () => {
   const serverProc = await ensureServer();
-  const { browser, page, errors } = await openApp();
+  const { browser, page, errors } = await openApp({ viewport: { width: 1440, height: 1100 } });
   const { report, isFailed } = makeReporter();
 
   try {
