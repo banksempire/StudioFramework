@@ -3,6 +3,7 @@ export type IconDef = string | { type: 'image'; url: string };
 export interface PanelUtility {
   id: string;
   icon: IconDef;
+  label?: string;
   tooltip?: string;
   closeMobilePanel?: boolean;
 }

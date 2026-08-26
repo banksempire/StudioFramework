@@ -49,6 +49,7 @@ function menuItemsOf(utilId: string) {
               <button class="sf-subsection-util" :title="util.tooltip" @click.stop="toggle">
                 <SvgIcon v-if="typeof util.icon === 'string'" :name="util.icon" />
                 <img v-else :src="util.icon.url" alt="" />
+                <span v-if="util.label" class="sf-subsection-util-label">{{ util.label }}</span>
               </button>
             </template>
           </Menu>
@@ -60,6 +61,7 @@ function menuItemsOf(utilId: string) {
           >
             <SvgIcon v-if="typeof util.icon === 'string'" :name="util.icon" />
             <img v-else :src="util.icon.url" alt="" />
+            <span v-if="util.label" class="sf-subsection-util-label">{{ util.label }}</span>
           </button>
         </template>
       </div>
