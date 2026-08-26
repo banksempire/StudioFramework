@@ -563,11 +563,11 @@ body,
 }
 
 .sf-panel-resize-handle--right {
-  right: calc(var(--sf-gap) * -1);
+  right: calc(var(--sf-gap) * -1 - 2px);
 }
 
 .sf-panel-resize-handle--left {
-  left: calc(var(--sf-sash-hit) * -0.5);
+  left: calc((var(--sf-sash-hit) + 1px) * -0.5);
   width: var(--sf-sash-hit);
 }
 
