@@ -389,6 +389,17 @@
                 ]
               },
               {
+                "id": "selectors",
+                "label": "Selectors",
+                "height": "fixed",
+                "components": [
+                  {
+                    "type": "component",
+                    "key": "selector-demo"
+                  }
+                ]
+              },
+              {
                 "id": "project",
                 "label": "Project",
                 "height": "variable",
