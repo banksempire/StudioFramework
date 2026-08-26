@@ -96,7 +96,7 @@ src/
 scripts/                      # Test suites + helpers (headless Chromium / Node)
 ├── check-ui.cjs              # UI smoke: menu, docker, sub-sections, panels (11 assertions)
 ├── check-dtt.cjs             # Drag-to-tile workspace interactions (23 assertions)
-├── check-active.cjs          # Active sub-section + hover behaviors (22 assertions)
+├── check-utils.cjs          # Sub-section utility buttons + icon geometry (15 assertions)
 ├── check-autohide.cjs        # Workspace-width auto-hide triggers (20 assertions)
 ├── check-tree.ts             # Node unit tests for workspace/tree.ts (44 assertions)
 └── shot-zones.cjs            # Mid-drag DnD zone screenshot helper
@@ -151,7 +151,7 @@ npm run dev
 |:---|:---|:---|
 | `npm run check` | Headless UI smoke: menu, docker switching, sub-section collapse/expand, panels | 11 |
 | `npm run check:dtt` | Drag-to-tile workspace interactions (splits, moves, sash, proportional resize) | 23 |
-| `npm run check:active` | Active sub-section + hover utility-button behaviors | 22 |
+| `npm run check:utils` | Sub-section utility buttons always visible + icon geometry | 15 |
 | `npm run check:autohide` | Workspace-width auto-hide (window-resize + panel-expansion triggers) | 20 |
 | `npm run check:tree` | Node unit tests for `src/workspace/tree.ts` (pure, no browser) | 44 |
 | `npm run typecheck` | `vue-tsc --noEmit` | – |

@@ -9,7 +9,7 @@
     "preview": "vite preview",
     "check": "node scripts/check-ui.cjs",
     "check:dtt": "node scripts/check-dtt.cjs",
-    "check:active": "node scripts/check-active.cjs",
+    "check:utils": "node scripts/check-utils.cjs",
     "check:autohide": "node scripts/check-autohide.cjs",
     "check:mobile": "node scripts/check-mobile.cjs",
     "check:singlemenu": "node scripts/check-single-menu.cjs",
