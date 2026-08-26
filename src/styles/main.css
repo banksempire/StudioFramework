@@ -699,6 +699,7 @@ body,
   border: none;
   color: var(--sf-text);
   cursor: pointer;
+  font-family: var(--sf-font);
   font-size: 16px;
   padding: 2px 4px;
   border-radius: 3px;
