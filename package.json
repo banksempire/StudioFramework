@@ -19,6 +19,7 @@
     "check:ws": "node scripts/check-workspace-app.cjs",
     "check:persist": "node scripts/check-persist.cjs",
     "check:corners": "node scripts/check-corners.cjs",
+    "check:seam": "node scripts/check-seam.cjs",
     "typecheck": "vue-tsc --noEmit",
     "lint": "biome check .",
     "format": "biome format --write ."
