@@ -146,6 +146,7 @@ function toUtility(v: unknown, path: string): PanelUtility {
   return {
     id: needId(r.id, `${path}.id`),
     icon: toIcon(r.icon, `${path}.icon`) ?? fail(`${path}.icon`, 'utility requires an icon'),
+    label: optString(r.label, `${path}.label`),
     tooltip: optString(r.tooltip, `${path}.tooltip`),
     closeMobilePanel:
       r.closeMobilePanel === undefined
