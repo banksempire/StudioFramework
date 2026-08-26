@@ -422,6 +422,10 @@ const WS = '.sf-workspace';
     const b = await locator.boundingBox();
     const x = b.x + b.width / 2;
     const y = b.y + b.height / 2;
+    for (let i = 0; i < 20; i += 1) {
+      if ((await page.locator('.sf-tile-tabs.sf-mobile-tab-bar--holding').count()) === 0) break;
+      await page.waitForTimeout(100);
+    }
     await touch('touchStart', [{ x, y }]);
     await touch('touchEnd', []);
     await page.waitForTimeout(250);
@@ -537,6 +541,17 @@ const WS = '.sf-workspace';
       (await page.locator('.sf-sm-dialog').count()) === 0,
   );
 
+  await tapEl(page.locator('.sf-tab-dropdown-close'));
+  for (let i = 0; i < 20; i += 1) {
+    if ((await page.locator('.sf-tab-dropdown').count()) === 0) break;
+    await page.waitForTimeout(100);
+  }
+  await tapEl(page.locator('.sf-mobile-tab-label'));
+  for (let i = 0; i < 20; i += 1) {
+    if ((await page.locator('.sf-tab-dropdown').count()) === 1) break;
+    await page.waitForTimeout(100);
+  }
+
   await tapEl(sheetRow('framework.t'));
   await page.waitForTimeout(250);
   report(
@@ -622,6 +637,10 @@ const WS = '.sf-workspace';
   );
   await page.waitForTimeout(600);
   await touch('touchEnd', []);
+  for (let i = 0; i < 20; i += 1) {
+    if ((await page.locator('.sf-tile-tabs.sf-mobile-tab-bar--holding').count()) === 0) break;
+    await page.waitForTimeout(100);
+  }
   await page.waitForTimeout(250);
   const lp1 = await page.evaluate(() => window.__lpFired);
   const activeId = await page.evaluate(() => {
