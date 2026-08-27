@@ -255,9 +255,9 @@ const WS = '.sf-workspace';
   await page.locator('.sf-mobile-rp-btn').click();
   await page.waitForTimeout(300);
   report(
-    'right-panel button opens the right panel fullscreen',
+    'right-panel button opens the right panel fullscreen (welcome variant for the active tab)',
     (await page.locator('.sf-mobile-panel').isVisible()) &&
-      (await page.locator('.sf-mobile-panel .sf-panel-title').textContent()) === 'Properties',
+      (await page.locator('.sf-mobile-panel .sf-panel-title').textContent()) === 'Welcome Info',
   );
   await page.locator('.sf-panel-close-btn').click();
   await page.waitForTimeout(300);

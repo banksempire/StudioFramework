@@ -59,6 +59,7 @@ export interface LayoutDefinition {
   menu: MenuNodeDef[];
   docker: DockerAppDef[];
   right: PanelDef | null;
+  rightPanels?: Record<string, PanelDef>;
   workspace: WorkspaceDef;
   status: { left: StatusItemDef[]; right: StatusItemDef[] };
 }
