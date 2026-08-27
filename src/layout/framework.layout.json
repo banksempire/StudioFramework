@@ -1072,6 +1072,33 @@
       }
     }
   ],
+  "rightPanels": {
+    "welcome": {
+      "title": "Welcome Info",
+      "sections": [
+        {
+          "id": "welcome-info",
+          "label": "Welcome",
+          "subSections": [
+            {
+              "id": "welcome-about",
+              "label": "About",
+              "height": "fixed",
+              "components": [
+                {
+                  "type": "keyValueList",
+                  "items": [
+                    { "key": "layout", "value": "welcome" },
+                    { "key": "right panel", "value": "rightPanels.welcome" }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  },
   "right": {
     "title": "Properties",
     "sections": [
@@ -1187,7 +1214,8 @@
       {
         "id": "layout-json",
         "label": "layout.json",
-        "icon": "📄"
+        "icon": "📄",
+        "content": "welcome"
       }
     ],
     "emptyContent": "welcome"

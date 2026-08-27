@@ -281,6 +281,16 @@ export function loadLayout(json: unknown = frameworkJson, label = 'framework.lay
     menu,
     docker,
     right: root.right === undefined || root.right === null ? null : toPanelDef(root.right, '<root>.right'),
+    rightPanels: (() => {
+      const src = root.rightPanels;
+      if (src === undefined || src === null) return {};
+      const rec = needRecord(src, '<root>.rightPanels');
+      const out: Record<string, PanelDef> = {};
+      for (const key of Object.keys(rec)) {
+        out[key] = toPanelDef(rec[key], `<root>.rightPanels[${key}]`);
+      }
+      return out;
+    })(),
     workspace: (() => {
       const ws = needRecord(root.workspace ?? {}, '<root>.workspace');
       return {

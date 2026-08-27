@@ -1,5 +1,6 @@
 <script lang="ts">
 import type { WorkspaceApi } from './composables/useWorkspace';
+import type { PanelDef } from './types/layout';
 import type { PanelAction } from './types/panel';
 
 export interface FrameworkAction {
@@ -26,6 +27,7 @@ import {
   PANEL_MIN_WIDTH,
 } from './composables/useResize';
 import { readUiNumber, readUiString, writeUiValue, applyUiValues, readAllUiValues, uiEpoch } from './uiState';
+import { findTile } from './workspace/tree';
 import { kIsMobile, kMobilePanelDismiss, kTitleBarMenus, kWorkspace, useWorkspace } from './composables/useWorkspace';
 
 const props = withDefaults(defineProps<{
@@ -212,6 +214,17 @@ const activeDockerItem = computed(
 );
 const dockerDef = computed(() => activeDockerItem.value?.panel ?? null);
 
+const rightDef = computed<PanelDef | null>(() => {
+  for (const root of api.roots) {
+    const tile = findTile(root.node, api.focusedTileId);
+    if (!tile) continue;
+    const content = api.tabDefs[tile.activeId]?.content;
+    const variant = content ? L.rightPanels?.[content] : undefined;
+    return variant ?? L.right;
+  }
+  return L.right;
+});
+
 function showAutoHiddenLeft() {
   leftAutoHidden.value = false;
   if (!leftPanelVisible.value) leftPanelVisible.value = true;
@@ -308,7 +321,7 @@ function onMenuAction(actionId: string) {
 }
 
 function utilityClosesMobilePanel(subId: string, utilityId: string): boolean {
-  for (const panel of [dockerDef.value, L.right]) {
+  for (const panel of [dockerDef.value, rightDef.value]) {
     for (const section of panel?.sections ?? []) {
       for (const sub of section.subSections) {
         if (sub.id !== subId) continue;
@@ -378,14 +391,14 @@ function onPanelAction(a: PanelAction) {
           :def="L.workspace"
           :api="api"
           :mobile="isMobile"
-          :right-panel-visible="isMobile ? mobileRightOpen : !!L.right && !rightAutoHidden && rightPanelVisible"
+          :right-panel-visible="isMobile ? mobileRightOpen : !!rightDef && !rightAutoHidden && rightPanelVisible"
           @toggle-right-panel="onWorkspaceToggleRightPanel"
         />
 
         <Panel
-          v-if="L.right && !isMobile"
-          :title="L.right.title"
-          :sections="L.right.sections"
+          v-if="rightDef && !isMobile"
+          :title="rightDef.title"
+          :sections="rightDef.sections"
           :visible="effRightPanelVisible"
           :width="rightPanelWidth"
           state-key="right"
@@ -420,10 +433,10 @@ function onPanelAction(a: PanelAction) {
           @component-action="onPanelAction"
         />
       </div>
-      <div v-if="mobileRightOpen && L.right" class="sf-mobile-panel">
+      <div v-if="mobileRightOpen && rightDef" class="sf-mobile-panel">
         <Panel
-          :title="L.right.title"
-          :sections="L.right.sections"
+          :title="rightDef.title"
+          :sections="rightDef.sections"
           :visible="true"
           state-key="right"
           position="mobile"

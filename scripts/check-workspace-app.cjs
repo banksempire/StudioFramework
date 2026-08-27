@@ -353,6 +353,27 @@ const PANEL = '.sf-ws-panel';
     (await panelDisplayed('left')) === true && (await panelDisplayed('right')) === true,
   );
 
+  const rightTitle = () => page.locator('.sf-panel--right .sf-panel-title').textContent();
+  report(
+    'right panel shows the default layout',
+    ((await rightTitle()) ?? '').trim() === 'Properties',
+    `title=${await rightTitle()}`,
+  );
+  await tab('layout.json').first().click({ force: true });
+  await page.waitForTimeout(400);
+  report(
+    'right panel switches to the welcome variant for the welcome tab',
+    ((await rightTitle()) ?? '').trim() === 'Welcome Info',
+    `title=${await rightTitle()}`,
+  );
+  await tab('framework.ts').first().click({ force: true });
+  await page.waitForTimeout(400);
+  report(
+    'right panel falls back to the default layout on other tabs',
+    ((await rightTitle()) ?? '').trim() === 'Properties',
+    `title=${await rightTitle()}`,
+  );
+
   report('no page errors during the whole check', errors.length === 0, errors.join('; ').slice(0, 300));
 
   await finish(browser, serverProc, isFailed(), 'WORKSPACE-APP CHECKS');
