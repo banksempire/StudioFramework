@@ -708,8 +708,9 @@ body,
 }
 
 .sf-subsection-util-label {
-  font-size: 12px;
-  font-weight: 400;
+  font-size: 14px;
+  font-weight: 600;
+  letter-spacing: 0.5px;
   white-space: nowrap;
   margin-left: 4px;
 }
