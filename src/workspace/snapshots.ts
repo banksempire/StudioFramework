@@ -1,3 +1,4 @@
+import type { WorkspaceTabDef } from '../types/layout.ts';
 import { nextId, type SplitDir, type WorkspaceNode } from './tree.ts';
 
 export interface TileSnapshot {
@@ -33,6 +34,7 @@ export interface WorkspaceSnapshot {
   panels?: SnapshotPanels;
   windows?: Record<string, unknown>;
   ui?: Record<string, unknown>;
+  defs?: Record<string, WorkspaceTabDef>;
 }
 
 export function nodeToSnapshot(
@@ -72,6 +74,7 @@ export function captureSnapshot(
   panels?: SnapshotPanels,
   windows?: Record<string, unknown>,
   ui?: Record<string, unknown>,
+  pickTabDef?: (tabId: string) => WorkspaceTabDef | undefined,
 ): WorkspaceSnapshot {
   const kept: RootSnapshot[] = [];
   for (const r of roots) {
@@ -89,7 +92,26 @@ export function captureSnapshot(
   if (panels) snap.panels = { ...panels };
   if (windows) snap.windows = { ...windows };
   if (ui) snap.ui = { ...ui };
+  if (pickTabDef) {
+    const defs: Record<string, WorkspaceTabDef> = {};
+    const live = new Set<string>();
+    for (const r of kept) collectTabIds(r.node, live);
+    for (const id of live) {
+      const d = pickTabDef(id);
+      if (d) defs[id] = d;
+    }
+    if (Object.keys(defs).length > 0) snap.defs = defs;
+  }
   return snap;
+}
+
+function collectTabIds(node: NodeSnapshot, out: Set<string>): void {
+  if (node.kind === 'tile') {
+    for (const t of node.tabs) out.add(t);
+    return;
+  }
+  collectTabIds(node.children[0], out);
+  collectTabIds(node.children[1], out);
 }
 
 export function restoreSnapshot(
