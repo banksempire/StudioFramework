@@ -159,6 +159,50 @@ const PANEL = '.sf-ws-panel';
   report('no ghost note for a complete load', (await page.locator('.sf-ws-ghosts').count()) === 0);
 
   await page.evaluate(() => {
+    const api = window.__sfWorkspace;
+    const tileId = api?.focusedTileId;
+    if (!api || !tileId) return;
+    api.ops.openTab(tileId, {
+      id: 'runtime-demo-tab',
+      label: 'Runtime Tab',
+      icon: '📄',
+      content: 'welcome',
+      props: { seed: 42 },
+    });
+  });
+  await page.waitForTimeout(700);
+  await page.reload({ waitUntil: 'networkidle' });
+  await page.waitForTimeout(600);
+  const runtimeRestored = await page.evaluate(() => {
+    const api = window.__sfWorkspace;
+    const def = api?.tabDefs['runtime-demo-tab'];
+    return {
+      tabVisible: [...document.querySelectorAll('.sf-tab-label')].some(
+        (t) => t.textContent === 'Runtime Tab',
+      ),
+      hasDef: !!def,
+      content: def?.content ?? null,
+      props: def?.props ?? null,
+      ghost: !!document.querySelector('.sf-tab--ghost'),
+      blank: !!document.querySelector('.sf-blank-tab'),
+      welcomeMounted: !!document.querySelector('.sf-welcome'),
+    };
+  });
+  report(
+    'reload restores runtime-opened tabs with content and props (no ghost)',
+    runtimeRestored.tabVisible &&
+      runtimeRestored.hasDef &&
+      runtimeRestored.content === 'welcome' &&
+      runtimeRestored.props?.seed === 42 &&
+      !runtimeRestored.ghost &&
+      !runtimeRestored.blank &&
+      runtimeRestored.welcomeMounted,
+    JSON.stringify(runtimeRestored),
+  );
+  await page.locator('.sf-tab:has-text("Runtime Tab")').locator('.sf-tab-close').click();
+  await page.waitForTimeout(600);
+
+  await page.evaluate(() => {
     const saved = JSON.parse(localStorage.getItem('sf.workspaces') || '[]');
     saved.push({
       id: 'ghost-ws',

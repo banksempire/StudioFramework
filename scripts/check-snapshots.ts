@@ -253,6 +253,63 @@ function allTabs(node: WorkspaceNode): string[] {
 }
 
 {
+  const tree = split('row', 0.5, tile(['x', 'y'], 'y'), tile(['z']));
+  const defs = {
+    x: { id: 'x', label: 'Editor X', icon: '📄', content: 'editor', props: { path: 'a.ts' } },
+    y: { id: 'y', label: 'Chart', content: 'chart', tabClass: 'hot', transient: true },
+    z: undefined,
+  };
+  const snap = captureSnapshot(
+    [{ node: tree, ratio: 1 }],
+    null,
+    undefined,
+    undefined,
+    undefined,
+    undefined,
+    (id) => defs[id],
+  );
+  report(
+    'capture stores tab defs for tabs the picker returns',
+    snap.defs !== undefined && Object.keys(snap.defs).length === 2 && snap.defs.x?.content === 'editor',
+    JSON.stringify(snap.defs),
+  );
+  report(
+    'captured defs round-trip through JSON with props intact',
+    JSON.parse(JSON.stringify(snap)).defs?.x?.props?.path === 'a.ts',
+  );
+  const bare = captureSnapshot([{ node: tile(['a'], 'a'), ratio: 1 }], null);
+  report('no picker arg → no defs field', bare.defs === undefined);
+  const nonePicked = captureSnapshot(
+    [{ node: tile(['a'], 'a'), ratio: 1 }],
+    null,
+    undefined,
+    undefined,
+    undefined,
+    undefined,
+    () => undefined,
+  );
+  report('picker returning nothing → no defs field', nonePicked.defs === undefined);
+  const both = {
+    a: { id: 'a', label: 'A', content: 'editor' },
+    b: { id: 'b', label: 'B', content: 'editor' },
+  };
+  const skipped = captureSnapshot(
+    [{ node: tile(['a', 'b'], 'a'), ratio: 1 }],
+    null,
+    (id) => id === 'b',
+    undefined,
+    undefined,
+    undefined,
+    (id) => both[id],
+  );
+  report(
+    'skipped (transient) tabs are excluded from defs',
+    skipped.defs !== undefined && Object.keys(skipped.defs).join(',') === 'a',
+    JSON.stringify(skipped.defs),
+  );
+}
+
+{
   const tree = split('column', 0.33, tile(['p', 'q'], 'q'), tile(['r']));
   const snap = nodeToSnapshot(tree);
   const back = nodeFromSnapshot(snap);

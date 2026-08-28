@@ -320,6 +320,18 @@ export function useWorkspace(def: WorkspaceDef): WorkspaceApi {
   }
 
   let lastAutoJson: string | null = null;
+  function persistedTabDef(id: string): WorkspaceTabDef | undefined {
+    const d = tabDefs[id];
+    if (!d || d.transient || d.content === BLANK_CONTENT || !d.content) return undefined;
+    return {
+      id: d.id,
+      label: d.label,
+      icon: d.icon,
+      closeable: d.closeable,
+      content: d.content,
+      props: d.props,
+    };
+  }
   function currentSnapshot(withUi = false): WorkspaceSnapshot {
     return captureSnapshot(
       state.roots,
@@ -328,6 +340,7 @@ export function useWorkspace(def: WorkspaceDef): WorkspaceApi {
       panelProvider?.read() ?? undefined,
       windowProvider?.read() ?? undefined,
       withUi ? (uiProvider?.read() ?? undefined) : undefined,
+      persistedTabDef,
     );
   }
   function saveAutoSnapshot() {
@@ -368,8 +381,13 @@ export function useWorkspace(def: WorkspaceDef): WorkspaceApi {
         for (const t of node.tabs) {
           live.add(t);
           if (!tabDefs[t]) {
-            tabDefs[t] = ghostDef(t);
-            ghosts.push(t);
+            const restored = snap.defs?.[t];
+            if (restored) {
+              tabDefs[t] = { ...restored, transient: false, tabClass: undefined };
+            } else {
+              tabDefs[t] = ghostDef(t);
+              ghosts.push(t);
+            }
           }
         }
       } else {
