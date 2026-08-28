@@ -40,6 +40,7 @@ const emit = defineEmits<{ 'update:modelValue': [value: string | number] }>();
   background: rgba(0, 0, 0, 0.15);
   width: fit-content;
   max-width: 100%;
+  box-sizing: border-box;
 }
 .sf-pill-item {
   padding: 4px 14px;
@@ -51,6 +52,8 @@ const emit = defineEmits<{ 'update:modelValue': [value: string | number] }>();
   font-family: inherit;
   cursor: pointer;
   opacity: 0.75;
+  white-space: nowrap;
+  flex-shrink: 0;
 }
 .sf-pill-item:hover {
   opacity: 1;
