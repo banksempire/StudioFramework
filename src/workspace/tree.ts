@@ -113,33 +113,33 @@ export function removeTile(root: WorkspaceNode, tileId: string): WorkspaceNode {
   return path.length === 2 ? sibling : replaceNode(path[0], parent.id, sibling);
 }
 
+const minSizeMemo = new WeakMap<WorkspaceNode, Map<string, number>>();
+
 export function subtreeMinSize(
   node: WorkspaceNode,
   dimension: 'width' | 'height',
   minTileWidth: number,
   minTileHeight: number,
 ): number {
-  const stack: WorkspaceNode[] = [node];
-  const memo = new Map<WorkspaceNode, number>();
-  while (stack.length) {
-    const n = stack[stack.length - 1];
-    if (n.kind === 'tile') {
-      memo.set(n, dimension === 'width' ? minTileWidth : minTileHeight);
-      stack.pop();
-      continue;
-    }
-    const [a, b] = n.children;
-    const va = memo.get(a);
-    const vb = memo.get(b);
-    if (va !== undefined && vb !== undefined) {
-      const sameDir = n.dir === (dimension === 'width' ? 'row' : 'column');
-      memo.set(n, sameDir ? va + vb : Math.max(va, vb));
-      stack.pop();
-    } else {
-      stack.push(b, a);
-    }
+  const key = `${dimension}|${minTileWidth}|${minTileHeight}`;
+  let perNode = minSizeMemo.get(node);
+  if (perNode === undefined) {
+    perNode = new Map();
+    minSizeMemo.set(node, perNode);
   }
-  return memo.get(node) ?? (dimension === 'width' ? minTileWidth : minTileHeight);
+  const hit = perNode.get(key);
+  if (hit !== undefined) return hit;
+  let value: number;
+  if (node.kind === 'tile') {
+    value = dimension === 'width' ? minTileWidth : minTileHeight;
+  } else {
+    const a = subtreeMinSize(node.children[0], dimension, minTileWidth, minTileHeight);
+    const b = subtreeMinSize(node.children[1], dimension, minTileWidth, minTileHeight);
+    const sameDir = node.dir === (dimension === 'width' ? 'row' : 'column');
+    value = sameDir ? a + b : Math.max(a, b);
+  }
+  perNode.set(key, value);
+  return value;
 }
 
 function nextActive(remaining: string[], idx: number, current: string): string {
