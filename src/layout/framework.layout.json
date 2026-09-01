@@ -400,6 +400,17 @@
                 ]
               },
               {
+                "id": "element-popup",
+                "label": "Element Popup",
+                "height": "fixed",
+                "components": [
+                  {
+                    "type": "component",
+                    "key": "dialog-demo"
+                  }
+                ]
+              },
+              {
                 "id": "project",
                 "label": "Project",
                 "height": "variable",
