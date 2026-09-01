@@ -61,6 +61,18 @@ const { ensureServer, openApp, makeReporter, finish } = require('./lib/ui-test.c
       JSON.stringify(desktopChrome),
     );
 
+    const footSizes = await page.evaluate(() =>
+      [...document.querySelectorAll('.sf-dialog-foot .sf-dialog-btn')].map((b) => {
+        const r = b.getBoundingClientRect();
+        return `${Math.round(r.width)}x${Math.round(r.height)}`;
+      }),
+    );
+    report(
+      'desktop: footer action buttons share one size',
+      footSizes.length === 2 && footSizes[0] === footSizes[1],
+      JSON.stringify(footSizes),
+    );
+
     await page.locator('#sf-dialog-demo-name').fill('hero-banner');
     await page.locator('.sf-dialog-foot .sf-dialog-btn--accent').click();
     await delay(150);
@@ -149,6 +161,32 @@ const { ensureServer, openApp, makeReporter, finish } = require('./lib/ui-test.c
       'mobile: footer action buttons reach a 44px touch height',
       mobileChrome.saveH >= 44,
       JSON.stringify(mobileChrome),
+    );
+
+    const mobileFootSizes = await mpage.evaluate(() =>
+      [...document.querySelectorAll('.sf-dialog-foot .sf-dialog-btn')].map((b) => {
+        const r = b.getBoundingClientRect();
+        return `${Math.round(r.width)}x${Math.round(r.height)}`;
+      }),
+    );
+    report(
+      'mobile: footer action buttons share one size',
+      mobileFootSizes.length === 2 && mobileFootSizes[0] === mobileFootSizes[1],
+      JSON.stringify(mobileFootSizes),
+    );
+
+    const corner = await mpage.evaluate(() => {
+      const close = getComputedStyle(document.querySelector('.sf-dialog-close'));
+      const card = getComputedStyle(document.querySelector('.sf-dialog'));
+      return {
+        closeTR: close.borderTopRightRadius,
+        cardTR: card.borderTopRightRadius,
+      };
+    });
+    report(
+      'mobile: the close button follows the card rounded top-right corner',
+      parseFloat(corner.closeTR) > 0 && parseFloat(corner.closeTR) >= parseFloat(corner.cardTR) - 1.5,
+      JSON.stringify(corner),
     );
 
     await mpage.locator('.sf-dialog-close').click();

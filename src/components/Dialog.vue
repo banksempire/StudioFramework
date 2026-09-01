@@ -206,6 +206,19 @@ onUnmounted(() => window.removeEventListener('keydown', onDocKey));
   }
 }
 
+.sf-dialog-foot :deep(.sf-dialog-btn--danger) {
+  background: var(--sf-status-err);
+  border-color: var(--sf-status-err);
+  color: var(--sf-text-on-accent);
+}
+
+@media (hover: hover) {
+  .sf-dialog-foot :deep(.sf-dialog-btn--danger):hover {
+    box-shadow: inset 0 0 0 999px var(--sf-hover-overlay);
+    color: var(--sf-text-on-accent);
+  }
+}
+
 .sf-root--mobile .sf-dialog-backdrop {
   padding: 10px;
 }
@@ -231,6 +244,7 @@ onUnmounted(() => window.removeEventListener('keydown', onDocKey));
   border: none;
   border-left: 1px solid var(--sf-border);
   border-radius: 0;
+  border-top-right-radius: calc(var(--sf-radius) - 1px);
   font-size: 24px;
 }
 
