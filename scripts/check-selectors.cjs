@@ -57,6 +57,26 @@ const { ensureServer, openApp, makeReporter, finish } = require('./lib/ui-test.c
       JSON.stringify(pillSelect),
     );
 
+    const pillWrap = await page.evaluate(() => {
+      const el = document.querySelector('.sf-selector-demo .sf-pill-item--on');
+      if (!el) return null;
+      const before = getComputedStyle(el, '::before');
+      return {
+        border: `${before.borderTopWidth} ${before.borderTopStyle}`,
+        borderColor: before.borderTopColor,
+        bg: before.backgroundColor,
+        itemBg: getComputedStyle(el).backgroundColor,
+      };
+    });
+    report(
+      'the selected pill is wrapped by the thin accent line like MultiSelectGroup',
+      !!pillWrap &&
+        pillWrap.border === '1px solid' &&
+        pillWrap.bg !== 'rgba(0, 0, 0, 0)' &&
+        pillWrap.itemBg === 'rgba(0, 0, 0, 0)',
+      JSON.stringify(pillWrap),
+    );
+
     await page.evaluate(() => {
       const s = document.createElement('style');
       s.id = 'force-pill-narrow';
@@ -119,7 +139,7 @@ const { ensureServer, openApp, makeReporter, finish } = require('./lib/ui-test.c
     await page.evaluate(() => {
       const s = document.createElement('style');
       s.id = 'force-ms-wrap';
-      s.textContent = '.sf-selector-demo .sf-ms-track{flex-wrap:wrap!important;max-width:220px!important}';
+      s.textContent = '.sf-selector-demo .sf-ms-track{flex-wrap:wrap!important;max-width:150px!important}';
       document.head.appendChild(s);
     });
     await page.locator('.sf-selector-demo .sf-ms-item', { hasText: 'Sun' }).click();
@@ -140,6 +160,9 @@ const { ensureServer, openApp, makeReporter, finish } = require('./lib/ui-test.c
         }
       }
       if (boundary === -1) return { rows, boundary };
+      const trackStyle = getComputedStyle(track);
+      const trackRadius = Number.parseFloat(trackStyle.borderTopLeftRadius);
+      const inset = Number.parseFloat(trackStyle.paddingTop) + Number.parseFloat(trackStyle.borderTopWidth);
       const last = getComputedStyle(items[boundary - 1], '::before');
       const lead = getComputedStyle(items[boundary], '::before');
       return {
@@ -150,6 +173,7 @@ const { ensureServer, openApp, makeReporter, finish } = require('./lib/ui-test.c
         lastRadius: last.borderTopRightRadius,
         leadBorderLeft: lead.borderLeftWidth,
         leadRadius: lead.borderTopLeftRadius,
+        expectedRadius: trackRadius - inset,
       };
     });
     await page.evaluate(() => document.getElementById('force-ms-wrap')?.remove());
@@ -158,9 +182,9 @@ const { ensureServer, openApp, makeReporter, finish } = require('./lib/ui-test.c
       wrapped.rows >= 2 &&
         wrapped.lastRight === '0px' &&
         wrapped.lastBorderRight === '1px' &&
-        parseFloat(wrapped.lastRadius) > 0 &&
+        parseFloat(wrapped.lastRadius) === wrapped.expectedRadius &&
         wrapped.leadBorderLeft === '1px' &&
-        parseFloat(wrapped.leadRadius) > 0,
+        parseFloat(wrapped.leadRadius) === wrapped.expectedRadius,
       JSON.stringify(wrapped),
     );
 

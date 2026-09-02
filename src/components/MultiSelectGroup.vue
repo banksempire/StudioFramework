@@ -103,22 +103,29 @@ watch(
 .sf-ms-track {
   --sf-ms-gap: 5px;
   --sf-ms-inset: calc(1px + 3px);
-  display: inline-flex;
+  display: flex;
   flex-wrap: wrap;
+  align-items: stretch;
   gap: var(--sf-ms-gap);
   padding: 3px;
   border-radius: 8px;
   border: 1px solid var(--sf-border);
   background: rgba(0, 0, 0, 0.15);
-  width: fit-content;
-  max-width: 100%;
+  width: 100%;
+  height: 36px;
+  box-sizing: border-box;
 }
 .sf-ms-item {
   position: relative;
   isolation: isolate;
-  padding: 3px 11px;
+  flex: 1 1 0;
+  min-width: fit-content;
+  align-self: stretch;
+  padding: 0;
+  line-height: 1;
+  text-align: center;
   border: none;
-  border-radius: 8px;
+  border-radius: calc(8px - var(--sf-ms-inset));
   background: transparent;
   color: inherit;
   font-size: inherit;
@@ -173,30 +180,11 @@ watch(
   border-bottom-left-radius: calc(8px - var(--sf-ms-inset));
 }
 
-@container (max-width: 640px) {
-  .sf-ms-track {
-    --sf-ms-gap: 4px;
-  }
-  .sf-ms-item {
-    padding: 3px 9px;
-  }
-}
-@container (max-width: 540px) {
-  .sf-ms-track {
-    --sf-ms-gap: 2px;
-  }
-  .sf-ms-item {
-    padding: 3px 6px;
-  }
-}
 @container (max-width: 490px) {
   .sf-ms-track {
     flex-wrap: nowrap;
     overflow-x: auto;
     scrollbar-width: none;
-  }
-  .sf-ms-item {
-    flex-shrink: 0;
   }
 }
 </style>
