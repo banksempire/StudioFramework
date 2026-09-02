@@ -119,6 +119,21 @@ const { ensureServer, openApp, makeReporter, finish } = require('./lib/ui-test.c
     });
     report('clear + outside click restores all rows and closes the popover', closed === 5, `rows=${closed}`);
 
+    await rowsIn('.sf-tbl-th').first().locator('.sf-tbl-filterbtn').click();
+    await delay(100);
+    await rowsIn('.sf-tbl-pop-input').fill('zzz');
+    await delay(150);
+    const emptyFiltered = await rowsIn('.sf-tbl-empty').textContent();
+    report(
+      'empty slot sees the filtered state',
+      emptyFiltered?.trim() === 'No files match.',
+      emptyFiltered,
+    );
+    await rowsIn('.sf-tbl-pop-input').fill('');
+    await delay(150);
+    await page.mouse.click(400, 10);
+    report('clearing the filter brings the rows back', (await rowsIn('.sf-tbl-row').count()) === 5);
+
     await rowsIn('.sf-tbl-th').nth(1).locator('.sf-tbl-filterbtn').click();
     await delay(100);
     const kindChips = rowsIn('.sf-tbl-pop .sf-ms-item');

@@ -61,6 +61,7 @@ const fileRows = computed(() => files as Array<Record<string, unknown>>);
         @row-click="(row) => ((state.clicked = String(row.name)), (state.selKey = String(row.name)))"
         @update:columns="onColumns"
       >
+        <template #empty="{ filtered }">{{ filtered ? 'No files match.' : 'No files.' }}</template>
         <template #cell-name="{ row }">
           <span class="sf-table-demo-key">{{ row.name }}</span>
         </template>

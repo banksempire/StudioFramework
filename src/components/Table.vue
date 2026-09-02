@@ -267,7 +267,7 @@ onBeforeUnmount(() => document.removeEventListener('pointerdown', onDocPointerDo
       </div>
     </div>
     <div v-if="!visibleRows.length" class="sf-tbl-empty">
-      <slot name="empty">{{ emptyText }}</slot>
+      <slot name="empty" :filtered="props.rows.length > 0">{{ emptyText }}</slot>
     </div>
   </div>
 </template>
@@ -548,7 +548,7 @@ body.sf-tbl-resizing {
 }
 
 .sf-root--mobile .sf-tbl-c--actions {
-  flex-direction: column;
+  grid-area: actions;
 }
 
 .sf-root--mobile .sf-tbl-c--actions :slotted(.sf-tbl-btn) {
