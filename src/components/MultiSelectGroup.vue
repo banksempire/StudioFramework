@@ -102,6 +102,7 @@ watch(
 }
 .sf-ms-track {
   --sf-ms-gap: 5px;
+  --sf-ms-inset: calc(1px + 3px);
   display: inline-flex;
   flex-wrap: wrap;
   gap: var(--sf-ms-gap);
@@ -146,7 +147,7 @@ watch(
   right: 0;
   background: var(--sf-accent-soft);
   border: 1px solid var(--sf-accent-dim);
-  border-radius: 8px;
+  border-radius: calc(8px - var(--sf-ms-inset));
 }
 .sf-ms-item--cont::before {
   right: calc(var(--sf-ms-gap, 5px) * -1);
@@ -157,8 +158,8 @@ watch(
 .sf-ms-item--cont.sf-ms-item--wrapclose::before {
   right: 0;
   border-right: 1px solid var(--sf-accent-dim);
-  border-top-right-radius: 8px;
-  border-bottom-right-radius: 8px;
+  border-top-right-radius: calc(8px - var(--sf-ms-inset));
+  border-bottom-right-radius: calc(8px - var(--sf-ms-inset));
 }
 .sf-ms-item--on:not(.sf-ms-item--start)::before {
   left: 0;
@@ -168,8 +169,8 @@ watch(
 }
 .sf-ms-item--on:not(.sf-ms-item--start).sf-ms-item--wrapopen::before {
   border-left: 1px solid var(--sf-accent-dim);
-  border-top-left-radius: 8px;
-  border-bottom-left-radius: 8px;
+  border-top-left-radius: calc(8px - var(--sf-ms-inset));
+  border-bottom-left-radius: calc(8px - var(--sf-ms-inset));
 }
 
 @container (max-width: 640px) {
