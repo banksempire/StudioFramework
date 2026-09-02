@@ -51,8 +51,8 @@ const PANEL = '.sf-ws-panel';
       (await page.locator('.sf-ws-empty').count()) === 1,
   );
   report(
-    'initial layout: single tile with 4 demo tabs',
-    (await tileCount()) === 1 && (await tileTabs(0)).length === 4,
+    'initial layout: single tile with 5 demo tabs',
+    (await tileCount()) === 1 && (await tileTabs(0)).length === 5,
   );
 
   await page.evaluate(() => {
@@ -139,7 +139,7 @@ const PANEL = '.sf-ws-panel';
   await page.waitForTimeout(350);
   report(
     'layout changed: merged back to one tile',
-    (await tileCount()) === 1 && (await tileTabs(0)).length === 3,
+    (await tileCount()) === 1 && (await tileTabs(0)).length === 4,
   );
 
   await wsItem('My Layout').locator('.sf-ws-btn[title="Load this workspace"]').click();

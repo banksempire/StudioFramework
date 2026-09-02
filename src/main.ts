@@ -2,6 +2,7 @@ import { createApp, reactive } from 'vue';
 import DialogDemo from './components/DialogDemo.vue';
 import SelectorDemo from './components/SelectorDemo.vue';
 import SingleMenuDemo from './components/SingleMenuDemo.vue';
+import TableDemo from './components/TableDemo.vue';
 import WelcomeContent from './components/WelcomeContent.vue';
 import WorkspacePanel from './components/WorkspacePanel.vue';
 import type { WorkspaceApi } from './composables/useWorkspace';
@@ -9,6 +10,8 @@ import Framework, { type FrameworkAction } from './Framework.vue';
 import { registerPanelComponent, registerTabContent, registerUtilityMenu } from './registry';
 
 registerTabContent('welcome', WelcomeContent);
+
+registerTabContent('table-demo', TableDemo);
 
 registerPanelComponent('workspace-panel', WorkspacePanel);
 

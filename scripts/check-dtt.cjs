@@ -37,7 +37,7 @@ const WS = '.sf-workspace';
   };
   const tileBox = async (i) => page.locator('.sf-tile').nth(i).boundingBox();
 
-  report('initial: single tile, 4 tabs', (await tileCount()) === 1 && (await tileTabs(0)).length === 4);
+  report('initial: single tile, 5 tabs', (await tileCount()) === 1 && (await tileTabs(0)).length === 5);
   const tileW = wsBox.width;
   await dropAt('framework.ts', wsBox.width - 10, wsBox.height / 2);
   report('split right → 2 tiles', (await tileCount()) === 2);
@@ -51,20 +51,20 @@ const WS = '.sf-workspace';
     'right tile holds framework.ts',
     JSON.stringify(await tileTabs(1)) === JSON.stringify(['framework.ts']),
   );
-  report('left tile keeps the rest', (await tileTabs(0)).length === 3);
+  report('left tile keeps the rest', (await tileTabs(0)).length === 4);
 
   await dropAt('utils.ts', w1.x - wsBox.x + w1.width / 2, 15);
   report(
     'move into right tile',
     JSON.stringify(await tileTabs(1)) === JSON.stringify(['framework.ts', 'utils.ts']),
   );
-  report('source tile keeps remaining', (await tileTabs(0)).length === 2);
+  report('source tile keeps remaining', (await tileTabs(0)).length === 3);
 
   await dropAt('styles.css', w1.x - wsBox.x + w1.width / 2, w1.height - 2);
   report('split bottom → 3 tiles', (await tileCount()) === 3);
   report(
     'cross-tile split removes from source',
-    JSON.stringify(await tileTabs(0)) === JSON.stringify(['layout.json']),
+    JSON.stringify(await tileTabs(0)) === JSON.stringify(['layout.json', 'Table']),
   );
   report(
     'bottom tile holds styles.css',
@@ -128,7 +128,7 @@ const WS = '.sf-workspace';
   await dropAt('styles.css', leftBox.x - wsBox.x + 20, 15);
   report(
     'reorder into strip start',
-    JSON.stringify(await tileTabs(0)) === JSON.stringify(['styles.css', 'layout.json']),
+    JSON.stringify(await tileTabs(0)) === JSON.stringify(['styles.css', 'layout.json', 'Table']),
   );
   report('emptied source tile merges away', (await tileCount()) === 1);
 

@@ -64,8 +64,8 @@ const WS = '.sf-workspace';
     `count=${desktopUtils.count}`,
   );
   report(
-    'desktop: single tile with 4 demo tabs',
-    (await tileCount()) === 1 && (await tileTabs(0)).length === 4,
+    'desktop: single tile with 5 demo tabs',
+    (await tileCount()) === 1 && (await tileTabs(0)).length === 5,
   );
 
   const wb = await wsBox();
@@ -82,7 +82,7 @@ const WS = '.sf-workspace';
   await page.waitForTimeout(300);
   const desktopTiles = [await tileTabs(0), await tileTabs(1)];
   const allTabs = desktopTiles.flat();
-  report('new tab added (5 tabs total)', allTabs.length === 5);
+  report('new tab added (6 tabs total)', allTabs.length === 6);
 
   await resizeTo(450);
   report('mobile: menu bar hidden', (await page.locator('.sf-menu-bar').count()) === 0);
@@ -450,7 +450,7 @@ const WS = '.sf-workspace';
 
   report(
     'every tab row shows an always-visible ⋮ button',
-    (await page.locator('.sf-tab-dropdown-row .sf-tab-dropdown-more').count()) === 5,
+    (await page.locator('.sf-tab-dropdown-row .sf-tab-dropdown-more').count()) === 6,
   );
   const tabBox = await sheetRow('styles.css')
     .locator('.sf-tab-dropdown-more')
@@ -500,8 +500,8 @@ const WS = '.sf-workspace';
   await page.waitForTimeout(200);
   const rowsB = await page.locator('.sf-tab-dropdown-label').allTextContents();
   report(
-    'Close from the popup removes the tab (4 left), active tab untouched',
-    rowsB.length === 4 && !rowsB.includes('styles.css') && (await mobileBarLabel()) === 'layout.json',
+    'Close from the popup removes the tab (5 left), active tab untouched',
+    rowsB.length === 5 && !rowsB.includes('styles.css') && (await mobileBarLabel()) === 'layout.json',
   );
 
   await tapEl(sheetRow('layout.json').locator('.sf-tab-dropdown-more'));
@@ -512,7 +512,7 @@ const WS = '.sf-workspace';
   const rowsC = await page.locator('.sf-tab-dropdown-label').allTextContents();
   report(
     'closing the ACTIVE tab activates a neighbor',
-    rowsC.length === 3 && newActive !== 'layout.json' && Boolean(newActive),
+    rowsC.length === 4 && newActive !== 'layout.json' && Boolean(newActive),
   );
   const markedMatches = await page.evaluate((lbl) => {
     const mark = document.querySelector('.sf-tab-dropdown-mark');

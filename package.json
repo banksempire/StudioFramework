@@ -16,6 +16,7 @@
     "check:tree": "node scripts/check-tree.ts",
     "check:snap": "node scripts/check-snapshots.ts",
     "check:tabfit": "node scripts/check-tabfit.cjs",
+    "check:table": "node scripts/check-table.cjs",
     "check:ws": "node scripts/check-workspace-app.cjs",
     "check:persist": "node scripts/check-persist.cjs",
     "check:corners": "node scripts/check-corners.cjs",

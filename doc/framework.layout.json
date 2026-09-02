@@ -1188,6 +1188,12 @@
         "id": "layout-json",
         "label": "layout.json",
         "icon": "📄"
+      },
+      {
+        "id": "table-demo",
+        "label": "Table",
+        "icon": "📄",
+        "content": "table-demo"
       }
     ],
     "emptyContent": "welcome"

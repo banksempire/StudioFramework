@@ -50,8 +50,8 @@ const { ensureServer, makeReporter, finish } = require('./lib/ui-test.cjs');
 
   const base = await barInfo();
   report(
-    'baseline: 4 tabs, natural widths differ, no scroll, all within [min, max]',
-    (await tabCount()) === 4 &&
+    'baseline: 5 tabs, natural widths differ, no scroll, all within [min, max]',
+    (await tabCount()) === 5 &&
       base !== null &&
       base.sw <= base.cw + 1 &&
       new Set(base.widths.map((w) => Math.round(w))).size > 1 &&
@@ -174,7 +174,7 @@ const { ensureServer, makeReporter, finish } = require('./lib/ui-test.cjs');
     }
   }, tid);
   await page.waitForFunction(
-    () => document.querySelectorAll('.sf-tile-tabs-inner .sf-tab').length === 28,
+    () => document.querySelectorAll('.sf-tile-tabs-inner .sf-tab').length === 29,
     null,
     {
       timeout: 5000,
@@ -183,14 +183,14 @@ const { ensureServer, makeReporter, finish } = require('./lib/ui-test.cjs');
   await page.waitForTimeout(100);
   const crowd = await barInfo();
   report(
-    '28 tabs: bar overflows into horizontal scroll, every tab floored at min',
+    '29 tabs: bar overflows into horizontal scroll, every tab floored at min',
     crowd !== null &&
       crowd.sw > crowd.cw + 1 &&
       crowd.ox === 'auto' &&
       crowd.widths.every((w) => w <= minW + 0.5),
   );
   report(
-    '28 tabs: bar actually scrolls sideways',
+    '29 tabs: bar actually scrolls sideways',
     await page.evaluate(() => {
       const bar = document.querySelector('.sf-tile-tabs-inner');
       if (!bar) return false;
@@ -216,7 +216,7 @@ const { ensureServer, makeReporter, finish } = require('./lib/ui-test.cjs');
     }),
   );
   report(
-    '28 tabs: close button still rendered inside the floored tab',
+    '29 tabs: close button still rendered inside the floored tab',
     await page.evaluate(() => {
       const tab = document.querySelector('.sf-tab.active');
       const btn = tab?.querySelector('.sf-tab-close');
@@ -257,8 +257,8 @@ const { ensureServer, makeReporter, finish } = require('./lib/ui-test.cjs');
   await page.waitForTimeout(300);
   const done = await barInfo();
   report(
-    'back to 4 tabs: widths recover to natural, no scroll, close button visible',
-    (await tabCount()) === 4 &&
+    'back to 5 tabs: widths recover to natural, no scroll, close button visible',
+    (await tabCount()) === 5 &&
       done !== null &&
       done.sw <= done.cw + 1 &&
       new Set(done.widths.map((w) => Math.round(w))).size > 1 &&
