@@ -40,6 +40,31 @@ const { ensureServer, openApp, makeReporter, finish } = require('./lib/ui-test.c
       JSON.stringify(initial),
     );
 
+    const colBorders = await page.evaluate(() => {
+      const block = document.querySelector('.sf-table-demo-block');
+      const head = [...block.querySelectorAll('.sf-tbl-th')];
+      const row = block.querySelector('.sf-tbl-row');
+      const cells = [...row.querySelectorAll('.sf-tbl-cell')];
+      const w = (el) => getComputedStyle(el).borderLeftWidth;
+      const c = (el) => getComputedStyle(el).borderLeftColor;
+      return {
+        head0: w(head[0]),
+        head1: w(head[1]),
+        row0: w(cells[0]),
+        row1: w(cells[1]),
+        sameColor: c(head[1]) === c(cells[1]),
+      };
+    });
+    report(
+      'columns are separated by one hairline border (none before the first)',
+      colBorders.head0 === '0px' &&
+        colBorders.head1 === '1px' &&
+        colBorders.row0 === '0px' &&
+        colBorders.row1 === '1px' &&
+        colBorders.sameColor,
+      JSON.stringify(colBorders),
+    );
+
     const nameBtn = rowsIn('.sf-tbl-th').first().locator('.sf-tbl-sortbtn');
     await nameBtn.click();
     const asc = await page.evaluate(() => {
@@ -124,11 +149,7 @@ const { ensureServer, openApp, makeReporter, finish } = require('./lib/ui-test.c
     await rowsIn('.sf-tbl-pop-input').fill('zzz');
     await delay(150);
     const emptyFiltered = await rowsIn('.sf-tbl-empty').textContent();
-    report(
-      'empty slot sees the filtered state',
-      emptyFiltered?.trim() === 'No files match.',
-      emptyFiltered,
-    );
+    report('empty slot sees the filtered state', emptyFiltered?.trim() === 'No files match.', emptyFiltered);
     await rowsIn('.sf-tbl-pop-input').fill('');
     await delay(150);
     await page.mouse.click(400, 10);
@@ -165,6 +186,35 @@ const { ensureServer, openApp, makeReporter, finish } = require('./lib/ui-test.c
       'empty chip selection means no filter',
       allOff.rows === 5 && allOff.on === 0,
       JSON.stringify(allOff),
+    );
+
+    await rowsIn('.sf-tbl-pop-input').fill('ima');
+    await delay(150);
+    const narrowed = await page.evaluate(() => {
+      const pop = document.querySelector('.sf-table-demo-block .sf-tbl-pop');
+      return {
+        chips: [...pop.querySelectorAll('.sf-ms-item')].map((c) => c.textContent),
+        rows: [...document.querySelector('.sf-table-demo-block').querySelectorAll('.sf-tbl-row')].length,
+      };
+    });
+    report(
+      'typing in the filter narrows the unique item list to pick from',
+      narrowed.chips.length === 1 && narrowed.chips[0] === 'image' && narrowed.rows === 2,
+      JSON.stringify(narrowed),
+    );
+    await rowsIn('.sf-tbl-pop-clear').click();
+    await delay(150);
+    const clearedBoth = await page.evaluate(() => {
+      const block = document.querySelector('.sf-table-demo-block');
+      return {
+        rows: [...block.querySelectorAll('.sf-tbl-row')].length,
+        on: block.querySelectorAll('.sf-tbl-filterbtn--on').length,
+      };
+    });
+    report(
+      'clear wipes the search and the selection',
+      clearedBoth.rows === 5 && clearedBoth.on === 0,
+      JSON.stringify(clearedBoth),
     );
     await page.mouse.click(400, 10);
 
@@ -250,6 +300,7 @@ const { ensureServer, openApp, makeReporter, finish } = require('./lib/ui-test.c
         btnW: btn.getBoundingClientRect().width,
         btnH: btn.getBoundingClientRect().height,
         hiddenDisplay: hidden ? getComputedStyle(hidden).display : 'absent',
+        noBorder: getComputedStyle(title).borderLeftWidth === '0px',
       };
     });
     report(
@@ -259,7 +310,8 @@ const { ensureServer, openApp, makeReporter, finish } = require('./lib/ui-test.c
         mobile.subTop > mobile.titleTop &&
         mobile.btnW === 44 &&
         mobile.btnH === 44 &&
-        (mobile.hiddenDisplay === 'none' || mobile.hiddenDisplay === 'absent'),
+        (mobile.hiddenDisplay === 'none' || mobile.hiddenDisplay === 'absent') &&
+        mobile.noBorder,
       JSON.stringify(mobile),
     );
 
@@ -307,6 +359,11 @@ const { ensureServer, openApp, makeReporter, finish } = require('./lib/ui-test.c
     console.error(err);
     process.exitCode = 1;
   } finally {
-    await finish(browser, serverProc, isFailed() || process.exitCode === 1 || errors.length > 0, 'TABLE CHECKS');
+    await finish(
+      browser,
+      serverProc,
+      isFailed() || process.exitCode === 1 || errors.length > 0,
+      'TABLE CHECKS',
+    );
   }
 })();

@@ -4,7 +4,7 @@ export interface TableColumn {
   width?: number;
   min?: number;
   sortable?: boolean;
-  filter?: 'text' | 'select';
+  filter?: boolean | 'text' | 'select';
   align?: 'left' | 'right' | 'center';
   mobile?: 'lead' | 'title' | 'sub' | 'hidden';
 }

@@ -24,7 +24,7 @@ const emit = defineEmits<{
 const slots = useSlots();
 const widths = reactive<Record<string, number>>({});
 const sort = ref<{ key: string; dir: 'asc' | 'desc' } | null>(null);
-const textFilters = reactive<Record<string, string>>({});
+const queries = reactive<Record<string, string>>({});
 const selectFilters = reactive<Record<string, Array<string | number>>>({});
 const openFilter = ref<string | null>(null);
 const headRefs = reactive<Record<string, HTMLElement | undefined>>({});
@@ -61,29 +61,32 @@ function valueText(v: unknown): string {
 }
 
 function selectOptions(c: TableColumn) {
+  const q = (queries[c.key] ?? '').trim().toLowerCase();
   const seen: string[] = [];
   for (const row of props.rows) {
     const s = valueText(row[c.key]);
-    if (s !== '' && !seen.includes(s)) seen.push(s);
+    if (s !== '' && !seen.includes(s) && (!q || s.toLowerCase().includes(q))) seen.push(s);
   }
   return seen.map((value) => ({ value, label: value, title: value }));
 }
 
 function filterActive(c: TableColumn): boolean {
-  if (c.filter === 'text') return !!textFilters[c.key]?.trim();
-  if (c.filter === 'select') return (selectFilters[c.key] ?? []).length > 0;
-  return false;
+  if (!c.filter) return false;
+  return !!queries[c.key]?.trim() || (selectFilters[c.key] ?? []).length > 0;
+}
+
+function clearFilter(c: TableColumn) {
+  queries[c.key] = '';
+  selectFilters[c.key] = [];
 }
 
 const visibleRows = computed(() => {
   const out: Array<{ row: Record<string, unknown>; index: number }> = [];
   props.rows.forEach((row, index) => {
     for (const c of props.columns) {
-      if (c.filter === 'text') {
-        const q = (textFilters[c.key] ?? '').trim().toLowerCase();
+      if (c.filter) {
+        const q = (queries[c.key] ?? '').trim().toLowerCase();
         if (q && !valueText(row[c.key]).toLowerCase().includes(q)) return;
-      }
-      if (c.filter === 'select') {
         const pick = selectFilters[c.key] ?? [];
         if (pick.length > 0 && !pick.includes(valueText(row[c.key]))) return;
       }
@@ -221,26 +224,26 @@ onBeforeUnmount(() => document.removeEventListener('pointerdown', onDocPointerDo
           @dblclick.stop="resetWidth(c)"
         />
         <div v-if="c.filter && openFilter === c.key" class="sf-tbl-pop" @pointerdown.stop>
-          <template v-if="c.filter === 'text'">
-            <input
-              v-model="textFilters[c.key]"
-              class="sf-tbl-pop-input"
-              type="text"
-              :placeholder="`Filter ${c.label.toLowerCase()}…`"
-            >
-            <button
-              v-if="filterActive(c)"
-              class="sf-tbl-pop-clear"
-              type="button"
-              title="Clear"
-              @click="textFilters[c.key] = ''"
-            >✕</button>
-          </template>
+          <input
+            v-model="queries[c.key]"
+            class="sf-tbl-pop-input"
+            type="text"
+            :placeholder="`Search ${c.label.toLowerCase()}…`"
+          >
+          <button
+            v-if="filterActive(c)"
+            class="sf-tbl-pop-clear"
+            type="button"
+            title="Clear"
+            @click="clearFilter(c)"
+          >✕</button>
           <MultiSelectGroup
-            v-else-if="c.filter === 'select'"
+            v-if="selectOptions(c).length"
             v-model="selectFilters[c.key]"
             :options="selectOptions(c)"
+            class="sf-tbl-pop-opts"
           />
+          <span v-else class="sf-tbl-pop-none">no matching items</span>
         </div>
       </div>
       <div v-if="hasActions" class="sf-tbl-th sf-tbl-th--actions" />
@@ -385,6 +388,7 @@ onBeforeUnmount(() => document.removeEventListener('pointerdown', onDocPointerDo
   left: 0;
   z-index: 20;
   display: flex;
+  flex-wrap: wrap;
   gap: 6px;
   min-width: 170px;
   max-width: 280px;
@@ -397,6 +401,16 @@ onBeforeUnmount(() => document.removeEventListener('pointerdown', onDocPointerDo
   text-transform: none;
   font-weight: 400;
   letter-spacing: 0;
+}
+
+.sf-tbl-pop-opts {
+  flex-basis: 100%;
+}
+
+.sf-tbl-pop-none {
+  flex-basis: 100%;
+  color: var(--sf-text-muted);
+  padding: 2px 4px;
 }
 
 .sf-tbl-pop-input {
@@ -435,6 +449,16 @@ onBeforeUnmount(() => document.removeEventListener('pointerdown', onDocPointerDo
     color: var(--sf-text);
     background: var(--sf-hover-overlay);
   }
+}
+
+.sf-tbl-th:not(:first-child),
+.sf-tbl-cell:not(:first-child) {
+  border-left: 1px solid var(--sf-border);
+}
+
+.sf-root--mobile .sf-tbl-th,
+.sf-root--mobile .sf-tbl-cell {
+  border-left: none;
 }
 
 .sf-tbl-resize {
