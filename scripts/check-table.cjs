@@ -81,6 +81,21 @@ const { ensureServer, openApp, makeReporter, finish } = require('./lib/ui-test.c
           s(th).borderRightColor === s(tbl).borderTopColor,
       };
     });
+    const alignCheck = await page.evaluate(() => {
+      const block = document.querySelector('.sf-table-demo-block');
+      const ths = [...block.querySelectorAll('.sf-tbl-th')];
+      const cells = [...block.querySelector('.sf-tbl-row').querySelectorAll('.sf-tbl-cell')];
+      const diffs = ths.map((th, i) =>
+        Math.abs(th.getBoundingClientRect().right - cells[i].getBoundingClientRect().right),
+      );
+      return { pairs: ths.length, maxDiff: Math.max(...diffs) };
+    });
+    report(
+      'header and body vertical borders line up column for column',
+      alignCheck.pairs === 7 && alignCheck.maxDiff <= 1,
+      JSON.stringify(alignCheck),
+    );
+
     report(
       'the spreadsheet grid: outer frame plus right/bottom hairlines on every cell',
       grid.tblTop === '1px' &&

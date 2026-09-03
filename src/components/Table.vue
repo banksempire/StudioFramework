@@ -289,7 +289,11 @@ onBeforeUnmount(() => document.removeEventListener('pointerdown', onDocPointerDo
           <span v-else class="sf-tbl-pop-none">no matching items</span>
         </div>
       </div>
-      <div v-if="hasActions" class="sf-tbl-th sf-tbl-th--actions" />
+      <div v-if="hasActions" class="sf-tbl-th sf-tbl-th--actions">
+        <div v-if="visibleRows.length" class="sf-tbl-sizer" aria-hidden="true">
+          <slot name="actions" :row="visibleRows[0].row" />
+        </div>
+      </div>
     </div>
     <div
       v-for="({ row, index }, i) in visibleRows"
@@ -582,6 +586,19 @@ onBeforeUnmount(() => document.removeEventListener('pointerdown', onDocPointerDo
   justify-content: flex-end;
   gap: 4px;
   padding: 0 4px;
+}
+
+.sf-tbl-th--actions {
+  padding: 0;
+}
+
+.sf-tbl-sizer {
+  display: flex;
+  gap: 4px;
+  height: 0;
+  padding: 0 4px;
+  visibility: hidden;
+  overflow: hidden;
 }
 
 .sf-tbl-empty {
