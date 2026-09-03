@@ -55,6 +55,7 @@ const fileRows = computed(() => files as Array<Record<string, unknown>>);
         :columns="fileColumns"
         :rows="fileRows"
         row-key="name"
+        row-numbers
         :row-title="(row) => String(row.name)"
         :row-class="(row) => ({ 'sf-table-demo--sel': row.name === state.selKey })"
         empty-text="No files."

@@ -1,8 +1,6 @@
 <script setup lang="ts">
 import { computed, onBeforeUnmount, onMounted, reactive, ref, useSlots } from 'vue';
 import type { TableColumn } from '../types/table';
-import MultiSelectGroup from './MultiSelectGroup.vue';
-import SvgIcon from './SvgIcon.vue';
 
 const props = withDefaults(
   defineProps<{
@@ -12,8 +10,9 @@ const props = withDefaults(
     rowTitle?: (row: Record<string, unknown>) => string | undefined;
     rowClass?: (row: Record<string, unknown>) => Record<string, boolean>;
     emptyText?: string;
+    rowNumbers?: boolean;
   }>(),
-  { emptyText: 'No rows.' },
+  { emptyText: 'No rows.', rowNumbers: false },
 );
 
 const emit = defineEmits<{
@@ -25,7 +24,7 @@ const slots = useSlots();
 const widths = reactive<Record<string, number>>({});
 const sort = ref<{ key: string; dir: 'asc' | 'desc' } | null>(null);
 const queries = reactive<Record<string, string>>({});
-const selectFilters = reactive<Record<string, Array<string | number>>>({});
+const excluded = reactive<Record<string, string[]>>({});
 const openFilter = ref<string | null>(null);
 const headRefs = reactive<Record<string, HTMLElement | undefined>>({});
 
@@ -38,7 +37,7 @@ const templateColumns = computed(() => {
     const w = widths[c.key] ?? c.width;
     return w === undefined ? 'minmax(0, 1fr)' : `${w}px`;
   });
-  return [...cols, ...(hasActions.value ? ['auto'] : [])].join(' ');
+  return [...(props.rowNumbers ? ['34px'] : []), ...cols, ...(hasActions.value ? ['auto'] : [])].join(' ');
 });
 
 function cellWidth(c: TableColumn): number {
@@ -60,24 +59,42 @@ function valueText(v: unknown): string {
   return v === null || v === undefined ? '' : String(v);
 }
 
-function selectOptions(c: TableColumn) {
-  const q = (queries[c.key] ?? '').trim().toLowerCase();
+function uniqueValues(c: TableColumn): string[] {
   const seen: string[] = [];
   for (const row of props.rows) {
     const s = valueText(row[c.key]);
-    if (s !== '' && !seen.includes(s) && (!q || s.toLowerCase().includes(q))) seen.push(s);
+    if (s !== '' && !seen.includes(s)) seen.push(s);
   }
-  return seen.map((value) => ({ value, label: value, title: value }));
+  return seen;
+}
+
+function listValues(c: TableColumn): string[] {
+  const q = (queries[c.key] ?? '').trim().toLowerCase();
+  if (!q) return uniqueValues(c);
+  return uniqueValues(c).filter((v) => v.toLowerCase().includes(q));
 }
 
 function filterActive(c: TableColumn): boolean {
   if (!c.filter) return false;
-  return !!queries[c.key]?.trim() || (selectFilters[c.key] ?? []).length > 0;
+  return !!queries[c.key]?.trim() || (excluded[c.key] ?? []).length > 0;
 }
 
 function clearFilter(c: TableColumn) {
   queries[c.key] = '';
-  selectFilters[c.key] = [];
+  excluded[c.key] = [];
+}
+
+function isChecked(c: TableColumn, v: string): boolean {
+  return !(excluded[c.key] ?? []).includes(v);
+}
+
+function toggleValue(c: TableColumn, v: string) {
+  const cur = excluded[c.key] ?? [];
+  excluded[c.key] = cur.includes(v) ? cur.filter((x) => x !== v) : [...cur, v];
+}
+
+function toggleAll(c: TableColumn) {
+  excluded[c.key] = (excluded[c.key] ?? []).length > 0 ? [] : uniqueValues(c);
 }
 
 const visibleRows = computed(() => {
@@ -87,8 +104,7 @@ const visibleRows = computed(() => {
       if (c.filter) {
         const q = (queries[c.key] ?? '').trim().toLowerCase();
         if (q && !valueText(row[c.key]).toLowerCase().includes(q)) return;
-        const pick = selectFilters[c.key] ?? [];
-        if (pick.length > 0 && !pick.includes(valueText(row[c.key]))) return;
+        if ((excluded[c.key] ?? []).includes(valueText(row[c.key]))) return;
       }
     }
     out.push({ row, index });
@@ -122,6 +138,19 @@ function toggleSort(c: TableColumn) {
   sort.value = null;
 }
 
+function setSort(c: TableColumn, dir: 'asc' | 'desc') {
+  if (!c.sortable) return;
+  sort.value = sort.value?.key === c.key && sort.value.dir === dir ? null : { key: c.key, dir };
+}
+
+function onHeadClick(c: TableColumn) {
+  if (c.filter) {
+    togglePopover(c.key);
+    return;
+  }
+  toggleSort(c);
+}
+
 function togglePopover(key: string) {
   openFilter.value = openFilter.value === key ? null : key;
 }
@@ -129,7 +158,7 @@ function togglePopover(key: string) {
 function onDocPointerDown(e: Event) {
   if (!openFilter.value) return;
   const el = e.target as HTMLElement | null;
-  if (el?.closest('.sf-tbl-pop') || el?.closest('.sf-tbl-filterbtn')) return;
+  if (el?.closest('.sf-tbl-pop') || el?.closest('.sf-tbl-hbtn')) return;
   openFilter.value = null;
 }
 
@@ -186,37 +215,27 @@ onBeforeUnmount(() => document.removeEventListener('pointerdown', onDocPointerDo
     :class="{ 'sf-tbl--m-lead': mobileLead, 'sf-tbl--m-sub': mobileSub }"
   >
     <div class="sf-tbl-head">
+      <div v-if="rowNumbers" class="sf-tbl-th sf-tbl-gutter"><span class="sf-tbl-hlabel">#</span></div>
       <div
         v-for="c in columns"
         :key="c.key"
         :ref="(el) => setHeadRef(c.key, el)"
         class="sf-tbl-th"
-        :class="{ 'sf-tbl-th--active': filterActive(c) }"
+        :class="{ 'sf-tbl-th--active': filterActive(c) || sort?.key === c.key }"
         :style="{ justifyContent: cellJustify(c) }"
       >
         <button
-          v-if="c.sortable"
-          class="sf-tbl-sortbtn"
+          v-if="c.sortable || c.filter"
+          class="sf-tbl-hbtn"
           type="button"
-          :title="`Sort by ${c.label}`"
-          @click="toggleSort(c)"
+          :title="c.filter ? `Sort or filter by ${c.label}` : `Sort by ${c.label}`"
+          @click.stop="onHeadClick(c)"
         >
-          {{ c.label }}<span
-            v-if="sort?.key === c.key"
-            class="sf-tbl-sortind"
-          >{{ sort.dir === 'asc' ? '↑' : '↓' }}</span>
+          <span class="sf-tbl-hlabel">{{ c.label }}</span>
+          <span v-if="sort?.key === c.key" class="sf-tbl-sortind">{{ sort.dir === 'asc' ? '↑' : '↓' }}</span>
+          <span v-else class="sf-tbl-harrow">▾</span>
         </button>
-        <span v-else class="sf-tbl-label">{{ c.label }}</span>
-        <button
-          v-if="c.filter"
-          class="sf-tbl-filterbtn"
-          :class="{ 'sf-tbl-filterbtn--on': filterActive(c), 'sf-tbl-filterbtn--open': openFilter === c.key }"
-          type="button"
-          :title="`Filter by ${c.label}`"
-          @click.stop="togglePopover(c.key)"
-        >
-          <SvgIcon name="🔍" />
-        </button>
+        <span v-else class="sf-tbl-hlabel">{{ c.label }}</span>
         <span
           class="sf-tbl-resize"
           title="Drag to resize · double-click to reset"
@@ -224,44 +243,69 @@ onBeforeUnmount(() => document.removeEventListener('pointerdown', onDocPointerDo
           @dblclick.stop="resetWidth(c)"
         />
         <div v-if="c.filter && openFilter === c.key" class="sf-tbl-pop" @pointerdown.stop>
-          <input
-            v-model="queries[c.key]"
-            class="sf-tbl-pop-input"
-            type="text"
-            :placeholder="`Search ${c.label.toLowerCase()}…`"
-          >
-          <button
-            v-if="filterActive(c)"
-            class="sf-tbl-pop-clear"
-            type="button"
-            title="Clear"
-            @click="clearFilter(c)"
-          >✕</button>
-          <MultiSelectGroup
-            v-if="selectOptions(c).length"
-            v-model="selectFilters[c.key]"
-            :options="selectOptions(c)"
-            class="sf-tbl-pop-opts"
-          />
+          <div v-if="c.sortable" class="sf-tbl-pop-sort">
+            <button
+              class="sf-tbl-pop-sortbtn"
+              :class="{ 'sf-tbl-pop-sortbtn--on': sort?.key === c.key && sort.dir === 'asc' }"
+              type="button"
+              @click="setSort(c, 'asc')"
+            >↑ A→Z</button>
+            <button
+              class="sf-tbl-pop-sortbtn"
+              :class="{ 'sf-tbl-pop-sortbtn--on': sort?.key === c.key && sort.dir === 'desc' }"
+              type="button"
+              @click="setSort(c, 'desc')"
+            >↓ Z→A</button>
+          </div>
+          <div class="sf-tbl-pop-search">
+            <input
+              v-model="queries[c.key]"
+              class="sf-tbl-pop-input"
+              type="text"
+              :placeholder="`Search ${c.label.toLowerCase()}…`"
+            >
+            <button
+              v-if="filterActive(c)"
+              class="sf-tbl-pop-clear"
+              type="button"
+              title="Clear"
+              @click="clearFilter(c)"
+            >✕</button>
+          </div>
+          <div v-if="listValues(c).length" class="sf-tbl-pop-list">
+            <label class="sf-tbl-chk sf-tbl-chk--all">
+              <input
+                type="checkbox"
+                :checked="(excluded[c.key] ?? []).length === 0"
+                @change="toggleAll(c)"
+              >
+              <span class="sf-tbl-chk-val">(Select all)</span>
+            </label>
+            <label v-for="v in listValues(c)" :key="v" class="sf-tbl-chk">
+              <input type="checkbox" :checked="isChecked(c, v)" @change="toggleValue(c, v)">
+              <span class="sf-tbl-chk-val" :title="v">{{ v }}</span>
+            </label>
+          </div>
           <span v-else class="sf-tbl-pop-none">no matching items</span>
         </div>
       </div>
       <div v-if="hasActions" class="sf-tbl-th sf-tbl-th--actions" />
     </div>
     <div
-      v-for="{ row, index } in visibleRows"
+      v-for="({ row, index }, i) in visibleRows"
       :key="rowId(row, index)"
       class="sf-tbl-row"
       :class="rowClass?.(row)"
       :title="rowTitle?.(row)"
       @click="emit('row-click', row)"
     >
+      <div v-if="rowNumbers" class="sf-tbl-cell sf-tbl-gutter">{{ i + 1 }}</div>
       <div
         v-for="c in columns"
         :key="c.key"
         class="sf-tbl-cell"
         :class="`sf-tbl-c--${c.mobile ?? 'hidden'}`"
-        :style="{ textAlign: cellAlign(c) }"
+        :style="{ justifyContent: cellJustify(c) }"
       >
         <slot :name="`cell-${c.key}`" :row="row" :value="row[c.key]">{{ valueText(row[c.key]) }}</slot>
       </div>
@@ -280,30 +324,26 @@ onBeforeUnmount(() => document.removeEventListener('pointerdown', onDocPointerDo
   min-height: 0;
   font-size: inherit;
   color: var(--sf-text);
+  border-top: 1px solid var(--sf-border);
+  border-left: 1px solid var(--sf-border);
 }
 
 .sf-tbl-head,
 .sf-tbl-row {
   display: grid;
   grid-template-columns: v-bind(templateColumns);
-  gap: 8px;
-  align-items: center;
-  padding: 4px 8px;
+  align-items: stretch;
 }
 
 .sf-tbl-head {
   position: sticky;
   top: 0;
   z-index: 1;
-  height: 30px;
-  padding: 0 8px;
+  height: 28px;
   font-size: 0.92em;
   font-weight: 600;
-  letter-spacing: 0.4px;
-  text-transform: uppercase;
   color: var(--sf-text-bright);
   background: var(--sf-bg-lighter);
-  border-bottom: 1px solid var(--sf-border);
   user-select: none;
 }
 
@@ -311,75 +351,48 @@ onBeforeUnmount(() => document.removeEventListener('pointerdown', onDocPointerDo
   position: relative;
   display: flex;
   align-items: center;
-  gap: 2px;
   min-width: 0;
+  padding: 0 4px 0 8px;
+  border-right: 1px solid var(--sf-border);
+  border-bottom: 1px solid var(--sf-border);
 }
 
-.sf-tbl-sortbtn {
-  display: inline-flex;
+.sf-tbl-hbtn {
+  display: flex;
   align-items: center;
-  gap: 2px;
+  gap: 3px;
+  flex: 1;
   min-width: 0;
   background: none;
   border: none;
   padding: 0;
   font: inherit;
   font-weight: 600;
-  letter-spacing: 0.4px;
-  text-transform: uppercase;
   color: inherit;
   cursor: pointer;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  text-align: left;
 }
 
-.sf-tbl-sortind {
-  color: var(--sf-accent);
-}
-
-.sf-tbl-label {
+.sf-tbl-hlabel {
   min-width: 0;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
 
-.sf-tbl-filterbtn {
+.sf-tbl-harrow {
   flex-shrink: 0;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 18px;
-  height: 18px;
-  padding: 0;
-  background: none;
-  border: none;
-  border-radius: var(--sf-radius-sm);
+  font-size: 10px;
   color: var(--sf-text-muted);
-  cursor: pointer;
-  opacity: 0.6;
 }
 
-.sf-tbl-filterbtn svg {
-  width: 12px;
-  height: 12px;
-}
-
-@media (hover: hover) {
-  .sf-tbl-filterbtn:hover {
-    opacity: 1;
-    background: var(--sf-hover-overlay);
-  }
-}
-
-.sf-tbl-filterbtn--on {
-  opacity: 1;
+.sf-tbl-sortind {
+  flex-shrink: 0;
   color: var(--sf-accent);
 }
 
-.sf-tbl-filterbtn--open {
-  opacity: 1;
+.sf-tbl-th--active .sf-tbl-harrow {
+  color: var(--sf-accent);
 }
 
 .sf-tbl-pop {
@@ -388,29 +401,50 @@ onBeforeUnmount(() => document.removeEventListener('pointerdown', onDocPointerDo
   left: 0;
   z-index: 20;
   display: flex;
-  flex-wrap: wrap;
+  flex-direction: column;
   gap: 6px;
-  min-width: 170px;
+  min-width: 190px;
   max-width: 280px;
-  margin-top: 3px;
+  margin-top: 2px;
   padding: 6px;
   background: var(--sf-bg-lighter);
   border: 1px solid var(--sf-border);
   border-radius: 8px;
   box-shadow: 0 4px 14px rgba(0, 0, 0, 0.35);
-  text-transform: none;
-  font-weight: 400;
-  letter-spacing: 0;
 }
 
-.sf-tbl-pop-opts {
-  flex-basis: 100%;
+.sf-tbl-pop-sort {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 4px;
 }
 
-.sf-tbl-pop-none {
-  flex-basis: 100%;
-  color: var(--sf-text-muted);
-  padding: 2px 4px;
+.sf-tbl-pop-sortbtn {
+  background: var(--sf-bar);
+  border: 1px solid var(--sf-border);
+  border-radius: var(--sf-radius-sm);
+  color: var(--sf-text);
+  font-family: var(--sf-font);
+  font-size: 12px;
+  padding: 3px 4px;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+@media (hover: hover) {
+  .sf-tbl-pop-sortbtn:hover {
+    box-shadow: inset 0 0 0 999px var(--sf-hover-overlay);
+  }
+}
+
+.sf-tbl-pop-sortbtn--on {
+  color: var(--sf-accent);
+  border-color: var(--sf-accent);
+}
+
+.sf-tbl-pop-search {
+  display: flex;
+  gap: 4px;
 }
 
 .sf-tbl-pop-input {
@@ -451,14 +485,54 @@ onBeforeUnmount(() => document.removeEventListener('pointerdown', onDocPointerDo
   }
 }
 
-.sf-tbl-th:not(:first-child),
-.sf-tbl-cell:not(:first-child) {
-  border-left: 1px solid var(--sf-border);
+.sf-tbl-pop-list {
+  display: flex;
+  flex-direction: column;
+  max-height: 190px;
+  overflow: auto;
+  margin: 0 -2px;
+  padding: 0 2px;
 }
 
-.sf-root--mobile .sf-tbl-th,
-.sf-root--mobile .sf-tbl-cell {
-  border-left: none;
+.sf-tbl-chk {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 24px;
+  padding: 0 4px;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+@media (hover: hover) {
+  .sf-tbl-chk:hover {
+    background: var(--sf-hover-overlay);
+  }
+}
+
+.sf-tbl-chk input {
+  accent-color: var(--sf-accent);
+  flex-shrink: 0;
+}
+
+.sf-tbl-chk--all {
+  border-bottom: 1px solid var(--sf-border);
+  border-radius: 0;
+  margin-bottom: 2px;
+}
+
+.sf-tbl-chk-val {
+  min-width: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font-size: 13px;
+}
+
+.sf-tbl-pop-none {
+  color: var(--sf-text-muted);
+  padding: 2px 4px;
+  font-size: 13px;
 }
 
 .sf-tbl-resize {
@@ -471,8 +545,7 @@ onBeforeUnmount(() => document.removeEventListener('pointerdown', onDocPointerDo
 }
 
 .sf-tbl-row {
-  min-height: 32px;
-  border-bottom: 1px solid var(--sf-border);
+  min-height: 28px;
 }
 
 @media (hover: hover) {
@@ -482,22 +555,41 @@ onBeforeUnmount(() => document.removeEventListener('pointerdown', onDocPointerDo
 }
 
 .sf-tbl-cell {
+  display: flex;
+  align-items: center;
   min-width: 0;
   overflow: hidden;
-  text-overflow: ellipsis;
+  padding: 0 8px;
+  border-right: 1px solid var(--sf-border);
+  border-bottom: 1px solid var(--sf-border);
+}
+
+.sf-tbl-cell > :slotted(*) {
+  min-width: 0;
   white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.sf-tbl-gutter {
+  justify-content: center;
+  padding: 0 4px;
+  color: var(--sf-text-muted);
+  font-size: 0.9em;
 }
 
 .sf-tbl-c--actions {
-  display: flex;
-  gap: 4px;
   justify-content: flex-end;
+  gap: 4px;
+  padding: 0 4px;
 }
 
 .sf-tbl-empty {
   padding: 24px 8px;
   text-align: center;
   color: var(--sf-text-muted);
+  border-right: 1px solid var(--sf-border);
+  border-bottom: 1px solid var(--sf-border);
 }
 
 :slotted(.sf-tbl-btn) {
@@ -535,6 +627,28 @@ body.sf-tbl-resizing {
   user-select: none;
 }
 
+.sf-root--mobile .sf-tbl {
+  border: none;
+}
+
+.sf-root--mobile .sf-tbl-th,
+.sf-root--mobile .sf-tbl-cell {
+  border: none;
+}
+
+.sf-root--mobile .sf-tbl-cell {
+  display: block;
+  text-align: left;
+}
+
+.sf-root--mobile .sf-tbl-c--actions {
+  display: flex;
+}
+
+.sf-root--mobile .sf-tbl-gutter {
+  display: none;
+}
+
 .sf-root--mobile .sf-tbl-head {
   display: none;
 }
@@ -546,6 +660,7 @@ body.sf-tbl-resizing {
   row-gap: 4px;
   align-content: center;
   padding: 8px;
+  border-bottom: 1px solid var(--sf-border);
 }
 
 .sf-root--mobile .sf-tbl--m-lead .sf-tbl-row {
@@ -568,7 +683,7 @@ body.sf-tbl-resizing {
 
 .sf-root--mobile .sf-tbl-c--sub {
   grid-area: sub;
-  text-align: left;
+  justify-content: flex-start;
 }
 
 .sf-root--mobile .sf-tbl-c--actions {

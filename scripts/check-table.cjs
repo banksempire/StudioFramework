@@ -18,6 +18,11 @@ const { ensureServer, openApp, makeReporter, finish } = require('./lib/ui-test.c
     await delay(300);
 
     const rowsIn = (sel) => page.locator(`.sf-table-demo-block:first-child ${sel}`);
+    const rowsText = () =>
+      page.evaluate(() => {
+        const block = document.querySelector('.sf-table-demo-block');
+        return [...block.querySelectorAll('.sf-tbl-row')].map((r) => r.textContent);
+      });
 
     const initial = await page.evaluate(() => {
       const block = document.querySelector('.sf-table-demo-block');
@@ -25,126 +30,141 @@ const { ensureServer, openApp, makeReporter, finish } = require('./lib/ui-test.c
       const ths = [...head.children].map((th) => th.textContent.trim());
       const rows = [...block.querySelectorAll('.sf-tbl-row')].map((r) => r.textContent);
       const tracks = getComputedStyle(head).gridTemplateColumns.split(' ').map(parseFloat);
-      return { count: rows.length, ths, row0: rows[0], tracks };
+      const th = head.children[1];
+      return { count: rows.length, ths, row0: rows[0], tracks, thCase: getComputedStyle(th).textTransform };
     });
     report(
-      'renders header labels and all rows on a fixed-column grid',
+      'renders header labels, a row-number gutter and all rows on a fixed-column grid',
       initial.count === 5 &&
         initial.ths.join('|').toUpperCase().includes('NAME') &&
         initial.ths.join('|').toUpperCase().includes('SIZE KB') &&
-        initial.tracks.length === 6 &&
-        initial.tracks[0] === 150 &&
-        initial.tracks[1] === 80 &&
-        initial.tracks[2] === 76 &&
-        initial.tracks[4] > 0,
+        initial.row0.startsWith('1') &&
+        initial.tracks.length === 7 &&
+        initial.tracks[0] === 34 &&
+        initial.tracks[1] === 150 &&
+        initial.tracks[2] === 80 &&
+        initial.tracks[3] === 76 &&
+        initial.tracks[5] > 0,
       JSON.stringify(initial),
     );
+    report(
+      'headers keep spreadsheet casing (no uppercase transform)',
+      initial.thCase === 'none',
+      initial.thCase,
+    );
 
-    const colBorders = await page.evaluate(() => {
+    const gutters = await page.evaluate(() => {
       const block = document.querySelector('.sf-table-demo-block');
-      const head = [...block.querySelectorAll('.sf-tbl-th')];
-      const row = block.querySelector('.sf-tbl-row');
-      const cells = [...row.querySelectorAll('.sf-tbl-cell')];
-      const w = (el) => getComputedStyle(el).borderLeftWidth;
-      const c = (el) => getComputedStyle(el).borderLeftColor;
+      return [...block.querySelectorAll('.sf-tbl-gutter')].map((g) => g.textContent);
+    });
+    report(
+      'the gutter numbers the displayed rows 1..n',
+      gutters.length === 6 && gutters[0] === '#' && gutters.slice(1).join(',') === '1,2,3,4,5',
+      JSON.stringify(gutters),
+    );
+
+    const grid = await page.evaluate(() => {
+      const block = document.querySelector('.sf-table-demo-block');
+      const tbl = block.querySelector('.sf-tbl');
+      const th = [...block.querySelectorAll('.sf-tbl-th')][1];
+      const cell = [...block.querySelectorAll('.sf-tbl-row')][0].querySelectorAll('.sf-tbl-cell')[1];
+      const s = (el) => getComputedStyle(el);
       return {
-        head0: w(head[0]),
-        head1: w(head[1]),
-        row0: w(cells[0]),
-        row1: w(cells[1]),
-        sameColor: c(head[1]) === c(cells[1]),
+        tblTop: s(tbl).borderTopWidth,
+        tblLeft: s(tbl).borderLeftWidth,
+        thRight: s(th).borderRightWidth,
+        thBottom: s(th).borderBottomWidth,
+        cellRight: s(cell).borderRightWidth,
+        cellBottom: s(cell).borderBottomWidth,
+        sameColor:
+          s(th).borderRightColor === s(cell).borderRightColor &&
+          s(th).borderRightColor === s(tbl).borderTopColor,
       };
     });
     report(
-      'columns are separated by one hairline border (none before the first)',
-      colBorders.head0 === '0px' &&
-        colBorders.head1 === '1px' &&
-        colBorders.row0 === '0px' &&
-        colBorders.row1 === '1px' &&
-        colBorders.sameColor,
-      JSON.stringify(colBorders),
+      'the spreadsheet grid: outer frame plus right/bottom hairlines on every cell',
+      grid.tblTop === '1px' &&
+        grid.tblLeft === '1px' &&
+        grid.thRight === '1px' &&
+        grid.thBottom === '1px' &&
+        grid.cellRight === '1px' &&
+        grid.cellBottom === '1px' &&
+        grid.sameColor,
+      JSON.stringify(grid),
     );
 
-    const nameBtn = rowsIn('.sf-tbl-th').first().locator('.sf-tbl-sortbtn');
-    await nameBtn.click();
-    const asc = await page.evaluate(() => {
-      const block = document.querySelector('.sf-table-demo-block');
-      const rows = [...block.querySelectorAll('.sf-tbl-row')].map((r) => r.textContent);
-      return { first: rows[0], last: rows[rows.length - 1], n: rows.length };
-    });
+    const nameHead = page.locator('.sf-table-demo-block:first-child .sf-tbl-th', { hasText: 'Name' });
+    await nameHead.locator('.sf-tbl-hbtn').click();
+    await delay(100);
+    await rowsIn('.sf-tbl-pop-sortbtn').first().click();
+    await delay(150);
+    const asc = await rowsText();
     report(
-      'clicking a sortable header sorts ascending and shows the ↑ indicator',
-      (await rowsIn('.sf-tbl-sortind').first().textContent()) === '↑' &&
-        asc.first.includes('archive.zip') &&
-        asc.last.includes('report-final.md'),
+      'dropdown A→Z sorts ascending and shows the ↑ indicator',
+      (await nameHead.locator('.sf-tbl-sortind').textContent()) === '↑' &&
+        asc[0].includes('archive.zip') &&
+        asc[4].includes('report-final.md'),
       JSON.stringify(asc),
     );
 
-    await nameBtn.click();
-    const desc = await page.evaluate(() => {
-      const block = document.querySelector('.sf-table-demo-block');
-      return [...block.querySelectorAll('.sf-tbl-row')][0].textContent;
-    });
+    await rowsIn('.sf-tbl-pop-sortbtn').nth(1).click();
+    await delay(150);
+    const desc = await rowsText();
     report(
-      'second click sorts descending (↓)',
-      (await rowsIn('.sf-tbl-sortind').first().textContent()) === '↓' && desc.includes('report-final.md'),
-      desc,
+      'dropdown Z→A sorts descending (↓)',
+      (await nameHead.locator('.sf-tbl-sortind').textContent()) === '↓' &&
+        desc[0].includes('report-final.md'),
+      JSON.stringify(desc),
     );
 
-    await nameBtn.click();
-    const unsorted = await page.evaluate(() => {
-      const block = document.querySelector('.sf-table-demo-block');
-      return {
-        first: [...block.querySelectorAll('.sf-tbl-row')][0].textContent,
-        ind: block.querySelectorAll('.sf-tbl-sortind').length,
-      };
-    });
+    await rowsIn('.sf-tbl-pop-sortbtn').nth(1).click();
+    await delay(150);
+    const unsorted = await rowsText();
     report(
-      'third click clears the sort back to natural order',
-      unsorted.ind === 0 && unsorted.first.includes('report-final.md'),
+      'clicking the active sort again clears it back to natural order',
+      (await nameHead.locator('.sf-tbl-sortind').count()) === 0 && unsorted[0].includes('report-final.md'),
       JSON.stringify(unsorted),
     );
+    await page.mouse.click(400, 10);
+    await delay(100);
 
-    const sizeBtn = rowsIn('.sf-tbl-th').nth(2).locator('.sf-tbl-sortbtn');
-    await sizeBtn.click();
-    const numSort = await page.evaluate(() => {
-      const block = document.querySelector('.sf-table-demo-block');
-      return [...block.querySelectorAll('.sf-tbl-row')].map((r) => r.textContent);
-    });
+    const sizeHead = page.locator('.sf-table-demo-block:first-child .sf-tbl-th', { hasText: 'Size KB' });
+    await sizeHead.locator('.sf-tbl-hbtn').click();
+    await delay(150);
+    const numSort = await rowsText();
     report(
-      'numeric columns sort by value, not string',
+      'sortable-only headers cycle on click and numeric columns sort by value',
       numSort[0].includes('12') && numSort[4].includes('2048'),
       JSON.stringify(numSort),
     );
-    await sizeBtn.click();
-    await sizeBtn.click();
+    await sizeHead.locator('.sf-tbl-hbtn').click();
+    await sizeHead.locator('.sf-tbl-hbtn').click();
+    await delay(150);
 
-    await rowsIn('.sf-tbl-th').first().locator('.sf-tbl-filterbtn').click();
+    await nameHead.locator('.sf-tbl-hbtn').click();
     await delay(100);
     await rowsIn('.sf-tbl-pop-input').fill('ar');
     await delay(150);
-    const textFilter = await page.evaluate(() => {
-      const block = document.querySelector('.sf-table-demo-block');
-      return [...block.querySelectorAll('.sf-tbl-row')].map((r) => r.textContent);
-    });
+    const textFilter = await rowsText();
+    const nameActive = await nameHead.evaluate((el) => el.classList.contains('sf-tbl-th--active'));
     report(
-      'text filter narrows rows by substring',
-      textFilter.length === 2 &&
-        textFilter.every((t) => t.includes('ar')) &&
-        (await rowsIn('.sf-tbl-filterbtn--on').count()) === 1,
+      'search in the dropdown narrows rows by substring and marks the header active',
+      textFilter.length === 2 && textFilter.every((t) => t.includes('ar')) && nameActive,
       JSON.stringify(textFilter),
     );
 
     await rowsIn('.sf-tbl-pop-clear').click();
     await page.mouse.click(400, 10);
     await delay(100);
-    const closed = await page.evaluate(() => {
-      const block = document.querySelector('.sf-table-demo-block');
-      return [...block.querySelectorAll('.sf-tbl-row')].length;
-    });
-    report('clear + outside click restores all rows and closes the popover', closed === 5, `rows=${closed}`);
+    const closed = (await rowsText()).length;
+    const popGone = (await rowsIn('.sf-tbl-pop').count()) === 0;
+    report(
+      'clear + outside click restores all rows and closes the dropdown',
+      closed === 5 && popGone,
+      `rows=${closed}`,
+    );
 
-    await rowsIn('.sf-tbl-th').first().locator('.sf-tbl-filterbtn').click();
+    await nameHead.locator('.sf-tbl-hbtn').click();
     await delay(100);
     await rowsIn('.sf-tbl-pop-input').fill('zzz');
     await delay(150);
@@ -155,51 +175,50 @@ const { ensureServer, openApp, makeReporter, finish } = require('./lib/ui-test.c
     await page.mouse.click(400, 10);
     report('clearing the filter brings the rows back', (await rowsIn('.sf-tbl-row').count()) === 5);
 
-    await rowsIn('.sf-tbl-th').nth(1).locator('.sf-tbl-filterbtn').click();
+    const kindHead = page.locator('.sf-table-demo-block:first-child .sf-tbl-th', { hasText: 'Kind' });
+    await kindHead.locator('.sf-tbl-hbtn').click();
     await delay(100);
-    const kindChips = rowsIn('.sf-tbl-pop .sf-ms-item');
-    await kindChips.filter({ hasText: 'image' }).first().click();
+    const chkRow = (label) => rowsIn('.sf-tbl-chk').filter({ hasText: label }).first();
+    await chkRow('doc').locator('input').click();
     await delay(150);
-    const selectFilter = await page.evaluate(() => {
-      const block = document.querySelector('.sf-table-demo-block');
-      return [...block.querySelectorAll('.sf-tbl-row')].map((r) => r.textContent);
-    });
+    const excluded = await rowsText();
     report(
-      'select filter (MultiSelectGroup chips) filters by value',
-      selectFilter.length === 2 &&
-        selectFilter.every((t) => t.includes('ar')) &&
-        selectFilter.some((t) => t.includes('avatar')) &&
-        selectFilter.some((t) => t.includes('archive')),
-      JSON.stringify(selectFilter),
+      'unchecking an item in the value list hides its rows',
+      excluded.length === 4 && excluded.every((t) => !t.includes('report-final.md')),
+      JSON.stringify(excluded),
     );
 
-    await kindChips.filter({ hasText: 'image' }).first().click();
+    await chkRow('doc').locator('input').click();
     await delay(150);
-    const allOff = await page.evaluate(() => {
-      const block = document.querySelector('.sf-table-demo-block');
-      return {
-        rows: [...block.querySelectorAll('.sf-tbl-row')].length,
-        on: block.querySelectorAll('.sf-tbl-filterbtn--on').length,
-      };
-    });
+    report('re-checking the item restores its rows', (await rowsIn('.sf-tbl-row').count()) === 5);
+
+    await chkRow('(Select all)').locator('input').click();
+    await delay(150);
+    const noneChecked = await rowsText();
     report(
-      'empty chip selection means no filter',
-      allOff.rows === 5 && allOff.on === 0,
-      JSON.stringify(allOff),
+      '(Select all) off leaves no rows and the filtered empty state',
+      noneChecked.length === 0 && (await rowsIn('.sf-tbl-empty').textContent())?.trim() === 'No files match.',
+      JSON.stringify(noneChecked),
     );
+
+    await chkRow('(Select all)').locator('input').click();
+    await delay(150);
+    report('(Select all) back on restores every row', (await rowsIn('.sf-tbl-row').count()) === 5);
 
     await rowsIn('.sf-tbl-pop-input').fill('ima');
     await delay(150);
     const narrowed = await page.evaluate(() => {
       const pop = document.querySelector('.sf-table-demo-block .sf-tbl-pop');
       return {
-        chips: [...pop.querySelectorAll('.sf-ms-item')].map((c) => c.textContent),
+        items: [...pop.querySelectorAll('.sf-tbl-chk-val')]
+          .map((c) => c.textContent)
+          .filter((t) => t !== '(Select all)'),
         rows: [...document.querySelector('.sf-table-demo-block').querySelectorAll('.sf-tbl-row')].length,
       };
     });
     report(
-      'typing in the filter narrows the unique item list to pick from',
-      narrowed.chips.length === 1 && narrowed.chips[0] === 'image' && narrowed.rows === 2,
+      'typing in the dropdown narrows the value list and the rows together',
+      narrowed.items.length === 1 && narrowed.items[0] === 'image' && narrowed.rows === 2,
       JSON.stringify(narrowed),
     );
     await rowsIn('.sf-tbl-pop-clear').click();
@@ -208,17 +227,17 @@ const { ensureServer, openApp, makeReporter, finish } = require('./lib/ui-test.c
       const block = document.querySelector('.sf-table-demo-block');
       return {
         rows: [...block.querySelectorAll('.sf-tbl-row')].length,
-        on: block.querySelectorAll('.sf-tbl-filterbtn--on').length,
+        on: block.querySelectorAll('.sf-tbl-th--active').length,
       };
     });
     report(
-      'clear wipes the search and the selection',
+      'clear wipes the search and the exclusions',
       clearedBoth.rows === 5 && clearedBoth.on === 0,
       JSON.stringify(clearedBoth),
     );
     await page.mouse.click(400, 10);
 
-    const headBox = await rowsIn('.sf-tbl-th').first().boundingBox();
+    const headBox = await nameHead.boundingBox();
     const handleX = headBox.x + headBox.width - 1;
     await page.mouse.move(handleX, headBox.y + headBox.height / 2);
     await page.mouse.down();
@@ -231,8 +250,8 @@ const { ensureServer, openApp, makeReporter, finish } = require('./lib/ui-test.c
       const row = block.querySelector('.sf-tbl-row');
       const state = document.querySelector('.sf-table-demo-state').textContent;
       return {
-        head: getComputedStyle(head).gridTemplateColumns.split(' ')[0],
-        row: getComputedStyle(row).gridTemplateColumns.split(' ')[0],
+        head: getComputedStyle(head).gridTemplateColumns.split(' ')[1],
+        row: getComputedStyle(row).gridTemplateColumns.split(' ')[1],
         state,
       };
     });
@@ -244,12 +263,12 @@ const { ensureServer, openApp, makeReporter, finish } = require('./lib/ui-test.c
       JSON.stringify(resized),
     );
 
-    const hd2 = await rowsIn('.sf-tbl-th').first().boundingBox();
+    const hd2 = await nameHead.boundingBox();
     await page.mouse.dblclick(hd2.x + hd2.width - 1, hd2.y + hd2.height / 2);
     await delay(150);
     const reset = await page.evaluate(() => {
       const block = document.querySelector('.sf-table-demo-block');
-      return getComputedStyle(block.querySelector('.sf-tbl-head')).gridTemplateColumns.split(' ')[0];
+      return getComputedStyle(block.querySelector('.sf-tbl-head')).gridTemplateColumns.split(' ')[1];
     });
     report('double-click on the handle resets the column width', reset === '150px', reset);
 
@@ -292,6 +311,7 @@ const { ensureServer, openApp, makeReporter, finish } = require('./lib/ui-test.c
       const sub = row.querySelector('.sf-tbl-c--sub');
       const hidden = row.querySelector('.sf-tbl-c--hidden');
       const btn = row.querySelector('.sf-tbl-btn');
+      const gutter = row.querySelector('.sf-tbl-gutter');
       return {
         head: getComputedStyle(block.querySelector('.sf-tbl-head')).display,
         template: rs.gridTemplateAreas.includes('title'),
@@ -300,18 +320,22 @@ const { ensureServer, openApp, makeReporter, finish } = require('./lib/ui-test.c
         btnW: btn.getBoundingClientRect().width,
         btnH: btn.getBoundingClientRect().height,
         hiddenDisplay: hidden ? getComputedStyle(hidden).display : 'absent',
-        noBorder: getComputedStyle(title).borderLeftWidth === '0px',
+        noBorder:
+          getComputedStyle(title).borderRightWidth === '0px' &&
+          getComputedStyle(title).borderBottomWidth === '0px',
+        gutter: gutter ? getComputedStyle(gutter).display : 'absent',
       };
     });
     report(
-      'mobile: header hides, rows become cards (title over sub, hidden columns gone, square actions)',
+      'mobile: header hides, rows become borderless cards with square actions, gutter gone',
       mobile.head === 'none' &&
         mobile.template === true &&
         mobile.subTop > mobile.titleTop &&
         mobile.btnW === 44 &&
         mobile.btnH === 44 &&
         (mobile.hiddenDisplay === 'none' || mobile.hiddenDisplay === 'absent') &&
-        mobile.noBorder,
+        mobile.noBorder &&
+        (mobile.gutter === 'none' || mobile.gutter === 'absent'),
       JSON.stringify(mobile),
     );
 
