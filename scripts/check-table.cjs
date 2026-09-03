@@ -94,6 +94,23 @@ const { ensureServer, openApp, makeReporter, finish } = require('./lib/ui-test.c
       searched.length === 2 && searched.every((t) => t.includes('image')) && countFiltered?.trim() === '2/5',
       JSON.stringify(searched),
     );
+
+    const clearInside = await rowsIn('.sf-tbl-search-box').evaluate((box) => {
+      const b = box.getBoundingClientRect();
+      const c = box.querySelector('.sf-tbl-search-clear');
+      if (!c) return { present: false };
+      const r = c.getBoundingClientRect();
+      return {
+        present: true,
+        inside: r.right <= b.right - 1 && r.top >= b.top - 1 && r.bottom <= b.bottom + 1,
+        centered: Math.abs((r.top + r.bottom) / 2 - (b.top + b.bottom) / 2) <= 2,
+      };
+    });
+    report(
+      'the clear ✕ sits inside the search box, vertically centered',
+      clearInside.present && clearInside.inside && clearInside.centered,
+      JSON.stringify(clearInside),
+    );
     await rowsIn('.sf-tbl-search-clear').click();
     await delay(150);
     const clearedCount = await rowsIn('.sf-tbl-search-side--end').textContent();

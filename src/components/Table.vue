@@ -389,20 +389,22 @@ onBeforeUnmount(() => {
       <div v-if="hasLeadSlot" class="sf-tbl-search-side">
         <slot name="search-lead" />
       </div>
-      <input
-        v-if="searchable"
-        v-model="globalQuery"
-        class="sf-tbl-search-input"
-        type="text"
-        :placeholder="searchPlaceholder"
-      >
-      <button
-        v-if="searchable && globalQuery"
-        class="sf-tbl-search-clear"
-        type="button"
-        title="Clear"
-        @click="globalQuery = ''"
-      >✕</button>
+      <div class="sf-tbl-search-box">
+        <input
+          v-if="searchable"
+          v-model="globalQuery"
+          class="sf-tbl-search-input"
+          type="text"
+          :placeholder="searchPlaceholder"
+        >
+        <button
+          v-if="searchable && globalQuery"
+          class="sf-tbl-search-clear"
+          type="button"
+          title="Clear"
+          @click="globalQuery = ''"
+        >✕</button>
+      </div>
       <div v-if="hasEndSlot" class="sf-tbl-search-side sf-tbl-search-side--end">
         <slot name="search-end" :filtered="visibleRows.length" :total="props.rows.length" />
       </div>
@@ -588,25 +590,38 @@ onBeforeUnmount(() => {
   border-bottom: 1px solid var(--sf-border);
 }
 
-.sf-tbl-search-input {
+.sf-tbl-search-box {
   flex: 1;
   min-width: 0;
+  position: relative;
+  display: flex;
+  align-items: stretch;
   background: var(--sf-bg);
   border: 1px solid var(--sf-border);
   border-radius: var(--sf-radius-sm);
-  color: var(--sf-text);
-  font-family: var(--sf-font);
-  font-size: 13px;
-  padding: 3px 6px;
-  outline: none;
 }
 
-.sf-tbl-search-input:focus {
+.sf-tbl-search-box:focus-within {
   border-color: var(--sf-accent);
 }
 
+.sf-tbl-search-input {
+  flex: 1;
+  min-width: 0;
+  background: none;
+  border: none;
+  color: var(--sf-text);
+  font-family: var(--sf-font);
+  font-size: 13px;
+  padding: 3px 26px 3px 8px;
+  outline: none;
+}
+
 .sf-tbl-search-clear {
-  flex-shrink: 0;
+  position: absolute;
+  right: 2px;
+  top: 50%;
+  transform: translateY(-50%);
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -745,29 +760,36 @@ onBeforeUnmount(() => {
 }
 
 .sf-tbl-pop-search {
+  position: relative;
   display: flex;
-  gap: 4px;
+  align-items: stretch;
+  background: var(--sf-bg);
+  border: 1px solid var(--sf-border);
+  border-radius: var(--sf-radius-sm);
+}
+
+.sf-tbl-pop-search:focus-within {
+  border-color: var(--sf-accent);
 }
 
 .sf-tbl-pop-input {
   flex: 1;
   min-width: 0;
-  background: var(--sf-bg);
-  border: 1px solid var(--sf-border);
+  background: none;
+  border: none;
   border-radius: var(--sf-radius-sm);
   color: var(--sf-text);
   font-family: var(--sf-font);
   font-size: 13px;
-  padding: 3px 6px;
+  padding: 3px 26px 3px 8px;
   outline: none;
 }
 
-.sf-tbl-pop-input:focus {
-  border-color: var(--sf-accent);
-}
-
 .sf-tbl-pop-clear {
-  flex-shrink: 0;
+  position: absolute;
+  right: 2px;
+  top: 50%;
+  transform: translateY(-50%);
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -1063,14 +1085,19 @@ onBeforeUnmount(() => {
   gap: 10px;
 }
 
+.sf-root--mobile .sf-tbl-search-box {
+  min-height: 44px;
+}
+
 .sf-root--mobile .sf-tbl-search-input {
   font-size: 16px;
-  padding: 8px 10px;
+  padding: 8px 46px 8px 12px;
 }
 
 .sf-root--mobile .sf-tbl-search-clear {
-  width: 44px;
-  height: 44px;
+  width: 40px;
+  height: 40px;
+  right: 2px;
   font-size: 18px;
 }
 
