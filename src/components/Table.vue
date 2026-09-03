@@ -1046,4 +1046,31 @@ onBeforeUnmount(() => {
   height: 44px;
   padding: 0;
 }
+
+.sf-root--mobile .sf-tbl-search {
+  height: 60px;
+  padding: 0 12px;
+  gap: 10px;
+}
+
+.sf-root--mobile .sf-tbl-search-input {
+  font-size: 16px;
+  padding: 8px 10px;
+}
+
+.sf-root--mobile .sf-tbl-search-clear {
+  width: 44px;
+  height: 44px;
+  font-size: 18px;
+}
+
+.sf-root--mobile .sf-tbl-search-side :slotted(.sf-tbl-btn) {
+  width: 44px;
+  height: 44px;
+  padding: 0;
+}
+
+.sf-root--mobile .sf-tbl {
+  min-height: calc(100% + 1px);
+}
 </style>

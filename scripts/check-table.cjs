@@ -543,6 +543,27 @@ const { ensureServer, openApp, makeReporter, finish } = require('./lib/ui-test.c
       JSON.stringify(mobile),
     );
 
+    const mobileToolbar = await page.evaluate(() => {
+      const block = document.querySelector('.sf-table-demo-block');
+      const bar = block.querySelector('.sf-tbl-search');
+      const input = block.querySelector('.sf-tbl-search-input');
+      const lead = block.querySelector('.sf-tbl-search-side .sf-tbl-btn');
+      return {
+        barH: Math.round(bar.getBoundingClientRect().height),
+        inputH: Math.round(input.getBoundingClientRect().height),
+        leadW: Math.round(lead.getBoundingClientRect().width),
+        leadH: Math.round(lead.getBoundingClientRect().height),
+      };
+    });
+    report(
+      'mobile: the toolbar grows to a 60px bar with touch-sized input and lead button',
+      mobileToolbar.barH === 60 &&
+        mobileToolbar.inputH >= 36 &&
+        mobileToolbar.leadW === 44 &&
+        mobileToolbar.leadH === 44,
+      JSON.stringify(mobileToolbar),
+    );
+
     const jobCard = await page.evaluate(() => {
       const blocks = [...document.querySelectorAll('.sf-table-demo-block')];
       const job = blocks[1];
