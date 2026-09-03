@@ -32,6 +32,15 @@ const jobs = reactive([
   { id: 'a1', model: 'beta/pro-1', window: '(UTC+8) 14:00-18:00', on: true },
   { id: 'a2', model: 'beta/lite', window: '(UTC) 22:00-02:00', on: false },
   { id: 'a3', model: 'gamma/xl', window: '(UTC+2) 09:00-17:00', on: true },
+  { id: 'a4', model: 'beta/pro-2', window: '(UTC+8) 09:00-12:00', on: false },
+  { id: 'a5', model: 'delta/mini', window: '(UTC-5) 07:00-10:00', on: true },
+  { id: 'a6', model: 'gamma/xl-2', window: '(UTC+2) 20:00-23:00', on: true },
+  { id: 'a7', model: 'beta/lite-2', window: '(UTC) 01:00-05:00', on: false },
+  { id: 'a8', model: 'delta/max', window: '(UTC-5) 18:00-22:00', on: true },
+  { id: 'a9', model: 'gamma/mini', window: '(UTC+2) 11:00-15:00', on: false },
+  { id: 'a10', model: 'beta/pro-3', window: '(UTC+8) 16:00-20:00', on: true },
+  { id: 'a11', model: 'delta/lite', window: '(UTC-5) 05:00-08:00', on: true },
+  { id: 'a12', model: 'gamma/pro', window: '(UTC+2) 13:00-17:00', on: false },
 ]);
 
 const jobColumns: TableColumn[] = [
@@ -97,9 +106,15 @@ const fileRows = computed(() => files as Array<Record<string, unknown>>);
         </template>
       </Table>
     </div>
-    <div class="sf-table-demo-block">
-      <div class="sf-table-demo-caption">jobs — mobile card layout (lead · title · sub)</div>
-      <Table :columns="jobColumns" :rows="jobs" row-key="id">
+    <div class="sf-table-demo-block sf-table-demo-block--cap">
+      <div class="sf-table-demo-caption">jobs — capped height: header stays, only rows scroll</div>
+      <Table
+        :columns="jobColumns"
+        :rows="jobs"
+        row-key="id"
+        searchable
+        search-placeholder="Search jobs…"
+      >
         <template #cell-on="{ row }">
           <button
             class="sf-table-demo-switch"
@@ -151,6 +166,12 @@ const fileRows = computed(() => files as Array<Record<string, unknown>>);
 
 .sf-table-demo-key {
   font-weight: 600;
+}
+
+.sf-table-demo-block--cap {
+  height: 300px;
+  display: flex;
+  flex-direction: column;
 }
 
 .sf-table-demo-days {

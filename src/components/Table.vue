@@ -384,34 +384,35 @@ onBeforeUnmount(() => {
 </script>
 
 <template>
-  <div class="sf-tbl-scroll">
-    <div
-      :ref="setTblEl"
-      class="sf-tbl"
-      :class="{ 'sf-tbl--m-lead': mobileLead, 'sf-tbl--m-sub': mobileSub }"
-    >
-      <div v-if="searchable || hasToolbarSides" class="sf-tbl-search">
-        <div v-if="hasLeadSlot" class="sf-tbl-search-side">
-          <slot name="search-lead" />
-        </div>
-        <input
-          v-if="searchable"
-          v-model="globalQuery"
-          class="sf-tbl-search-input"
-          type="text"
-          :placeholder="searchPlaceholder"
-        >
-        <button
-          v-if="searchable && globalQuery"
-          class="sf-tbl-search-clear"
-          type="button"
-          title="Clear"
-          @click="globalQuery = ''"
-        >✕</button>
-        <div v-if="hasEndSlot" class="sf-tbl-search-side sf-tbl-search-side--end">
-          <slot name="search-end" :filtered="visibleRows.length" :total="props.rows.length" />
-        </div>
+  <div class="sf-tbl-wrap">
+    <div v-if="searchable || hasToolbarSides" class="sf-tbl-search">
+      <div v-if="hasLeadSlot" class="sf-tbl-search-side">
+        <slot name="search-lead" />
       </div>
+      <input
+        v-if="searchable"
+        v-model="globalQuery"
+        class="sf-tbl-search-input"
+        type="text"
+        :placeholder="searchPlaceholder"
+      >
+      <button
+        v-if="searchable && globalQuery"
+        class="sf-tbl-search-clear"
+        type="button"
+        title="Clear"
+        @click="globalQuery = ''"
+      >✕</button>
+      <div v-if="hasEndSlot" class="sf-tbl-search-side sf-tbl-search-side--end">
+        <slot name="search-end" :filtered="visibleRows.length" :total="props.rows.length" />
+      </div>
+    </div>
+    <div class="sf-tbl-scroll">
+      <div
+        :ref="setTblEl"
+        class="sf-tbl"
+        :class="{ 'sf-tbl--m-lead': mobileLead, 'sf-tbl--m-sub': mobileSub }"
+      >
     <div class="sf-tbl-head">
       <div v-if="rowNumbers" class="sf-tbl-th sf-tbl-gutter"><span class="sf-tbl-hlabel">#</span></div>
       <div
@@ -543,10 +544,18 @@ onBeforeUnmount(() => {
       <button class="sf-tbl-colmenu-act" type="button" @click="resetWidths(); colMenu = null">Reset column widths</button>
     </div>
   </div>
+    </div>
   </div>
 </template>
 
 <style scoped>
+.sf-tbl-wrap {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
+  min-height: 0;
+}
+
 .sf-tbl-scroll {
   flex: 1 1 auto;
   min-height: 0;
@@ -573,6 +582,7 @@ onBeforeUnmount(() => {
   align-items: center;
   gap: 4px;
   padding: 5px 8px;
+  flex-shrink: 0;
   background: var(--sf-bg-lighter);
   border-right: 1px solid var(--sf-border);
   border-bottom: 1px solid var(--sf-border);

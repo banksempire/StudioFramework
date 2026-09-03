@@ -106,6 +106,38 @@ const { ensureServer, openApp, makeReporter, finish } = require('./lib/ui-test.c
     await delay(100);
     const leadActed = await page.evaluate(() => document.querySelector('.sf-table-demo-state').textContent);
     report('the toolbar lead slot hosts working actions', leadActed.includes('edits=1'), leadActed);
+
+    const jobGeom = () =>
+      page.evaluate(() => {
+        const block = [...document.querySelectorAll('.sf-table-demo-block')][1];
+        const bar = block.querySelector('.sf-tbl-search');
+        const scroller = block.querySelector('.sf-tbl-scroll');
+        const head = block.querySelector('.sf-tbl-head');
+        const row = block.querySelector('.sf-tbl-row');
+        return {
+          barTop: Math.round(bar.getBoundingClientRect().top),
+          headTop: Math.round(head.getBoundingClientRect().top),
+          rowTop: Math.round(row.getBoundingClientRect().top),
+          scrollTop: scroller.scrollTop,
+          overflows: scroller.scrollHeight > scroller.clientHeight,
+          x: scroller.getBoundingClientRect().left + 100,
+          y: scroller.getBoundingClientRect().top + scroller.getBoundingClientRect().height / 2,
+        };
+      });
+    const scrollBefore = await jobGeom();
+    await page.mouse.move(scrollBefore.x, scrollBefore.y);
+    await page.mouse.wheel(0, 140);
+    await delay(300);
+    const scrollAfter = await jobGeom();
+    report(
+      'scrolling moves only the rows: toolbar and column header stay pinned',
+      scrollBefore.overflows &&
+        scrollAfter.scrollTop > 40 &&
+        Math.abs(scrollAfter.barTop - scrollBefore.barTop) <= 1 &&
+        Math.abs(scrollAfter.headTop - scrollBefore.headTop) <= 1 &&
+        scrollAfter.rowTop < scrollBefore.rowTop - 100,
+      JSON.stringify({ before: scrollBefore, after: scrollAfter }),
+    );
     await rowsIn('.sf-tbl-search-input').fill('mon');
     await delay(150);
     const daySearch = await rowsText();
