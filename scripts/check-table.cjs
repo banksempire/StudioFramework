@@ -326,6 +326,15 @@ const { ensureServer, openApp, makeReporter, finish } = require('./lib/ui-test.c
       `before=${before} after=${after}`,
     );
 
+    const preClamp = await page.evaluate(() => {
+      const block = document.querySelector('.sf-table-demo-block');
+      return {
+        tracks: getComputedStyle(block.querySelector('.sf-tbl-row'))
+          .gridTemplateColumns.split(' ')
+          .map(parseFloat),
+        handles: block.querySelectorAll('.sf-tbl-head .sf-tbl-resize').length,
+      };
+    });
     const kb2 = await kindTh.boundingBox();
     await page.mouse.move(kb2.x + kb2.width - 1, kb2.y + kb2.height / 2);
     await page.mouse.down();
@@ -334,21 +343,20 @@ const { ensureServer, openApp, makeReporter, finish } = require('./lib/ui-test.c
     await delay(150);
     const clamped = await page.evaluate(() => {
       const block = document.querySelector('.sf-table-demo-block');
+      const scroller = block.querySelector('.sf-tbl').parentElement;
       const tracks = getComputedStyle(block.querySelector('.sf-tbl-row'))
         .gridTemplateColumns.split(' ')
         .map(parseFloat);
-      return {
-        note: tracks[5],
-        scrolled:
-          block.querySelector('.sf-tbl').parentElement.scrollWidth >
-          block.querySelector('.sf-tbl').parentElement.clientWidth,
-      };
+      return { note: tracks[5], kind: tracks[2], scrolled: scroller.scrollWidth > scroller.clientWidth + 1 };
     });
+    const t = preClamp.tracks;
+    const expectedKind = t[2] + Math.max(0, t[5] - 48) + Math.max(0, t[3] - 48) + Math.max(0, t[4] - 48);
     report(
-      'the flexible last column stops at its min-width and the table scrolls horizontally',
-      clamped.note === 48 && clamped.scrolled,
-      JSON.stringify(clamped),
+      'growth stops when every column to the right floors at its min-width and the table never overflows',
+      clamped.note === 48 && Math.abs(clamped.kind - expectedKind) <= 2 && !clamped.scrolled,
+      JSON.stringify({ ...clamped, expectedKind }),
     );
+    report('the last column carries no resize handle', preClamp.handles === 4, `handles=${preClamp.handles}`);
     await nameHead.click({ button: 'right' });
     await delay(150);
     await page

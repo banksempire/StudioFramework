@@ -252,19 +252,56 @@ function emitColumns() {
   );
 }
 
+function resolvedTracks(): number[] {
+  const head = tblEl.value?.querySelector('.sf-tbl-head');
+  if (!head) return [];
+  return getComputedStyle(head)
+    .gridTemplateColumns.split(' ')
+    .map((t) => parseFloat(t) || 0);
+}
+
 function startResize(e: PointerEvent, c: TableColumn) {
   if (e.button !== 0) return;
   e.preventDefault();
   e.stopPropagation();
+  const vis = visibleColumns.value;
+  const idx = vis.findIndex((col) => col.key === c.key);
+  if (idx < 0 || idx === vis.length - 1) return;
   const handle = e.currentTarget as HTMLElement;
   const startX = e.clientX;
-  const startW = cellWidth(c);
+  const off = props.rowNumbers ? 1 : 0;
+  const tracks = resolvedTracks();
+  const startW = tracks[off + idx] ?? cellWidth(c);
   const min = c.min ?? 48;
   const max = c.max ?? Number.POSITIVE_INFINITY;
-  let width = startW;
+  const after = vis.slice(idx + 1);
+  const afterStart = after.map((col, k) => tracks[off + idx + 1 + k] ?? cellWidth(col));
+  const afterMin = after.map((col) => col.min ?? 48);
+  const last = after[after.length - 1];
+  const flexGive =
+    last && (widths[last.key] ?? last.width) === undefined
+      ? Math.max(0, afterStart[after.length - 1] - afterMin[after.length - 1])
+      : 0;
   const onMove = (ev: PointerEvent) => {
-    width = Math.min(max, Math.max(min, Math.round(startW + (ev.clientX - startX))));
-    widths[c.key] = width;
+    const delta = Math.round(ev.clientX - startX);
+    if (delta <= 0) {
+      widths[c.key] = Math.max(min, Math.round(startW + delta));
+      return;
+    }
+    const implicit = Math.min(delta, flexGive);
+    let need = delta - implicit;
+    const wip = afterStart.slice();
+    for (let k = 0; k < after.length - 1 && need > 0; k++) {
+      const give = Math.min(wip[k] - afterMin[k], need);
+      if (give > 0) {
+        wip[k] -= give;
+        need -= give;
+      }
+    }
+    widths[c.key] = Math.min(max, Math.round(startW + delta - need));
+    for (let k = 0; k < after.length - 1; k++) {
+      widths[after[k].key] = Math.round(wip[k]);
+    }
   };
   const onUp = () => {
     handle.releasePointerCapture(e.pointerId);
@@ -317,7 +354,7 @@ onBeforeUnmount(() => {
     <div class="sf-tbl-head">
       <div v-if="rowNumbers" class="sf-tbl-th sf-tbl-gutter"><span class="sf-tbl-hlabel">#</span></div>
       <div
-        v-for="c in visibleColumns"
+        v-for="(c, ci) in visibleColumns"
         :key="c.key"
         :ref="(el) => setHeadRef(c.key, el)"
         class="sf-tbl-th"
@@ -339,6 +376,7 @@ onBeforeUnmount(() => {
         </button>
         <span v-else class="sf-tbl-hlabel">{{ c.label }}</span>
         <span
+          v-if="ci < visibleColumns.length - 1"
           class="sf-tbl-resize"
           title="Drag to resize · double-click to reset"
           @pointerdown="startResize($event, c)"
