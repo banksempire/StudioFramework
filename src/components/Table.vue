@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, onBeforeUnmount, onMounted, reactive, ref, useSlots } from 'vue';
+import { computed, nextTick, onBeforeUnmount, onMounted, reactive, ref, useSlots, watch } from 'vue';
 import type { TableColumn } from '../types/table';
 
 const props = withDefaults(
@@ -22,23 +22,101 @@ const emit = defineEmits<{
 
 const slots = useSlots();
 const widths = reactive<Record<string, number>>({});
+const hiddenCols = reactive<Record<string, boolean>>({});
 const sort = ref<{ key: string; dir: 'asc' | 'desc' } | null>(null);
 const queries = reactive<Record<string, string>>({});
 const excluded = reactive<Record<string, string[]>>({});
 const openFilter = ref<string | null>(null);
+const colMenu = ref<{ key: string; x: number; y: number } | null>(null);
+const actionsWidth = ref<number | null>(null);
+const sizerEl = ref<HTMLElement | null>(null);
 const headRefs = reactive<Record<string, HTMLElement | undefined>>({});
+const autoWidths = reactive<Record<string, number>>({});
+const tblEl = ref<HTMLElement | null>(null);
+
+function measureAutoColumns() {
+  const root = tblEl.value;
+  if (!root) return;
+  const last = visibleColumns.value[visibleColumns.value.length - 1];
+  for (const c of visibleColumns.value) {
+    if (c.key === last?.key) continue;
+    if ((widths[c.key] ?? c.width) !== undefined) continue;
+    let w = 0;
+    for (const el of root.querySelectorAll(`[data-col="${c.key}"]`)) {
+      w = Math.max(w, (el as HTMLElement).scrollWidth);
+    }
+    if (w === 0) continue;
+    const min = c.min ?? 48;
+    const max = c.max ?? 260;
+    autoWidths[c.key] = Math.ceil(Math.min(max, Math.max(min, w + 16)));
+  }
+}
 
 const hasActions = computed(() => !!slots.actions);
-const mobileLead = computed(() => props.columns.some((c) => c.mobile === 'lead'));
-const mobileSub = computed(() => props.columns.some((c) => c.mobile === 'sub'));
+const visibleColumns = computed(() => props.columns.filter((c) => !(hiddenCols[c.key] ?? c.hidden === true)));
+const mobileLead = computed(() => visibleColumns.value.some((c) => c.mobile === 'lead'));
+const mobileSub = computed(() => visibleColumns.value.some((c) => c.mobile === 'sub'));
 
 const templateColumns = computed(() => {
-  const cols = props.columns.map((c) => {
+  const cols = visibleColumns.value.map((c, i) => {
     const w = widths[c.key] ?? c.width;
-    return w === undefined ? 'minmax(0, 1fr)' : `${w}px`;
+    if (w !== undefined) return `${w}px`;
+    const min = c.min ?? 48;
+    const last = i === visibleColumns.value.length - 1;
+    return last ? `minmax(${min}px, 1fr)` : `${autoWidths[c.key] ?? 0}px`;
   });
-  return [...(props.rowNumbers ? ['34px'] : []), ...cols, ...(hasActions.value ? ['auto'] : [])].join(' ');
+  return [
+    ...(props.rowNumbers ? ['34px'] : []),
+    ...cols,
+    ...(hasActions.value ? [actionsWidth.value === null ? 'auto' : `${actionsWidth.value}px`] : []),
+  ].join(' ');
 });
+
+const sizerObserver = new ResizeObserver(() => {
+  if (sizerEl.value) actionsWidth.value = sizerEl.value.offsetWidth;
+});
+
+function setSizerEl(el: unknown) {
+  sizerEl.value = (el as HTMLElement) ?? null;
+  if (sizerEl.value) sizerObserver.observe(sizerEl.value);
+}
+
+watch(
+  () => [
+    props.rows.length,
+    visibleColumns.value.map((c) => c.key).join('|'),
+    props.rows[0] ? Object.values(props.rows[0]).join('\u0001') : '',
+  ],
+  () => {
+    void nextTick(measureAutoColumns);
+  },
+  { immediate: true },
+);
+
+function columnVisible(c: TableColumn): boolean {
+  return !(hiddenCols[c.key] ?? c.hidden === true);
+}
+
+function toggleColumn(c: TableColumn) {
+  hiddenCols[c.key] = columnVisible(c);
+}
+
+function showAllColumns() {
+  for (const key of Object.keys(hiddenCols)) hiddenCols[key] = false;
+}
+
+function resetWidths() {
+  for (const key of Object.keys(widths)) delete widths[key];
+  emitColumns();
+}
+
+function openColMenu(e: MouseEvent, c: TableColumn) {
+  colMenu.value = {
+    key: c.key,
+    x: Math.min(e.clientX, window.innerWidth - 230),
+    y: Math.min(e.clientY, window.innerHeight - 260),
+  };
+}
 
 function cellWidth(c: TableColumn): number {
   if (widths[c.key] !== undefined) return widths[c.key];
@@ -100,7 +178,7 @@ function toggleAll(c: TableColumn) {
 const visibleRows = computed(() => {
   const out: Array<{ row: Record<string, unknown>; index: number }> = [];
   props.rows.forEach((row, index) => {
-    for (const c of props.columns) {
+    for (const c of visibleColumns.value) {
       if (c.filter) {
         const q = (queries[c.key] ?? '').trim().toLowerCase();
         if (q && !valueText(row[c.key]).toLowerCase().includes(q)) return;
@@ -156,8 +234,9 @@ function togglePopover(key: string) {
 }
 
 function onDocPointerDown(e: Event) {
-  if (!openFilter.value) return;
   const el = e.target as HTMLElement | null;
+  if (colMenu.value && !el?.closest('.sf-tbl-colmenu')) colMenu.value = null;
+  if (!openFilter.value) return;
   if (el?.closest('.sf-tbl-pop') || el?.closest('.sf-tbl-hbtn')) return;
   openFilter.value = null;
 }
@@ -165,7 +244,11 @@ function onDocPointerDown(e: Event) {
 function emitColumns() {
   emit(
     'update:columns',
-    props.columns.map((c) => (widths[c.key] !== undefined ? { ...c, width: widths[c.key] } : c)),
+    props.columns.map((c) => ({
+      ...c,
+      hidden: !columnVisible(c),
+      width: widths[c.key] ?? c.width,
+    })),
   );
 }
 
@@ -173,19 +256,27 @@ function startResize(e: PointerEvent, c: TableColumn) {
   if (e.button !== 0) return;
   e.preventDefault();
   e.stopPropagation();
+  const handle = e.currentTarget as HTMLElement;
   const startX = e.clientX;
   const startW = cellWidth(c);
   const min = c.min ?? 48;
+  const max = c.max ?? Number.POSITIVE_INFINITY;
+  let width = startW;
   const onMove = (ev: PointerEvent) => {
-    widths[c.key] = Math.max(min, Math.round(startW + (ev.clientX - startX)));
+    width = Math.min(max, Math.max(min, Math.round(startW + (ev.clientX - startX))));
+    widths[c.key] = width;
   };
   const onUp = () => {
+    handle.releasePointerCapture(e.pointerId);
     window.removeEventListener('pointermove', onMove);
     window.removeEventListener('pointerup', onUp);
-    document.body.classList.remove('sf-tbl-resizing');
+    document.body.style.cursor = '';
+    document.body.style.userSelect = '';
     emitColumns();
   };
-  document.body.classList.add('sf-tbl-resizing');
+  handle.setPointerCapture(e.pointerId);
+  document.body.style.cursor = 'col-resize';
+  document.body.style.userSelect = 'none';
   window.addEventListener('pointermove', onMove);
   window.addEventListener('pointerup', onUp);
 }
@@ -201,28 +292,39 @@ function rowId(row: Record<string, unknown>, index: number): string | number {
   return index;
 }
 
+function setTblEl(el: unknown) {
+  tblEl.value = (el as HTMLElement) ?? null;
+}
+
 function setHeadRef(key: string, el: unknown) {
   headRefs[key] = (el as HTMLElement) ?? undefined;
 }
 
 onMounted(() => document.addEventListener('pointerdown', onDocPointerDown));
-onBeforeUnmount(() => document.removeEventListener('pointerdown', onDocPointerDown));
+onBeforeUnmount(() => {
+  document.removeEventListener('pointerdown', onDocPointerDown);
+  sizerObserver.disconnect();
+});
 </script>
 
 <template>
-  <div
-    class="sf-tbl"
-    :class="{ 'sf-tbl--m-lead': mobileLead, 'sf-tbl--m-sub': mobileSub }"
-  >
+  <div class="sf-tbl-scroll">
+    <div
+      :ref="setTblEl"
+      class="sf-tbl"
+      :class="{ 'sf-tbl--m-lead': mobileLead, 'sf-tbl--m-sub': mobileSub }"
+    >
     <div class="sf-tbl-head">
       <div v-if="rowNumbers" class="sf-tbl-th sf-tbl-gutter"><span class="sf-tbl-hlabel">#</span></div>
       <div
-        v-for="c in columns"
+        v-for="c in visibleColumns"
         :key="c.key"
         :ref="(el) => setHeadRef(c.key, el)"
         class="sf-tbl-th"
         :class="{ 'sf-tbl-th--active': filterActive(c) || sort?.key === c.key }"
+        :data-col="c.key"
         :style="{ justifyContent: cellJustify(c) }"
+        @contextmenu.prevent="openColMenu($event, c)"
       >
         <button
           v-if="c.sortable || c.filter"
@@ -289,11 +391,15 @@ onBeforeUnmount(() => document.removeEventListener('pointerdown', onDocPointerDo
           <span v-else class="sf-tbl-pop-none">no matching items</span>
         </div>
       </div>
-      <div v-if="hasActions" class="sf-tbl-th sf-tbl-th--actions">
-        <div v-if="visibleRows.length" class="sf-tbl-sizer" aria-hidden="true">
-          <slot name="actions" :row="visibleRows[0].row" />
-        </div>
-      </div>
+      <div v-if="hasActions" class="sf-tbl-th sf-tbl-th--actions" />
+    </div>
+    <div
+      v-if="hasActions && visibleRows.length"
+      :ref="setSizerEl"
+      class="sf-tbl-sizer"
+      aria-hidden="true"
+    >
+      <slot name="actions" :row="visibleRows[0].row" />
     </div>
     <div
       v-for="({ row, index }, i) in visibleRows"
@@ -305,11 +411,12 @@ onBeforeUnmount(() => document.removeEventListener('pointerdown', onDocPointerDo
     >
       <div v-if="rowNumbers" class="sf-tbl-cell sf-tbl-gutter">{{ i + 1 }}</div>
       <div
-        v-for="c in columns"
+        v-for="c in visibleColumns"
         :key="c.key"
         class="sf-tbl-cell"
         :class="`sf-tbl-c--${c.mobile ?? 'hidden'}`"
         :style="{ justifyContent: cellJustify(c) }"
+        :data-col="c.key"
       >
         <slot :name="`cell-${c.key}`" :row="row" :value="row[c.key]">{{ valueText(row[c.key]) }}</slot>
       </div>
@@ -320,10 +427,32 @@ onBeforeUnmount(() => document.removeEventListener('pointerdown', onDocPointerDo
     <div v-if="!visibleRows.length" class="sf-tbl-empty">
       <slot name="empty" :filtered="props.rows.length > 0">{{ emptyText }}</slot>
     </div>
+    <div
+      v-if="colMenu"
+      class="sf-tbl-colmenu"
+      :style="{ left: `${colMenu.x}px`, top: `${colMenu.y}px` }"
+      @pointerdown.stop
+      @contextmenu.prevent.stop
+    >
+      <div class="sf-tbl-colmenu-head">Columns</div>
+      <label v-for="c in columns" :key="c.key" class="sf-tbl-chk">
+        <input type="checkbox" :checked="columnVisible(c)" @change="toggleColumn(c)">
+        <span class="sf-tbl-chk-val">{{ c.label }}</span>
+      </label>
+      <div class="sf-tbl-colmenu-sep" />
+      <button class="sf-tbl-colmenu-act" type="button" @click="showAllColumns(); colMenu = null">Show all columns</button>
+      <button class="sf-tbl-colmenu-act" type="button" @click="resetWidths(); colMenu = null">Reset column widths</button>
+    </div>
+  </div>
   </div>
 </template>
 
 <style scoped>
+.sf-tbl-scroll {
+  overflow-x: auto;
+  min-height: 0;
+}
+
 .sf-tbl {
   min-height: 0;
   font-size: inherit;
@@ -593,12 +722,13 @@ onBeforeUnmount(() => document.removeEventListener('pointerdown', onDocPointerDo
 }
 
 .sf-tbl-sizer {
+  position: fixed;
+  top: 0;
+  left: -9999px;
   display: flex;
   gap: 4px;
-  height: 0;
   padding: 0 4px;
   visibility: hidden;
-  overflow: hidden;
 }
 
 .sf-tbl-empty {
@@ -639,9 +769,54 @@ onBeforeUnmount(() => document.removeEventListener('pointerdown', onDocPointerDo
   color: var(--sf-text-on-accent);
 }
 
-body.sf-tbl-resizing {
-  cursor: col-resize;
-  user-select: none;
+.sf-tbl-colmenu {
+  position: fixed;
+  z-index: 30;
+  display: flex;
+  flex-direction: column;
+  min-width: 190px;
+  max-width: 260px;
+  max-height: 320px;
+  overflow: auto;
+  padding: 6px;
+  background: var(--sf-bg-lighter);
+  border: 1px solid var(--sf-border);
+  border-radius: 8px;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.35);
+}
+
+.sf-tbl-colmenu-head {
+  padding: 2px 4px 6px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--sf-text-muted);
+}
+
+.sf-tbl-colmenu-sep {
+  border-top: 1px solid var(--sf-border);
+  margin: 4px 0;
+}
+
+.sf-tbl-colmenu-act {
+  background: none;
+  border: none;
+  border-radius: var(--sf-radius-sm);
+  color: var(--sf-text);
+  cursor: pointer;
+  font-family: var(--sf-font);
+  font-size: 13px;
+  padding: 4px;
+  text-align: left;
+}
+
+@media (hover: hover) {
+  .sf-tbl-colmenu-act:hover {
+    box-shadow: inset 0 0 0 999px var(--sf-hover-overlay);
+  }
+}
+
+.sf-root--mobile .sf-tbl-scroll {
+  overflow-x: hidden;
 }
 
 .sf-root--mobile .sf-tbl {

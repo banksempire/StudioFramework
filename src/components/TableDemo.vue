@@ -16,7 +16,7 @@ const fileColumns = ref<TableColumn[]>([
   { key: 'name', label: 'Name', width: 150, sortable: true, filter: true, mobile: 'title' },
   { key: 'kind', label: 'Kind', width: 80, sortable: true, filter: true },
   { key: 'size', label: 'Size KB', width: 76, sortable: true, align: 'right', mobile: 'sub' },
-  { key: 'days', label: 'Days', width: 90, sortable: true, filter: 'select' },
+  { key: 'days', label: 'Days', sortable: true, filter: 'select' },
   { key: 'note', label: 'Note' },
 ]);
 

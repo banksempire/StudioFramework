@@ -3,6 +3,8 @@ export interface TableColumn {
   label: string;
   width?: number;
   min?: number;
+  max?: number;
+  hidden?: boolean;
   sortable?: boolean;
   filter?: boolean | 'text' | 'select';
   align?: 'left' | 'right' | 'center';

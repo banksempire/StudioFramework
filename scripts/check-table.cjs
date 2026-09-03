@@ -18,6 +18,17 @@ const { ensureServer, openApp, makeReporter, finish } = require('./lib/ui-test.c
     await delay(300);
 
     const rowsIn = (sel) => page.locator(`.sf-table-demo-block:first-child ${sel}`);
+
+    await page.waitForFunction(
+      () => {
+        const row = document.querySelector('.sf-table-demo-block .sf-tbl-row');
+        if (!row) return false;
+        const cells = [...row.querySelectorAll('.sf-tbl-cell')];
+        return cells[cells.length - 1].getBoundingClientRect().width > 40;
+      },
+      { timeout: 8000 },
+    );
+    await delay(100);
     const rowsText = () =>
       page.evaluate(() => {
         const block = document.querySelector('.sf-table-demo-block');
@@ -44,6 +55,8 @@ const { ensureServer, openApp, makeReporter, finish } = require('./lib/ui-test.c
         initial.tracks[1] === 150 &&
         initial.tracks[2] === 80 &&
         initial.tracks[3] === 76 &&
+        initial.tracks[4] > 30 &&
+        initial.tracks[4] < 150 &&
         initial.tracks[5] > 0,
       JSON.stringify(initial),
     );
@@ -286,6 +299,123 @@ const { ensureServer, openApp, makeReporter, finish } = require('./lib/ui-test.c
       return getComputedStyle(block.querySelector('.sf-tbl-head')).gridTemplateColumns.split(' ')[1];
     });
     report('double-click on the handle resets the column width', reset === '150px', reset);
+
+    const kindTh = page.locator('.sf-table-demo-block:first-child .sf-tbl-th', { hasText: 'Kind' });
+    const thRights = () =>
+      page.evaluate(() =>
+        [...document.querySelectorAll('.sf-table-demo-block:first-child .sf-tbl-th')].map((t) =>
+          Math.round(t.getBoundingClientRect().right),
+        ),
+      );
+    const before = await thRights();
+    const kb = await kindTh.boundingBox();
+    await page.mouse.move(kb.x + kb.width - 1, kb.y + kb.height / 2);
+    await page.mouse.down();
+    await page.mouse.move(kb.x + kb.width + 39, kb.y + kb.height / 2, { steps: 6 });
+    await page.mouse.up();
+    await delay(150);
+    const after = await thRights();
+    report(
+      'dragging a border moves it and the columns right of it, never the ones left of it',
+      after[0] === before[0] &&
+        after[1] === before[1] &&
+        Math.abs(after[2] - before[2] - 40) <= 2 &&
+        Math.abs(after[3] - before[3] - 40) <= 2 &&
+        Math.abs(after[4] - before[4] - 40) <= 2 &&
+        after[6] === before[6],
+      `before=${before} after=${after}`,
+    );
+
+    const kb2 = await kindTh.boundingBox();
+    await page.mouse.move(kb2.x + kb2.width - 1, kb2.y + kb2.height / 2);
+    await page.mouse.down();
+    await page.mouse.move(kb2.x + kb2.width + 600, kb2.y + kb2.height / 2, { steps: 8 });
+    await page.mouse.up();
+    await delay(150);
+    const clamped = await page.evaluate(() => {
+      const block = document.querySelector('.sf-table-demo-block');
+      const tracks = getComputedStyle(block.querySelector('.sf-tbl-row'))
+        .gridTemplateColumns.split(' ')
+        .map(parseFloat);
+      return {
+        note: tracks[5],
+        scrolled:
+          block.querySelector('.sf-tbl').parentElement.scrollWidth >
+          block.querySelector('.sf-tbl').parentElement.clientWidth,
+      };
+    });
+    report(
+      'the flexible last column stops at its min-width and the table scrolls horizontally',
+      clamped.note === 48 && clamped.scrolled,
+      JSON.stringify(clamped),
+    );
+    await nameHead.click({ button: 'right' });
+    await delay(150);
+    await page
+      .locator('.sf-table-demo-block:first-child .sf-tbl-colmenu-act', { hasText: 'Reset column widths' })
+      .click();
+    await delay(150);
+    const kindReset = await page.evaluate(() => {
+      const block = document.querySelector('.sf-table-demo-block');
+      return getComputedStyle(block.querySelector('.sf-tbl-head')).gridTemplateColumns.split(' ')[2];
+    });
+    report('resetting widths recovers from the overflow', kindReset === '80px', kindReset);
+    await page.mouse.click(400, 10);
+    await delay(100);
+
+    await nameHead.click({ button: 'right' });
+    await delay(150);
+    const menuOpen = (await rowsIn('.sf-tbl-colmenu').count()) === 1;
+    await rowsIn('.sf-tbl-chk').filter({ hasText: 'Kind' }).locator('input').click();
+    await delay(150);
+    const kindGone = await page.evaluate(() => {
+      const block = document.querySelector('.sf-table-demo-block');
+      const ths = [...block.querySelectorAll('.sf-tbl-th')].map((t) => t.textContent);
+      return { n: ths.length, hasKind: ths.some((t) => t.includes('Kind')) };
+    });
+    report(
+      'right-click on a header opens the column menu; unchecking hides the column',
+      menuOpen && kindGone.n === 6 && !kindGone.hasKind,
+      JSON.stringify(kindGone),
+    );
+
+    await nameHead.click({ button: 'right' });
+    await delay(150);
+    await rowsIn('.sf-tbl-chk').filter({ hasText: 'Kind' }).locator('input').click();
+    await delay(150);
+    report('re-checking brings the column back', (await rowsIn('.sf-tbl-th').count()) === 7);
+
+    await nameHead.click({ button: 'right' });
+    await delay(150);
+    await rowsIn('.sf-tbl-chk').filter({ hasText: 'Size KB' }).locator('input').click();
+    await delay(100);
+    await nameHead.click({ button: 'right' });
+    await delay(150);
+    await page
+      .locator('.sf-table-demo-block:first-child .sf-tbl-colmenu-act', { hasText: 'Show all columns' })
+      .click();
+    await delay(150);
+    report('show-all restores every column', (await rowsIn('.sf-tbl-th').count()) === 7);
+
+    await page.mouse.click(400, 10);
+    await delay(100);
+    const nb = await nameHead.boundingBox();
+    await page.mouse.move(nb.x + nb.width - 1, nb.y + nb.height / 2);
+    await page.mouse.down();
+    await page.mouse.move(nb.x + nb.width + 39, nb.y + nb.height / 2, { steps: 6 });
+    await page.mouse.up();
+    await delay(150);
+    await nameHead.click({ button: 'right' });
+    await delay(150);
+    await page
+      .locator('.sf-table-demo-block:first-child .sf-tbl-colmenu-act', { hasText: 'Reset column widths' })
+      .click();
+    await delay(150);
+    const afterMenuReset = await page.evaluate(() => {
+      const block = document.querySelector('.sf-table-demo-block');
+      return getComputedStyle(block.querySelector('.sf-tbl-head')).gridTemplateColumns.split(' ')[1];
+    });
+    report('the menu resets every column width', afterMenuReset === '150px', afterMenuReset);
 
     await rowsIn('.sf-tbl-row').first().locator('.sf-tbl-btn--danger').click();
     await delay(100);
