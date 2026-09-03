@@ -56,6 +56,8 @@ const fileRows = computed(() => files as Array<Record<string, unknown>>);
         :rows="fileRows"
         row-key="name"
         row-numbers
+        searchable
+        search-placeholder="Search files…"
         :row-title="(row) => String(row.name)"
         :row-class="(row) => ({ 'sf-table-demo--sel': row.name === state.selKey })"
         empty-text="No files."

@@ -66,6 +66,28 @@ const { ensureServer, openApp, makeReporter, finish } = require('./lib/ui-test.c
       initial.thCase,
     );
 
+    await rowsIn('.sf-tbl-search-input').fill('ima');
+    await delay(150);
+    const searched = await rowsText();
+    report(
+      'the top search box filters rows across every column',
+      searched.length === 2 && searched.every((t) => t.includes('image')),
+      JSON.stringify(searched),
+    );
+    await rowsIn('.sf-tbl-search-clear').click();
+    await delay(150);
+    report('clearing the search restores the rows', (await rowsIn('.sf-tbl-row').count()) === 5);
+    await rowsIn('.sf-tbl-search-input').fill('mon');
+    await delay(150);
+    const daySearch = await rowsText();
+    report(
+      'the search matches any column, not just the first',
+      daySearch.length === 3 && daySearch.every((t) => t.includes('Mon–Fri')),
+      JSON.stringify(daySearch),
+    );
+    await rowsIn('.sf-tbl-search-clear').click();
+    await delay(150);
+
     const gutters = await page.evaluate(() => {
       const block = document.querySelector('.sf-table-demo-block');
       return [...block.querySelectorAll('.sf-tbl-gutter')].map((g) => g.textContent);

@@ -11,8 +11,10 @@ const props = withDefaults(
     rowClass?: (row: Record<string, unknown>) => Record<string, boolean>;
     emptyText?: string;
     rowNumbers?: boolean;
+    searchable?: boolean;
+    searchPlaceholder?: string;
   }>(),
-  { emptyText: 'No rows.', rowNumbers: false },
+  { emptyText: 'No rows.', rowNumbers: false, searchable: false, searchPlaceholder: 'Search…' },
 );
 
 const emit = defineEmits<{
@@ -25,6 +27,7 @@ const widths = reactive<Record<string, number>>({});
 const hiddenCols = reactive<Record<string, boolean>>({});
 const sort = ref<{ key: string; dir: 'asc' | 'desc' } | null>(null);
 const queries = reactive<Record<string, string>>({});
+const globalQuery = ref('');
 const excluded = reactive<Record<string, string[]>>({});
 const openFilter = ref<string | null>(null);
 const colMenu = ref<{ key: string; x: number; y: number } | null>(null);
@@ -176,8 +179,10 @@ function toggleAll(c: TableColumn) {
 }
 
 const visibleRows = computed(() => {
+  const gq = globalQuery.value.trim().toLowerCase();
   const out: Array<{ row: Record<string, unknown>; index: number }> = [];
   props.rows.forEach((row, index) => {
+    if (gq && !visibleColumns.value.some((c) => valueText(row[c.key]).toLowerCase().includes(gq))) return;
     for (const c of visibleColumns.value) {
       if (c.filter) {
         const q = (queries[c.key] ?? '').trim().toLowerCase();
@@ -351,6 +356,21 @@ onBeforeUnmount(() => {
       class="sf-tbl"
       :class="{ 'sf-tbl--m-lead': mobileLead, 'sf-tbl--m-sub': mobileSub }"
     >
+      <div v-if="searchable" class="sf-tbl-search">
+        <input
+          v-model="globalQuery"
+          class="sf-tbl-search-input"
+          type="text"
+          :placeholder="searchPlaceholder"
+        >
+        <button
+          v-if="globalQuery"
+          class="sf-tbl-search-clear"
+          type="button"
+          title="Clear"
+          @click="globalQuery = ''"
+        >✕</button>
+      </div>
     <div class="sf-tbl-head">
       <div v-if="rowNumbers" class="sf-tbl-th sf-tbl-gutter"><span class="sf-tbl-hlabel">#</span></div>
       <div
@@ -504,6 +524,54 @@ onBeforeUnmount(() => {
   display: grid;
   grid-template-columns: v-bind(templateColumns);
   align-items: stretch;
+}
+
+.sf-tbl-search {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 5px 8px;
+  background: var(--sf-bg-lighter);
+  border-right: 1px solid var(--sf-border);
+  border-bottom: 1px solid var(--sf-border);
+}
+
+.sf-tbl-search-input {
+  flex: 1;
+  min-width: 0;
+  background: var(--sf-bg);
+  border: 1px solid var(--sf-border);
+  border-radius: var(--sf-radius-sm);
+  color: var(--sf-text);
+  font-family: var(--sf-font);
+  font-size: 13px;
+  padding: 3px 6px;
+  outline: none;
+}
+
+.sf-tbl-search-input:focus {
+  border-color: var(--sf-accent);
+}
+
+.sf-tbl-search-clear {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  background: none;
+  border: none;
+  color: var(--sf-text-muted);
+  cursor: pointer;
+  border-radius: var(--sf-radius-sm);
+}
+
+@media (hover: hover) {
+  .sf-tbl-search-clear:hover {
+    color: var(--sf-text);
+    background: var(--sf-hover-overlay);
+  }
 }
 
 .sf-tbl-head {
