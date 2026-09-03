@@ -64,6 +64,15 @@ const fileRows = computed(() => files as Array<Record<string, unknown>>);
         @row-click="(row) => ((state.clicked = String(row.name)), (state.selKey = String(row.name)))"
         @update:columns="onColumns"
       >
+        <template #search-lead>
+          <button class="sf-tbl-btn" type="button" title="New file" @click="state.edits += 1">
+            <SvgIcon name="＋" />
+          </button>
+        </template>
+        <template #search-end="{ filtered, total }">{{ filtered }}/{{ total }}</template>
+        <template #cell-days="{ value }">
+          <span class="sf-table-demo-days">{{ value }}</span>
+        </template>
         <template #empty="{ filtered }">{{ filtered ? 'No files match.' : 'No files.' }}</template>
         <template #cell-name="{ row }">
           <span class="sf-table-demo-key">{{ row.name }}</span>
@@ -142,6 +151,10 @@ const fileRows = computed(() => files as Array<Record<string, unknown>>);
 
 .sf-table-demo-key {
   font-weight: 600;
+}
+
+.sf-table-demo-days {
+  font-variant-numeric: tabular-nums;
 }
 
 .sf-table-demo--sel {

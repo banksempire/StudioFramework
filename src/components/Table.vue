@@ -40,22 +40,55 @@ const tblEl = ref<HTMLElement | null>(null);
 function measureAutoColumns() {
   const root = tblEl.value;
   if (!root) return;
-  const last = visibleColumns.value[visibleColumns.value.length - 1];
-  for (const c of visibleColumns.value) {
+  const vis = visibleColumns.value;
+  const last = vis[vis.length - 1];
+  const cells = [...root.querySelectorAll<HTMLElement>('[data-col]')];
+  const saved: Array<[HTMLElement, string]> = [];
+  for (const el of cells) {
+    saved.push([el, el.style.cssText]);
+    el.style.width = 'max-content';
+  }
+  const measured: Record<string, number> = {};
+  for (const c of vis) {
     if (c.key === last?.key) continue;
     if ((widths[c.key] ?? c.width) !== undefined) continue;
     let w = 0;
-    for (const el of root.querySelectorAll(`[data-col="${c.key}"]`)) {
-      w = Math.max(w, (el as HTMLElement).scrollWidth);
+    for (const el of cells) {
+      if (el.dataset.col === c.key) w = Math.max(w, el.getBoundingClientRect().width);
     }
     if (w === 0) continue;
+    measured[c.key] = Math.ceil(w + 17);
+  }
+  for (const [el, css] of saved) el.style.cssText = css;
+  const keys = Object.keys(measured);
+  if (!keys.length) return;
+  const fixedSum = vis.reduce((sum, c) => {
+    const w = widths[c.key] ?? c.width;
+    return w !== undefined ? sum + w : sum;
+  }, 0);
+  const container = (root.parentElement?.clientWidth ?? 0) - (props.rowNumbers ? 34 : 0);
+  const lastMin = last ? (last.min ?? 48) : 0;
+  const avail = container - fixedSum - (actionsWidth.value ?? 0) - lastMin;
+  let excess = keys.reduce((e, k) => e + measured[k], 0) - avail;
+  for (const k of keys) {
+    const c = vis.find((col) => col.key === k);
+    if (!c) continue;
     const min = c.min ?? 48;
     const max = c.max ?? 260;
-    autoWidths[c.key] = Math.ceil(Math.min(max, Math.max(min, w + 16)));
+    let w = measured[k];
+    if (excess > 0) {
+      const give = Math.min(w - min, excess);
+      w -= give;
+      excess -= give;
+    }
+    autoWidths[k] = Math.ceil(Math.min(max, Math.max(min, w)));
   }
 }
 
 const hasActions = computed(() => !!slots.actions);
+const hasLeadSlot = computed(() => !!slots['search-lead']);
+const hasEndSlot = computed(() => !!slots['search-end']);
+const hasToolbarSides = computed(() => hasLeadSlot.value || hasEndSlot.value);
 const visibleColumns = computed(() => props.columns.filter((c) => !(hiddenCols[c.key] ?? c.hidden === true)));
 const mobileLead = computed(() => visibleColumns.value.some((c) => c.mobile === 'lead'));
 const mobileSub = computed(() => visibleColumns.value.some((c) => c.mobile === 'sub'));
@@ -89,6 +122,7 @@ watch(
     props.rows.length,
     visibleColumns.value.map((c) => c.key).join('|'),
     props.rows[0] ? Object.values(props.rows[0]).join('\u0001') : '',
+    actionsWidth.value,
   ],
   () => {
     void nextTick(measureAutoColumns);
@@ -356,20 +390,27 @@ onBeforeUnmount(() => {
       class="sf-tbl"
       :class="{ 'sf-tbl--m-lead': mobileLead, 'sf-tbl--m-sub': mobileSub }"
     >
-      <div v-if="searchable" class="sf-tbl-search">
+      <div v-if="searchable || hasToolbarSides" class="sf-tbl-search">
+        <div v-if="hasLeadSlot" class="sf-tbl-search-side">
+          <slot name="search-lead" />
+        </div>
         <input
+          v-if="searchable"
           v-model="globalQuery"
           class="sf-tbl-search-input"
           type="text"
           :placeholder="searchPlaceholder"
         >
         <button
-          v-if="globalQuery"
+          v-if="searchable && globalQuery"
           class="sf-tbl-search-clear"
           type="button"
           title="Clear"
           @click="globalQuery = ''"
         >✕</button>
+        <div v-if="hasEndSlot" class="sf-tbl-search-side sf-tbl-search-side--end">
+          <slot name="search-end" :filtered="visibleRows.length" :total="props.rows.length" />
+        </div>
       </div>
     <div class="sf-tbl-head">
       <div v-if="rowNumbers" class="sf-tbl-th sf-tbl-gutter"><span class="sf-tbl-hlabel">#</span></div>
@@ -507,8 +548,9 @@ onBeforeUnmount(() => {
 
 <style scoped>
 .sf-tbl-scroll {
-  overflow-x: auto;
+  flex: 1 1 auto;
   min-height: 0;
+  overflow: auto;
 }
 
 .sf-tbl {
@@ -572,6 +614,17 @@ onBeforeUnmount(() => {
     color: var(--sf-text);
     background: var(--sf-hover-overlay);
   }
+}
+
+.sf-tbl-search-side {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+.sf-tbl-search-side--end {
+  margin-left: auto;
 }
 
 .sf-tbl-head {

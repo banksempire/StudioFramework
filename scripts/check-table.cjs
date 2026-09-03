@@ -66,17 +66,46 @@ const { ensureServer, openApp, makeReporter, finish } = require('./lib/ui-test.c
       initial.thCase,
     );
 
+    const toolbar = await page.evaluate(() => {
+      const block = document.querySelector('.sf-table-demo-block');
+      const lead = block.querySelector('.sf-tbl-search-side');
+      const input = block.querySelector('.sf-tbl-search-input');
+      const end = block.querySelector('.sf-tbl-search-side--end');
+      const scroller = block.querySelector('.sf-tbl').parentElement;
+      const r = (el) => Math.round(el.getBoundingClientRect().left);
+      return {
+        order: r(lead) < r(input) && r(input) < r(end),
+        count: end.textContent.trim(),
+        noOverflow: scroller.scrollWidth <= scroller.clientWidth + 1,
+      };
+    });
+    report(
+      'toolbar reads [lead | search | count] and the fitted columns never overflow on load',
+      toolbar.order && toolbar.count === '5/5' && toolbar.noOverflow,
+      JSON.stringify(toolbar),
+    );
+
     await rowsIn('.sf-tbl-search-input').fill('ima');
     await delay(150);
     const searched = await rowsText();
+    const countFiltered = await rowsIn('.sf-tbl-search-side--end').textContent();
     report(
       'the top search box filters rows across every column',
-      searched.length === 2 && searched.every((t) => t.includes('image')),
+      searched.length === 2 && searched.every((t) => t.includes('image')) && countFiltered?.trim() === '2/5',
       JSON.stringify(searched),
     );
     await rowsIn('.sf-tbl-search-clear').click();
     await delay(150);
-    report('clearing the search restores the rows', (await rowsIn('.sf-tbl-row').count()) === 5);
+    const clearedCount = await rowsIn('.sf-tbl-search-side--end').textContent();
+    report(
+      'clearing the search restores the rows and the count',
+      (await rowsIn('.sf-tbl-row').count()) === 5 && clearedCount?.trim() === '5/5',
+    );
+
+    await rowsIn('.sf-tbl-search-side .sf-tbl-btn').click();
+    await delay(100);
+    const leadActed = await page.evaluate(() => document.querySelector('.sf-table-demo-state').textContent);
+    report('the toolbar lead slot hosts working actions', leadActed.includes('edits=1'), leadActed);
     await rowsIn('.sf-tbl-search-input').fill('mon');
     await delay(150);
     const daySearch = await rowsText();
