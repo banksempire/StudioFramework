@@ -397,6 +397,35 @@ const { ensureServer, openApp, makeReporter, finish } = require('./lib/ui-test.c
       JSON.stringify({ preDrag, resized }),
     );
 
+    const kindBox = await page
+      .locator('.sf-table-demo-block:first-child .sf-tbl-th', { hasText: 'Kind' })
+      .boundingBox();
+    const widthsByLabel = () =>
+      page.evaluate(() => {
+        const out = {};
+        for (const th of document.querySelectorAll('.sf-table-demo-block:first-child .sf-tbl-th')) {
+          const label = (th.textContent || '').replace(/[^A-Za-z ]/g, '').trim();
+          if (label) out[label] = Math.round(th.getBoundingClientRect().width);
+        }
+        return out;
+      });
+    const kwBefore = await widthsByLabel();
+    await page.mouse.move(kindBox.x + kindBox.width - 1, kindBox.y + kindBox.height / 2);
+    await page.mouse.down();
+    await page.mouse.move(kindBox.x + kindBox.width + 39, kindBox.y + kindBox.height / 2, { steps: 6 });
+    await page.mouse.up();
+    await delay(200);
+    const kwAfter = await widthsByLabel();
+    report(
+      'dragging a fixed column edge resizes that column, squeezing the nearest variable below',
+      kwAfter.Kind - kwBefore.Kind >= 38 &&
+        kwAfter.Kind - kwBefore.Kind <= 40 &&
+        kwBefore.Days - kwAfter.Days >= 38 &&
+        Math.abs(kwAfter.Note - kwBefore.Note) <= 1 &&
+        Math.abs(kwAfter.Name - kwBefore.Name) <= 1,
+      JSON.stringify({ before: kwBefore, after: kwAfter }),
+    );
+
     const thRights = () =>
       page.evaluate(() =>
         [...document.querySelectorAll('.sf-table-demo-block:first-child .sf-tbl-th')].map((t) =>
@@ -458,8 +487,8 @@ const { ensureServer, openApp, makeReporter, finish } = require('./lib/ui-test.c
       JSON.stringify({ ...clamped, expectedDays }),
     );
     report(
-      'handles render only between columns that can exchange space',
-      preClamp.handles === 1,
+      'handles render on every border that has a variable column below it',
+      preClamp.handles === 4,
       `handles=${preClamp.handles}`,
     );
     await nameHead.click({ button: 'right' });
