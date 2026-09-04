@@ -34,15 +34,14 @@ const colMenu = ref<{ key: string; x: number; y: number } | null>(null);
 const actionsWidth = ref<number | null>(null);
 const sizerEl = ref<HTMLElement | null>(null);
 const headRefs = reactive<Record<string, HTMLElement | undefined>>({});
-const varWidths = reactive<Record<string, number>>({});
-let dragging = false;
-const fitted = new Set<string>();
+const autoWidths = reactive<Record<string, number>>({});
 const tblEl = ref<HTMLElement | null>(null);
 
 function measureAutoColumns() {
   const root = tblEl.value;
   if (!root) return;
   const vis = visibleColumns.value;
+  const last = vis[vis.length - 1];
   const cells = [...root.querySelectorAll<HTMLElement>('[data-col]')];
   const saved: Array<[HTMLElement, string]> = [];
   for (const el of cells) {
@@ -51,6 +50,7 @@ function measureAutoColumns() {
   }
   const measured: Record<string, number> = {};
   for (const c of vis) {
+    if (c.key === last?.key) continue;
     if ((widths[c.key] ?? c.width) !== undefined) continue;
     let w = 0;
     for (const el of cells) {
@@ -63,76 +63,26 @@ function measureAutoColumns() {
   const keys = Object.keys(measured);
   if (!keys.length) return;
   const fixedSum = vis.reduce((sum, c) => {
+    if (c.key === last?.key) return sum;
     const w = widths[c.key] ?? c.width;
     return w !== undefined ? sum + w : sum;
   }, 0);
+  const container = (root.parentElement?.clientWidth ?? 0) - (props.rowNumbers ? 34 : 0);
+  const avail = container - fixedSum - (actionsWidth.value ?? 0) - (last ? flexibleFloor(last) : 0);
+  let excess = keys.reduce((e, k) => e + measured[k], 0) - avail;
   for (const k of keys) {
     const c = vis.find((col) => col.key === k);
     if (!c) continue;
     const min = c.min ?? 48;
     const max = c.max ?? 260;
-    const content = Math.ceil(Math.min(max, Math.max(min, measured[k])));
-    if (fitted.has(k)) varWidths[k] = Math.max(varWidths[k] ?? content, content);
-    else {
-      varWidths[k] = content;
-      fitted.add(k);
+    let w = measured[k];
+    if (excess > 0) {
+      const give = Math.min(w - min, excess);
+      w -= give;
+      excess -= give;
     }
+    autoWidths[k] = Math.ceil(Math.min(max, Math.max(min, w)));
   }
-  redistribute();
-}
-
-function redistribute() {
-  const root = tblEl.value;
-  if (!root) return;
-  const vis = visibleColumns.value;
-  const vars = vis.filter((c) => (widths[c.key] ?? c.width) === undefined);
-  if (!vars.length) return;
-  if (vars.some((c) => !fitted.has(c.key))) return;
-  const container = (root.parentElement?.clientWidth ?? 0) - (props.rowNumbers ? 34 : 0);
-  const fixed =
-    vis.reduce((sum, c) => {
-      const w = widths[c.key] ?? c.width;
-      return w !== undefined ? sum + w : sum;
-    }, 0) + (actionsWidth.value ?? 0);
-  const cur = new Map(vars.map((c) => [c.key, varWidths[c.key] ?? c.min ?? 48]));
-  let budget = container - fixed - [...cur.values()].reduce((a, b) => a + b, 0);
-  if (budget === 0) return;
-  applyVarPlan(vars, budget > 0 ? varGivePlan(vars, cur, budget) : varTakePlan(vars, cur, -budget));
-}
-
-function applyVarPlan(cols: TableColumn[], plan: Map<string, number>) {
-  for (const c of cols) varWidths[c.key] = plan.get(c.key) ?? varWidths[c.key] ?? 48;
-}
-
-function varTakePlan(cols: TableColumn[], base: Map<string, number>, amount: number): Map<string, number> {
-  const out = new Map(base);
-  let need = amount;
-  while (need > 0.5) {
-    const active = cols.filter((c) => (out.get(c.key) ?? 48) - (c.min ?? 48) > 0.5);
-    if (!active.length) break;
-    const total = active.reduce((a, c) => a + (out.get(c.key) ?? 48), 0);
-    let round = 0;
-    for (const c of active) {
-      const w = out.get(c.key) ?? 48;
-      const share = (need * w) / total;
-      const take = Math.min(share, w - (c.min ?? 48));
-      out.set(c.key, w - take);
-      round += take;
-    }
-    need -= round;
-  }
-  return out;
-}
-
-function varGivePlan(cols: TableColumn[], base: Map<string, number>, amount: number): Map<string, number> {
-  const out = new Map(base);
-  const total = cols.reduce((a, c) => a + (out.get(c.key) ?? 48), 0);
-  if (total <= 0 || amount <= 0) return out;
-  for (const c of cols) {
-    const w = out.get(c.key) ?? 48;
-    out.set(c.key, w + (amount * w) / total);
-  }
-  return out;
 }
 
 const hasActions = computed(() => !!slots.actions);
@@ -143,12 +93,17 @@ const visibleColumns = computed(() => props.columns.filter((c) => !(hiddenCols[c
 const mobileLead = computed(() => visibleColumns.value.some((c) => c.mobile === 'lead'));
 const mobileSub = computed(() => visibleColumns.value.some((c) => c.mobile === 'sub'));
 
+function flexibleFloor(c: TableColumn): number {
+  return Math.max(c.min ?? 48, widths[c.key] ?? c.width ?? 0, autoWidths[c.key] ?? 0);
+}
+
 const templateColumns = computed(() => {
   const vis = visibleColumns.value;
-  const cols = vis.map((c) => {
+  const cols = vis.map((c, i) => {
+    if (i === vis.length - 1) return `minmax(${flexibleFloor(c)}px, 1fr)`;
     const w = widths[c.key] ?? c.width;
     if (w !== undefined) return `${w}px`;
-    return `${varWidths[c.key] ?? c.min ?? 48}px`;
+    return `${autoWidths[c.key] ?? 0}px`;
   });
   return [
     ...(props.rowNumbers ? ['34px'] : []),
@@ -178,11 +133,6 @@ watch(
   },
   { immediate: true },
 );
-
-watch(widths, () => {
-  if (dragging) return;
-  void nextTick(redistribute);
-});
 
 function columnVisible(c: TableColumn): boolean {
   return !(hiddenCols[c.key] ?? c.hidden === true);
@@ -370,44 +320,30 @@ function startResize(e: PointerEvent, c: TableColumn) {
   const after = vis.slice(idx + 1);
   const afterStart = after.map((col, k) => tracks[off + idx + 1 + k] ?? cellWidth(col));
   const afterMin = after.map((col) => col.min ?? 48);
-  const rightVars = after.filter((col) => (widths[col.key] ?? col.width) === undefined);
-  const varStart = new Map(rightVars.map((col) => [col.key, varWidths[col.key] ?? 48]));
-  dragging = true;
+  const last = after[after.length - 1];
+  const flexGive = last ? Math.max(0, afterStart[after.length - 1] - flexibleFloor(last)) : 0;
   const onMove = (ev: PointerEvent) => {
     const delta = Math.round(ev.clientX - startX);
-    const target = Math.max(min, Math.min(max, Math.round(startW + delta)));
-    const want = target - startW;
-    if (want < 0) {
-      applyVarPlan(rightVars, varGivePlan(rightVars, varStart, -want));
-      widths[c.key] = target;
+    if (delta <= 0) {
+      widths[c.key] = Math.max(min, Math.round(startW + delta));
       return;
     }
-    const give = rightVars.reduce(
-      (a, col) => a + Math.max(0, (varStart.get(col.key) ?? 48) - (col.min ?? 48)),
-      0,
-    );
-    const varTake = Math.min(want, give);
-    applyVarPlan(rightVars, varTakePlan(rightVars, varStart, varTake));
-    let need = want - varTake;
+    const implicit = Math.min(delta, flexGive);
+    let need = delta - implicit;
     const wip = afterStart.slice();
     for (let k = 0; k < after.length - 1 && need > 0; k++) {
-      const col = after[k];
-      if ((widths[col.key] ?? col.width) === undefined) continue;
-      const squeeze = Math.min(wip[k] - afterMin[k], need);
-      if (squeeze > 0) {
-        wip[k] -= squeeze;
-        need -= squeeze;
+      const give = Math.min(wip[k] - afterMin[k], need);
+      if (give > 0) {
+        wip[k] -= give;
+        need -= give;
       }
     }
-    widths[c.key] = startW + want - need;
+    widths[c.key] = Math.min(max, Math.round(startW + delta - need));
     for (let k = 0; k < after.length - 1; k++) {
-      const col = after[k];
-      if ((widths[col.key] ?? col.width) === undefined) continue;
-      widths[col.key] = Math.round(wip[k]);
+      widths[after[k].key] = Math.round(wip[k]);
     }
   };
   const onUp = () => {
-    dragging = false;
     handle.releasePointerCapture(e.pointerId);
     window.removeEventListener('pointermove', onMove);
     window.removeEventListener('pointerup', onUp);
@@ -433,18 +369,8 @@ function rowId(row: Record<string, unknown>, index: number): string | number {
   return index;
 }
 
-const tblObserver = new ResizeObserver(() => {
-  const w = tblEl.value?.clientWidth ?? 0;
-  if (w !== tblLastW) {
-    tblLastW = w;
-    redistribute();
-  }
-});
-let tblLastW = 0;
-
 function setTblEl(el: unknown) {
   tblEl.value = (el as HTMLElement) ?? null;
-  if (tblEl.value) tblObserver.observe(tblEl.value);
 }
 
 function setHeadRef(key: string, el: unknown) {
