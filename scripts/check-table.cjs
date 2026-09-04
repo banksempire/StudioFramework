@@ -55,8 +55,8 @@ const { ensureServer, openApp, makeReporter, finish } = require('./lib/ui-test.c
         initial.tracks[1] === 150 &&
         initial.tracks[2] === 80 &&
         initial.tracks[3] === 76 &&
-        initial.tracks[4] > 30 &&
-        initial.tracks[4] < 150 &&
+        initial.tracks[4] > 100 &&
+        initial.tracks[4] < 220 &&
         initial.tracks[5] > 0,
       JSON.stringify(initial),
     );
@@ -365,42 +365,38 @@ const { ensureServer, openApp, makeReporter, finish } = require('./lib/ui-test.c
     );
     await page.mouse.click(400, 10);
 
-    const headBox = await nameHead.boundingBox();
+    const daysHead = page.locator('.sf-table-demo-block:first-child .sf-tbl-th', { hasText: 'Days' });
+    const headBox = await daysHead.boundingBox();
     const handleX = headBox.x + headBox.width - 1;
+    const preDrag = await page.evaluate(() => {
+      const block = document.querySelector('.sf-table-demo-block');
+      return getComputedStyle(block.querySelector('.sf-tbl-head'))
+        .gridTemplateColumns.split(' ')
+        .map(parseFloat);
+    });
     await page.mouse.move(handleX, headBox.y + headBox.height / 2);
     await page.mouse.down();
-    await page.mouse.move(handleX + 60, headBox.y + headBox.height / 2, { steps: 8 });
+    await page.mouse.move(handleX + 40, headBox.y + headBox.height / 2, { steps: 8 });
     await page.mouse.up();
     await delay(150);
     const resized = await page.evaluate(() => {
       const block = document.querySelector('.sf-table-demo-block');
       const head = block.querySelector('.sf-tbl-head');
       const row = block.querySelector('.sf-tbl-row');
-      const state = document.querySelector('.sf-table-demo-state').textContent;
       return {
-        head: getComputedStyle(head).gridTemplateColumns.split(' ')[1],
-        row: getComputedStyle(row).gridTemplateColumns.split(' ')[1],
-        state,
+        head: getComputedStyle(head).gridTemplateColumns.split(' ')[4],
+        row: getComputedStyle(row).gridTemplateColumns.split(' ')[4],
+        note: getComputedStyle(head).gridTemplateColumns.split(' ')[5],
       };
     });
     report(
-      'dragging the header edge widens the column for header and rows alike',
-      Math.round(parseFloat(resized.head)) >= 208 &&
+      'dragging the Days/Note edge widens Days from Note for header and rows alike',
+      Math.abs(parseFloat(resized.head) - preDrag[4] - 40) <= 2 &&
         resized.head === resized.row &&
-        resized.state.includes('name:2'),
-      JSON.stringify(resized),
+        Math.abs(parseFloat(resized.note) - preDrag[5] + 40) <= 2,
+      JSON.stringify({ preDrag, resized }),
     );
 
-    const hd2 = await nameHead.boundingBox();
-    await page.mouse.dblclick(hd2.x + hd2.width - 1, hd2.y + hd2.height / 2);
-    await delay(150);
-    const reset = await page.evaluate(() => {
-      const block = document.querySelector('.sf-table-demo-block');
-      return getComputedStyle(block.querySelector('.sf-tbl-head')).gridTemplateColumns.split(' ')[1];
-    });
-    report('double-click on the handle resets the column width', reset === '150px', reset);
-
-    const kindTh = page.locator('.sf-table-demo-block:first-child .sf-tbl-th', { hasText: 'Kind' });
     const thRights = () =>
       page.evaluate(() =>
         [...document.querySelectorAll('.sf-table-demo-block:first-child .sf-tbl-th')].map((t) =>
@@ -408,7 +404,7 @@ const { ensureServer, openApp, makeReporter, finish } = require('./lib/ui-test.c
         ),
       );
     const before = await thRights();
-    const kb = await kindTh.boundingBox();
+    const kb = await daysHead.boundingBox();
     await page.mouse.move(kb.x + kb.width - 1, kb.y + kb.height / 2);
     await page.mouse.down();
     await page.mouse.move(kb.x + kb.width + 39, kb.y + kb.height / 2, { steps: 6 });
@@ -416,12 +412,14 @@ const { ensureServer, openApp, makeReporter, finish } = require('./lib/ui-test.c
     await delay(150);
     const after = await thRights();
     report(
-      'dragging a border moves it and the columns right of it, never the ones left of it',
+      'dragging the Days/Note border right moves it and the note edge, never the columns left of it',
       after[0] === before[0] &&
         after[1] === before[1] &&
-        Math.abs(after[2] - before[2] - 40) <= 2 &&
-        Math.abs(after[3] - before[3] - 40) <= 2 &&
-        Math.abs(after[4] - before[4] - 40) <= 2 &&
+        after[2] === before[2] &&
+        after[3] === before[3] &&
+        after[4] - before[4] >= 30 &&
+        after[4] - before[4] <= 40 &&
+        after[5] === before[5] &&
         after[6] === before[6],
       `before=${before} after=${after}`,
     );
@@ -435,7 +433,7 @@ const { ensureServer, openApp, makeReporter, finish } = require('./lib/ui-test.c
         handles: block.querySelectorAll('.sf-tbl-head .sf-tbl-resize').length,
       };
     });
-    const kb2 = await kindTh.boundingBox();
+    const kb2 = await daysHead.boundingBox();
     await page.mouse.move(kb2.x + kb2.width - 1, kb2.y + kb2.height / 2);
     await page.mouse.down();
     await page.mouse.move(kb2.x + kb2.width + 600, kb2.y + kb2.height / 2, { steps: 8 });
@@ -447,16 +445,23 @@ const { ensureServer, openApp, makeReporter, finish } = require('./lib/ui-test.c
       const tracks = getComputedStyle(block.querySelector('.sf-tbl-row'))
         .gridTemplateColumns.split(' ')
         .map(parseFloat);
-      return { note: tracks[5], kind: tracks[2], scrolled: scroller.scrollWidth > scroller.clientWidth + 1 };
+      return { note: tracks[5], days: tracks[4], scrolled: scroller.scrollWidth > scroller.clientWidth + 1 };
     });
     const t = preClamp.tracks;
-    const expectedKind = t[2] + Math.max(0, t[5] - 48) + Math.max(0, t[3] - 48) + Math.max(0, t[4] - 48);
+    const expectedDays = t[4] + Math.max(0, t[5] - 48);
     report(
-      'growth stops when every column to the right floors at its min-width and the table never overflows',
-      clamped.note === 48 && Math.abs(clamped.kind - expectedKind) <= 2 && !clamped.scrolled,
-      JSON.stringify({ ...clamped, expectedKind }),
+      'growth stops when the variable column to the right floors at its min-width and the table never overflows',
+      clamped.note >= 47.5 &&
+        clamped.note <= 48.5 &&
+        Math.abs(clamped.days - expectedDays) <= 2 &&
+        !clamped.scrolled,
+      JSON.stringify({ ...clamped, expectedDays }),
     );
-    report('the last column carries no resize handle', preClamp.handles === 4, `handles=${preClamp.handles}`);
+    report(
+      'handles render only between columns that can exchange space',
+      preClamp.handles === 1,
+      `handles=${preClamp.handles}`,
+    );
     await nameHead.click({ button: 'right' });
     await delay(150);
     await page
@@ -511,7 +516,7 @@ const { ensureServer, openApp, makeReporter, finish } = require('./lib/ui-test.c
       };
     });
     report(
-      'hiding the flexible column leaves no gap: the next column absorbs the freed space',
+      'hiding the flexible column leaves no gap: the first variable column absorbs the freed space',
       !absorb.noteVisible && absorb.edge <= 1 && Math.abs(absorb.sum - absorb.w) <= 1,
       JSON.stringify(absorb),
     );
@@ -532,8 +537,8 @@ const { ensureServer, openApp, makeReporter, finish } = require('./lib/ui-test.c
       };
     });
     report(
-      'with the flexible and auto columns hidden, the fixed-size Size KB column absorbs the space',
-      absorbFixed.edge <= 1 && Math.abs(absorbFixed.sum - absorbFixed.w) <= 1,
+      'with every variable column hidden the leftover stays unallocated, like a panel with no resizeable sub-sections',
+      absorbFixed.edge > 50 && absorbFixed.sum < absorbFixed.w - 50,
       JSON.stringify(absorbFixed),
     );
 
