@@ -35,6 +35,7 @@ const actionsWidth = ref<number | null>(null);
 const sizerEl = ref<HTMLElement | null>(null);
 const headRefs = reactive<Record<string, HTMLElement | undefined>>({});
 const varWidths = reactive<Record<string, number>>({});
+let dragging = false;
 const fitted = new Set<string>();
 const tblEl = ref<HTMLElement | null>(null);
 
@@ -96,30 +97,42 @@ function redistribute() {
   const cur = new Map(vars.map((c) => [c.key, varWidths[c.key] ?? c.min ?? 48]));
   let budget = container - fixed - [...cur.values()].reduce((a, b) => a + b, 0);
   if (budget === 0) return;
-  if (budget > 0) {
-    const total = [...cur.values()].reduce((a, b) => a + b, 0);
-    for (const c of vars) {
-      const w = cur.get(c.key) ?? 48;
-      varWidths[c.key] = w + (budget * w) / total;
-    }
-    return;
-  }
-  let need = -budget;
+  applyVarPlan(vars, budget > 0 ? varGivePlan(vars, cur, budget) : varTakePlan(vars, cur, -budget));
+}
+
+function applyVarPlan(cols: TableColumn[], plan: Map<string, number>) {
+  for (const c of cols) varWidths[c.key] = plan.get(c.key) ?? varWidths[c.key] ?? 48;
+}
+
+function varTakePlan(cols: TableColumn[], base: Map<string, number>, amount: number): Map<string, number> {
+  const out = new Map(base);
+  let need = amount;
   while (need > 0.5) {
-    const active = vars.filter((c) => (cur.get(c.key) ?? 48) - (c.min ?? 48) > 0.5);
+    const active = cols.filter((c) => (out.get(c.key) ?? 48) - (c.min ?? 48) > 0.5);
     if (!active.length) break;
-    const total = active.reduce((a, c) => a + (cur.get(c.key) ?? 48), 0);
-    let taken = 0;
+    const total = active.reduce((a, c) => a + (out.get(c.key) ?? 48), 0);
+    let round = 0;
     for (const c of active) {
-      const w = cur.get(c.key) ?? 48;
+      const w = out.get(c.key) ?? 48;
       const share = (need * w) / total;
       const take = Math.min(share, w - (c.min ?? 48));
-      cur.set(c.key, w - take);
-      varWidths[c.key] = w - take;
-      taken += take;
+      out.set(c.key, w - take);
+      round += take;
     }
-    need -= taken;
+    need -= round;
   }
+  return out;
+}
+
+function varGivePlan(cols: TableColumn[], base: Map<string, number>, amount: number): Map<string, number> {
+  const out = new Map(base);
+  const total = cols.reduce((a, c) => a + (out.get(c.key) ?? 48), 0);
+  if (total <= 0 || amount <= 0) return out;
+  for (const c of cols) {
+    const w = out.get(c.key) ?? 48;
+    out.set(c.key, w + (amount * w) / total);
+  }
+  return out;
 }
 
 const hasActions = computed(() => !!slots.actions);
@@ -167,6 +180,7 @@ watch(
 );
 
 watch(widths, () => {
+  if (dragging) return;
   void nextTick(redistribute);
 });
 
@@ -356,39 +370,44 @@ function startResize(e: PointerEvent, c: TableColumn) {
   const after = vis.slice(idx + 1);
   const afterStart = after.map((col, k) => tracks[off + idx + 1 + k] ?? cellWidth(col));
   const afterMin = after.map((col) => col.min ?? 48);
-  let flexGive = 0;
-  for (const col of vis) {
-    if (col === c) continue;
-    if ((widths[col.key] ?? col.width) !== undefined) continue;
-    flexGive += Math.max(0, (varWidths[col.key] ?? 48) - (col.min ?? 48));
-  }
+  const rightVars = after.filter((col) => (widths[col.key] ?? col.width) === undefined);
+  const varStart = new Map(rightVars.map((col) => [col.key, varWidths[col.key] ?? 48]));
+  dragging = true;
   const onMove = (ev: PointerEvent) => {
     const delta = Math.round(ev.clientX - startX);
-    if (delta <= 0) {
-      widths[c.key] = Math.max(min, Math.round(startW + delta));
-      redistribute();
+    const target = Math.max(min, Math.min(max, Math.round(startW + delta)));
+    const want = target - startW;
+    if (want < 0) {
+      applyVarPlan(rightVars, varGivePlan(rightVars, varStart, -want));
+      widths[c.key] = target;
       return;
     }
-    let need = Math.max(0, delta - flexGive);
+    const give = rightVars.reduce(
+      (a, col) => a + Math.max(0, (varStart.get(col.key) ?? 48) - (col.min ?? 48)),
+      0,
+    );
+    const varTake = Math.min(want, give);
+    applyVarPlan(rightVars, varTakePlan(rightVars, varStart, varTake));
+    let need = want - varTake;
     const wip = afterStart.slice();
     for (let k = 0; k < after.length - 1 && need > 0; k++) {
       const col = after[k];
       if ((widths[col.key] ?? col.width) === undefined) continue;
-      const give = Math.min(wip[k] - afterMin[k], need);
-      if (give > 0) {
-        wip[k] -= give;
-        need -= give;
+      const squeeze = Math.min(wip[k] - afterMin[k], need);
+      if (squeeze > 0) {
+        wip[k] -= squeeze;
+        need -= squeeze;
       }
     }
-    widths[c.key] = Math.min(max, Math.round(startW + delta - need));
+    widths[c.key] = startW + want - need;
     for (let k = 0; k < after.length - 1; k++) {
       const col = after[k];
       if ((widths[col.key] ?? col.width) === undefined) continue;
       widths[col.key] = Math.round(wip[k]);
     }
-    redistribute();
   };
   const onUp = () => {
+    dragging = false;
     handle.releasePointerCapture(e.pointerId);
     window.removeEventListener('pointermove', onMove);
     window.removeEventListener('pointerup', onUp);
