@@ -34,14 +34,22 @@ const colMenu = ref<{ key: string; x: number; y: number } | null>(null);
 const actionsWidth = ref<number | null>(null);
 const sizerEl = ref<HTMLElement | null>(null);
 const headRefs = reactive<Record<string, HTMLElement | undefined>>({});
-const autoWidths = reactive<Record<string, number>>({});
+const contentWidths: Record<string, number> = {};
+const varWidths = reactive<Record<string, number>>({});
 const tblEl = ref<HTMLElement | null>(null);
+
+function isVarColumn(c: TableColumn): boolean {
+  return (widths[c.key] ?? c.width) === undefined;
+}
+
+function visibleVars(): TableColumn[] {
+  return visibleColumns.value.filter(isVarColumn);
+}
 
 function measureAutoColumns() {
   const root = tblEl.value;
   if (!root) return;
   const vis = visibleColumns.value;
-  const last = vis[vis.length - 1];
   const cells = [...root.querySelectorAll<HTMLElement>('[data-col]')];
   const saved: Array<[HTMLElement, string]> = [];
   for (const el of cells) {
@@ -50,8 +58,7 @@ function measureAutoColumns() {
   }
   const measured: Record<string, number> = {};
   for (const c of vis) {
-    if (c.key === last?.key) continue;
-    if ((widths[c.key] ?? c.width) !== undefined) continue;
+    if (!isVarColumn(c)) continue;
     let w = 0;
     for (const el of cells) {
       if (el.dataset.col === c.key) w = Math.max(w, el.getBoundingClientRect().width);
@@ -60,29 +67,53 @@ function measureAutoColumns() {
     measured[c.key] = Math.ceil(w + 17);
   }
   for (const [el, css] of saved) el.style.cssText = css;
-  const keys = Object.keys(measured);
-  if (!keys.length) return;
-  const fixedSum = vis.reduce((sum, c) => {
-    if (c.key === last?.key) return sum;
-    const w = widths[c.key] ?? c.width;
-    return w !== undefined ? sum + w : sum;
-  }, 0);
-  const container = (root.parentElement?.clientWidth ?? 0) - (props.rowNumbers ? 34 : 0);
-  const avail = container - fixedSum - (actionsWidth.value ?? 0) - (last ? flexibleFloor(last) : 0);
-  let excess = keys.reduce((e, k) => e + measured[k], 0) - avail;
-  for (const k of keys) {
+  for (const [k, raw] of Object.entries(measured)) {
     const c = vis.find((col) => col.key === k);
     if (!c) continue;
     const min = c.min ?? 48;
     const max = c.max ?? 260;
-    let w = measured[k];
-    if (excess > 0) {
-      const give = Math.min(w - min, excess);
-      w -= give;
-      excess -= give;
-    }
-    autoWidths[k] = Math.ceil(Math.min(max, Math.max(min, w)));
+    const content = Math.ceil(Math.min(max, Math.max(min, raw)));
+    contentWidths[k] = content;
+    varWidths[k] = Math.max(varWidths[k] ?? content, content);
   }
+  distribute();
+}
+
+function distribute() {
+  const root = tblEl.value;
+  if (!root) return;
+  const vis = visibleColumns.value;
+  const vars = visibleVars();
+  if (!vars.length) return;
+  if (vars.some((c) => varWidths[c.key] === undefined)) return;
+  const container = (root.parentElement?.clientWidth ?? 0) - (props.rowNumbers ? 34 : 0);
+  const fixed =
+    vis.reduce((sum, c) => {
+      const w = widths[c.key] ?? c.width;
+      return w !== undefined ? sum + w : sum;
+    }, 0) + (actionsWidth.value ?? 0);
+  const used = vars.reduce((sum, c) => sum + (varWidths[c.key] ?? 48), 0);
+  const unallocated = container - fixed - used;
+  if (unallocated > 0) {
+    const first = vars[0];
+    varWidths[first.key] = (varWidths[first.key] ?? 48) + unallocated;
+  } else if (unallocated < 0) {
+    squeezeVars(vars, -unallocated, null);
+  }
+}
+
+function squeezeVars(cols: TableColumn[], needed: number, base: Map<string, number> | null): number {
+  let freed = 0;
+  for (const c of cols) {
+    if (freed >= needed) break;
+    const start = base ? (base.get(c.key) ?? 48) : (varWidths[c.key] ?? 48);
+    const canGive = start - (c.min ?? 48);
+    if (canGive <= 0) continue;
+    const give = Math.min(canGive, needed - freed);
+    varWidths[c.key] = start - give;
+    freed += give;
+  }
+  return freed;
 }
 
 const hasActions = computed(() => !!slots.actions);
@@ -93,17 +124,30 @@ const visibleColumns = computed(() => props.columns.filter((c) => !(hiddenCols[c
 const mobileLead = computed(() => visibleColumns.value.some((c) => c.mobile === 'lead'));
 const mobileSub = computed(() => visibleColumns.value.some((c) => c.mobile === 'sub'));
 
-function flexibleFloor(c: TableColumn): number {
-  return Math.max(c.min ?? 48, widths[c.key] ?? c.width ?? 0, autoWidths[c.key] ?? 0);
-}
+const handleFlags = computed(() => {
+  const vis = visibleColumns.value;
+  const flags: boolean[] = [];
+  let hasAbove = false;
+  for (let i = 0; i < vis.length - 1; i++) {
+    if (isVarColumn(vis[i])) hasAbove = true;
+    let hasBelow = false;
+    for (let j = i + 1; j < vis.length; j++) {
+      if (isVarColumn(vis[j])) {
+        hasBelow = true;
+        break;
+      }
+    }
+    flags.push(hasAbove && hasBelow);
+  }
+  return flags;
+});
 
 const templateColumns = computed(() => {
   const vis = visibleColumns.value;
-  const cols = vis.map((c, i) => {
-    if (i === vis.length - 1) return `minmax(${flexibleFloor(c)}px, 1fr)`;
+  const cols = vis.map((c) => {
     const w = widths[c.key] ?? c.width;
     if (w !== undefined) return `${w}px`;
-    return `${autoWidths[c.key] ?? 0}px`;
+    return `${varWidths[c.key] ?? c.min ?? 48}px`;
   });
   return [
     ...(props.rowNumbers ? ['34px'] : []),
@@ -134,6 +178,19 @@ watch(
   { immediate: true },
 );
 
+const tblObserver = new ResizeObserver(() => {
+  distribute();
+});
+const tblObserved = new WeakSet<HTMLElement>();
+
+function setTblEl(el: unknown) {
+  tblEl.value = (el as HTMLElement) ?? null;
+  if (tblEl.value && !tblObserved.has(tblEl.value)) {
+    tblObserved.add(tblEl.value);
+    tblObserver.observe(tblEl.value);
+  }
+}
+
 function columnVisible(c: TableColumn): boolean {
   return !(hiddenCols[c.key] ?? c.hidden === true);
 }
@@ -148,6 +205,10 @@ function showAllColumns() {
 
 function resetWidths() {
   for (const key of Object.keys(widths)) delete widths[key];
+  for (const c of visibleVars()) {
+    if (contentWidths[c.key] !== undefined) varWidths[c.key] = contentWidths[c.key];
+  }
+  distribute();
   emitColumns();
 }
 
@@ -157,12 +218,6 @@ function openColMenu(e: MouseEvent, c: TableColumn) {
     x: Math.min(e.clientX, window.innerWidth - 230),
     y: Math.min(e.clientY, window.innerHeight - 260),
   };
-}
-
-function cellWidth(c: TableColumn): number {
-  if (widths[c.key] !== undefined) return widths[c.key];
-  if (c.width !== undefined) return c.width;
-  return headRefs[c.key]?.getBoundingClientRect().width ?? 0;
 }
 
 function cellAlign(c: TableColumn): 'left' | 'right' | 'center' {
@@ -295,52 +350,30 @@ function emitColumns() {
   );
 }
 
-function resolvedTracks(): number[] {
-  const head = tblEl.value?.querySelector('.sf-tbl-head');
-  if (!head) return [];
-  return getComputedStyle(head)
-    .gridTemplateColumns.split(' ')
-    .map((t) => parseFloat(t) || 0);
-}
-
 function startResize(e: PointerEvent, c: TableColumn) {
   if (e.button !== 0) return;
   e.preventDefault();
   e.stopPropagation();
   const vis = visibleColumns.value;
   const idx = vis.findIndex((col) => col.key === c.key);
-  if (idx < 0 || idx === vis.length - 1) return;
+  if (idx < 0) return;
+  const above = vis.slice(0, idx + 1).filter(isVarColumn);
+  const below = vis.slice(idx + 1).filter(isVarColumn);
+  if (!above.length || !below.length) return;
   const handle = e.currentTarget as HTMLElement;
   const startX = e.clientX;
-  const off = props.rowNumbers ? 1 : 0;
-  const tracks = resolvedTracks();
-  const startW = tracks[off + idx] ?? cellWidth(c);
-  const min = c.min ?? 48;
-  const max = c.max ?? Number.POSITIVE_INFINITY;
-  const after = vis.slice(idx + 1);
-  const afterStart = after.map((col, k) => tracks[off + idx + 1 + k] ?? cellWidth(col));
-  const afterMin = after.map((col) => col.min ?? 48);
-  const last = after[after.length - 1];
-  const flexGive = last ? Math.max(0, afterStart[after.length - 1] - flexibleFloor(last)) : 0;
+  const base = new Map([...above, ...below].map((col) => [col.key, varWidths[col.key] ?? col.min ?? 48]));
   const onMove = (ev: PointerEvent) => {
     const delta = Math.round(ev.clientX - startX);
-    if (delta <= 0) {
-      widths[c.key] = Math.max(min, Math.round(startW + delta));
-      return;
-    }
-    const implicit = Math.min(delta, flexGive);
-    let need = delta - implicit;
-    const wip = afterStart.slice();
-    for (let k = 0; k < after.length - 1 && need > 0; k++) {
-      const give = Math.min(wip[k] - afterMin[k], need);
-      if (give > 0) {
-        wip[k] -= give;
-        need -= give;
-      }
-    }
-    widths[c.key] = Math.min(max, Math.round(startW + delta - need));
-    for (let k = 0; k < after.length - 1; k++) {
-      widths[after[k].key] = Math.round(wip[k]);
+    for (const col of [...above, ...below]) varWidths[col.key] = base.get(col.key) ?? 48;
+    if (delta > 0) {
+      const freed = squeezeVars(below, delta, base);
+      const last = above[above.length - 1];
+      varWidths[last.key] = (base.get(last.key) ?? 48) + freed;
+    } else if (delta < 0) {
+      const freed = squeezeVars([...above].reverse(), -delta, base);
+      const first = below[0];
+      varWidths[first.key] = (base.get(first.key) ?? 48) + freed;
     }
   };
   const onUp = () => {
@@ -358,19 +391,10 @@ function startResize(e: PointerEvent, c: TableColumn) {
   window.addEventListener('pointerup', onUp);
 }
 
-function resetWidth(c: TableColumn) {
-  delete widths[c.key];
-  emitColumns();
-}
-
 function rowId(row: Record<string, unknown>, index: number): string | number {
   if (typeof props.rowKey === 'string') return valueText(row[props.rowKey]);
   if (typeof props.rowKey === 'function') return props.rowKey(row, index);
   return index;
-}
-
-function setTblEl(el: unknown) {
-  tblEl.value = (el as HTMLElement) ?? null;
 }
 
 function setHeadRef(key: string, el: unknown) {
@@ -441,11 +465,10 @@ onBeforeUnmount(() => {
         </button>
         <span v-else class="sf-tbl-hlabel">{{ c.label }}</span>
         <span
-          v-if="ci < visibleColumns.length - 1"
+          v-if="ci < visibleColumns.length - 1 && handleFlags[ci]"
           class="sf-tbl-resize"
-          title="Drag to resize · double-click to reset"
+          title="Drag to resize"
           @pointerdown="startResize($event, c)"
-          @dblclick.stop="resetWidth(c)"
         />
         <div v-if="c.filter && openFilter === c.key" class="sf-tbl-pop" @pointerdown.stop>
           <div v-if="c.sortable" class="sf-tbl-pop-sort">
