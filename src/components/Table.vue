@@ -63,12 +63,12 @@ function measureAutoColumns() {
   const keys = Object.keys(measured);
   if (!keys.length) return;
   const fixedSum = vis.reduce((sum, c) => {
+    if (c.key === last?.key) return sum;
     const w = widths[c.key] ?? c.width;
     return w !== undefined ? sum + w : sum;
   }, 0);
   const container = (root.parentElement?.clientWidth ?? 0) - (props.rowNumbers ? 34 : 0);
-  const lastMin = last ? (last.min ?? 48) : 0;
-  const avail = container - fixedSum - (actionsWidth.value ?? 0) - lastMin;
+  const avail = container - fixedSum - (actionsWidth.value ?? 0) - (last ? flexibleFloor(last) : 0);
   let excess = keys.reduce((e, k) => e + measured[k], 0) - avail;
   for (const k of keys) {
     const c = vis.find((col) => col.key === k);
@@ -93,13 +93,17 @@ const visibleColumns = computed(() => props.columns.filter((c) => !(hiddenCols[c
 const mobileLead = computed(() => visibleColumns.value.some((c) => c.mobile === 'lead'));
 const mobileSub = computed(() => visibleColumns.value.some((c) => c.mobile === 'sub'));
 
+function flexibleFloor(c: TableColumn): number {
+  return Math.max(c.min ?? 48, widths[c.key] ?? c.width ?? 0, autoWidths[c.key] ?? 0);
+}
+
 const templateColumns = computed(() => {
-  const cols = visibleColumns.value.map((c, i) => {
+  const vis = visibleColumns.value;
+  const cols = vis.map((c, i) => {
+    if (i === vis.length - 1) return `minmax(${flexibleFloor(c)}px, 1fr)`;
     const w = widths[c.key] ?? c.width;
     if (w !== undefined) return `${w}px`;
-    const min = c.min ?? 48;
-    const last = i === visibleColumns.value.length - 1;
-    return last ? `minmax(${min}px, 1fr)` : `${autoWidths[c.key] ?? 0}px`;
+    return `${autoWidths[c.key] ?? 0}px`;
   });
   return [
     ...(props.rowNumbers ? ['34px'] : []),
@@ -317,10 +321,7 @@ function startResize(e: PointerEvent, c: TableColumn) {
   const afterStart = after.map((col, k) => tracks[off + idx + 1 + k] ?? cellWidth(col));
   const afterMin = after.map((col) => col.min ?? 48);
   const last = after[after.length - 1];
-  const flexGive =
-    last && (widths[last.key] ?? last.width) === undefined
-      ? Math.max(0, afterStart[after.length - 1] - afterMin[after.length - 1])
-      : 0;
+  const flexGive = last ? Math.max(0, afterStart[after.length - 1] - flexibleFloor(last)) : 0;
   const onMove = (ev: PointerEvent) => {
     const delta = Math.round(ev.clientX - startX);
     if (delta <= 0) {

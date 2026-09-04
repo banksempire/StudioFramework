@@ -495,6 +495,68 @@ const { ensureServer, openApp, makeReporter, finish } = require('./lib/ui-test.c
 
     await nameHead.click({ button: 'right' });
     await delay(150);
+    await rowsIn('.sf-tbl-chk').filter({ hasText: 'Note' }).locator('input').click();
+    await delay(250);
+    const absorb = await page.evaluate(() => {
+      const block = document.querySelector('.sf-table-demo-block');
+      const scroller = block.querySelector('.sf-tbl-scroll');
+      const head = block.querySelector('.sf-tbl-head');
+      const lastTh = [...head.querySelectorAll('.sf-tbl-th')].pop();
+      const tracks = getComputedStyle(head).gridTemplateColumns.split(' ').map(parseFloat);
+      return {
+        edge: Math.abs(lastTh.getBoundingClientRect().right - scroller.getBoundingClientRect().right),
+        sum: tracks.reduce((a, b) => a + b, 0),
+        w: scroller.clientWidth,
+        noteVisible: [...head.querySelectorAll('.sf-tbl-th')].some((t) => t.textContent.includes('Note')),
+      };
+    });
+    report(
+      'hiding the flexible column leaves no gap: the next column absorbs the freed space',
+      !absorb.noteVisible && absorb.edge <= 1 && Math.abs(absorb.sum - absorb.w) <= 1,
+      JSON.stringify(absorb),
+    );
+    await nameHead.click({ button: 'right' });
+    await delay(150);
+    await rowsIn('.sf-tbl-chk').filter({ hasText: 'Days' }).locator('input').click();
+    await delay(250);
+    const absorbFixed = await page.evaluate(() => {
+      const block = document.querySelector('.sf-table-demo-block');
+      const scroller = block.querySelector('.sf-tbl-scroll');
+      const head = block.querySelector('.sf-tbl-head');
+      const lastTh = [...head.querySelectorAll('.sf-tbl-th')].pop();
+      const tracks = getComputedStyle(head).gridTemplateColumns.split(' ').map(parseFloat);
+      return {
+        edge: Math.abs(lastTh.getBoundingClientRect().right - scroller.getBoundingClientRect().right),
+        sum: tracks.reduce((a, b) => a + b, 0),
+        w: scroller.clientWidth,
+      };
+    });
+    report(
+      'with the flexible and auto columns hidden, the fixed-size Size KB column absorbs the space',
+      absorbFixed.edge <= 1 && Math.abs(absorbFixed.sum - absorbFixed.w) <= 1,
+      JSON.stringify(absorbFixed),
+    );
+
+    await nameHead.click({ button: 'right' });
+    await delay(150);
+    await page
+      .locator('.sf-table-demo-block:first-child .sf-tbl-colmenu-act', { hasText: 'Show all columns' })
+      .click();
+    await delay(250);
+    const restoredFill = await page.evaluate(() => {
+      const block = document.querySelector('.sf-table-demo-block');
+      const scroller = block.querySelector('.sf-tbl-scroll');
+      const head = block.querySelector('.sf-tbl-head');
+      const tracks = getComputedStyle(head).gridTemplateColumns.split(' ').map(parseFloat);
+      return (
+        Math.abs(tracks.reduce((a, b) => a + b, 0) - scroller.clientWidth) <= 1 &&
+        [...head.querySelectorAll('.sf-tbl-th')].some((t) => t.textContent.includes('Note'))
+      );
+    });
+    report('Show all columns restores the grid exactly filled', restoredFill);
+
+    await nameHead.click({ button: 'right' });
+    await delay(150);
     await rowsIn('.sf-tbl-chk').filter({ hasText: 'Size KB' }).locator('input').click();
     await delay(100);
     await nameHead.click({ button: 'right' });
