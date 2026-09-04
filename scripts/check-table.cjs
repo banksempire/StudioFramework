@@ -44,6 +44,12 @@ const { ensureServer, openApp, makeReporter, finish } = require('./lib/ui-test.c
       const th = head.children[1];
       return { count: rows.length, ths, row0: rows[0], tracks, thCase: getComputedStyle(th).textTransform };
     });
+    const startupRatio = initial.tracks[4] / initial.tracks[5];
+    report(
+      'startup widths keep the content proportions between variable columns',
+      startupRatio > 0.55 && startupRatio < 0.95,
+      `days=${initial.tracks[4]} note=${initial.tracks[5]} ratio=${startupRatio.toFixed(3)}`,
+    );
     report(
       'renders header labels, a row-number gutter and all rows on a fixed-column grid',
       initial.count === 5 &&
@@ -421,7 +427,6 @@ const { ensureServer, openApp, makeReporter, finish } = require('./lib/ui-test.c
         after[1] === before[1] &&
         Math.abs(after[2] - before[2] - 40) <= 2 &&
         Math.abs(after[3] - before[3] - 40) <= 2 &&
-        Math.abs(after[4] - before[4] - 40) <= 2 &&
         after[6] === before[6],
       `before=${before} after=${after}`,
     );
@@ -505,8 +510,8 @@ const { ensureServer, openApp, makeReporter, finish } = require('./lib/ui-test.c
       'hiding a fixed column shares its space across every variable column',
       gDays > 20 &&
         gNote > 20 &&
-        gDays > gNote &&
-        gDays / gNote < 4 &&
+        gDays / gNote > 0.8 &&
+        gDays / gNote < 1.25 &&
         Math.abs(varAfter.sum - varBefore.sum) <= 2,
       JSON.stringify({ before: varBefore, after: varAfter, gDays, gNote }),
     );
