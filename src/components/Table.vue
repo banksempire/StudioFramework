@@ -127,8 +127,17 @@ const mobileSub = computed(() => visibleColumns.value.some((c) => c.mobile === '
 const handleFlags = computed(() => {
   const vis = visibleColumns.value;
   const flags: boolean[] = [];
+  let hasAbove = false;
   for (let i = 0; i < vis.length - 1; i++) {
-    flags.push(vis.slice(i + 1).some(isVarColumn));
+    if (isVarColumn(vis[i])) hasAbove = true;
+    let hasBelow = false;
+    for (let j = i + 1; j < vis.length; j++) {
+      if (isVarColumn(vis[j])) {
+        hasBelow = true;
+        break;
+      }
+    }
+    flags.push(hasAbove && hasBelow);
   }
   return flags;
 });
@@ -348,29 +357,21 @@ function startResize(e: PointerEvent, c: TableColumn) {
   const vis = visibleColumns.value;
   const idx = vis.findIndex((col) => col.key === c.key);
   if (idx < 0) return;
+  const above = vis.slice(0, idx + 1).filter(isVarColumn);
   const below = vis.slice(idx + 1).filter(isVarColumn);
-  if (!below.length) return;
+  if (!above.length || !below.length) return;
   const handle = e.currentTarget as HTMLElement;
   const startX = e.clientX;
-  const dragged = isVarColumn(c);
-  const min = c.min ?? 48;
-  const max = c.max ?? Number.POSITIVE_INFINITY;
-  const startW = dragged ? (varWidths[c.key] ?? min) : (widths[c.key] ?? c.width ?? min);
-  const base = new Map(below.map((col) => [col.key, varWidths[col.key] ?? col.min ?? 48]));
+  const base = new Map([...above, ...below].map((col) => [col.key, varWidths[col.key] ?? col.min ?? 48]));
   const onMove = (ev: PointerEvent) => {
     const delta = Math.round(ev.clientX - startX);
-    for (const col of below) varWidths[col.key] = base.get(col.key) ?? 48;
-    const setWidth = (w: number) => {
-      if (dragged) varWidths[c.key] = w;
-      else widths[c.key] = Math.round(w);
-    };
+    for (const col of [...above, ...below]) varWidths[col.key] = base.get(col.key) ?? 48;
     if (delta > 0) {
       const freed = squeezeVars(below, delta, base);
-      setWidth(Math.min(max, startW + freed));
+      const last = above[above.length - 1];
+      varWidths[last.key] = (base.get(last.key) ?? 48) + freed;
     } else if (delta < 0) {
-      const target = Math.max(min, startW + delta);
-      const freed = startW - target;
-      setWidth(target);
+      const freed = squeezeVars([...above].reverse(), -delta, base);
       const first = below[0];
       varWidths[first.key] = (base.get(first.key) ?? 48) + freed;
     }
