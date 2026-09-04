@@ -41,7 +41,6 @@ function measureAutoColumns() {
   const root = tblEl.value;
   if (!root) return;
   const vis = visibleColumns.value;
-  const last = vis[vis.length - 1];
   const cells = [...root.querySelectorAll<HTMLElement>('[data-col]')];
   const saved: Array<[HTMLElement, string]> = [];
   for (const el of cells) {
@@ -50,7 +49,6 @@ function measureAutoColumns() {
   }
   const measured: Record<string, number> = {};
   for (const c of vis) {
-    if (c.key === last?.key) continue;
     if ((widths[c.key] ?? c.width) !== undefined) continue;
     let w = 0;
     for (const el of cells) {
@@ -63,12 +61,11 @@ function measureAutoColumns() {
   const keys = Object.keys(measured);
   if (!keys.length) return;
   const fixedSum = vis.reduce((sum, c) => {
-    if (c.key === last?.key) return sum;
     const w = widths[c.key] ?? c.width;
     return w !== undefined ? sum + w : sum;
   }, 0);
   const container = (root.parentElement?.clientWidth ?? 0) - (props.rowNumbers ? 34 : 0);
-  const avail = container - fixedSum - (actionsWidth.value ?? 0) - (last ? flexibleFloor(last) : 0);
+  const avail = container - fixedSum - (actionsWidth.value ?? 0) - Object.keys(measured).length * 48;
   let excess = keys.reduce((e, k) => e + measured[k], 0) - avail;
   for (const k of keys) {
     const c = vis.find((col) => col.key === k);
@@ -93,17 +90,14 @@ const visibleColumns = computed(() => props.columns.filter((c) => !(hiddenCols[c
 const mobileLead = computed(() => visibleColumns.value.some((c) => c.mobile === 'lead'));
 const mobileSub = computed(() => visibleColumns.value.some((c) => c.mobile === 'sub'));
 
-function flexibleFloor(c: TableColumn): number {
-  return Math.max(c.min ?? 48, widths[c.key] ?? c.width ?? 0, autoWidths[c.key] ?? 0);
-}
-
 const templateColumns = computed(() => {
   const vis = visibleColumns.value;
-  const cols = vis.map((c, i) => {
-    if (i === vis.length - 1) return `minmax(${flexibleFloor(c)}px, 1fr)`;
+  const cols = vis.map((c) => {
     const w = widths[c.key] ?? c.width;
     if (w !== undefined) return `${w}px`;
-    return `${autoWidths[c.key] ?? 0}px`;
+    const min = c.min ?? 48;
+    const weight = Math.max(autoWidths[c.key] ?? 0, min);
+    return `minmax(${min}px, ${weight}fr)`;
   });
   return [
     ...(props.rowNumbers ? ['34px'] : []),
@@ -320,8 +314,12 @@ function startResize(e: PointerEvent, c: TableColumn) {
   const after = vis.slice(idx + 1);
   const afterStart = after.map((col, k) => tracks[off + idx + 1 + k] ?? cellWidth(col));
   const afterMin = after.map((col) => col.min ?? 48);
-  const last = after[after.length - 1];
-  const flexGive = last ? Math.max(0, afterStart[after.length - 1] - flexibleFloor(last)) : 0;
+  let flexGive = 0;
+  vis.forEach((col, k) => {
+    if (col === c) return;
+    if ((widths[col.key] ?? col.width) !== undefined) return;
+    flexGive += Math.max(0, (tracks[off + k] ?? 0) - (col.min ?? 48));
+  });
   const onMove = (ev: PointerEvent) => {
     const delta = Math.round(ev.clientX - startX);
     if (delta <= 0) {

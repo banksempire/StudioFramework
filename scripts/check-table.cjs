@@ -474,8 +474,20 @@ const { ensureServer, openApp, makeReporter, finish } = require('./lib/ui-test.c
     await nameHead.click({ button: 'right' });
     await delay(150);
     const menuOpen = (await rowsIn('.sf-tbl-colmenu').count()) === 1;
+    const varTracks = () =>
+      page.evaluate(() => {
+        const head = document.querySelector('.sf-table-demo-block .sf-tbl-head');
+        const byLabel = {};
+        for (const th of head.querySelectorAll('.sf-tbl-th')) {
+          const label = (th.textContent || '').replace(/[^A-Za-z ]/g, '').trim();
+          if (label) byLabel[label] = th.getBoundingClientRect().width;
+        }
+        const t = getComputedStyle(head).gridTemplateColumns.split(' ').map(parseFloat);
+        return { days: byLabel.Days ?? 0, note: byLabel.Note ?? 0, sum: t.reduce((a, b) => a + b, 0) };
+      });
+    const varBefore = await varTracks();
     await rowsIn('.sf-tbl-chk').filter({ hasText: 'Kind' }).locator('input').click();
-    await delay(150);
+    await delay(250);
     const kindGone = await page.evaluate(() => {
       const block = document.querySelector('.sf-table-demo-block');
       const ths = [...block.querySelectorAll('.sf-tbl-th')].map((t) => t.textContent);
@@ -485,6 +497,18 @@ const { ensureServer, openApp, makeReporter, finish } = require('./lib/ui-test.c
       'right-click on a header opens the column menu; unchecking hides the column',
       menuOpen && kindGone.n === 6 && !kindGone.hasKind,
       JSON.stringify(kindGone),
+    );
+    const varAfter = await varTracks();
+    const gDays = varAfter.days - varBefore.days;
+    const gNote = varAfter.note - varBefore.note;
+    report(
+      'hiding a fixed column shares its space across every variable column',
+      gDays > 20 &&
+        gNote > 20 &&
+        gDays > gNote &&
+        gDays / gNote < 4 &&
+        Math.abs(varAfter.sum - varBefore.sum) <= 2,
+      JSON.stringify({ before: varBefore, after: varAfter, gDays, gNote }),
     );
 
     await nameHead.click({ button: 'right' });
@@ -526,14 +550,15 @@ const { ensureServer, openApp, makeReporter, finish } = require('./lib/ui-test.c
       const lastTh = [...head.querySelectorAll('.sf-tbl-th')].pop();
       const tracks = getComputedStyle(head).gridTemplateColumns.split(' ').map(parseFloat);
       return {
-        edge: Math.abs(lastTh.getBoundingClientRect().right - scroller.getBoundingClientRect().right),
+        edge: Math.round(scroller.getBoundingClientRect().right - lastTh.getBoundingClientRect().right),
         sum: tracks.reduce((a, b) => a + b, 0),
         w: scroller.clientWidth,
+        tracks,
       };
     });
     report(
-      'with the flexible and auto columns hidden, the fixed-size Size KB column absorbs the space',
-      absorbFixed.edge <= 1 && Math.abs(absorbFixed.sum - absorbFixed.w) <= 1,
+      'with every variable column hidden the leftover stays unallocated, like a panel with no resizeable sub-sections',
+      absorbFixed.edge > 50 && absorbFixed.sum < absorbFixed.w - 50 && absorbFixed.tracks[3] === 76,
       JSON.stringify(absorbFixed),
     );
 
@@ -543,17 +568,25 @@ const { ensureServer, openApp, makeReporter, finish } = require('./lib/ui-test.c
       .locator('.sf-table-demo-block:first-child .sf-tbl-colmenu-act', { hasText: 'Show all columns' })
       .click();
     await delay(250);
-    const restoredFill = await page.evaluate(() => {
+    const restoredFillState = await page.evaluate(() => {
       const block = document.querySelector('.sf-table-demo-block');
       const scroller = block.querySelector('.sf-tbl-scroll');
       const head = block.querySelector('.sf-tbl-head');
-      const tracks = getComputedStyle(head).gridTemplateColumns.split(' ').map(parseFloat);
-      return (
-        Math.abs(tracks.reduce((a, b) => a + b, 0) - scroller.clientWidth) <= 1 &&
-        [...head.querySelectorAll('.sf-tbl-th')].some((t) => t.textContent.includes('Note'))
-      );
+      const tracks = getComputedStyle(head).gridTemplateColumns.split(' ');
+      return {
+        tracks,
+        w: scroller.clientWidth,
+        note: [...head.querySelectorAll('.sf-tbl-th')].some((t) => t.textContent.includes('Note')),
+      };
     });
-    report('Show all columns restores the grid exactly filled', restoredFill);
+    const restoredFill =
+      Math.abs(restoredFillState.tracks.map(parseFloat).reduce((a, b) => a + b, 0) - restoredFillState.w) <=
+        2 && restoredFillState.note;
+    report(
+      'Show all columns restores the grid exactly filled',
+      restoredFill,
+      JSON.stringify(restoredFillState),
+    );
 
     await nameHead.click({ button: 'right' });
     await delay(150);
