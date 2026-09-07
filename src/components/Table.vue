@@ -585,7 +585,8 @@ onBeforeUnmount(() => {
 .sf-tbl-scroll {
   flex: 1 1 auto;
   min-height: 0;
-  overflow: auto;
+  overflow-y: auto;
+  overflow-x: hidden;
 }
 
 .sf-tbl {
@@ -1028,10 +1029,6 @@ onBeforeUnmount(() => {
   .sf-tbl-colmenu-act:hover {
     box-shadow: inset 0 0 0 999px var(--sf-hover-overlay);
   }
-}
-
-.sf-root--mobile .sf-tbl-scroll {
-  overflow-x: hidden;
 }
 
 .sf-root--mobile .sf-tbl {

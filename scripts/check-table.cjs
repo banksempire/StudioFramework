@@ -457,6 +457,47 @@ const { ensureServer, openApp, makeReporter, finish } = require('./lib/ui-test.c
         !clamped.scrolled,
       JSON.stringify({ ...clamped, expectedDays }),
     );
+
+    await page.evaluate(() => {
+      const s = document.createElement('style');
+      s.id = 'sf-table-narrow';
+      s.textContent = '.sf-table-demo-block:first-child .sf-tbl-wrap { max-width: 360px !important; }';
+      document.head.appendChild(s);
+    });
+    await delay(400);
+    await page.locator('.sf-table-demo').scrollIntoViewIfNeeded();
+    await delay(150);
+    const wheelBox = await page.evaluate(() => {
+      const scroller = document.querySelector('.sf-table-demo-block .sf-tbl-scroll');
+      scroller.scrollTop = 0;
+      const r = scroller.getBoundingClientRect();
+      return { x: Math.round(r.left + Math.min(120, r.width / 2)), y: Math.round(r.top + r.height / 2) };
+    });
+    await page.mouse.move(wheelBox.x, wheelBox.y);
+    const narrowState = await page.evaluate(() => {
+      const scroller = document.querySelector('.sf-table-demo-block .sf-tbl-scroll');
+      return {
+        ox: getComputedStyle(scroller).overflowX,
+        cw: scroller.clientWidth,
+        sw: scroller.scrollWidth,
+        scrollbar: scroller.offsetWidth - scroller.clientWidth,
+      };
+    });
+    await page.mouse.wheel(180, 0);
+    await delay(150);
+    const xAfter = await page.evaluate(
+      () => document.querySelector('.sf-table-demo-block .sf-tbl-scroll').scrollLeft,
+    );
+    await page.evaluate(() => document.getElementById('sf-table-narrow')?.remove());
+    await delay(200);
+    report(
+      'squeezed below its column floors the table never pans horizontally (wheel deltaX is a no-op)',
+      narrowState.ox === 'hidden' &&
+        narrowState.scrollbar === 0 &&
+        xAfter === 0 &&
+        narrowState.cw < narrowState.sw,
+      JSON.stringify({ ...narrowState, xAfter }),
+    );
     report(
       'handles render only between columns that can exchange space',
       preClamp.handles === 1,
