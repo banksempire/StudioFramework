@@ -1,7 +1,7 @@
 export interface TableColumn {
   key: string;
   label: string;
-  width?: number;
+  fixedWidth?: number;
   min?: number;
   max?: number;
   hidden?: boolean;

@@ -39,7 +39,7 @@ const varWidths = reactive<Record<string, number>>({});
 const tblEl = ref<HTMLElement | null>(null);
 
 function isVarColumn(c: TableColumn): boolean {
-  return (widths[c.key] ?? c.width) === undefined;
+  return (widths[c.key] ?? c.fixedWidth) === undefined;
 }
 
 function visibleVars(): TableColumn[] {
@@ -89,7 +89,7 @@ function distribute() {
   const container = (root.parentElement?.clientWidth ?? 0) - (props.rowNumbers ? 34 : 0);
   const fixed =
     vis.reduce((sum, c) => {
-      const w = widths[c.key] ?? c.width;
+      const w = widths[c.key] ?? c.fixedWidth;
       return w !== undefined ? sum + w : sum;
     }, 0) + (actionsWidth.value ?? 0);
   const used = vars.reduce((sum, c) => sum + (varWidths[c.key] ?? 48), 0);
@@ -145,7 +145,7 @@ const handleFlags = computed(() => {
 const templateColumns = computed(() => {
   const vis = visibleColumns.value;
   const cols = vis.map((c) => {
-    const w = widths[c.key] ?? c.width;
+    const w = widths[c.key] ?? c.fixedWidth;
     if (w !== undefined) return `${w}px`;
     return `${varWidths[c.key] ?? c.min ?? 48}px`;
   });
@@ -345,7 +345,7 @@ function emitColumns() {
     props.columns.map((c) => ({
       ...c,
       hidden: !columnVisible(c),
-      width: widths[c.key] ?? c.width,
+      width: widths[c.key] ?? c.fixedWidth,
     })),
   );
 }

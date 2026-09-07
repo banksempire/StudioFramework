@@ -13,9 +13,9 @@ const files = reactive([
 ]);
 
 const fileColumns = ref<TableColumn[]>([
-  { key: 'name', label: 'Name', width: 150, sortable: true, filter: true, mobile: 'title' },
-  { key: 'kind', label: 'Kind', width: 80, sortable: true, filter: true },
-  { key: 'size', label: 'Size KB', width: 76, sortable: true, align: 'right', mobile: 'sub' },
+  { key: 'name', label: 'Name', fixedWidth: 150, sortable: true, filter: true, mobile: 'title' },
+  { key: 'kind', label: 'Kind', fixedWidth: 80, sortable: true, filter: true },
+  { key: 'size', label: 'Size KB', fixedWidth: 76, sortable: true, align: 'right', mobile: 'sub' },
   { key: 'days', label: 'Days', sortable: true, filter: 'select' },
   { key: 'note', label: 'Note' },
 ]);
@@ -44,13 +44,13 @@ const jobs = reactive([
 ]);
 
 const jobColumns: TableColumn[] = [
-  { key: 'on', label: 'On', width: 40, mobile: 'lead' },
+  { key: 'on', label: 'On', fixedWidth: 40, mobile: 'lead' },
   { key: 'model', label: 'Model', sortable: true, mobile: 'title' },
-  { key: 'window', label: 'Window', width: 160, mobile: 'sub' },
+  { key: 'window', label: 'Window', fixedWidth: 160, mobile: 'sub' },
 ];
 
 function onColumns(cols: TableColumn[]) {
-  state.widths = cols.map((c) => `${c.key}:${c.width ?? 'auto'}`).join(' ');
+  state.widths = cols.map((c) => `${c.key}:${c.fixedWidth ?? 'auto'}`).join(' ');
 }
 
 const fileRows = computed(() => files as Array<Record<string, unknown>>);
