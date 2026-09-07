@@ -6,10 +6,12 @@ const props = withDefaults(
   defineProps<{
     title: string;
     open: boolean;
+    wide?: boolean;
     closeOnBackdrop?: boolean;
     closeOnEscape?: boolean;
   }>(),
   {
+    wide: false,
     closeOnBackdrop: true,
     closeOnEscape: true,
   },
@@ -65,6 +67,7 @@ onUnmounted(() => window.removeEventListener('keydown', onDocKey));
       <div
         ref="card"
         class="sf-dialog"
+        :class="{ 'sf-dialog--wide': props.wide }"
         role="dialog"
         aria-modal="true"
         :aria-label="props.title"
@@ -109,6 +112,10 @@ onUnmounted(() => window.removeEventListener('keydown', onDocKey));
   border-radius: var(--sf-radius);
   box-shadow: var(--sf-shadow);
   outline: none;
+}
+
+.sf-dialog--wide {
+  width: min(680px, 100%);
 }
 
 .sf-dialog-head {

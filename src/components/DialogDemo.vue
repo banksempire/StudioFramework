@@ -4,6 +4,7 @@ import Dialog from './Dialog.vue';
 import PillSelector from './PillSelector.vue';
 
 const open = ref(false);
+const wideOpen = ref(false);
 const name = ref('panel-1');
 const scope = ref('workspace');
 const lastResult = ref('');
@@ -22,7 +23,10 @@ function save() {
 
 <template>
   <div class="sf-dialog-demo">
-    <button class="sf-dialog-demo-open" type="button" @click="open = true">Open element popup</button>
+    <div class="sf-dialog-demo-row">
+      <button class="sf-dialog-demo-open" type="button" @click="open = true">Open element popup</button>
+      <button class="sf-dialog-demo-open-wide" type="button" @click="wideOpen = true">Open wide popup</button>
+    </div>
     <div class="sf-dialog-demo-status">{{ lastResult || 'popup not opened yet' }}</div>
     <Dialog v-model:open="open" title="Edit element">
       <div class="sf-dialog-demo-field">
@@ -38,6 +42,15 @@ function save() {
         <button class="sf-dialog-btn sf-dialog-btn--accent" type="button" @click="save">Save</button>
       </template>
     </Dialog>
+    <Dialog v-model:open="wideOpen" wide title="Edit element (wide)">
+      <div class="sf-dialog-demo-field">
+        <label class="sf-dialog-demo-label" for="sf-dialog-demo-wide-name">Name</label>
+        <input id="sf-dialog-demo-wide-name" v-model="name" class="sf-dialog-demo-input" />
+      </div>
+      <template #actions="{ close }">
+        <button class="sf-dialog-btn" type="button" @click="close()">Close</button>
+      </template>
+    </Dialog>
   </div>
 </template>
 
@@ -47,6 +60,11 @@ function save() {
   flex-direction: column;
   gap: 6px;
   padding: 2px 6px;
+}
+
+.sf-dialog-demo-row {
+  display: flex;
+  gap: 6px;
 }
 
 .sf-dialog-demo-open {
