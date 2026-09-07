@@ -223,6 +223,20 @@ const ICONS: Record<string, IconSpec> = {
     paths: [{ d: 'M8 6L5 3L2 6' }, { d: 'M5 3v18' }, { d: 'M16 18l3 3l3-3' }, { d: 'M19 21V3' }],
   },
 
+  pin: {
+    paths: [{ d: 'M9 3h6v3H9z' }, { d: 'M9 6l1.4 4h3.2L15 6' }, { d: 'M7 10h10v2H7z' }, { d: 'M12 12v8' }],
+  },
+
+  unpin: {
+    paths: [
+      { d: 'M9 3h6v3H9z' },
+      { d: 'M9 6l1.4 4h3.2L15 6' },
+      { d: 'M7 10h10v2H7z' },
+      { d: 'M12 12v8' },
+      { d: 'M4.5 4.5l15 15' },
+    ],
+  },
+
   '⏰': {
     paths: [
       { d: 'M12 13.5m-7.5 0a7.5 7.5 0 1 0 15 0a7.5 7.5 0 1 0 -15 0' },
