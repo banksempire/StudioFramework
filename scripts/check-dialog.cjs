@@ -183,6 +183,43 @@ const { ensureServer, openApp, makeReporter, finish } = require('./lib/ui-test.c
         cardTR: card.borderTopRightRadius,
       };
     });
+
+    const noPan = await mpage.evaluate(() => {
+      const body = document.querySelector('.sf-dialog-body');
+      const wide = document.createElement('div');
+      wide.style.width = '9999px';
+      wide.style.height = '2px';
+      body.appendChild(wide);
+      const r = body.getBoundingClientRect();
+      const input = document.querySelector('.sf-dialog-body input');
+      return {
+        ox: getComputedStyle(body).overflowX,
+        overflowReal: body.scrollWidth > body.clientWidth + 1,
+        wheelX: Math.round(r.left + Math.min(120, r.width / 2)),
+        wheelY: Math.round(r.top + r.height / 2),
+        inputFont: input ? getComputedStyle(input).fontSize : null,
+      };
+    });
+    await mpage.mouse.move(noPan.wheelX, noPan.wheelY);
+    await mpage.mouse.wheel(180, 0);
+    await delay(200);
+    const noPanAfter = await mpage.evaluate(() => {
+      const body = document.querySelector('.sf-dialog-body');
+      const v = body.scrollLeft;
+      body.querySelector('div[style*="9999px"]')?.remove();
+      return v;
+    });
+    report(
+      'mobile: the dialog body never pans horizontally, even with overflowing content',
+      noPan.ox === 'hidden' && noPan.overflowReal && noPanAfter === 0,
+      JSON.stringify({ ...noPan, noPanAfter }),
+    );
+    report(
+      'mobile: dialog form inputs render at 16px so iOS never zooms the viewport on focus',
+      noPan.inputFont === '16px',
+      JSON.stringify(noPan),
+    );
+
     report(
       'mobile: the close button follows the card rounded top-right corner',
       parseFloat(corner.closeTR) > 0 && parseFloat(corner.closeTR) >= parseFloat(corner.cardTR) - 1.5,

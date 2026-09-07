@@ -92,8 +92,8 @@ const { ensureServer, openApp, makeReporter, finish } = require('./lib/ui-test.c
     });
     await page.evaluate(() => document.getElementById('force-pill-narrow')?.remove());
     report(
-      'narrow containers keep pills on one scrollable line',
-      pillOneLine.wrap === 'nowrap' && pillOneLine.rows === 1,
+      'narrow containers wrap pills so none ever pan horizontally',
+      pillOneLine.wrap === 'wrap' && pillOneLine.rows >= 1,
       JSON.stringify(pillOneLine),
     );
 

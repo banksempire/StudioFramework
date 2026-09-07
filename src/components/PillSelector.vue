@@ -88,9 +88,10 @@ const emit = defineEmits<{ 'update:modelValue': [value: string | number] }>();
 
 @container (max-width: 490px) {
   .sf-pill-track {
-    flex-wrap: nowrap;
-    overflow-x: auto;
-    scrollbar-width: none;
+    flex-wrap: wrap;
+    overflow-x: hidden;
+    height: auto;
+    min-height: 36px;
   }
 }
 </style>

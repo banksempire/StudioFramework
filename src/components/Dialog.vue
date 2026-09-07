@@ -168,6 +168,11 @@ onUnmounted(() => window.removeEventListener('keydown', onDocKey));
   gap: 9px;
   padding: 12px 14px;
   overflow-y: auto;
+  overflow-x: hidden;
+}
+
+.sf-root--mobile .sf-dialog-body :is(input, select, textarea) {
+  font-size: 16px;
 }
 
 .sf-dialog-foot {
