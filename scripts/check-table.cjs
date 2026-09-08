@@ -539,6 +539,62 @@ const { ensureServer, openApp, makeReporter, finish } = require('./lib/ui-test.c
     await delay(150);
     report('re-checking brings the column back', (await rowsIn('.sf-tbl-th').count()) === 7);
 
+    const tracksOf = () =>
+      page.evaluate(() => {
+        const head = document.querySelector('.sf-table-demo-block .sf-tbl-head');
+        return getComputedStyle(head).gridTemplateColumns.split(' ').map(parseFloat);
+      });
+    const evenBefore = await tracksOf();
+    await nameHead.click({ button: 'right' });
+    await delay(150);
+    await rowsIn('.sf-tbl-chk').filter({ hasText: 'Size KB' }).locator('input').click();
+    await delay(300);
+    const evenHidden = await tracksOf();
+    report(
+      'hiding a fixed column shares the freed space evenly across the variable columns',
+      Math.abs(evenHidden[3] - evenBefore[4] - 38) <= 2 && Math.abs(evenHidden[4] - evenBefore[5] - 38) <= 2,
+      JSON.stringify({ evenBefore, evenHidden }),
+    );
+    await nameHead.click({ button: 'right' });
+    await delay(150);
+    await rowsIn('.sf-tbl-chk').filter({ hasText: 'Size KB' }).locator('input').click();
+    await delay(300);
+    const evenRestored = await tracksOf();
+    report(
+      'showing the fixed column back takes the space evenly from the variable columns',
+      Math.abs(evenRestored[4] - evenHidden[3] + 38) <= 2 &&
+        Math.abs(evenRestored[5] - evenHidden[4] + 38) <= 2,
+      JSON.stringify({ evenHidden, evenRestored }),
+    );
+
+    await page.evaluate(() => {
+      const s = document.createElement('style');
+      s.id = 'sf-table-even';
+      s.textContent = '.sf-table-demo-block:first-child .sf-tbl-wrap { max-width: 624px !important; }';
+      document.head.appendChild(s);
+    });
+    await delay(400);
+    const squeezed = await tracksOf();
+    const daysLost = evenRestored[4] - squeezed[4];
+    const noteLost = evenRestored[5] - squeezed[5];
+    report(
+      'shrinking the window takes space evenly from the variable columns',
+      daysLost > 0 && Math.abs(daysLost - noteLost) <= 2 && squeezed[4] >= 47 && squeezed[5] >= 47,
+      JSON.stringify({ evenRestored, squeezed, daysLost, noteLost }),
+    );
+    await page.evaluate(() => document.getElementById('sf-table-even')?.remove());
+    await delay(400);
+    const regrown = await tracksOf();
+    const daysGained = regrown[4] - squeezed[4];
+    const noteGained = regrown[5] - squeezed[5];
+    report(
+      'growing the window gives the space evenly back to the variable columns',
+      Math.abs(daysGained - noteGained) <= 2 &&
+        Math.abs(regrown[4] - evenRestored[4]) <= 2 &&
+        Math.abs(regrown[5] - evenRestored[5]) <= 2,
+      JSON.stringify({ squeezed, regrown, daysGained, noteGained }),
+    );
+
     await nameHead.click({ button: 'right' });
     await delay(150);
     await rowsIn('.sf-tbl-chk').filter({ hasText: 'Note' }).locator('input').click();

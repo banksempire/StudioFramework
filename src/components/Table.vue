@@ -94,12 +94,39 @@ function distribute() {
     }, 0) + (actionsWidth.value ?? 0);
   const used = vars.reduce((sum, c) => sum + (varWidths[c.key] ?? 48), 0);
   const unallocated = container - fixed - used;
-  if (unallocated > 0) {
-    const first = vars[0];
-    varWidths[first.key] = (varWidths[first.key] ?? 48) + unallocated;
-  } else if (unallocated < 0) {
-    squeezeVars(vars, -unallocated, null);
+  if (unallocated > 0) growVarsEvenly(vars, unallocated);
+  else if (unallocated < 0) shrinkVarsEvenly(vars, -unallocated);
+}
+
+function growVarsEvenly(cols: TableColumn[], amount: number) {
+  const share = Math.floor(amount / cols.length);
+  let rem = amount - share * cols.length;
+  for (const c of cols) {
+    varWidths[c.key] = (varWidths[c.key] ?? 48) + share + (rem > 0 ? 1 : 0);
+    if (rem > 0) rem--;
   }
+}
+
+function shrinkVarsEvenly(cols: TableColumn[], needed: number) {
+  const start = new Map(cols.map((c) => [c.key, varWidths[c.key] ?? 48]));
+  const taken = new Map<string, number>(cols.map((c) => [c.key, 0]));
+  let remaining = needed;
+  while (remaining > 0) {
+    const active = cols.filter((c) => (start.get(c.key) ?? 48) - (taken.get(c.key) ?? 0) > (c.min ?? 48));
+    if (!active.length) break;
+    const share = Math.max(1, Math.floor(remaining / active.length));
+    let moved = 0;
+    for (const c of active) {
+      const headroom = (start.get(c.key) ?? 48) - (taken.get(c.key) ?? 0) - (c.min ?? 48);
+      const take = Math.min(headroom, share, remaining);
+      if (take <= 0) continue;
+      taken.set(c.key, (taken.get(c.key) ?? 0) + take);
+      remaining -= take;
+      moved += take;
+    }
+    if (moved === 0) break;
+  }
+  for (const c of cols) varWidths[c.key] = (start.get(c.key) ?? 48) - (taken.get(c.key) ?? 0);
 }
 
 function squeezeVars(cols: TableColumn[], needed: number, base: Map<string, number> | null): number {
