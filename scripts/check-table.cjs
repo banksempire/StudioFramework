@@ -595,6 +595,64 @@ const { ensureServer, openApp, makeReporter, finish } = require('./lib/ui-test.c
       JSON.stringify({ squeezed, regrown, daysGained, noteGained }),
     );
 
+    await page.evaluate(() => {
+      const s = document.createElement('style');
+      s.id = 'sf-table-floor';
+      s.textContent = '.sf-table-demo-block:first-child .sf-tbl-wrap { max-width: 484px !important; }';
+      document.head.appendChild(s);
+    });
+    await delay(400);
+    const floored = await tracksOf();
+    report(
+      'squeezing below the column floors parks the variable columns at min-width',
+      floored[4] >= 47 && floored[4] <= 49 && floored[5] >= 47 && floored[5] <= 49,
+      JSON.stringify({ evenRestored, floored }),
+    );
+    await page.evaluate(() => document.getElementById('sf-table-floor')?.remove());
+    await delay(400);
+    const unfloored = await tracksOf();
+    report(
+      'widening back after a floor-bound squeeze restores the pre-squeeze widths exactly',
+      Math.abs(unfloored[4] - evenRestored[4]) <= 1 && Math.abs(unfloored[5] - evenRestored[5]) <= 1,
+      JSON.stringify({ evenRestored, floored, unfloored }),
+    );
+
+    const kb3 = await daysHead.boundingBox();
+    await page.mouse.move(kb3.x + kb3.width - 1, kb3.y + kb3.height / 2);
+    await page.mouse.down();
+    await page.mouse.move(kb3.x + kb3.width + 40, kb3.y + kb3.height / 2, { steps: 6 });
+    await page.mouse.up();
+    await delay(150);
+    const dragged = await tracksOf();
+    await page.evaluate(() => {
+      const s = document.createElement('style');
+      s.id = 'sf-table-dragwrap';
+      s.textContent = '.sf-table-demo-block:first-child .sf-tbl-wrap { max-width: 624px !important; }';
+      document.head.appendChild(s);
+    });
+    await delay(400);
+    const draggedSqueezed = await tracksOf();
+    await page.evaluate(() => document.getElementById('sf-table-dragwrap')?.remove());
+    await delay(400);
+    const draggedRegrown = await tracksOf();
+    report(
+      'a user-dragged width survives shrink and regrow of the container',
+      Math.abs(draggedRegrown[4] - dragged[4]) <= 1 && Math.abs(draggedRegrown[5] - dragged[5]) <= 1,
+      JSON.stringify({ dragged, draggedSqueezed, draggedRegrown }),
+    );
+    await nameHead.click({ button: 'right' });
+    await delay(150);
+    await page
+      .locator('.sf-table-demo-block:first-child .sf-tbl-colmenu-act', { hasText: 'Reset column widths' })
+      .click();
+    await delay(150);
+    const resetTracks = await tracksOf();
+    report(
+      'resetting widths re-anchors the variable columns at their content widths',
+      Math.abs(resetTracks[4] - evenRestored[4]) <= 1 && Math.abs(resetTracks[5] - evenRestored[5]) <= 1,
+      JSON.stringify({ dragged, resetTracks }),
+    );
+
     await nameHead.click({ button: 'right' });
     await delay(150);
     await rowsIn('.sf-tbl-chk').filter({ hasText: 'Note' }).locator('input').click();

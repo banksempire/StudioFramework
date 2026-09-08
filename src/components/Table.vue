@@ -35,7 +35,9 @@ const actionsWidth = ref<number | null>(null);
 const sizerEl = ref<HTMLElement | null>(null);
 const headRefs = reactive<Record<string, HTMLElement | undefined>>({});
 const contentWidths: Record<string, number> = {};
+const restWidths: Record<string, number> = {};
 const varWidths = reactive<Record<string, number>>({});
+let resizeDragging = false;
 const tblEl = ref<HTMLElement | null>(null);
 
 function isVarColumn(c: TableColumn): boolean {
@@ -74,7 +76,7 @@ function measureAutoColumns() {
     const max = c.max ?? 260;
     const content = Math.ceil(Math.min(max, Math.max(min, raw)));
     contentWidths[k] = content;
-    varWidths[k] = Math.max(varWidths[k] ?? content, content);
+    restWidths[k] = Math.max(restWidths[k] ?? content, content);
   }
   distribute();
 }
@@ -85,30 +87,31 @@ function distribute() {
   const vis = visibleColumns.value;
   const vars = visibleVars();
   if (!vars.length) return;
-  if (vars.some((c) => varWidths[c.key] === undefined)) return;
+  if (vars.some((c) => restWidths[c.key] === undefined)) return;
   const container = (root.parentElement?.clientWidth ?? 0) - (props.rowNumbers ? 34 : 0);
   const fixed =
     vis.reduce((sum, c) => {
       const w = widths[c.key] ?? c.fixedWidth;
       return w !== undefined ? sum + w : sum;
     }, 0) + (actionsWidth.value ?? 0);
-  const used = vars.reduce((sum, c) => sum + (varWidths[c.key] ?? 48), 0);
-  const unallocated = container - fixed - used;
-  if (unallocated > 0) growVarsEvenly(vars, unallocated);
-  else if (unallocated < 0) shrinkVarsEvenly(vars, -unallocated);
+  const resting = vars.reduce((sum, c) => sum + (restWidths[c.key] ?? 48), 0);
+  const available = container - fixed;
+  if (resizeDragging) return;
+  if (available >= resting) growVarsEvenly(vars, available - resting);
+  else if (available < resting) shrinkVarsEvenly(vars, resting - available);
 }
 
 function growVarsEvenly(cols: TableColumn[], amount: number) {
   const share = Math.floor(amount / cols.length);
   let rem = amount - share * cols.length;
   for (const c of cols) {
-    varWidths[c.key] = (varWidths[c.key] ?? 48) + share + (rem > 0 ? 1 : 0);
+    varWidths[c.key] = (restWidths[c.key] ?? 48) + share + (rem > 0 ? 1 : 0);
     if (rem > 0) rem--;
   }
 }
 
 function shrinkVarsEvenly(cols: TableColumn[], needed: number) {
-  const start = new Map(cols.map((c) => [c.key, varWidths[c.key] ?? 48]));
+  const start = new Map(cols.map((c) => [c.key, restWidths[c.key] ?? 48]));
   const taken = new Map<string, number>(cols.map((c) => [c.key, 0]));
   let remaining = needed;
   while (remaining > 0) {
@@ -233,7 +236,7 @@ function showAllColumns() {
 function resetWidths() {
   for (const key of Object.keys(widths)) delete widths[key];
   for (const c of visibleVars()) {
-    if (contentWidths[c.key] !== undefined) varWidths[c.key] = contentWidths[c.key];
+    if (contentWidths[c.key] !== undefined) restWidths[c.key] = contentWidths[c.key];
   }
   distribute();
   emitColumns();
@@ -381,6 +384,7 @@ function startResize(e: PointerEvent, c: TableColumn) {
   if (e.button !== 0) return;
   e.preventDefault();
   e.stopPropagation();
+  resizeDragging = true;
   const vis = visibleColumns.value;
   const idx = vis.findIndex((col) => col.key === c.key);
   if (idx < 0) return;
@@ -409,6 +413,10 @@ function startResize(e: PointerEvent, c: TableColumn) {
     window.removeEventListener('pointerup', onUp);
     document.body.style.cursor = '';
     document.body.style.userSelect = '';
+    resizeDragging = false;
+    for (const col of [...above, ...below]) {
+      if (varWidths[col.key] !== undefined) restWidths[col.key] = varWidths[col.key];
+    }
     emitColumns();
   };
   handle.setPointerCapture(e.pointerId);
