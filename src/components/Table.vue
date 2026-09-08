@@ -236,7 +236,8 @@ watch(
 );
 
 const tblObserver = new ResizeObserver(() => {
-  distribute();
+  if (visibleVars().some((c) => restWidths[c.key] === undefined)) measureAutoColumns();
+  else distribute();
 });
 const tblObserved = new WeakSet<HTMLElement>();
 
