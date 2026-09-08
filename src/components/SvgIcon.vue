@@ -121,6 +121,12 @@ const ICONS: Record<string, IconSpec> = {
   '❯': {
     paths: [{ d: 'M9 18l6-6-6-6' }],
   },
+  '⌃': {
+    paths: [{ d: 'M6 15l6-6 6 6' }],
+  },
+  '⌄': {
+    paths: [{ d: 'M6 9l6 6 6-6' }],
+  },
   '⇔': {
     paths: [
       { d: 'M1 1v22' },
