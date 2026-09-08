@@ -95,7 +95,8 @@ function distribute() {
   const vars = visibleVars();
   if (!vars.length) return;
   if (vars.some((c) => restWidths[c.key] === undefined)) return;
-  const container = (root.parentElement?.clientWidth ?? 0) - (props.rowNumbers ? 34 : 0);
+  const borders = root.offsetWidth - root.clientWidth;
+  const container = (root.parentElement?.clientWidth ?? 0) - borders - (props.rowNumbers ? 34 : 0);
   const fixed =
     vis.reduce((sum, c) => {
       const w = widths[c.key] ?? c.fixedWidth;
