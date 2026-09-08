@@ -13,8 +13,15 @@ const props = withDefaults(
     rowNumbers?: boolean;
     searchable?: boolean;
     searchPlaceholder?: string;
+    resizable?: boolean;
   }>(),
-  { emptyText: 'No rows.', rowNumbers: false, searchable: false, searchPlaceholder: 'Search…' },
+  {
+    emptyText: 'No rows.',
+    rowNumbers: false,
+    searchable: false,
+    searchPlaceholder: 'Search…',
+    resizable: true,
+  },
 );
 
 const emit = defineEmits<{
@@ -500,7 +507,7 @@ onBeforeUnmount(() => {
         </button>
         <span v-else class="sf-tbl-hlabel">{{ c.label }}</span>
         <span
-          v-if="ci < visibleColumns.length - 1 && handleFlags[ci]"
+          v-if="resizable && ci < visibleColumns.length - 1 && handleFlags[ci]"
           class="sf-tbl-resize"
           title="Drag to resize"
           @pointerdown="startResize($event, c)"
