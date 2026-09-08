@@ -105,7 +105,27 @@ function distribute() {
   const available = container - fixed;
   if (resizeDragging) return;
   if (available >= resting) growVarsEvenly(vars, available - resting);
-  else if (available < resting) shrinkVarsEvenly(vars, resting - available);
+  else {
+    shrinkVarsEvenly(vars, resting - available);
+    squeezeVarsToAvailable(vars, available);
+  }
+}
+
+function squeezeVarsToAvailable(cols: TableColumn[], available: number) {
+  const total = cols.reduce((sum, c) => sum + (varWidths[c.key] ?? 48), 0);
+  if (available <= 0 || total <= available) return;
+  const scale = available / total;
+  let used = 0;
+  for (let i = 0; i < cols.length; i++) {
+    const c = cols[i];
+    if (i === cols.length - 1) {
+      varWidths[c.key] = Math.max(0, available - used);
+      break;
+    }
+    const w = Math.floor((varWidths[c.key] ?? 48) * scale);
+    varWidths[c.key] = w;
+    used += w;
+  }
 }
 
 function growVarsEvenly(cols: TableColumn[], amount: number) {
