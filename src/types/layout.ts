@@ -51,6 +51,7 @@ export interface StatusItemDef {
   label: string;
   icon?: IconDef;
   component?: string;
+  bind?: string;
   props?: Record<string, unknown>;
 }
 

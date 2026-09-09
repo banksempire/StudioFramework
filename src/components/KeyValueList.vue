@@ -2,8 +2,9 @@
 import { ref } from 'vue';
 import type { KeyValueItem } from '../types/panel';
 
-defineProps<{
+const props = defineProps<{
   items: KeyValueItem[];
+  empty?: string;
 }>();
 
 const copiedIndex = ref<number | null>(null);
@@ -24,7 +25,7 @@ function legacyCopy(text: string, done: () => void) {
 }
 
 function copyRow(item: KeyValueItem, index: number) {
-  const text = `${item.key}: ${item.value ?? ''}`;
+  const text = `${item.key}: ${item.title ?? item.value ?? ''}`;
   const done = () => {
     copiedIndex.value = index;
     if (copyTimer) clearTimeout(copyTimer);
@@ -43,25 +44,37 @@ function copyRow(item: KeyValueItem, index: number) {
   } catch {}
   legacyCopy(text, done);
 }
+
+function copyTitle(item: KeyValueItem): string {
+  return `Click to copy: ${item.key}: ${item.title ?? item.value ?? ''}`;
+}
 </script>
 
 <template>
-  <div class="kv-list">
-    <div
-      v-for="(item, i) in items"
-      :key="item.key"
-      class="kv-row"
-      :class="{ 'kv-row--copied': copiedIndex === i }"
-      :title="'Click to copy: ' + item.key + ': ' + (item.value ?? '')"
-      @click="copyRow(item, i)"
-    >
-      <span class="kv-key">{{ item.key }}</span>
-      <span
-        v-if="item.pill"
-        class="kv-pill"
-        :class="'kv-pill--' + (item.tone ?? item.value)"
-      >{{ copiedIndex === i ? 'Copied' : item.value ?? '—' }}</span>
-      <span v-else class="kv-value">{{ copiedIndex === i ? 'Copied' : item.value ?? '—' }}</span>
-    </div>
+  <div v-if="props.items.length === 0 && props.empty" class="sf-empty">{{ props.empty }}</div>
+  <div v-else class="kv-list">
+    <template v-for="(item, i) in props.items" :key="i">
+      <div v-if="item.header" class="kv-header">{{ item.key }}</div>
+      <div
+        v-else
+        class="kv-row"
+        :class="{ 'kv-row--copied': copiedIndex === i }"
+        :title="copyTitle(item)"
+        @click="copyRow(item, i)"
+      >
+        <span class="kv-key" :style="{ paddingLeft: (item.indent ?? 0) * 14 + 'px' }">{{ item.key }}</span>
+        <span
+          v-if="item.pill"
+          class="kv-pill"
+          :class="'kv-pill--' + (item.tone ?? item.value)"
+        >{{ copiedIndex === i ? 'Copied' : item.value ?? '—' }}</span>
+        <span
+          v-else
+          class="kv-value"
+          :class="{ 'kv-value--copied': copiedIndex === i }"
+          :title="item.title ?? ''"
+        >{{ copiedIndex === i ? 'Copied' : item.value ?? '—' }}</span>
+      </div>
+    </template>
   </div>
 </template>

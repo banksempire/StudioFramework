@@ -400,6 +400,17 @@
                 ]
               },
               {
+                "id": "element-popup",
+                "label": "Element Popup",
+                "height": "fixed",
+                "components": [
+                  {
+                    "type": "component",
+                    "key": "dialog-demo"
+                  }
+                ]
+              },
+              {
                 "id": "project",
                 "label": "Project",
                 "height": "variable",
@@ -1044,6 +1055,158 @@
       }
     },
     {
+      "id": "library",
+      "displayName": "Library",
+      "icon": "🧱",
+      "panel": {
+        "title": "Panel Library",
+        "sections": [
+          {
+            "id": "library",
+            "label": "Components",
+            "subSections": [
+              {
+                "id": "lib-list",
+                "label": "List",
+                "height": "variable",
+                "minHeight": 90,
+                "components": [
+                  {
+                    "type": "list",
+                    "bind": "demo-list",
+                    "empty": "No demo items."
+                  }
+                ]
+              },
+              {
+                "id": "lib-cards",
+                "label": "Card List",
+                "height": "variable",
+                "minHeight": 90,
+                "components": [
+                  {
+                    "type": "list",
+                    "bind": "demo-cards",
+                    "variant": "card"
+                  }
+                ]
+              },
+              {
+                "id": "lib-form",
+                "label": "Form",
+                "height": "fixed",
+                "components": [
+                  {
+                    "type": "form",
+                    "bind": "demo-form"
+                  }
+                ]
+              },
+              {
+                "id": "lib-header",
+                "label": "Header & Banner",
+                "height": "fixed",
+                "components": [
+                  {
+                    "type": "header",
+                    "bind": "demo-header",
+                    "variant": "bar",
+                    "action": {
+                      "label": "add",
+                      "icon": "＋",
+                      "variant": "accent",
+                      "title": "Add a demo item",
+                      "action": "demo-add"
+                    }
+                  },
+                  {
+                    "type": "banner",
+                    "bind": "demo-banner",
+                    "tone": "info"
+                  }
+                ]
+              },
+              {
+                "id": "lib-tree",
+                "label": "Check Tree",
+                "height": "variable",
+                "minHeight": 90,
+                "components": [
+                  {
+                    "type": "tree",
+                    "bind": "demo-tree",
+                    "stateKey": "demo-tree",
+                    "expandByDefault": true,
+                    "empty": "Loading demo tree…"
+                  }
+                ]
+              },
+              {
+                "id": "lib-table",
+                "label": "Table",
+                "height": "fixed",
+                "components": [
+                  {
+                    "type": "table",
+                    "bind": "demo-table",
+                    "resizable": false,
+                    "columns": [
+                      {
+                        "key": "status",
+                        "label": "Status",
+                        "min": 56,
+                        "kind": "status",
+                        "mobile": "lead"
+                      },
+                      {
+                        "key": "time",
+                        "label": "Time",
+                        "min": 60,
+                        "kind": "time",
+                        "mobile": "sub"
+                      },
+                      {
+                        "key": "who",
+                        "label": "Who",
+                        "min": 60,
+                        "kind": "mono",
+                        "mobile": "title"
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "id": "lib-kv",
+                "label": "Key-Value Groups",
+                "height": "fixed",
+                "components": [
+                  {
+                    "type": "keyValueList",
+                    "bind": "demo-kv",
+                    "maxHeight": 220
+                  }
+                ]
+              },
+              {
+                "id": "lib-menu",
+                "label": "Menu Button",
+                "height": "fixed",
+                "components": [
+                  {
+                    "type": "menuButton",
+                    "label": "Change Demo",
+                    "bind": "demo-menu",
+                    "action": "demo-menu-pick"
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
       "id": "workspace",
       "displayName": "Workspace",
       "icon": "🗂",
@@ -1072,6 +1235,33 @@
       }
     }
   ],
+  "rightPanels": {
+    "welcome": {
+      "title": "Welcome Info",
+      "sections": [
+        {
+          "id": "welcome-info",
+          "label": "Welcome",
+          "subSections": [
+            {
+              "id": "welcome-about",
+              "label": "About",
+              "height": "fixed",
+              "components": [
+                {
+                  "type": "keyValueList",
+                  "items": [
+                    { "key": "layout", "value": "welcome" },
+                    { "key": "right panel", "value": "rightPanels.welcome" }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  },
   "right": {
     "title": "Properties",
     "sections": [
@@ -1187,7 +1377,8 @@
       {
         "id": "layout-json",
         "label": "layout.json",
-        "icon": "📄"
+        "icon": "📄",
+        "content": "welcome"
       },
       {
         "id": "table-demo",
