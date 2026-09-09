@@ -5,7 +5,8 @@ Task-specific manual for the StudioFramework repo. The workspace-level contract 
 ## Role and constraints
 
 - VSCode-like IDE shell for Vue 3 + TypeScript, fully data-driven: the entire UI (menu bar, docker, panels, workspace, status bar) is defined by a single JSON layout file loaded at startup.
-- **Must remain framework-generic** — no pi-agent-specific code. All product-specific content lives in `pi-agent-studio/src/pi-studio/layout/app.layout.json` + its components. If the framework is missing a feature, add it here and keep the demo + test suites green.
+- **Must remain framework-generic** — no pi-agent-specific code. All product-specific content lives in `pi-agent-studio/src/pi-studio/layout/app.layout.json` + its providers. If the framework is missing a feature, add it here and keep the demo + test suites green.
+- **Declarative panel library**: panel components are `text | input | button | tree | keyValueList | list | form | header | banner | table | menuButton | component`. Every type accepts `bind` — a key registered via `registerPanelData(key, getter)` whose reactive value supplies the content (viewmodel); user gestures funnel to the app as panel actions (framework emits, app handles). Rich list rows (badges/dots/menus/buttons/switches/drag), form rows (pills/stepper/switch), checkable trees, grouped key-value lists, headers with trailing action buttons, banners, tables and menu buttons are all framework-rendered and framework-styled; the `component` escape hatch remains for genuinely custom surfaces (e.g. workspace-panel). Lists/trees/tables/forms carry stable data attributes (`data-id`, `data-row`, `data-cell`, `data-key`, plus the subsection's `data-sub-body`) for tests. The demo's Library docker app exercises every declarative type against demo providers.
 - The product consumes this source directly via the `@sf` vite alias — one dev server, HMR across both repos.
 
 ## Dev server & ports
