@@ -603,10 +603,19 @@ const { ensureServer, openApp, makeReporter, finish } = require('./lib/ui-test.c
     });
     await delay(400);
     const floored = await tracksOf();
+    const flooredSum = floored.reduce((acc, w) => acc + w, 0);
     report(
-      'squeezing below the column floors parks the variable columns at min-width',
-      floored[4] >= 47 && floored[4] <= 49 && floored[5] >= 47 && floored[5] <= 49,
-      JSON.stringify({ evenRestored, floored }),
+      'below the column-floor sum the variable columns shrink under min evenly and never overflow',
+      floored[4] <= 47 &&
+        floored[5] <= 47 &&
+        Math.abs(floored[4] - floored[5]) <= 1 &&
+        floored[0] === evenRestored[0] &&
+        floored[1] === evenRestored[1] &&
+        floored[2] === evenRestored[2] &&
+        floored[3] === evenRestored[3] &&
+        floored[6] === evenRestored[6] &&
+        flooredSum <= 484,
+      JSON.stringify({ evenRestored, floored, flooredSum }),
     );
     await page.evaluate(() => document.getElementById('sf-table-floor')?.remove());
     await delay(400);
