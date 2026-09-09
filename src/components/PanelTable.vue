@@ -17,6 +17,14 @@ const tableColumns = computed<TableColumn[]>(() =>
 
 const tableRows = computed(() => props.rows.map((r) => ({ ...r.cells, __id: r.id })));
 
+function cellClass(col: PanelTableColumn, row: Record<string, unknown>): string[] {
+  const value = row[col.key];
+  if (!col.kind || value === undefined || value === null || value === '') return [];
+  const out = [`sf-pt-cell--${col.kind}`];
+  if (col.kind === 'status') out.push(`sf-pt-cell--s-${String(value)}`);
+  return out;
+}
+
 function cellTitle(row: Record<string, unknown>, col: PanelTableColumn): string | undefined {
   const src = props.rows.find((r) => r.id === row.__id);
   return src?.titles?.[col.key];
@@ -35,13 +43,10 @@ function cellTitle(row: Record<string, unknown>, col: PanelTableColumn): string 
       <template v-for="col in columns" :key="col.key" #[`cell-${col.key}`]="{ row }">
         <span
           class="sf-pt-cell"
-          :class="[
-            col.kind ? `sf-pt-cell--${col.kind}` : '',
-            col.kind === 'status' ? `sf-pt-cell--s-${String(row[col.key] ?? '')}` : '',
-          ]"
+          :class="cellClass(col, row)"
           :data-cell="col.key"
           :title="cellTitle(row, col)"
-        >{{ row[col.key] ?? '—' }}</span>
+        >{{ row[col.key] || '—' }}</span>
       </template>
     </Table>
   </div>
