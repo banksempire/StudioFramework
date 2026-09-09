@@ -163,6 +163,32 @@ const { ensureServer, openApp, makeReporter, finish } = require('./lib/ui-test.c
       JSON.stringify(mobileChrome),
     );
 
+    const fitArea = await mpage.evaluate(() => {
+      const body = document.querySelector('.sf-dialog-body');
+      const tall = document.createElement('div');
+      tall.style.height = '3000px';
+      body.appendChild(tall);
+      const card = document.querySelector('.sf-dialog').getBoundingClientRect();
+      const bcs = getComputedStyle(document.querySelector('.sf-dialog-backdrop'));
+      const out = {
+        top: Math.round(card.top * 10) / 10,
+        bottom: Math.round(card.bottom * 10) / 10,
+        padTop: bcs.paddingTop,
+        padBottom: bcs.paddingBottom,
+        vh: window.innerHeight,
+      };
+      tall.remove();
+      return out;
+    });
+    report(
+      'mobile: the backdrop reserves the top bar and docker so the popup cannot leave the main area',
+      fitArea.padTop === '70px' &&
+        fitArea.padBottom === '108px' &&
+        fitArea.top >= 59.5 &&
+        fitArea.bottom <= fitArea.vh - 60 - 38 + 0.5,
+      JSON.stringify(fitArea),
+    );
+
     const mobileFootSizes = await mpage.evaluate(() =>
       [...document.querySelectorAll('.sf-dialog-foot .sf-dialog-btn')].map((b) => {
         const r = b.getBoundingClientRect();
