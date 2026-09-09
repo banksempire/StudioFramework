@@ -15,7 +15,7 @@ const emit = defineEmits<{ change: [row: PanelFormRow, value: string | number | 
 <template>
   <div v-if="rows.length === 0 && empty" class="sf-empty">{{ empty }}</div>
   <div v-else class="sf-pf">
-    <div v-for="row in rows" :key="row.id" class="sf-pf-row">
+    <div v-for="row in rows" :key="row.id" class="sf-pf-row" :data-row="row.id">
       <span v-if="row.label" class="sf-pf-key">{{ row.label }}</span>
       <span class="sf-pf-ctl">
         <PillSelector

@@ -57,7 +57,11 @@ function onDragStart(item: PanelListItem, e: DragEvent) {
     e.preventDefault();
     return;
   }
-  e.dataTransfer?.setData(type, item.dragData ?? item.id);
+  const dt = e.dataTransfer;
+  if (!dt) return;
+  dt.setData(type, item.dragData ?? item.id);
+  if (item.dragText) dt.setData('text/plain', item.dragText);
+  dt.effectAllowed = 'copy';
   emit('dragstart', item, e);
 }
 </script>
@@ -69,6 +73,7 @@ function onDragStart(item: PanelListItem, e: DragEvent) {
       v-for="item in props.items"
       :key="item.id"
       class="sf-pc-list-item"
+      :data-id="item.id"
       @click="emit('activate', item)"
     >
       <Icon v-if="item.icon" class="sf-pc-list-icon" :icon="item.icon" />
@@ -95,6 +100,7 @@ function onDragStart(item: PanelListItem, e: DragEvent) {
             'sf-pl-item--active': it.active,
             'sf-pl-item--muted': it.muted,
           }"
+          :data-id="it.id"
           :title="it.title"
         >
           <div class="sf-pl-top">

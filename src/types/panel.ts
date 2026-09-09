@@ -78,6 +78,7 @@ export interface PanelListItem {
   action?: string;
   dragType?: string;
   dragData?: string;
+  dragText?: string;
 }
 
 export interface PanelListData {

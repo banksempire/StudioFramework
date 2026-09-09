@@ -249,18 +249,17 @@ function onAction(e: FrameworkAction) {
       demo.note = `added row ${demo.count}`;
       break;
     case 'demo-open':
-      if (payload?.option === 'pin') demo.pinned = !demo.pinned;
-      else if (payload?.option === 'delete') demo.note = 'delete requested';
-      else if (payload?.button === 'edit') demo.note = 'edit requested';
-      else if (payload?.button === 'delete') demo.note = 'delete requested';
-      else if (payload?.switch !== undefined) demo.enabled = Boolean(payload.switch);
-      else demo.note = `opened ${String(payload?.id ?? e.payload)}`;
+      if (payload?.gesture === 'menu' && payload.option === 'pin') demo.pinned = !demo.pinned;
+      else if (payload?.gesture === 'menu' && payload.option === 'delete') demo.note = 'delete requested';
+      else if (payload?.gesture === 'button') demo.note = `${String(payload.button)} requested`;
+      else if (payload?.gesture === 'switch') demo.enabled = Boolean(payload.value);
+      else demo.note = `opened ${String(payload?.id ?? '')}`;
       break;
     case 'demo-card':
-      if (payload?.switch !== undefined) {
-        demo.enabled = Boolean(payload.switch);
+      if (payload?.gesture === 'switch') {
+        demo.enabled = Boolean(payload.value);
         demo.note = `card ${demo.enabled ? 'on' : 'off'}`;
-      } else if (payload?.button) demo.note = `card ${String(payload.button)}`;
+      } else if (payload?.gesture === 'button') demo.note = `card ${String(payload.button)}`;
       break;
     case 'demo-form':
       if (payload?.row === 'level' && typeof payload.value === 'string') demo.level = payload.value;

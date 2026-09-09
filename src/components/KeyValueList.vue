@@ -54,11 +54,12 @@ function copyTitle(item: KeyValueItem): string {
   <div v-if="props.items.length === 0 && props.empty" class="sf-empty">{{ props.empty }}</div>
   <div v-else class="kv-list">
     <template v-for="(item, i) in props.items" :key="i">
-      <div v-if="item.header" class="kv-header">{{ item.key }}</div>
+      <div v-if="item.header" class="kv-header" :data-key="item.key">{{ item.key }}</div>
       <div
         v-else
         class="kv-row"
         :class="{ 'kv-row--copied': copiedIndex === i }"
+        :data-key="item.key"
         :title="copyTitle(item)"
         @click="copyRow(item, i)"
       >

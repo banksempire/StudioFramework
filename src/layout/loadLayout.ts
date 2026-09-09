@@ -181,6 +181,7 @@ function toListItem(v: unknown, path: string): PanelListItem {
     action: optString(r.action, `${path}.action`),
     dragType: optString(r.dragType, `${path}.dragType`),
     dragData: optString(r.dragData, `${path}.dragData`),
+    dragText: optString(r.dragText, `${path}.dragText`),
   };
 }
 

@@ -39,6 +39,7 @@ function cellTitle(row: Record<string, unknown>, col: PanelTableColumn): string 
             col.kind ? `sf-pt-cell--${col.kind}` : '',
             col.kind === 'status' ? `sf-pt-cell--s-${String(row[col.key] ?? '')}` : '',
           ]"
+          :data-cell="col.key"
           :title="cellTitle(row, col)"
         >{{ row[col.key] ?? '—' }}</span>
       </template>

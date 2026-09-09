@@ -320,10 +320,10 @@ function onNodeClick(node: TreeNode) {
       :empty="listData.empty"
       :variant="component.variant"
       :dismiss-on-activate="component.dismissOnActivate"
-      @activate="(it) => emitAction(it.action, it)"
-      @menu="(it, optionId) => emitAction(it.action, { id: it.id, option: optionId })"
-      @button="(it, buttonId) => emitAction(it.action, { id: it.id, button: buttonId })"
-      @switch-toggle="(it) => emitAction(it.action, { id: it.id, switch: !(it.switch?.on ?? false) })"
+      @activate="(it) => emitAction(it.action, { gesture: 'activate', id: it.id })"
+      @menu="(it, optionId) => emitAction(it.action, { gesture: 'menu', id: it.id, option: optionId })"
+      @button="(it, buttonId) => emitAction(it.action, { gesture: 'button', id: it.id, button: buttonId })"
+      @switch-toggle="(it) => emitAction(it.action, { gesture: 'switch', id: it.id, value: !(it.switch?.on ?? false) })"
     />
 
     <PanelForm
