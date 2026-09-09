@@ -448,5 +448,6 @@ function onPanelAction(a: PanelAction) {
     </template>
 
     <StatusBar :left="L.status.left" :right="L.status.right" />
+    <slot name="overlay" />
   </div>
 </template>

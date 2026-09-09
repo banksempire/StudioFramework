@@ -2378,10 +2378,18 @@ body.sf-dragging-row * {
 }
 
 .sf-pf-ctl {
-  display: flex;
-  align-items: center;
-  justify-content: flex-end;
+  display: block;
+  text-align: right;
   min-width: 0;
+}
+
+.sf-pf-ctl .sf-pill {
+  width: 100%;
+}
+
+.sf-pf-ctl .sf-stepper-input {
+  width: fit-content;
+  margin-left: auto;
 }
 
 .sf-pf-hint {
@@ -2563,4 +2571,19 @@ body.sf-dragging-row * {
 
 .sf-pc-tree-node--indet {
   background: var(--sf-accent-soft);
+}
+
+.sf-dialog-input {
+  background: var(--sf-bg);
+  border: 1px solid var(--sf-border);
+  border-radius: var(--sf-radius-sm);
+  color: var(--sf-text);
+  font-family: var(--sf-font);
+  font-size: 16px;
+  padding: 6px 8px;
+  outline: none;
+}
+
+.sf-dialog-input:focus {
+  border-color: var(--sf-accent);
 }

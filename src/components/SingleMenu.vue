@@ -59,11 +59,12 @@ const rowViews = computed<RowView<T>[]>(() =>
   })),
 );
 
-const optsByItem = computed(() => new Map(rowViews.value.map((r) => [r.item, r.opts])));
-const rowByKey = computed(() => new Map(rowViews.value.map((r) => [r.key, r])));
+const optsByKey = computed(() => new Map(rowViews.value.map((r) => [r.key, r.opts])));
 
 function optsOf(item: T): SingleMenuOption[] {
-  return optsByItem.value.get(item) ?? [];
+  const key = stableKey(item);
+  if (key === null) return [];
+  return optsByKey.value.get(key) ?? [];
 }
 
 const dialogItem = ref(null) as Ref<T | null>;
