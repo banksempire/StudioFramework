@@ -1143,6 +1143,8 @@ onBeforeUnmount(() => {
 
 .sf-root--mobile .sf-tbl-c--lead {
   grid-area: lead;
+  display: flex;
+  align-items: center;
 }
 
 .sf-root--mobile .sf-tbl-c--title {
