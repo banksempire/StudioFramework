@@ -49,7 +49,14 @@ const { ensureServer, openApp, makeReporter, finish } = require('./lib/ui-test.c
       const head = document.querySelector('.sf-dialog-head').getBoundingClientRect();
       const close = document.querySelector('.sf-dialog-close').getBoundingClientRect();
       const card = document.querySelector('.sf-dialog').getBoundingClientRect();
-      return { headH: head.height, closeW: close.width, closeH: close.height, cardW: card.width };
+      const input = document.querySelector('.sf-dialog-input').getBoundingClientRect();
+      return {
+        headH: head.height,
+        closeW: close.width,
+        closeH: close.height,
+        cardW: card.width,
+        inputH: Math.round(input.height * 10) / 10,
+      };
     });
     report(
       'desktop: compact title bar with a small square close button',
@@ -57,7 +64,8 @@ const { ensureServer, openApp, makeReporter, finish } = require('./lib/ui-test.c
         desktopChrome.headH <= 46 &&
         desktopChrome.closeW === 22 &&
         desktopChrome.closeH === 22 &&
-        desktopChrome.cardW <= 440,
+        desktopChrome.cardW <= 440 &&
+        desktopChrome.inputH === 36,
       JSON.stringify(desktopChrome),
     );
 
@@ -140,6 +148,7 @@ const { ensureServer, openApp, makeReporter, finish } = require('./lib/ui-test.c
       const close = document.querySelector('.sf-dialog-close').getBoundingClientRect();
       const card = document.querySelector('.sf-dialog').getBoundingClientRect();
       const save = document.querySelector('.sf-dialog-foot .sf-dialog-btn--accent').getBoundingClientRect();
+      const input = document.querySelector('.sf-dialog-input').getBoundingClientRect();
       return {
         headH: head.height,
         headW: head.width,
@@ -147,6 +156,7 @@ const { ensureServer, openApp, makeReporter, finish } = require('./lib/ui-test.c
         closeW: close.width,
         closeH: close.height,
         saveH: save.height,
+        inputH: Math.round(input.height * 10) / 10,
       };
     });
     report(
@@ -154,7 +164,8 @@ const { ensureServer, openApp, makeReporter, finish } = require('./lib/ui-test.c
       mobileChrome.headH >= 60 &&
         mobileChrome.closeW >= 60 &&
         mobileChrome.closeH >= 60 &&
-        mobileChrome.headW >= mobileChrome.cardW - 2,
+        mobileChrome.headW >= mobileChrome.cardW - 2 &&
+        mobileChrome.inputH === 36,
       JSON.stringify(mobileChrome),
     );
     report(

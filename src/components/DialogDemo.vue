@@ -31,7 +31,7 @@ function save() {
     <Dialog v-model:open="open" title="Edit element">
       <div class="sf-dialog-demo-field">
         <label class="sf-dialog-demo-label" for="sf-dialog-demo-name">Name</label>
-        <input id="sf-dialog-demo-name" v-model="name" class="sf-dialog-demo-input" />
+        <input id="sf-dialog-demo-name" v-model="name" class="sf-dialog-input" />
       </div>
       <div class="sf-dialog-demo-field">
         <span class="sf-dialog-demo-label">Scope</span>
@@ -45,7 +45,7 @@ function save() {
     <Dialog v-model:open="wideOpen" wide title="Edit element (wide)">
       <div class="sf-dialog-demo-field">
         <label class="sf-dialog-demo-label" for="sf-dialog-demo-wide-name">Name</label>
-        <input id="sf-dialog-demo-wide-name" v-model="name" class="sf-dialog-demo-input" />
+        <input id="sf-dialog-demo-wide-name" v-model="name" class="sf-dialog-input" />
       </div>
       <template #actions="{ close }">
         <button class="sf-dialog-btn" type="button" @click="close()">Close</button>
@@ -106,20 +106,4 @@ function save() {
   color: var(--sf-text-muted);
 }
 
-.sf-dialog-demo-input {
-  width: 100%;
-  box-sizing: border-box;
-  padding: 5px 7px;
-  border: 1px solid var(--sf-border);
-  border-radius: var(--sf-radius-sm);
-  background: var(--sf-bg);
-  color: var(--sf-text);
-  font-family: var(--sf-font);
-  font-size: 14px;
-  outline: none;
-}
-
-.sf-dialog-demo-input:focus {
-  border-color: var(--sf-accent);
-}
 </style>

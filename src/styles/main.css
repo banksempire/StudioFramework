@@ -2574,6 +2574,7 @@ body.sf-dragging-row * {
 }
 
 .sf-dialog-input {
+  height: 36px;
   background: var(--sf-bg);
   border: 1px solid var(--sf-border);
   border-radius: var(--sf-radius-sm);
