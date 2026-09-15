@@ -743,6 +743,81 @@ const WS = '.sf-workspace';
   await page.locator('.sf-panel-close-btn').click();
   await page.waitForTimeout(200);
 
+  const pwa = await browser.newContext({ viewport: { width: 390, height: 852 } });
+  await pwa.addInitScript(() => {
+    const realMq = window.matchMedia.bind(window);
+    window.matchMedia = (q) => {
+      const m = realMq(q);
+      if (q.includes('display-mode')) {
+        Object.defineProperty(m, 'matches', { value: q.includes('standalone') });
+      }
+      return m;
+    };
+    Object.defineProperty(window, 'screen', {
+      value: { width: 393, height: 852, availWidth: 393, availHeight: 852 },
+    });
+    const vvListeners = {};
+    const track = (t, f) => {
+      if (!vvListeners[t]) vvListeners[t] = [];
+      vvListeners[t].push(f);
+    };
+    const untrack = (t, f) => {
+      vvListeners[t] = (vvListeners[t] || []).filter((x) => x !== f);
+    };
+    Object.defineProperty(window, 'visualViewport', {
+      value: {
+        height: 400,
+        addEventListener: track,
+        removeEventListener: untrack,
+      },
+    });
+  });
+  const pwaPage = await pwa.newPage();
+  const pwaErrors = [];
+  pwaPage.on('pageerror', (e) => pwaErrors.push(`pageerror: ${e.message}`));
+  await pwaPage.goto(`http://localhost:${process.env.SF_TEST_PORT || '7493'}/`, {
+    waitUntil: 'networkidle',
+    timeout: 15000,
+  });
+  await pwaPage.waitForFunction(() => (document.getElementById('framework')?.innerHTML.length ?? 0) > 1000, {
+    timeout: 10000,
+  });
+  const pwaHeight = () =>
+    pwaPage.evaluate(() => ({
+      varSet: document.documentElement.style.getPropertyValue('--sf-app-height'),
+      rootH: Math.round(document.querySelector('.sf-root').getBoundingClientRect().height),
+    }));
+  let ah = await pwaHeight();
+  report(
+    'pwa standalone: shell pinned to the full screen height (dvh inset gap on iOS)',
+    ah.varSet === '852px' && ah.rootH === 852,
+    JSON.stringify(ah),
+  );
+  await pwaPage.evaluate(() => {
+    const i = document.createElement('input');
+    i.style.position = 'fixed';
+    i.style.top = '10px';
+    document.body.appendChild(i);
+    i.focus();
+  });
+  await pwaPage.waitForTimeout(100);
+  ah = await pwaHeight();
+  report(
+    'pwa standalone: focused input sizes the shell to the visual viewport (keyboard)',
+    ah.varSet === '400px' && ah.rootH === 400,
+    JSON.stringify(ah),
+  );
+  await pwaPage.evaluate(() => document.activeElement.blur());
+  await pwaPage.waitForTimeout(100);
+  ah = await pwaHeight();
+  report(
+    'pwa standalone: blur restores the full screen height',
+    ah.varSet === '852px' && ah.rootH === 852,
+    JSON.stringify(ah),
+  );
+  report('pwa standalone: no console/page errors', pwaErrors.length === 0, pwaErrors.join('; '));
+  await pwa.close();
+
   report('no console/page errors', errors.length === 0, errors.join('; '));
 
   await finish(browser, serverProc, isFailed(), 'MOBILE CHECKS');
