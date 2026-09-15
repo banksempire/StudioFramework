@@ -84,6 +84,14 @@ body,
   user-select: none;
 }
 
+@supports (height: 100dvh) {
+  html,
+  body,
+  #framework {
+    height: 100dvh;
+  }
+}
+
 .sf-root {
   display: flex;
   flex-direction: column;

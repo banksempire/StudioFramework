@@ -94,6 +94,44 @@ const WS = '.sf-workspace';
   );
   report('mobile: right panel hidden', (await page.locator('.sf-panel--right').count()) === 0);
   report('mobile: ONE tile', (await tileCount()) === 1);
+  const dvhChain = await page.evaluate(() => {
+    const findDvhHeight = (selector) => {
+      const scan = (rules) => {
+        let hit = null;
+        for (const rule of rules) {
+          if (rule.cssRules) hit = scan(rule.cssRules) ?? hit;
+          const selectors = rule.selectorText ? rule.selectorText.split(',').map((s) => s.trim()) : [];
+          if (selectors.includes(selector) && /dvh/.test(rule.style?.height || '')) {
+            hit = rule.style.height;
+          }
+        }
+        return hit;
+      };
+      for (const sheet of document.styleSheets) {
+        try {
+          const hit = scan(sheet.cssRules);
+          if (hit) return hit;
+        } catch {}
+      }
+      return null;
+    };
+    return ['html', 'body', '#framework'].map(findDvhHeight);
+  });
+  report(
+    'viewport: root chain sized with 100dvh (tracks iOS Safari collapsed toolbars)',
+    dvhChain.every((h) => h !== null),
+    JSON.stringify(dvhChain),
+  );
+  const shellSpan = await page.evaluate(() => ({
+    rootBottom: Math.round(document.querySelector('.sf-root').getBoundingClientRect().bottom),
+    htmlBottom: Math.round(document.documentElement.getBoundingClientRect().bottom),
+    inner: Math.round(window.innerHeight),
+  }));
+  report(
+    'viewport: shell spans the whole window (no dead strip below)',
+    shellSpan.rootBottom === shellSpan.inner && shellSpan.htmlBottom === shellSpan.inner,
+    JSON.stringify(shellSpan),
+  );
   report(
     'mobile bar: [⋯ menu | active tab (tap opens the tab list) | right panel]',
     (await page.locator('.sf-mobile-menu-btn').count()) === 1 &&
