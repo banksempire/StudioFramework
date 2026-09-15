@@ -206,22 +206,14 @@ type NavStandalone = Navigator & { standalone?: boolean };
 const standaloneMq = window.matchMedia('(display-mode: standalone)');
 const isStandaloneDisplay = () =>
   standaloneMq.matches || (window.navigator as NavStandalone).standalone === true;
-const editableFocused = () => {
-  const el = document.activeElement as HTMLElement | null;
-  return (
-    !!el && (el.tagName === 'INPUT' || el.tagName === 'TEXTAREA' || el.isContentEditable)
-  );
-};
 const applyAppHeight = () => {
   if (!isStandaloneDisplay()) {
     document.documentElement.style.removeProperty('--sf-app-height');
     return;
   }
-  const vv = window.visualViewport;
   const portrait = window.matchMedia('(orientation: portrait)').matches;
   const full = portrait ? window.screen.height : window.screen.width;
-  const h = editableFocused() && vv ? Math.round(vv.height) : full;
-  document.documentElement.style.setProperty('--sf-app-height', `${h}px`);
+  document.documentElement.style.setProperty('--sf-app-height', `${full}px`);
 };
 onMounted(() => {
   const vv = window.visualViewport;
@@ -229,10 +221,6 @@ onMounted(() => {
   vv?.addEventListener('scroll', applyAppHeight);
   window.addEventListener('resize', applyAppHeight);
   window.addEventListener('orientationchange', applyAppHeight);
-  document.addEventListener('focusin', applyAppHeight);
-  document.addEventListener('focusout', applyAppHeight);
-
-
   standaloneMq.addEventListener('change', applyAppHeight);
   applyAppHeight();
 });
@@ -242,8 +230,6 @@ onUnmounted(() => {
   vv?.removeEventListener('scroll', applyAppHeight);
   window.removeEventListener('resize', applyAppHeight);
   window.removeEventListener('orientationchange', applyAppHeight);
-  document.removeEventListener('focusin', applyAppHeight);
-  document.removeEventListener('focusout', applyAppHeight);
   standaloneMq.removeEventListener('change', applyAppHeight);
 });
 

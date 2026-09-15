@@ -803,15 +803,15 @@ const WS = '.sf-workspace';
   await pwaPage.waitForTimeout(100);
   ah = await pwaHeight();
   report(
-    'pwa standalone: focused input sizes the shell to the visual viewport (keyboard)',
-    ah.varSet === '400px' && ah.rootH === 400,
+    'pwa standalone: keyboard focus keeps the shell pinned (no shrink, no pan hole)',
+    ah.varSet === '852px' && ah.rootH === 852,
     JSON.stringify(ah),
   );
   await pwaPage.evaluate(() => document.activeElement.blur());
   await pwaPage.waitForTimeout(100);
   ah = await pwaHeight();
   report(
-    'pwa standalone: blur restores the full screen height',
+    'pwa standalone: blur keeps the full screen height',
     ah.varSet === '852px' && ah.rootH === 852,
     JSON.stringify(ah),
   );
