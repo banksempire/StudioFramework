@@ -2613,7 +2613,7 @@ body.sf-dragging-row * {
   display: flex;
   flex-direction: column;
   gap: 9px;
-  padding: 10px 0;
+  padding: 14px 0 12px;
   border-top: 1px solid var(--sf-border);
 }
 
@@ -2624,16 +2624,14 @@ body.sf-dragging-row * {
 
 .sf-form-section-title {
   margin: 0;
-  font-size: 12px;
+  font-size: 14px;
   font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
-  color: var(--sf-text-muted);
+  color: var(--sf-text-bright);
 }
 
 .sf-form-section-note {
-  margin: 0;
-  font-size: 13px;
+  margin: -4px 0 0;
+  font-size: 12px;
   line-height: 1.5;
   color: var(--sf-text-muted);
 }

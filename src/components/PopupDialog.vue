@@ -370,15 +370,15 @@ defineExpose({ validate });
 }
 
 .sf-form-group + .sf-form-group {
-  margin-top: 14px;
-  padding-top: 10px;
+  margin-top: 18px;
+  padding-top: 14px;
   border-top: 1px solid var(--sf-border);
 }
 
 .sf-form-group-title {
-  margin: 0 0 4px;
-  font-size: 14px;
-  font-weight: 600;
+  margin: 0 0 8px;
+  font-size: 16px;
+  font-weight: 700;
   color: var(--sf-text-bright);
 }
 
