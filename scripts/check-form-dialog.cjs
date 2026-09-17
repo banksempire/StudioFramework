@@ -4,6 +4,7 @@ const { ensureServer, openApp, makeReporter, finish } = require('./lib/ui-test.c
   const serverProc = await ensureServer();
   const { browser, page, errors } = await openApp();
   const { report, isFailed } = makeReporter();
+  await page.setViewportSize({ width: 1440, height: 560 });
 
   const delay = (ms) => new Promise((r) => setTimeout(r, ms));
 
@@ -30,15 +31,19 @@ const { ensureServer, openApp, makeReporter, finish } = require('./lib/ui-test.c
 
     const chrome = await page.evaluate(() => ({
       title: document.querySelector('.sf-dialog-title')?.textContent,
+      groups: [...document.querySelectorAll('.sf-form-group-title')].map((t) => t.textContent?.trim()),
       sections: [...document.querySelectorAll('.sf-form-section-title')].map((t) => t.textContent?.trim()),
       fields: [...document.querySelectorAll('.sf-form-field')].map((f) => f.dataset.field),
+      nav: [...document.querySelectorAll('.sf-form-nav-item')].map((b) => b.textContent?.trim()),
     }));
     report(
-      'form dialog renders sections and data-field hooks from the schema',
-      chrome.title === 'Edit element (form)' &&
+      'popup dialog renders groups, sections and data-field hooks from the document',
+      chrome.title === 'Edit element' &&
+        JSON.stringify(chrome.groups) === JSON.stringify(['Connection', 'Delivery']) &&
         JSON.stringify(chrome.sections) === JSON.stringify(['Element', 'Delivery']) &&
         JSON.stringify(chrome.fields) ===
-          JSON.stringify(['name', 'kind', 'copies', 'tag', 'notes', 'scope', 'secret']),
+          JSON.stringify(['name', 'kind', 'copies', 'tag', 'notes', 'scope', 'secret']) &&
+        JSON.stringify(chrome.nav) === JSON.stringify(['Connection', 'Delivery']),
       JSON.stringify(chrome),
     );
 
@@ -125,6 +130,24 @@ const { ensureServer, openApp, makeReporter, finish } = require('./lib/ui-test.c
       JSON.stringify(slotField),
     );
 
+    const navJump = await page.evaluate(async () => {
+      const rail = [...document.querySelectorAll('.sf-form-nav-item')];
+      const body = document.querySelector('.sf-dialog-body');
+      const before = body.scrollTop;
+      rail[1].click();
+      await new Promise((r) => setTimeout(r, 600));
+      return {
+        before,
+        after: body.scrollTop,
+        active: document.querySelector('.sf-form-nav-item--on')?.textContent,
+      };
+    });
+    report(
+      'the H1 nav rail jumps to the group and marks it active',
+      navJump.after > navJump.before && navJump.active === 'Delivery',
+      JSON.stringify(navJump),
+    );
+
     await page.locator('.sf-dialog-foot button', { hasText: 'Save Element' }).click();
     await delay(600);
     const saved = await page.evaluate(() => document.querySelector('.sf-formdemo-status')?.textContent);
@@ -133,6 +156,32 @@ const { ensureServer, openApp, makeReporter, finish } = require('./lib/ui-test.c
       saved === 'saved panel-1 · fanout · scope workspace',
       String(saved),
     );
+
+    await page.locator('.sf-formdemo-confirm').click();
+    await delay(200);
+    const confirmState = await page.evaluate(() => ({
+      title: document.querySelector('.sf-dialog-title')?.textContent,
+      info: document.querySelector('.sf-form-info')?.textContent,
+      btns: [...document.querySelectorAll('.sf-dialog-foot .sf-dialog-btn')].map((b) => ({
+        label: b.textContent?.trim(),
+        danger: b.classList.contains('sf-dialog-btn--danger'),
+      })),
+      nav: document.querySelectorAll('.sf-form-nav-item').length,
+    }));
+    report(
+      'a no-group document renders a plain confirm with a danger action and no rail',
+      confirmState.title === 'Confirm delete?' &&
+        confirmState.info === 'This removes the element and its history.' &&
+        confirmState.nav === 0 &&
+        confirmState.btns.length === 2 &&
+        confirmState.btns[1].label === 'Delete' &&
+        confirmState.btns[1].danger,
+      JSON.stringify(confirmState),
+    );
+    await page.locator('.sf-dialog-foot button', { hasText: 'Delete' }).click();
+    await delay(200);
+    const deleted = await page.evaluate(() => document.querySelector('.sf-formdemo-status')?.textContent);
+    report('the danger action emits and closes', deleted === 'deleted', String(deleted));
 
     await page.locator('.sf-formdemo-open').click();
     await delay(200);

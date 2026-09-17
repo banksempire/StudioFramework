@@ -2666,12 +2666,12 @@ body.sf-dragging-row * {
   height: 36px;
   box-sizing: border-box;
   padding: 7px 10px;
-  border-radius: var(--sf-radius-sm);
+  border-radius: 8px;
   border: 1px solid var(--sf-border);
   background: rgba(0, 0, 0, 0.15);
   color: var(--sf-text);
   font-family: var(--sf-font);
-  font-size: 14px;
+  font-size: 16px;
   outline: none;
 }
 
@@ -2740,6 +2740,25 @@ body.sf-dragging-row * {
   font-size: 16px;
 }
 
-.sf-root--mobile .sf-form-cols {
-  grid-template-columns: 1fr;
+.sf-form-info {
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--sf-text-muted);
+}
+
+.sf-form-info--warn {
+  color: var(--sf-status-warn);
+}
+
+.sf-form-info--error {
+  color: var(--sf-status-err);
+}
+
+.sf-form-footnote--warn {
+  color: var(--sf-status-warn);
+}
+
+.sf-form-footnote--error {
+  color: var(--sf-status-err);
 }
