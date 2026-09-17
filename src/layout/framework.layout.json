@@ -406,6 +406,10 @@
                 "components": [
                   {
                     "type": "component",
+                    "key": "form-dialog-demo"
+                  },
+                  {
+                    "type": "component",
                     "key": "dialog-demo"
                   }
                 ]
@@ -1251,8 +1255,14 @@
                 {
                   "type": "keyValueList",
                   "items": [
-                    { "key": "layout", "value": "welcome" },
-                    { "key": "right panel", "value": "rightPanels.welcome" }
+                    {
+                      "key": "layout",
+                      "value": "welcome"
+                    },
+                    {
+                      "key": "right panel",
+                      "value": "rightPanels.welcome"
+                    }
                   ]
                 }
               ]

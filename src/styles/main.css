@@ -2603,3 +2603,143 @@ body.sf-dragging-row * {
 .sf-dialog-input:focus {
   border-color: var(--sf-accent);
 }
+
+.sf-form {
+  display: flex;
+  flex-direction: column;
+}
+
+.sf-form-section {
+  display: flex;
+  flex-direction: column;
+  gap: 9px;
+  padding: 10px 0;
+  border-top: 1px solid var(--sf-border);
+}
+
+.sf-form-section--first {
+  border-top: none;
+  padding-top: 2px;
+}
+
+.sf-form-section-title {
+  margin: 0;
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--sf-text-muted);
+}
+
+.sf-form-section-note {
+  font-weight: 400;
+  text-transform: none;
+  letter-spacing: normal;
+  opacity: 0.8;
+}
+
+.sf-form-cols {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+.sf-form-field {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  min-width: 0;
+}
+
+.sf-form-label {
+  font-size: 12px;
+  color: var(--sf-text-muted);
+}
+
+.sf-form-label-note {
+  font-size: 11px;
+  opacity: 0.75;
+}
+
+.sf-form-input {
+  width: 100%;
+  height: 36px;
+  box-sizing: border-box;
+  padding: 7px 10px;
+  border-radius: var(--sf-radius-sm);
+  border: 1px solid var(--sf-border);
+  background: rgba(0, 0, 0, 0.15);
+  color: var(--sf-text);
+  font-family: var(--sf-font);
+  font-size: 14px;
+  outline: none;
+}
+
+.sf-form-input:focus-visible {
+  outline: none;
+  border-color: var(--sf-accent);
+}
+
+.sf-form-input:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+
+.sf-form-input--mono {
+  font-family: var(--sf-mono, monospace);
+}
+
+.sf-form-select {
+  appearance: none;
+  -webkit-appearance: none;
+  padding-right: 32px;
+  cursor: pointer;
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'><path d='M1 1l4 4 4-4' stroke='%23858585' stroke-width='1.5' fill='none' stroke-linecap='round'/></svg>");
+  background-repeat: no-repeat;
+  background-position: right 10px center;
+  background-size: 10px 6px;
+}
+
+.sf-form-select option {
+  background-color: #252526;
+  color: #cccccc;
+}
+
+.sf-form-textarea {
+  height: auto;
+  resize: vertical;
+  line-height: 1.45;
+}
+
+.sf-form-hint {
+  font-size: 12px;
+  color: var(--sf-text-muted);
+}
+
+.sf-form-hint--warn {
+  color: var(--sf-status-warn);
+}
+
+.sf-form-hint--error {
+  color: var(--sf-status-err);
+}
+
+.sf-form-error {
+  margin: 0;
+  color: var(--sf-status-err);
+  font-size: 12px;
+}
+
+.sf-form-footnote {
+  margin: 0;
+}
+
+.sf-root--mobile .sf-form input,
+.sf-root--mobile .sf-form select,
+.sf-root--mobile .sf-form textarea {
+  font-size: 16px;
+}
+
+.sf-root--mobile .sf-form-cols {
+  grid-template-columns: 1fr;
+}
