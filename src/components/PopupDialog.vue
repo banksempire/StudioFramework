@@ -204,10 +204,8 @@ defineExpose({ validate });
             class="sf-form-section"
             :class="{ 'sf-form-section--first': si === 0 && !(hasNav && gi === 0) }"
           >
-            <h3 v-if="section.title" class="sf-form-section-title">
-              {{ section.title }}
-              <span v-if="section.note" class="sf-form-section-note">{{ section.note }}</span>
-            </h3>
+            <h3 v-if="section.title" class="sf-form-section-title">{{ section.title }}</h3>
+            <p v-if="section.note" class="sf-form-section-note">{{ section.note }}</p>
             <template v-for="(pair, pi) in sectionPairs(si, gi)" :key="`p-${pi}`">
               <div v-if="pair.length > 1" class="sf-form-cols">
                 <div

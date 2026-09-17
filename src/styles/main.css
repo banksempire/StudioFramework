@@ -2632,10 +2632,10 @@ body.sf-dragging-row * {
 }
 
 .sf-form-section-note {
-  font-weight: 400;
-  text-transform: none;
-  letter-spacing: normal;
-  opacity: 0.8;
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--sf-text-muted);
 }
 
 .sf-form-cols {
