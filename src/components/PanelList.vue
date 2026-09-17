@@ -139,6 +139,7 @@ function onDragStart(item: PanelListItem, e: DragEvent) {
               {{ it.badge }}
             </span>
             <span class="sf-pl-detail">{{ it.detail }}</span>
+            <span v-if="it.detailMeta" class="sf-pl-detail-meta">{{ it.detailMeta }}</span>
           </div>
           <div v-if="it.note" class="sf-pl-note">{{ it.note }}</div>
         </div>

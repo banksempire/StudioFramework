@@ -2336,6 +2336,13 @@ body.sf-dragging-row * {
   white-space: nowrap;
 }
 
+.sf-pl-detail-meta {
+  flex-shrink: 0;
+  font-size: 16px;
+  font-variant-numeric: tabular-nums;
+  color: var(--sf-text);
+}
+
 .sf-pl--card .sf-pl-sub,
 .sf-pl--card .sf-pl-note {
   padding-left: 30px;

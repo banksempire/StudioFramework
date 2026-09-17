@@ -63,6 +63,7 @@ export interface PanelListItem {
   label: string;
   meta?: string;
   detail?: string;
+  detailMeta?: string;
   note?: string;
   badge?: string;
   badgeTone?: BadgeTone;
