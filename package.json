@@ -25,7 +25,8 @@
     "check:dialog": "node scripts/check-dialog.cjs",
     "typecheck": "vue-tsc --noEmit",
     "lint": "biome check .",
-    "format": "biome format --write ."
+    "format": "biome format --write .",
+    "check:form": "node scripts/check-form-dialog.cjs"
   },
   "devDependencies": {
     "@biomejs/biome": "^2.5.8",
