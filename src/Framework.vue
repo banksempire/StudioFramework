@@ -343,9 +343,6 @@ function onMenuAction(actionId: string) {
     case 'toggle-right-panel':
       toggleRightPanel();
       break;
-    case 'about':
-      alert(L.framework.title);
-      break;
     default:
       emit('action', { source: 'menu', action: actionId });
   }
