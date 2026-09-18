@@ -35,7 +35,7 @@ export interface PopupField {
   hint?: string;
   hintTone?: PopupFieldTone;
   mono?: boolean;
-  half?: boolean;
+  span?: number;
   disabled?: boolean;
   rows?: number;
   spellcheck?: boolean;
@@ -51,6 +51,7 @@ export interface PopupSection {
   title?: string;
   note?: string;
   fields: PopupField[];
+  columns?: number;
   extraSlot?: string;
 }
 

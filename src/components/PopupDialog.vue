@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed, ref, useSlots } from 'vue';
-import type { PopupDocument, PopupField, PopupValues } from '../types/popup';
+import type { PopupDocument, PopupField, PopupSection, PopupValues } from '../types/popup';
 import Dialog from './Dialog.vue';
 import FormFieldControl from './FormFieldControl.vue';
 
@@ -63,35 +63,14 @@ const actions = computed(
 const leftActions = computed(() => actions.value.filter((a) => a.align === 'left'));
 const rightActions = computed(() => actions.value.filter((a) => a.align !== 'left'));
 
-function fieldSlot(field: PopupField) {
-  return slots[`field-${field.key}`] ?? null;
+function sectionCols(section: PopupSection): number {
+  return Math.min(Math.max(section.columns ?? 1, 1), 4);
 }
 
-function rows(fields: PopupField[]): PopupField[][] {
-  const out: PopupField[][] = [];
-  let halfRun: PopupField[] = [];
-  for (const field of fields) {
-    if (field.type !== 'info' && field.half) {
-      halfRun.push(field);
-      if (halfRun.length === 2) {
-        out.push(halfRun);
-        halfRun = [];
-      }
-      continue;
-    }
-    if (halfRun.length > 0) {
-      out.push(halfRun);
-      halfRun = [];
-    }
-    out.push([field]);
-  }
-  if (halfRun.length > 0) out.push(halfRun);
-  return out;
+function fieldSpan(field: PopupField, section: PopupSection): string | undefined {
+  const span = Math.min(Math.max(field.span ?? 1, 1), sectionCols(section));
+  return span > 1 ? `grid-column: span ${span}` : undefined;
 }
-
-const layout = computed(() =>
-  groups.value.map((group) => group.sections.map((section) => rows(section.fields))),
-);
 
 function isEmpty(value: unknown): boolean {
   if (Array.isArray(value)) return value.length === 0;
@@ -116,10 +95,6 @@ function validate(): string | null {
 
 function patch(key: string, value: string | number | Array<string | number>) {
   emit('update:values', { ...props.values, [key]: value });
-}
-
-function sectionPairs(si: number, gi: number) {
-  return layout.value[gi]?.[si] ?? [];
 }
 
 function fieldId(field: PopupField): string {
@@ -206,14 +181,22 @@ defineExpose({ validate });
           >
             <h3 v-if="section.title" class="sf-form-section-title">{{ section.title }}</h3>
             <p v-if="section.note" class="sf-form-section-note">{{ section.note }}</p>
-            <template v-for="(pair, pi) in sectionPairs(si, gi)" :key="`p-${pi}`">
-              <div v-if="pair.length > 1" class="sf-form-cols">
+            <div class="sf-form-grid" :data-cols="sectionCols(section)">
+              <template v-for="field in section.fields" :key="field.key">
                 <div
-                  v-for="field in pair"
-                  :key="field.key"
+                  v-if="field.type === 'info'"
+                  class="sf-form-info"
+                  :class="[field.class, {
+                    'sf-form-info--warn': field.hintTone === 'warn',
+                    'sf-form-info--error': field.hintTone === 'error',
+                  }]"
+                >{{ field.text }}</div>
+                <div
+                  v-else
                   class="sf-form-field"
                   :class="field.class"
                   :data-field="field.key"
+                  :style="fieldSpan(field, section)"
                 >
                   <label v-if="field.label" class="sf-form-label" :for="fieldId(field)">
                     {{ field.label }}
@@ -237,41 +220,8 @@ defineExpose({ validate });
                     }"
                   >{{ field.hint }}</span>
                 </div>
-              </div>
-              <template v-else>
-                <div
-                  v-if="pair[0].type === 'info'"
-                  class="sf-form-info"
-                  :class="[pair[0].class, {
-                    'sf-form-info--warn': pair[0].hintTone === 'warn',
-                    'sf-form-info--error': pair[0].hintTone === 'error',
-                  }]"
-                >{{ pair[0].text }}</div>
-                <div v-else class="sf-form-field" :class="pair[0].class" :data-field="pair[0].key">
-                  <label v-if="pair[0].label" class="sf-form-label" :for="fieldId(pair[0])">
-                    {{ pair[0].label }}
-                    <span v-if="pair[0].labelNote" class="sf-form-label-note">{{ pair[0].labelNote }}</span>
-                  </label>
-                  <slot :name="`field-${pair[0].key}`" :field="pair[0]" :values="values" :patch="patch">
-                    <FormFieldControl
-                      :field="pair[0]"
-                      :values="values"
-                      :input-id="fieldId(pair[0])"
-                      :busy="busy"
-                      @patch="patch"
-                    />
-                  </slot>
-                  <span
-                    v-if="pair[0].hint"
-                    class="sf-form-hint"
-                    :class="{
-                      'sf-form-hint--warn': pair[0].hintTone === 'warn',
-                      'sf-form-hint--error': pair[0].hintTone === 'error',
-                    }"
-                  >{{ pair[0].hint }}</span>
-                </div>
               </template>
-            </template>
+            </div>
             <slot v-if="section.extraSlot" :name="section.extraSlot" />
           </section>
         </section>

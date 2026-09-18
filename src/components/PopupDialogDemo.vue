@@ -32,8 +32,9 @@ const doc = computed(
         sections: [
           {
             title: 'Element',
+            columns: 2,
             fields: [
-              { key: 'name', type: 'input', label: 'Name', placeholder: 'panel-1', required: true },
+              { key: 'name', type: 'input', label: 'Name', placeholder: 'panel-1', required: true, span: 2 },
               {
                 key: 'kind',
                 type: 'select',
@@ -46,14 +47,14 @@ const doc = computed(
                 key: 'copies',
                 type: 'number',
                 label: 'Copies',
-                half: true,
                 hint: values.value.kind === 'fanout' ? 'fanout multiplies copies downstream' : undefined,
               },
-              { key: 'tag', type: 'input', label: 'Tag', half: true, mono: true, placeholder: 'optional' },
+              { key: 'tag', type: 'input', label: 'Tag', span: 2, mono: true, placeholder: 'optional' },
               {
                 key: 'notes',
                 type: 'textarea',
                 label: 'Notes',
+                span: 2,
                 rows: 3,
                 hint: Number(values.value.copies ?? 0) > 5 ? 'large copy counts take a while' : undefined,
                 hintTone: 'warn',
@@ -68,6 +69,7 @@ const doc = computed(
         sections: [
           {
             title: 'Delivery',
+            columns: 3,
             fields: [
               {
                 key: 'scope',
@@ -77,6 +79,16 @@ const doc = computed(
                   { value: 'file', label: 'File', title: 'Current file only' },
                   { value: 'folder', label: 'Folder', title: 'Current folder' },
                   { value: 'workspace', label: 'Workspace', title: 'Whole workspace' },
+                ],
+              },
+              {
+                key: 'region',
+                type: 'select',
+                label: 'Region',
+                options: [
+                  { value: 'eu', label: 'EU' },
+                  { value: 'us', label: 'US' },
+                  { value: 'apac', label: 'APAC' },
                 ],
               },
               {

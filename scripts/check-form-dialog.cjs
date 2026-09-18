@@ -34,6 +34,7 @@ const { ensureServer, openApp, makeReporter, finish } = require('./lib/ui-test.c
       groups: [...document.querySelectorAll('.sf-form-group-title')].map((t) => t.textContent?.trim()),
       sections: [...document.querySelectorAll('.sf-form-section-title')].map((t) => t.textContent?.trim()),
       fields: [...document.querySelectorAll('.sf-form-field')].map((f) => f.dataset.field),
+      grids: [...document.querySelectorAll('.sf-form-grid')].map((g) => g.dataset.cols),
       nav: [...document.querySelectorAll('.sf-form-nav-item')].map((b) => b.textContent?.trim()),
     }));
     report(
@@ -42,7 +43,8 @@ const { ensureServer, openApp, makeReporter, finish } = require('./lib/ui-test.c
         JSON.stringify(chrome.groups) === JSON.stringify(['Connection', 'Delivery']) &&
         JSON.stringify(chrome.sections) === JSON.stringify(['Element', 'Delivery']) &&
         JSON.stringify(chrome.fields) ===
-          JSON.stringify(['name', 'kind', 'copies', 'tag', 'notes', 'scope', 'secret']) &&
+          JSON.stringify(['name', 'kind', 'copies', 'tag', 'notes', 'scope', 'region', 'secret']) &&
+        JSON.stringify(chrome.grids) === JSON.stringify(['2', '3']) &&
         JSON.stringify(chrome.nav) === JSON.stringify(['Connection', 'Delivery']),
       JSON.stringify(chrome),
     );
@@ -57,19 +59,31 @@ const { ensureServer, openApp, makeReporter, finish } = require('./lib/ui-test.c
       JSON.stringify(blankSelect),
     );
 
-    const halfPair = await page.evaluate(() => {
-      const copies = document.querySelector('[data-field="copies"]')?.getBoundingClientRect();
-      const tag = document.querySelector('[data-field="tag"]')?.getBoundingClientRect();
+    const gridFlow = await page.evaluate(() => {
+      const rect = (sel) => document.querySelector(sel)?.getBoundingClientRect();
+      const kind = rect('[data-field="kind"]');
+      const copies = rect('[data-field="copies"]');
+      const name = rect('[data-field="name"]');
+      const grid2 = document.querySelector('.sf-form-grid[data-cols="2"]');
+      const grid3 = document.querySelector('.sf-form-grid[data-cols="3"]');
+      const region = rect('[data-field="region"]');
+      const secret = rect('[data-field="secret"]');
       return {
-        sameRow: Math.abs(copies.top - tag.top) < 2,
-        gridCols: getComputedStyle(document.querySelector('.sf-form-cols')).gridTemplateColumns.split(' ')
-          .length,
+        pairRow: Math.abs(kind.top - copies.top) < 2,
+        cols2: getComputedStyle(grid2).gridTemplateColumns.split(' ').length,
+        cols3: getComputedStyle(grid3).gridTemplateColumns.split(' ').length,
+        nameFull: Math.abs(name.right - grid2.getBoundingClientRect().right) < 2,
+        threeRow: Math.abs(region.top - secret.top) < 2,
       };
     });
     report(
-      'half fields pair into a two-column row',
-      halfPair.sameRow && halfPair.gridCols === 2,
-      JSON.stringify(halfPair),
+      'fields flow in the section grid: pairs share a row, spans go full width',
+      gridFlow.pairRow &&
+        gridFlow.cols2 === 2 &&
+        gridFlow.cols3 === 3 &&
+        gridFlow.nameFull &&
+        gridFlow.threeRow,
+      JSON.stringify(gridFlow),
     );
 
     const inputTheme = await page.evaluate(() => {
