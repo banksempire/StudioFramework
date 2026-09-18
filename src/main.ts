@@ -68,6 +68,7 @@ registerPanelData('demo-list', () => {
       icon: '⏳',
       iconBlink: true,
       detail: 'icons can blink; dots pulse',
+      active: true,
       action: 'demo-open',
       options: [{ id: 'pin', label: 'Pin', icon: 'pin' }],
     },

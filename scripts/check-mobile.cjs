@@ -398,6 +398,40 @@ const WS = '.sf-workspace';
   await page.waitForTimeout(300);
   report('✕ closes the panel', (await page.locator('.sf-mobile-panel').count()) === 0);
 
+  await page.locator('.sf-docker-app[title="Library"]').click();
+  await page.waitForSelector('.sf-mobile-panel .sf-pl-item', { timeout: 3000 });
+  report(
+    'Library app opens on mobile with the demo list rows',
+    (await page.locator('.sf-mobile-panel .sf-panel-title').textContent()) === 'Panel Library' &&
+      (await page.locator('.sf-mobile-panel .sf-pl-item').count()) >= 2,
+  );
+  const activeRow = await page.evaluate(() => {
+    const item = document.querySelector('.sf-mobile-panel .sf-pl-item--active');
+    if (!item) return null;
+    const slide = item.closest('.sf-sm-slide');
+    const more = slide?.querySelector('.sf-sm-more');
+    const s = slide?.getBoundingClientRect();
+    const m = more?.getBoundingClientRect();
+    return {
+      slideShadow: slide ? getComputedStyle(slide).boxShadow : null,
+      itemShadow: getComputedStyle(item).boxShadow,
+      hasMore: !!more,
+      moreInside: !!(s && m && m.right <= s.right + 0.5 && m.left >= s.left - 0.5),
+    };
+  });
+  report(
+    'active row: highlight painted on the whole slide (⋮ button inside the highlight)',
+    !!activeRow &&
+      activeRow.hasMore &&
+      activeRow.slideShadow !== 'none' &&
+      activeRow.slideShadow.includes('inset') &&
+      activeRow.itemShadow === 'none' &&
+      activeRow.moreInside,
+    JSON.stringify(activeRow),
+  );
+  await page.locator('.sf-panel-close-btn').click();
+  await page.waitForTimeout(300);
+
   await resizeTo(1300);
   report(
     'tile structure resumes (2 tiles, all 5 tabs intact)',
