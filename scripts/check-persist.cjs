@@ -47,6 +47,22 @@ async function openWsPanel(page) {
 
 const near = (a, b, tol = 2) => a !== null && b !== null && Math.abs(a - b) <= tol;
 
+function projectMinHeight() {
+  const layout = require('../src/layout/framework.layout.json');
+  const stack = [layout];
+  while (stack.length) {
+    const node = stack.pop();
+    if (Array.isArray(node)) {
+      stack.push(...node);
+      continue;
+    }
+    if (!node || typeof node !== 'object') continue;
+    if (node.id === 'project' && typeof node.minHeight === 'number') return node.minHeight;
+    stack.push(...Object.values(node));
+  }
+  throw new Error('project subsection with minHeight not found in framework.layout.json');
+}
+
 (async () => {
   const serverProc = await ensureServer();
   const { browser, page, errors } = await openApp({ viewport: { width: 1440, height: 1100 } });
@@ -65,9 +81,12 @@ const near = (a, b, tol = 2) => a !== null && b !== null && Math.abs(a - b) <= t
     const hProj0 = await subBodyHeight(page, 'project');
     await dragSubsectionHandle(page, 0, -60);
     const hProj1 = await subBodyHeight(page, 'project');
+    const projMin = projectMinHeight();
+    const expectedShrink = Math.max(0, Math.min(60, (hProj0 ?? projMin) - projMin));
     report(
       'subsection drag shrinks project body',
-      hProj0 !== null && hProj1 !== null && hProj1 < hProj0 - 30,
+      hProj0 !== null && hProj1 !== null && near(hProj0 - hProj1, expectedShrink) && hProj1 >= projMin,
+      `${hProj0}px → ${hProj1}px (expected shrink ${expectedShrink}px, minHeight ${projMin}px)`,
     );
 
     await page.click('.sf-subsection-header:has-text("Outline")');
