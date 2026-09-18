@@ -1,6 +1,5 @@
 import { createApp, reactive } from 'vue';
 import DialogDemo from './components/DialogDemo.vue';
-import PopupDialogDemo from './components/PopupDialogDemo.vue';
 import SelectorDemo from './components/SelectorDemo.vue';
 import SingleMenuDemo from './components/SingleMenuDemo.vue';
 import TableDemo from './components/TableDemo.vue';
@@ -27,8 +26,6 @@ registerPanelComponent('single-menu-demo', SingleMenuDemo);
 registerPanelComponent('selector-demo', SelectorDemo);
 
 registerPanelComponent('dialog-demo', DialogDemo);
-
-registerPanelComponent('form-dialog-demo', PopupDialogDemo);
 
 const demoFilter = reactive({ sources: true, assets: true });
 registerUtilityMenu('demo-filter', () => [

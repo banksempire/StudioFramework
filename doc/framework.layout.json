@@ -406,10 +406,6 @@
                 "components": [
                   {
                     "type": "component",
-                    "key": "form-dialog-demo"
-                  },
-                  {
-                    "type": "component",
                     "key": "dialog-demo"
                   }
                 ]
