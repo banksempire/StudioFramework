@@ -2636,10 +2636,21 @@ body.sf-dragging-row * {
   color: var(--sf-text-muted);
 }
 
-.sf-form-cols {
+.sf-form-grid {
   display: grid;
-  grid-template-columns: 1fr 1fr;
   gap: 10px;
+}
+
+.sf-form-grid[data-cols="2"] {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.sf-form-grid[data-cols="3"] {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.sf-form-grid[data-cols="4"] {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
 }
 
 .sf-form-field {
@@ -2740,6 +2751,7 @@ body.sf-dragging-row * {
 
 .sf-form-info {
   margin: 0;
+  grid-column: 1 / -1;
   font-size: 13px;
   line-height: 1.5;
   color: var(--sf-text-muted);
@@ -2759,4 +2771,14 @@ body.sf-dragging-row * {
 
 .sf-form-footnote--error {
   color: var(--sf-status-err);
+}
+
+.sf-root--mobile .sf-form-grid[data-cols="3"],
+.sf-root--mobile .sf-form-grid[data-cols="4"] {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.sf-root--mobile .sf-form-grid[data-cols="3"] > .sf-form-field,
+.sf-root--mobile .sf-form-grid[data-cols="4"] > .sf-form-field {
+  grid-column: auto;
 }
