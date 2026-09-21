@@ -142,7 +142,7 @@ npm install
 # Start dev server
 npm run dev
 
-# Opens at http://localhost:7492
+# Opens at http://localhost:7493
 ```
 
 ## Testing
