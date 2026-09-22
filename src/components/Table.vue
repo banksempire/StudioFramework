@@ -13,6 +13,7 @@ const props = withDefaults(
     rowNumbers?: boolean;
     searchable?: boolean;
     searchPlaceholder?: string;
+    renderLimit?: number;
     resizable?: boolean;
   }>(),
   {
@@ -20,6 +21,7 @@ const props = withDefaults(
     rowNumbers: false,
     searchable: false,
     searchPlaceholder: 'Search…',
+    renderLimit: 0,
     resizable: true,
   },
 );
@@ -330,6 +332,10 @@ function toggleAll(c: TableColumn) {
   excluded[c.key] = (excluded[c.key] ?? []).length > 0 ? [] : uniqueValues(c);
 }
 
+const renderedRows = computed(() =>
+  props.renderLimit > 0 ? visibleRows.value.slice(0, props.renderLimit) : visibleRows.value,
+);
+
 const visibleRows = computed(() => {
   const gq = globalQuery.value.trim().toLowerCase();
   const out: Array<{ row: Record<string, unknown>; index: number }> = [];
@@ -591,7 +597,7 @@ onBeforeUnmount(() => {
       <slot name="actions" :row="visibleRows[0].row" />
     </div>
     <div
-      v-for="({ row, index }, i) in visibleRows"
+      v-for="({ row, index }, i) in renderedRows"
       :key="rowId(row, index)"
       class="sf-tbl-row"
       :class="rowClass?.(row)"
