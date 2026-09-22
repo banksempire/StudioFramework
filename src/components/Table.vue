@@ -1299,6 +1299,29 @@ onBeforeUnmount(() => {
   gap: 10px;
 }
 
+.sf-root--mobile .sf-tbl-pager {
+  height: 60px;
+  padding: 0 12px;
+  gap: 10px;
+}
+
+.sf-root--mobile .sf-tbl-pager-range {
+  font-size: 16px;
+}
+
+.sf-root--mobile .sf-tbl-pager-btn {
+  height: 44px;
+  font-size: 16px;
+  padding: 0 14px;
+  border-radius: 8px;
+}
+
+.sf-root--mobile .sf-tbl-pager-select {
+  height: 44px;
+  font-size: 16px;
+  border-radius: 8px;
+}
+
 .sf-root--mobile .sf-tbl-search-box {
   min-height: 44px;
 }
