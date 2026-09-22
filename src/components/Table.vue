@@ -13,7 +13,7 @@ const props = withDefaults(
     rowNumbers?: boolean;
     searchable?: boolean;
     searchPlaceholder?: string;
-    renderLimit?: number;
+    pageSize?: number;
     resizable?: boolean;
   }>(),
   {
@@ -21,7 +21,7 @@ const props = withDefaults(
     rowNumbers: false,
     searchable: false,
     searchPlaceholder: 'Search…',
-    renderLimit: 0,
+    pageSize: 0,
     resizable: true,
   },
 );
@@ -332,10 +332,6 @@ function toggleAll(c: TableColumn) {
   excluded[c.key] = (excluded[c.key] ?? []).length > 0 ? [] : uniqueValues(c);
 }
 
-const renderedRows = computed(() =>
-  props.renderLimit > 0 ? visibleRows.value.slice(0, props.renderLimit) : visibleRows.value,
-);
-
 const visibleRows = computed(() => {
   const gq = globalQuery.value.trim().toLowerCase();
   const out: Array<{ row: Record<string, unknown>; index: number }> = [];
@@ -365,6 +361,31 @@ const visibleRows = computed(() => {
   };
   return [...out].sort(cmp);
 });
+
+const page = ref(1);
+const pageCount = computed(() =>
+  props.pageSize > 0 ? Math.max(1, Math.ceil(visibleRows.value.length / props.pageSize)) : 1,
+);
+const pageRows = computed(() =>
+  props.pageSize > 0
+    ? visibleRows.value.slice((page.value - 1) * props.pageSize, page.value * props.pageSize)
+    : visibleRows.value,
+);
+const pagerRange = computed(() => {
+  const size = props.pageSize > 0 ? props.pageSize : visibleRows.value.length;
+  const start = visibleRows.value.length === 0 ? 0 : (page.value - 1) * size + 1;
+  const end = Math.min(page.value * size, visibleRows.value.length);
+  return `${start}–${end} of ${visibleRows.value.length}`;
+});
+watch(pageCount, (count) => {
+  if (page.value > count) page.value = count;
+});
+watch(
+  () => globalQuery.value,
+  () => {
+    page.value = 1;
+  },
+);
 
 function toggleSort(c: TableColumn) {
   if (!c.sortable) return;
@@ -597,7 +618,7 @@ onBeforeUnmount(() => {
       <slot name="actions" :row="visibleRows[0].row" />
     </div>
     <div
-      v-for="({ row, index }, i) in renderedRows"
+      v-for="({ row, index }, i) in pageRows"
       :key="rowId(row, index)"
       class="sf-tbl-row"
       :class="rowClass?.(row)"
@@ -639,6 +660,53 @@ onBeforeUnmount(() => {
       <button class="sf-tbl-colmenu-act" type="button" @click="resetWidths(); colMenu = null">Reset column widths</button>
     </div>
   </div>
+    </div>
+    <div v-if="pageCount > 1" class="sf-tbl-pager">
+      <span class="sf-tbl-pager-range">{{ pagerRange }}</span>
+      <button
+        class="sf-tbl-btn"
+        type="button"
+        title="First page"
+        :disabled="page <= 1"
+        @click="page = 1"
+      >
+        «
+      </button>
+      <button
+        class="sf-tbl-btn"
+        type="button"
+        title="Previous page"
+        :disabled="page <= 1"
+        @click="page -= 1"
+      >
+        ‹
+      </button>
+      <select
+        v-model.number="page"
+        class="sf-tbl-pager-select"
+        title="Select page"
+        :aria-label="`Page select, ${pageCount} pages`"
+      >
+        <option v-for="p in pageCount" :key="p" :value="p">{{ p }} / {{ pageCount }}</option>
+      </select>
+      <button
+        class="sf-tbl-btn"
+        type="button"
+        title="Next page"
+        :disabled="page >= pageCount"
+        @click="page += 1"
+      >
+        ›
+      </button>
+      <button
+        class="sf-tbl-btn"
+        type="button"
+        title="Last page"
+        :disabled="page >= pageCount"
+        @click="page = pageCount"
+      >
+        »
+      </button>
     </div>
   </div>
 </template>
@@ -1014,6 +1082,35 @@ onBeforeUnmount(() => {
   gap: 4px;
   padding: 0 4px;
   visibility: hidden;
+}
+
+.sf-tbl-pager {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 4px;
+  flex-shrink: 0;
+  padding: 4px 8px;
+  background: var(--sf-bg-lighter);
+  border-top: 1px solid var(--sf-border);
+}
+
+.sf-tbl-pager-range {
+  margin-right: auto;
+  color: var(--sf-text-muted);
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+}
+
+.sf-tbl-pager-select {
+  background: var(--sf-bg);
+  border: 1px solid var(--sf-border);
+  border-radius: var(--sf-radius-sm);
+  color: var(--sf-text);
+  font-family: var(--sf-font);
+  font-size: 12px;
+  padding: 2px 4px;
+  cursor: pointer;
 }
 
 .sf-tbl-empty {
