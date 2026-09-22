@@ -478,16 +478,15 @@ onBeforeUnmount(() => {
       <div v-if="hasLeadSlot" class="sf-tbl-search-side">
         <slot name="search-lead" />
       </div>
-      <div class="sf-tbl-search-box">
+      <div v-if="searchable" class="sf-tbl-search-box">
         <input
-          v-if="searchable"
           v-model="globalQuery"
           class="sf-tbl-search-input"
           type="text"
           :placeholder="searchPlaceholder"
         >
         <button
-          v-if="searchable && globalQuery"
+          v-if="globalQuery"
           class="sf-tbl-search-clear"
           type="button"
           title="Clear"
