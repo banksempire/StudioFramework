@@ -664,7 +664,7 @@ onBeforeUnmount(() => {
     <div v-if="pageCount > 1" class="sf-tbl-pager">
       <span class="sf-tbl-pager-range">{{ pagerRange }}</span>
       <button
-        class="sf-tbl-btn"
+        class="sf-tbl-pager-btn"
         type="button"
         title="First page"
         :disabled="page <= 1"
@@ -673,7 +673,7 @@ onBeforeUnmount(() => {
         «
       </button>
       <button
-        class="sf-tbl-btn"
+        class="sf-tbl-pager-btn"
         type="button"
         title="Previous page"
         :disabled="page <= 1"
@@ -683,14 +683,14 @@ onBeforeUnmount(() => {
       </button>
       <select
         v-model.number="page"
-        class="sf-tbl-pager-select"
+        class="sf-form-input sf-form-select sf-tbl-pager-select"
         title="Select page"
         :aria-label="`Page select, ${pageCount} pages`"
       >
         <option v-for="p in pageCount" :key="p" :value="p">{{ p }} / {{ pageCount }}</option>
       </select>
       <button
-        class="sf-tbl-btn"
+        class="sf-tbl-pager-btn"
         type="button"
         title="Next page"
         :disabled="page >= pageCount"
@@ -699,7 +699,7 @@ onBeforeUnmount(() => {
         ›
       </button>
       <button
-        class="sf-tbl-btn"
+        class="sf-tbl-pager-btn"
         type="button"
         title="Last page"
         :disabled="page >= pageCount"
@@ -1102,15 +1102,36 @@ onBeforeUnmount(() => {
   font-variant-numeric: tabular-nums;
 }
 
-.sf-tbl-pager-select {
-  background: var(--sf-bg);
+.sf-tbl-pager-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--sf-bar);
   border: 1px solid var(--sf-border);
   border-radius: var(--sf-radius-sm);
   color: var(--sf-text);
   font-family: var(--sf-font);
-  font-size: 12px;
-  padding: 2px 4px;
+  font-size: 13px;
+  line-height: 1;
+  padding: 2px 7px;
   cursor: pointer;
+}
+
+.sf-tbl-pager-btn:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+
+@media (hover: hover) {
+  .sf-tbl-pager-btn:not(:disabled):hover {
+    box-shadow: inset 0 0 0 999px var(--sf-hover-overlay);
+  }
+}
+
+.sf-tbl-pager-select {
+  width: auto;
+  font-size: 12px;
+  padding: 2px 24px 2px 8px;
 }
 
 .sf-tbl-empty {
