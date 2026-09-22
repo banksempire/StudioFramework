@@ -11,7 +11,7 @@ Task-specific manual for the StudioFramework repo. The workspace-level contract 
 
 ## Dev server & ports
 
-- `npm run dev` binds **7493** — the shared workspace test port — so it runs alongside the product on 7492 without taking it over. If 7493 is taken (e.g. the review instance's web), start it on a private port (`npm run dev -- --port 75xx`) and run checks with `SF_TEST_PORT=75xx`.
+- `npm run dev` binds **7493** — the shared workspace test port (loopback-reachable; the container only exposes 17000-17019 for product webs) — so it runs alongside the product on 17000 without taking it over. If 7493 is taken (e.g. another ad-hoc dev server), start it on a private port outside 17000-17019 (`npm run dev -- --port 75xx`) and run checks with `SF_TEST_PORT=75xx`.
 - Check scripts target whatever serves on `SF_TEST_PORT` (default 7493). **Always run checks against a server you started yourself** — pointed at the default while something else owns 7493, the suites silently test that other server.
 
 ## Scripts
