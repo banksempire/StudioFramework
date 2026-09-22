@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed, nextTick, onBeforeUnmount, onMounted, reactive, ref, useSlots, watch } from 'vue';
 import type { TableColumn } from '../types/table';
+import SvgIcon from './SvgIcon.vue';
 
 const props = withDefaults(
   defineProps<{
@@ -671,7 +672,7 @@ onBeforeUnmount(() => {
           :disabled="page <= 1"
           @click="page = 1"
         >
-          «
+          <SvgIcon name="«" />
         </button>
         <button
           class="sf-tbl-pager-btn"
@@ -680,7 +681,7 @@ onBeforeUnmount(() => {
           :disabled="page <= 1"
           @click="page -= 1"
         >
-          ‹
+          <SvgIcon name="‹" />
         </button>
       </div>
       <select
@@ -699,7 +700,7 @@ onBeforeUnmount(() => {
           :disabled="page >= pageCount"
           @click="page += 1"
         >
-          ›
+          <SvgIcon name="›" />
         </button>
         <button
           class="sf-tbl-pager-btn"
@@ -708,7 +709,7 @@ onBeforeUnmount(() => {
           :disabled="page >= pageCount"
           @click="page = pageCount"
         >
-          »
+          <SvgIcon name="»" />
         </button>
       </div>
     </div>
@@ -1119,14 +1120,14 @@ onBeforeUnmount(() => {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 26px;
+  width: 28px;
   height: 24px;
   background: none;
   border: none;
   border-radius: 0;
   color: var(--sf-text);
   font-family: var(--sf-font);
-  font-size: 13px;
+  font-size: 16px;
   line-height: 1;
   padding: 0;
   cursor: pointer;
@@ -1344,7 +1345,7 @@ onBeforeUnmount(() => {
 .sf-root--mobile .sf-tbl-pager-btn {
   width: 56px;
   height: 44px;
-  font-size: 16px;
+  font-size: 20px;
 }
 
 .sf-root--mobile .sf-tbl-pager-select {
