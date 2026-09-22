@@ -1106,6 +1106,7 @@ onBeforeUnmount(() => {
   display: inline-flex;
   align-items: center;
   justify-content: center;
+  height: 24px;
   background: var(--sf-bar);
   border: 1px solid var(--sf-border);
   border-radius: var(--sf-radius-sm);
@@ -1113,7 +1114,7 @@ onBeforeUnmount(() => {
   font-family: var(--sf-font);
   font-size: 13px;
   line-height: 1;
-  padding: 2px 7px;
+  padding: 0 7px;
   cursor: pointer;
 }
 
@@ -1130,8 +1131,11 @@ onBeforeUnmount(() => {
 
 .sf-tbl-pager-select {
   width: auto;
+  height: 24px;
+  box-sizing: border-box;
+  border-radius: var(--sf-radius-sm);
   font-size: 12px;
-  padding: 2px 24px 2px 8px;
+  padding: 0 24px 0 8px;
 }
 
 .sf-tbl-empty {
