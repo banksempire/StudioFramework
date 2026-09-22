@@ -663,24 +663,26 @@ onBeforeUnmount(() => {
     </div>
     <div v-if="pageCount > 1" class="sf-tbl-pager">
       <span class="sf-tbl-pager-range">{{ pagerRange }}</span>
-      <button
-        class="sf-tbl-pager-btn"
-        type="button"
-        title="First page"
-        :disabled="page <= 1"
-        @click="page = 1"
-      >
-        «
-      </button>
-      <button
-        class="sf-tbl-pager-btn"
-        type="button"
-        title="Previous page"
-        :disabled="page <= 1"
-        @click="page -= 1"
-      >
-        ‹
-      </button>
+      <div class="sf-tbl-pager-group">
+        <button
+          class="sf-tbl-pager-btn"
+          type="button"
+          title="First page"
+          :disabled="page <= 1"
+          @click="page = 1"
+        >
+          «
+        </button>
+        <button
+          class="sf-tbl-pager-btn"
+          type="button"
+          title="Previous page"
+          :disabled="page <= 1"
+          @click="page -= 1"
+        >
+          ‹
+        </button>
+      </div>
       <select
         v-model.number="page"
         class="sf-form-input sf-form-select sf-tbl-pager-select"
@@ -689,24 +691,26 @@ onBeforeUnmount(() => {
       >
         <option v-for="p in pageCount" :key="p" :value="p">{{ p }} / {{ pageCount }}</option>
       </select>
-      <button
-        class="sf-tbl-pager-btn"
-        type="button"
-        title="Next page"
-        :disabled="page >= pageCount"
-        @click="page += 1"
-      >
-        ›
-      </button>
-      <button
-        class="sf-tbl-pager-btn"
-        type="button"
-        title="Last page"
-        :disabled="page >= pageCount"
-        @click="page = pageCount"
-      >
-        »
-      </button>
+      <div class="sf-tbl-pager-group">
+        <button
+          class="sf-tbl-pager-btn"
+          type="button"
+          title="Next page"
+          :disabled="page >= pageCount"
+          @click="page += 1"
+        >
+          ›
+        </button>
+        <button
+          class="sf-tbl-pager-btn"
+          type="button"
+          title="Last page"
+          :disabled="page >= pageCount"
+          @click="page = pageCount"
+        >
+          »
+        </button>
+      </div>
     </div>
   </div>
 </template>
@@ -1102,20 +1106,34 @@ onBeforeUnmount(() => {
   font-variant-numeric: tabular-nums;
 }
 
+.sf-tbl-pager-group {
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+  border-radius: var(--sf-radius-sm);
+  overflow: hidden;
+  background: var(--sf-bar);
+}
+
 .sf-tbl-pager-btn {
   display: inline-flex;
   align-items: center;
   justify-content: center;
+  width: 26px;
   height: 24px;
-  background: var(--sf-bar);
-  border: 1px solid var(--sf-border);
-  border-radius: var(--sf-radius-sm);
+  background: none;
+  border: none;
+  border-radius: 0;
   color: var(--sf-text);
   font-family: var(--sf-font);
   font-size: 13px;
   line-height: 1;
-  padding: 0 7px;
+  padding: 0;
   cursor: pointer;
+}
+
+.sf-tbl-pager-btn:not(:first-child) {
+  border-left: 1px solid var(--sf-border);
 }
 
 .sf-tbl-pager-btn:disabled {
@@ -1307,13 +1325,26 @@ onBeforeUnmount(() => {
 
 .sf-root--mobile .sf-tbl-pager-range {
   font-size: 16px;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+@media (max-width: 420px) {
+  .sf-root--mobile .sf-tbl-pager-range {
+    display: none;
+  }
+}
+
+.sf-root--mobile .sf-tbl-pager-group {
+  border-radius: 8px;
 }
 
 .sf-root--mobile .sf-tbl-pager-btn {
+  width: 56px;
   height: 44px;
   font-size: 16px;
-  padding: 0 14px;
-  border-radius: 8px;
 }
 
 .sf-root--mobile .sf-tbl-pager-select {
