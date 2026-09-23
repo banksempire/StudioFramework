@@ -21,7 +21,9 @@ component types, missing ids, etc.
 Validation notes:
 
 - `docker` must contain **at least one** item.
-- `right` may be `null` (or omitted) to hide the right panel entirely.
+- There is no default right panel. Each workspace tab gets its right panel from
+  `rightPanels[content]` (falling back to `rightPanels[tab.id]`); when neither
+  exists the panel shows "`<name>` not defined" instead of guessing.
 - `minTileWidth` / `minTileHeight` must be positive numbers; they are rounded
   and default to `160` / `100`.
 - `framework` is optional (defaults to `{ "title": "Studio Framework" }`).
@@ -46,7 +48,7 @@ LayoutDefinition
 │   ├── icon                      IconDef
 │   ├── badge                     string (optional)
 │   └── panel                     PanelDef          panel shown when active
-├── right                         PanelDef | null   right panel (null = hidden)
+├── rightPanels?                  Record<string, PanelDef>   right panels keyed by tab content
 ├── workspace                  WorkspaceDef
 │   ├── tabs[]                 WorkspaceTabDef     initial workspace tabs
 │   │   ├── id                 string
@@ -82,23 +84,48 @@ utilities):
 
 ### PanelDef
 
+Panels use the same three heading levels as popup dialogs — **H1 groups →
+H2 sections → content** — with one panel-only extra: `heading: 3` renders a
+section as a flat **H3** header (label with a separator line under it, not
+collapsible, no drag handle, always visible).
+
 ```json
 {
   "title": "Files",
-  "sections": [ { "id": "files", "label": "Files", "subSections": [ ... ] } ]
+  "groups": [
+    {
+      "id": "files",
+      "title": "Files",
+      "sections": [ { "id": "open-editors", "title": "Open Editors", "components": [ ... ] } ]
+    }
+  ]
 }
 ```
 
-- Multiple sections → section tab bar appears (see Panel.md).
-- `right: null` hides the right panel entirely.
+- **H1 (`groups`)** render as the panel tab bar and auto-hide when a panel has
+  only one group.
+- **H2 (`sections`, default)** are collapsible (chevron) and, when
+  `height: "variable"`, drag-resizable; the panel's `⋯` menu can hide/show them.
+- **H3 (`sections` with `"heading": 3`)** are flat: label + separator line,
+  always expanded, no utilities restrictions but no collapse and no drag.
+  `height: "variable"` is rejected for H3 by the loader.
 
-### PanelSubSection
+```json
+{
+  "id": "general",
+  "title": "General",
+  "heading": 3,
+  "components": [ ... ]
+}
+```
+
+### PanelSection
 
 ```json
 {
   "id": "project",
-  "label": "Project",
-  "height": "variable",            // "fixed" (default) | "variable"
+  "title": "Project",
+  "height": "variable",            // "fixed" (default) | "variable" (H2 only)
   "minHeight": 80,                 // optional; clamp floor for "variable" (defaults to 0)
   "utilities": [
     { "id": "new-file", "icon": "📄", "tooltip": "New File" }
@@ -110,7 +137,7 @@ utilities):
 | `height` | Meaning |
 |:---|:---|
 | `fixed` (default) | Auto-sizes to content height (DOM-measured, never scrolls) |
-| `variable` | Managed by the layout engine; draggable, clamped to `minHeight` |
+| `variable` | Managed by the layout engine; draggable, clamped to `minHeight` (H2 only) |
 
 ### Components
 

@@ -2,6 +2,8 @@
 import type { PopupField, PopupOption, PopupValues } from '../types/popup';
 import MultiSelectGroup from './MultiSelectGroup.vue';
 import PillSelector from './PillSelector.vue';
+import StepperInput from './StepperInput.vue';
+import SwitchToggle from './SwitchToggle.vue';
 
 const props = defineProps<{
   field: PopupField;
@@ -11,7 +13,7 @@ const props = defineProps<{
 }>();
 
 const emit =
-  defineEmits<(e: 'patch', key: string, value: string | number | Array<string | number>) => void>();
+  defineEmits<(e: 'patch', key: string, value: string | number | boolean | Array<string | number>) => void>();
 
 const INPUT_TYPES = ['input', 'number', 'password', 'datetime-local'];
 
@@ -37,6 +39,17 @@ function onPills(value: string | number) {
 
 function onMulti(value: Array<string | number>) {
   emit('patch', props.field.key, value);
+}
+
+function switchOn(): boolean {
+  const v = props.values[props.field.key];
+  return v === true || v === 'true';
+}
+
+function stepperValue(): number {
+  const v = props.values[props.field.key];
+  const n = typeof v === 'number' ? v : Number(v);
+  return Number.isFinite(n) ? n : (props.field.min ?? 1);
 }
 
 function isEmpty(value: unknown): boolean {
@@ -108,5 +121,20 @@ function isEmpty(value: unknown): boolean {
     :options="((field.options as PopupOption[]) ?? [])"
     :model-value="(values[field.key] as Array<string | number>) ?? []"
     @update:model-value="onMulti"
+  />
+  <SwitchToggle
+    v-else-if="field.type === 'switch'"
+    :on="switchOn()"
+    :title="field.labelNote"
+    @toggle="emit('patch', field.key, !switchOn())"
+  />
+  <StepperInput
+    v-else-if="field.type === 'stepper'"
+    :model-value="stepperValue()"
+    :min="field.min ?? 1"
+    :max="field.max ?? 100"
+    :step="field.step ?? 1"
+    :title="field.labelNote"
+    @update:model-value="(v) => emit('patch', field.key, v)"
   />
 </template>

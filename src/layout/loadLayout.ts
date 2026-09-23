@@ -14,19 +14,18 @@ import type {
   KeyValueItem,
   PanelComponent,
   PanelComponentBase,
-  PanelFormChoice,
-  PanelFormRow,
+  PanelGroup,
   PanelHeaderAction,
   PanelListButton,
   PanelListItem,
   PanelListOption,
   PanelSection,
-  PanelSubSection,
   PanelTableColumn,
   PanelUtility,
   TreeCheckState,
   TreeNode,
 } from '../types/panel';
+import type { PopupField, PopupOption, PopupOptionGroup, PopupValues } from '../types/popup';
 import frameworkJson from './framework.layout.json';
 
 let sourceLabel = 'framework.layout.json';
@@ -93,6 +92,21 @@ const DOT_TONES: readonly DotTone[] = ['muted', 'ok', 'ok-pulse', 'err', 'warn',
 const BADGE_TONES: readonly BadgeTone[] = ['ok', 'ok-blink', 'accent', 'accent-soft', 'err', 'muted'];
 const BUTTON_VARIANTS: readonly ButtonVariant[] = ['default', 'accent', 'danger', 'ghost'];
 const TREE_CHECKS: readonly TreeCheckState[] = ['on', 'mid', 'off'];
+const POPUP_FIELD_TYPES = [
+  'input',
+  'number',
+  'password',
+  'datetime-local',
+  'textarea',
+  'select',
+  'pills',
+  'multi',
+  'switch',
+  'stepper',
+  'info',
+  'slot',
+] as const;
+
 const COLUMN_KINDS: readonly NonNullable<PanelTableColumn['kind']>[] = [
   'text',
   'status',
@@ -185,7 +199,7 @@ function toListItem(v: unknown, path: string): PanelListItem {
   };
 }
 
-function toFormChoice(v: unknown, path: string): PanelFormChoice {
+function toFormChoice(v: unknown, path: string): PopupOption {
   const r = needRecord(v, path);
   return {
     value: needString(r.value, `${path}.value`),
@@ -194,46 +208,61 @@ function toFormChoice(v: unknown, path: string): PanelFormChoice {
   };
 }
 
-function toFormRow(v: unknown, path: string): PanelFormRow {
+function toPopupField(v: unknown, path: string): PopupField {
   const r = needRecord(v, path);
-  const pills = r.pills === undefined ? undefined : needRecord(r.pills, `${path}.pills`);
-  const stepper = r.stepper === undefined ? undefined : needRecord(r.stepper, `${path}.stepper`);
-  const sw = r.switch === undefined ? undefined : needRecord(r.switch, `${path}.switch`);
-  const noteTone = optString(r.noteTone, `${path}.noteTone`);
-  if (noteTone !== undefined && noteTone !== 'muted' && noteTone !== 'error') {
-    fail(`${path}.noteTone`, `expected "muted" or "error", got "${noteTone}"`);
+  const type = optString(r.type, `${path}.type`);
+  if (type === undefined || !(POPUP_FIELD_TYPES as readonly string[]).includes(type)) {
+    fail(`${path}.type`, `expected one of ${POPUP_FIELD_TYPES.join(', ')}`);
+  }
+  let options: PopupField['options'];
+  if (r.options !== undefined) {
+    const arr = needArray(r.options, `${path}.options`).map<PopupOption | PopupOptionGroup>((o, i) => {
+      const rec = needRecord(o, `${path}.options[${i}]`);
+      if (rec.group !== undefined) {
+        return {
+          group: needString(rec.group, `${path}.options[${i}].group`),
+          options: needArray(rec.options, `${path}.options[${i}].options`).map((c, j) =>
+            toFormChoice(c, `${path}.options[${i}].options[${j}]`),
+          ),
+        };
+      }
+      return toFormChoice(o, `${path}.options[${i}]`);
+    });
+    options = arr.length > 0 && 'group' in arr[0] ? (arr as PopupOptionGroup[]) : (arr as PopupOption[]);
   }
   return {
-    id: needId(r.id, `${path}.id`),
+    key: needString(r.key, `${path}.key`),
+    type: type as PopupField['type'],
     label: optString(r.label, `${path}.label`),
+    labelNote: optString(r.labelNote, `${path}.labelNote`),
+    placeholder: optString(r.placeholder, `${path}.placeholder`),
+    required: optBool(r.required, `${path}.required`),
     hint: optString(r.hint, `${path}.hint`),
-    note: optString(r.note, `${path}.note`),
-    noteTone: noteTone as PanelFormRow['noteTone'],
-    pills: pills
-      ? {
-          value: needString(pills.value, `${path}.pills.value`),
-          choices: needArray(pills.choices, `${path}.pills.choices`).map((c, i) =>
-            toFormChoice(c, `${path}.pills.choices[${i}]`),
-          ),
-        }
-      : undefined,
-    stepper: stepper
-      ? {
-          value: optInt(stepper.value, `${path}.stepper.value`) ?? 0,
-          min: optInt(stepper.min, `${path}.stepper.min`),
-          max: optInt(stepper.max, `${path}.stepper.max`),
-          step: optInt(stepper.step, `${path}.stepper.step`),
-          title: optString(stepper.title, `${path}.stepper.title`),
-        }
-      : undefined,
-    switch: sw
-      ? {
-          on: sw.on === true || fail(`${path}.switch.on`, 'expected true or false'),
-          title: optString(sw.title, `${path}.switch.title`),
-        }
-      : undefined,
-    action: optString(r.action, `${path}.action`),
+    mono: optBool(r.mono, `${path}.mono`),
+    span: optInt(r.span, `${path}.span`),
+    disabled: optBool(r.disabled, `${path}.disabled`),
+    rows: optInt(r.rows, `${path}.rows`),
+    spellcheck: optBool(r.spellcheck, `${path}.spellcheck`),
+    options,
+    blankLabel: optString(r.blankLabel, `${path}.blankLabel`),
+    min: optInt(r.min, `${path}.min`),
+    max: optInt(r.max, `${path}.max`),
+    step: optInt(r.step, `${path}.step`),
+    text: optString(r.text, `${path}.text`),
   };
+}
+
+function toPopupValues(v: unknown, path: string): PopupValues {
+  const rec = needRecord(v, path);
+  const out: PopupValues = {};
+  for (const key of Object.keys(rec)) {
+    const v = rec[key];
+    out[key] =
+      typeof v === 'string' || typeof v === 'number' || typeof v === 'boolean'
+        ? v
+        : fail(`${path}.${key}`, 'expected a string, number or boolean');
+  }
+  return out;
 }
 
 function toHeaderAction(v: unknown, path: string): PanelHeaderAction {
@@ -372,10 +401,12 @@ function toComponent(v: unknown, path: string): PanelComponent {
     case 'form':
       base = {
         type,
-        rows:
-          r.rows === undefined
+        action: optString(r.action, `${path}.action`),
+        fields:
+          r.fields === undefined
             ? undefined
-            : needArray(r.rows, `${path}.rows`).map((row, i) => toFormRow(row, `${path}.rows[${i}]`)),
+            : needArray(r.fields, `${path}.fields`).map((f, i) => toPopupField(f, `${path}.fields[${i}]`)),
+        values: r.values === undefined ? undefined : toPopupValues(r.values, `${path}.values`),
         bind,
         empty: optString(r.empty, `${path}.empty`),
       };
@@ -490,15 +521,23 @@ function toUtility(v: unknown, path: string): PanelUtility {
   };
 }
 
-function toSubSection(v: unknown, path: string): PanelSubSection {
+function toSection(v: unknown, path: string): PanelSection {
   const r = needRecord(v, path);
   const height = optString(r.height, `${path}.height`) ?? 'fixed';
   if (height !== 'fixed' && height !== 'variable') {
     fail(`${path}.height`, `expected "fixed" or "variable", got "${height}"`);
   }
+  const heading = r.heading === undefined ? 2 : r.heading;
+  if (heading !== 2 && heading !== 3) {
+    fail(`${path}.heading`, `expected 2 or 3, got "${heading}"`);
+  }
+  if (heading === 3 && height === 'variable') {
+    fail(`${path}.heading`, 'h3 sections are flat: "height": "variable" is not allowed');
+  }
   return {
     id: needId(r.id, `${path}.id`),
-    label: needString(r.label, `${path}.label`),
+    title: needString(r.title, `${path}.title`),
+    heading,
     isHeightVariable: height === 'variable',
     minHeight:
       r.minHeight === undefined
@@ -516,14 +555,12 @@ function toSubSection(v: unknown, path: string): PanelSubSection {
   };
 }
 
-function toSection(v: unknown, path: string): PanelSection {
+function toGroup(v: unknown, path: string): PanelGroup {
   const r = needRecord(v, path);
   return {
     id: needId(r.id, `${path}.id`),
-    label: needString(r.label, `${path}.label`),
-    subSections: needArray(r.subSections, `${path}.subSections`).map((s, i) =>
-      toSubSection(s, `${path}.subSections[${i}]`),
-    ),
+    title: needString(r.title, `${path}.title`),
+    sections: needArray(r.sections, `${path}.sections`).map((s, i) => toSection(s, `${path}.sections[${i}]`)),
   };
 }
 
@@ -531,7 +568,7 @@ function toPanelDef(v: unknown, path: string): PanelDef {
   const r = needRecord(v, path);
   return {
     title: needString(r.title, `${path}.title`),
-    sections: needArray(r.sections, `${path}.sections`).map((s, i) => toSection(s, `${path}.sections[${i}]`)),
+    groups: needArray(r.groups, `${path}.groups`).map((g, i) => toGroup(g, `${path}.groups[${i}]`)),
   };
 }
 
@@ -614,7 +651,6 @@ export function loadLayout(json: unknown = frameworkJson, label = 'framework.lay
     },
     menu,
     docker,
-    right: root.right === undefined || root.right === null ? null : toPanelDef(root.right, '<root>.right'),
     rightPanels: (() => {
       const src = root.rightPanels;
       if (src === undefined || src === null) return {};

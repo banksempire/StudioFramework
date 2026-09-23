@@ -2,7 +2,7 @@
 import { computed, nextTick, onUnmounted, ref, watch } from 'vue';
 import { DEFAULT_PANEL_WIDTH, PANEL_MAX_WIDTH, PANEL_MIN_WIDTH, useResize } from '../composables/useResize';
 import type { MenuNodeDef } from '../types/layout';
-import type { PanelAction, PanelSection } from '../types/panel';
+import type { PanelAction, PanelGroup } from '../types/panel';
 import { readUiNumber, readUiStringArray, uiEpoch, writeUiValue } from '../uiState';
 import Menu from './Menu.vue';
 import SubsectionBody from './SubsectionBody.vue';
@@ -13,13 +13,13 @@ const props = withDefaults(
     title: string;
     visible: boolean;
     position: 'left' | 'right' | 'mobile';
-    sections?: PanelSection[];
+    groups?: PanelGroup[];
     width?: number;
     stateKey?: string;
   }>(),
   {
     visible: true,
-    sections: () => [],
+    groups: () => [],
     width: DEFAULT_PANEL_WIDTH,
   },
 );
@@ -61,42 +61,45 @@ const tabsRow = ref<HTMLElement | null>(null);
 
 const visibleCount = ref(100);
 
-const hasOverflow = computed(() => props.sections.length > 1 && visibleCount.value < props.sections.length);
+const hasOverflow = computed(() => props.groups.length > 1 && visibleCount.value < props.groups.length);
 
-const overflowTabs = computed(() => props.sections.slice(visibleCount.value));
+const overflowTabs = computed(() => props.groups.slice(visibleCount.value));
 
 const savedIndex = new Map<string, number>();
 let lastKey = '';
 
-function panelKey(sections: PanelSection[]) {
-  return sections.map((s) => s.id).join('|');
+function panelKey(groups: PanelGroup[]) {
+  return groups.map((g) => g.id).join('|');
 }
 
-lastKey = panelKey(props.sections);
+lastKey = panelKey(props.groups);
 
 const statePrefix = computed(() => (props.stateKey ? `${props.stateKey}::` : ''));
 const tabStateKey = (sectionsKey: string) => `panel.tab.${statePrefix.value}${sectionsKey}`;
 const hiddenStateKey = (mapKey: string) => `panel.hidden.${statePrefix.value}${mapKey}`;
 
-function restoreSectionState(sectionsKey: string, sections: PanelSection[]) {
-  const saved = savedIndex.get(sectionsKey);
-  const persisted = readUiNumber(tabStateKey(sectionsKey));
+function restoreSectionState(groupsKey: string, groups: PanelGroup[]) {
+  const saved = savedIndex.get(groupsKey);
+  const persisted = readUiNumber(tabStateKey(groupsKey));
   let idx = saved ?? persisted ?? 0;
-  if (!Number.isInteger(idx) || idx < 0 || idx >= sections.length) idx = 0;
+  if (!Number.isInteger(idx) || idx < 0 || idx >= groups.length) idx = 0;
   activeIndex.value = idx;
-  for (const sec of sections) {
-    const key = `${sectionsKey}::${sec.id}`;
-    hiddenSubSections.value.set(key, new Set(readUiStringArray(hiddenStateKey(key)) ?? []));
+  for (const grp of groups) {
+    for (const sec of grp.sections) {
+      if (sec.heading === 3) continue;
+      const key = `${groupsKey}::${grp.id}`;
+      hiddenSubSections.value.set(key, new Set(readUiStringArray(hiddenStateKey(key)) ?? []));
+    }
   }
   hiddenSubSections.value = new Map(hiddenSubSections.value);
 }
 
 watch(
-  () => props.sections,
-  (sections, _old) => {
+  () => props.groups,
+  (groups, _old) => {
     if (lastKey) savedIndex.set(lastKey, activeIndex.value);
-    lastKey = panelKey(sections);
-    restoreSectionState(lastKey, sections);
+    lastKey = panelKey(groups);
+    restoreSectionState(lastKey, groups);
     visibleCount.value = 100;
     overflowOpen.value = false;
     visibilityMenuOpen.value = false;
@@ -107,17 +110,17 @@ watch(
 function selectSection(idx: number) {
   activeIndex.value = idx;
   writeUiValue(tabStateKey(lastKey), idx);
-  emit('select-section', props.sections[idx].id);
+  emit('select-section', props.groups[idx].id);
 }
 
 watch(uiEpoch, () => {
   savedIndex.clear();
-  restoreSectionState(lastKey, props.sections);
+  restoreSectionState(lastKey, props.groups);
   nextTick(() => recompute());
 });
 
 function selectOverflowSection(sectionId: string) {
-  const i = props.sections.findIndex((s) => s.id === sectionId);
+  const i = props.groups.findIndex((g) => g.id === sectionId);
   if (i >= 0) selectSection(i);
   overflowOpen.value = false;
 }
@@ -198,27 +201,27 @@ watch(
 const visibilityMenuOpen = ref(false);
 const hiddenSubSections = ref<Map<string, Set<string>>>(new Map());
 
-const activeSection = computed(() => (props.sections.length > 0 ? props.sections[activeIndex.value] : null));
-const activeSectionId = computed(() => activeSection.value?.id ?? '');
-const activeSubSections = computed(() => activeSection.value?.subSections ?? []);
-const hasSubSections = computed(() => activeSubSections.value.length > 0);
+const activeGroup = computed(() => (props.groups.length > 0 ? props.groups[activeIndex.value] : null));
+const activeGroupId = computed(() => activeGroup.value?.id ?? '');
+const activeSections = computed(() => activeGroup.value?.sections ?? []);
+const hasSubSections = computed(() => activeSections.value.some((sec) => sec.heading !== 3));
 
 const subStateKey = computed(() =>
-  props.stateKey ? `${props.stateKey}::${activeSectionId.value}` : activeSectionId.value,
+  props.stateKey ? `${props.stateKey}::${activeGroupId.value}` : activeGroupId.value,
 );
 
-restoreSectionState(lastKey, props.sections);
+restoreSectionState(lastKey, props.groups);
 
 const activeHiddenIds = computed(() => {
-  const sec = activeSection.value;
-  if (!sec) return new Set<string>();
-  return new Set(hiddenSubSections.value.get(`${lastKey}::${sec.id}`) ?? []);
+  const grp = activeGroup.value;
+  if (!grp) return new Set<string>();
+  return new Set(hiddenSubSections.value.get(`${lastKey}::${grp.id}`) ?? []);
 });
 
 function toggleSubVisible(subId: string) {
-  const sec = activeSection.value;
-  if (!sec) return;
-  const key = `${lastKey}::${sec.id}`;
+  const grp = activeGroup.value;
+  if (!grp) return;
+  const key = `${lastKey}::${grp.id}`;
   let hidden = new Set(hiddenSubSections.value.get(key) ?? []);
   if (hidden.has(subId)) hidden.delete(subId);
   else hidden.add(subId);
@@ -228,25 +231,27 @@ function toggleSubVisible(subId: string) {
 }
 
 const visibilityItems = computed<MenuNodeDef[]>(() =>
-  activeSubSections.value.map((sub) => ({
-    id: sub.id,
-    label: sub.label,
-    iconKind: 'check' as const,
-    selected: !activeHiddenIds.value.has(sub.id),
-  })),
+  activeSections.value
+    .filter((sec) => sec.heading !== 3)
+    .map((sec) => ({
+      id: sec.id,
+      label: sec.title,
+      iconKind: 'check' as const,
+      selected: !activeHiddenIds.value.has(sec.id),
+    })),
 );
 
 const overflowItems = computed<MenuNodeDef[]>(() =>
-  overflowTabs.value.map((sec) => ({
-    id: sec.id,
-    label: sec.label,
+  overflowTabs.value.map((grp) => ({
+    id: grp.id,
+    label: grp.title,
     iconKind: 'dot' as const,
-    selected: sectionsIndexOf(sec) === activeIndex.value,
+    selected: groupsIndexOf(grp) === activeIndex.value,
   })),
 );
 
-function sectionsIndexOf(sec: PanelSection) {
-  return props.sections.indexOf(sec);
+function groupsIndexOf(grp: PanelGroup) {
+  return props.groups.indexOf(grp);
 }
 
 onUnmounted(() => observer?.disconnect());
@@ -303,15 +308,15 @@ onUnmounted(() => observer?.disconnect());
       ><SvgIcon name="✕" /></button>
     </div>
 
-    <div v-if="sections.length > 1" class="sf-panel-tabs-wrapper">
+    <div v-if="groups.length > 1" class="sf-panel-tabs-wrapper">
       <div ref="tabsRow" class="sf-panel-tabs">
         <button
-          v-for="(sec, i) in sections"
-          :key="sec.id"
+          v-for="(grp, i) in groups"
+          :key="grp.id"
           class="sf-panel-tab"
           :class="{ 'sf-panel-tab--active': i === activeIndex }"
           @click="selectSection(i)"
-        >{{ sec.label }}</button>
+        >{{ grp.title }}</button>
 
         <Menu
           :items="overflowItems"
@@ -332,9 +337,9 @@ onUnmounted(() => observer?.disconnect());
     </div>
 
     <SubsectionBody
-      v-if="hasSubSections"
-      :key="activeSectionId"
-      :sub-sections="activeSubSections"
+      v-if="activeSections.length > 0"
+      :key="activeGroupId"
+      :sections="activeSections"
       :hidden-ids="activeHiddenIds"
       :state-key="subStateKey"
       :mobile="position === 'mobile'"

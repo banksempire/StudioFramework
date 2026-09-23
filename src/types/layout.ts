@@ -1,4 +1,4 @@
-import type { IconDef, PanelSection } from './panel';
+import type { IconDef, PanelGroup } from './panel';
 
 export interface MenuNodeDef {
   id?: string;
@@ -17,7 +17,7 @@ export interface MenuNodeDef {
 
 export interface PanelDef {
   title: string;
-  sections: PanelSection[];
+  groups: PanelGroup[];
 }
 
 export interface DockerAppDef {
@@ -59,7 +59,6 @@ export interface LayoutDefinition {
   framework: { title: string };
   menu: MenuNodeDef[];
   docker: DockerAppDef[];
-  right: PanelDef | null;
   rightPanels?: Record<string, PanelDef>;
   workspace: WorkspaceDef;
   status: { left: StatusItemDef[]; right: StatusItemDef[] };

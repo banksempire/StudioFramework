@@ -14,6 +14,7 @@ import {
   registerUtilityMenu,
 } from './registry';
 import type { PanelListItem, TreeNode } from './types/panel';
+import type { PopupField, PopupValues } from './types/popup';
 
 registerTabContent('welcome', WelcomeContent);
 
@@ -101,39 +102,28 @@ registerPanelData('demo-cards', () => [
   },
 ]);
 
-registerPanelData('demo-form', () => [
-  {
-    id: 'level',
-    label: 'Effort',
-    pills: {
-      value: demo.level,
-      choices: [
+registerPanelData('demo-form', () => ({
+  fields: [
+    {
+      key: 'level',
+      type: 'pills',
+      label: 'Effort',
+      options: [
         { value: 'low', label: 'Low' },
         { value: 'medium', label: 'Medium' },
         { value: 'high', label: 'High' },
       ],
     },
-    action: 'demo-form',
-  },
-  {
-    id: 'caps',
-    label: 'Concurrency',
-    stepper: { value: demo.caps, min: 1, max: 10, title: 'Demo cap' },
-    action: 'demo-form',
-  },
-  {
-    id: 'pinned',
-    label: 'Pinned',
-    switch: { on: demo.pinned, title: 'Toggle pin' },
-    action: 'demo-form',
-  },
-  {
-    id: 'note',
-    label: 'Status',
-    hint: 'rows can carry hints and notes',
-    note: demo.note,
-  },
-]);
+    { key: 'caps', type: 'stepper', label: 'Concurrency', min: 1, max: 10, labelNote: 'Demo cap' },
+    { key: 'pinned', type: 'switch', label: 'Pinned', labelNote: 'Toggle pin' },
+    { key: 'note', type: 'info', text: demo.note },
+  ] satisfies PopupField[],
+  values: {
+    level: demo.level,
+    caps: demo.caps,
+    pinned: demo.pinned,
+  } satisfies PopupValues,
+}));
 
 registerPanelData('demo-header', () => ({
   dot: demo.enabled ? 'ok-pulse' : 'muted',
@@ -263,9 +253,9 @@ function onAction(e: FrameworkAction) {
       } else if (payload?.gesture === 'button') demo.note = `card ${String(payload.button)}`;
       break;
     case 'demo-form':
-      if (payload?.row === 'level' && typeof payload.value === 'string') demo.level = payload.value;
-      if (payload?.row === 'caps' && typeof payload.value === 'number') demo.caps = payload.value;
-      if (payload?.row === 'pinned' && typeof payload.value === 'boolean') demo.pinned = payload.value;
+      if (payload?.key === 'level' && typeof payload.value === 'string') demo.level = payload.value;
+      if (payload?.key === 'caps' && typeof payload.value === 'number') demo.caps = payload.value;
+      if (payload?.key === 'pinned' && typeof payload.value === 'boolean') demo.pinned = payload.value;
       break;
     case 'demo-menu-pick': {
       const data = (e.payload as { data?: { level?: string } } | undefined)?.data;

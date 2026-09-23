@@ -1,4 +1,5 @@
 import type { MenuNodeDef } from './layout';
+import type { PopupField, PopupValues } from './popup';
 
 export type IconDef = string | { type: 'image'; url: string };
 
@@ -87,32 +88,6 @@ export interface PanelListData {
   empty?: string;
 }
 
-export interface PanelFormChoice {
-  value: string;
-  label: string;
-  title?: string;
-}
-
-export interface PanelFormRowControl {
-  pills?: { value: string; choices: PanelFormChoice[] };
-  stepper?: { value: number; min?: number; max?: number; step?: number; title?: string };
-  switch?: { on: boolean; title?: string };
-}
-
-export interface PanelFormRow extends PanelFormRowControl {
-  id: string;
-  label?: string;
-  hint?: string;
-  note?: string;
-  noteTone?: 'muted' | 'error';
-  action?: string;
-}
-
-export interface PanelFormData {
-  rows: PanelFormRow[];
-  empty?: string;
-}
-
 export interface PanelHeaderData {
   dot?: DotTone;
   title?: string;
@@ -198,9 +173,11 @@ export type PanelComponentBase =
     }
   | {
       type: 'form';
-      rows?: PanelFormRow[];
+      fields?: PopupField[];
+      values?: PopupValues;
       bind?: string;
       empty?: string;
+      action?: string;
     }
   | {
       type: 'header';
@@ -240,17 +217,20 @@ export interface PanelAction {
   payload?: unknown;
 }
 
-export interface PanelSubSection {
+export type PanelHeading = 2 | 3;
+
+export interface PanelSection {
   id: string;
-  label: string;
+  title: string;
+  heading?: PanelHeading;
   isHeightVariable: boolean;
   minHeight?: number;
   utilities?: PanelUtility[];
   components: PanelComponent[];
 }
 
-export interface PanelSection {
+export interface PanelGroup {
   id: string;
-  label: string;
-  subSections: PanelSubSection[];
+  title: string;
+  sections: PanelSection[];
 }

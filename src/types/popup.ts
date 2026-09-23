@@ -22,6 +22,8 @@ export type PopupFieldType =
   | 'select'
   | 'pills'
   | 'multi'
+  | 'switch'
+  | 'stepper'
   | 'info'
   | 'slot';
 
@@ -41,6 +43,9 @@ export interface PopupField {
   spellcheck?: boolean;
   options?: PopupChoices;
   blankLabel?: string;
+  min?: number;
+  max?: number;
+  step?: number;
   id?: string;
   text?: string;
   class?: string;
@@ -81,6 +86,6 @@ export interface PopupDocument {
   actions?: PopupAction[];
 }
 
-export type PopupValue = string | number | Array<string | number> | undefined;
+export type PopupValue = string | number | boolean | Array<string | number> | undefined;
 
 export type PopupValues = Record<string, PopupValue>;

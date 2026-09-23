@@ -328,14 +328,14 @@
       "icon": "📁",
       "panel": {
         "title": "Files",
-        "sections": [
+        "groups": [
           {
             "id": "files",
-            "label": "Files",
-            "subSections": [
+            "title": "Files",
+            "sections": [
               {
                 "id": "open-editors",
-                "label": "Open Editors",
+                "title": "Open Editors",
                 "height": "fixed",
                 "utilities": [
                   {
@@ -379,7 +379,7 @@
               },
               {
                 "id": "recent",
-                "label": "Recent",
+                "title": "Recent",
                 "height": "fixed",
                 "components": [
                   {
@@ -390,7 +390,7 @@
               },
               {
                 "id": "selectors",
-                "label": "Selectors",
+                "title": "Selectors",
                 "height": "fixed",
                 "components": [
                   {
@@ -401,7 +401,7 @@
               },
               {
                 "id": "element-popup",
-                "label": "Element Popup",
+                "title": "Element Popup",
                 "height": "fixed",
                 "components": [
                   {
@@ -412,7 +412,7 @@
               },
               {
                 "id": "project",
-                "label": "Project",
+                "title": "Project",
                 "height": "variable",
                 "minHeight": 80,
                 "utilities": [
@@ -539,7 +539,7 @@
               },
               {
                 "id": "outline",
-                "label": "Outline",
+                "title": "Outline",
                 "height": "variable",
                 "minHeight": 50,
                 "utilities": [
@@ -581,7 +581,7 @@
               },
               {
                 "id": "timeline",
-                "label": "Timeline",
+                "title": "Timeline",
                 "height": "variable",
                 "minHeight": 50,
                 "utilities": [
@@ -615,11 +615,11 @@
           },
           {
             "id": "npm",
-            "label": "NPM Scripts",
-            "subSections": [
+            "title": "NPM Scripts",
+            "sections": [
               {
                 "id": "scripts",
-                "label": "Scripts",
+                "title": "Scripts",
                 "height": "fixed",
                 "components": [
                   {
@@ -645,11 +645,11 @@
           },
           {
             "id": "todo",
-            "label": "TODO",
-            "subSections": [
+            "title": "TODO",
+            "sections": [
               {
                 "id": "todos",
-                "label": "TODOs",
+                "title": "TODOs",
                 "height": "variable",
                 "minHeight": 50,
                 "components": [
@@ -681,14 +681,14 @@
       "icon": "🔍",
       "panel": {
         "title": "Search",
-        "sections": [
+        "groups": [
           {
             "id": "search",
-            "label": "Search",
-            "subSections": [
+            "title": "Search",
+            "sections": [
               {
                 "id": "search-input",
-                "label": "Search",
+                "title": "Search",
                 "height": "fixed",
                 "components": [
                   {
@@ -705,7 +705,7 @@
               },
               {
                 "id": "search-results",
-                "label": "Results",
+                "title": "Results",
                 "height": "variable",
                 "minHeight": 80,
                 "components": [
@@ -740,14 +740,14 @@
       "badge": "3",
       "panel": {
         "title": "Source Control",
-        "sections": [
+        "groups": [
           {
             "id": "scm",
-            "label": "SCM",
-            "subSections": [
+            "title": "SCM",
+            "sections": [
               {
                 "id": "changes",
-                "label": "Changes",
+                "title": "Changes",
                 "height": "variable",
                 "minHeight": 60,
                 "utilities": [
@@ -787,7 +787,7 @@
               },
               {
                 "id": "staged",
-                "label": "Staged Changes",
+                "title": "Staged Changes",
                 "height": "variable",
                 "minHeight": 50,
                 "components": [
@@ -814,14 +814,14 @@
       "icon": "🐛",
       "panel": {
         "title": "Debug",
-        "sections": [
+        "groups": [
           {
             "id": "variables",
-            "label": "Variables",
-            "subSections": [
+            "title": "Variables",
+            "sections": [
               {
                 "id": "vars",
-                "label": "Variables",
+                "title": "Variables",
                 "height": "fixed",
                 "components": [
                   {
@@ -847,11 +847,11 @@
           },
           {
             "id": "watch",
-            "label": "Watch",
-            "subSections": [
+            "title": "Watch",
+            "sections": [
               {
                 "id": "watch-list",
-                "label": "Watch",
+                "title": "Watch",
                 "height": "variable",
                 "minHeight": 50,
                 "components": [
@@ -866,11 +866,11 @@
           },
           {
             "id": "callstack",
-            "label": "Call Stack",
-            "subSections": [
+            "title": "Call Stack",
+            "sections": [
               {
                 "id": "stack",
-                "label": "Call Stack",
+                "title": "Call Stack",
                 "height": "variable",
                 "minHeight": 50,
                 "components": [
@@ -900,14 +900,14 @@
       "icon": "🧩",
       "panel": {
         "title": "Extensions",
-        "sections": [
+        "groups": [
           {
             "id": "extensions",
-            "label": "Extensions",
-            "subSections": [
+            "title": "Extensions",
+            "sections": [
               {
                 "id": "installed",
-                "label": "Installed",
+                "title": "Installed",
                 "height": "variable",
                 "minHeight": 60,
                 "components": [
@@ -932,7 +932,7 @@
               },
               {
                 "id": "popular",
-                "label": "Popular",
+                "title": "Popular",
                 "height": "variable",
                 "minHeight": 60,
                 "components": [
@@ -966,14 +966,14 @@
       "icon": "⚙️",
       "panel": {
         "title": "Settings",
-        "sections": [
+        "groups": [
           {
             "id": "editor",
-            "label": "Editor",
-            "subSections": [
+            "title": "Editor",
+            "sections": [
               {
                 "id": "appearance",
-                "label": "Appearance",
+                "title": "Appearance",
                 "height": "fixed",
                 "components": [
                   {
@@ -1001,7 +1001,7 @@
               },
               {
                 "id": "text-editor",
-                "label": "Text Editor",
+                "title": "Text Editor",
                 "height": "fixed",
                 "components": [
                   {
@@ -1027,11 +1027,11 @@
           },
           {
             "id": "workspace",
-            "label": "Workspace",
-            "subSections": [
+            "title": "Workspace",
+            "sections": [
               {
                 "id": "features",
-                "label": "Features",
+                "title": "Features",
                 "height": "fixed",
                 "components": [
                   {
@@ -1060,14 +1060,34 @@
       "icon": "🧱",
       "panel": {
         "title": "Panel Library",
-        "sections": [
+        "groups": [
           {
             "id": "library",
-            "label": "Components",
-            "subSections": [
+            "title": "Components",
+            "sections": [
+              {
+                "id": "lib-general",
+                "title": "General",
+                "heading": 3,
+                "components": [
+                  {
+                    "type": "keyValueList",
+                    "items": [
+                      {
+                        "key": "kit",
+                        "value": "Studio Framework"
+                      },
+                      {
+                        "key": "note",
+                        "value": "h3 sections are flat headers with a separator line"
+                      }
+                    ]
+                  }
+                ]
+              },
               {
                 "id": "lib-list",
-                "label": "List",
+                "title": "List",
                 "height": "variable",
                 "minHeight": 90,
                 "components": [
@@ -1080,7 +1100,7 @@
               },
               {
                 "id": "lib-cards",
-                "label": "Card List",
+                "title": "Card List",
                 "height": "variable",
                 "minHeight": 90,
                 "components": [
@@ -1093,7 +1113,7 @@
               },
               {
                 "id": "lib-form",
-                "label": "Form",
+                "title": "Form",
                 "height": "fixed",
                 "components": [
                   {
@@ -1104,7 +1124,7 @@
               },
               {
                 "id": "lib-header",
-                "label": "Header & Banner",
+                "title": "Header & Banner",
                 "height": "fixed",
                 "components": [
                   {
@@ -1128,7 +1148,7 @@
               },
               {
                 "id": "lib-tree",
-                "label": "Check Tree",
+                "title": "Check Tree",
                 "height": "variable",
                 "minHeight": 90,
                 "components": [
@@ -1143,7 +1163,7 @@
               },
               {
                 "id": "lib-table",
-                "label": "Table",
+                "title": "Table",
                 "height": "fixed",
                 "components": [
                   {
@@ -1178,7 +1198,7 @@
               },
               {
                 "id": "lib-kv",
-                "label": "Key-Value Groups",
+                "title": "Key-Value Groups",
                 "height": "fixed",
                 "components": [
                   {
@@ -1190,7 +1210,7 @@
               },
               {
                 "id": "lib-menu",
-                "label": "Menu Button",
+                "title": "Menu Button",
                 "height": "fixed",
                 "components": [
                   {
@@ -1212,14 +1232,14 @@
       "icon": "🗂",
       "panel": {
         "title": "Workspaces",
-        "sections": [
+        "groups": [
           {
             "id": "workspaces",
-            "label": "Workspaces",
-            "subSections": [
+            "title": "Workspaces",
+            "sections": [
               {
                 "id": "ws-panel",
-                "label": "Saved Workspaces",
+                "title": "Saved Workspaces",
                 "height": "variable",
                 "minHeight": 120,
                 "components": [
@@ -1238,14 +1258,14 @@
   "rightPanels": {
     "welcome": {
       "title": "Welcome Info",
-      "sections": [
+      "groups": [
         {
           "id": "welcome-info",
-          "label": "Welcome",
-          "subSections": [
+          "title": "Welcome",
+          "sections": [
             {
               "id": "welcome-about",
-              "label": "About",
+              "title": "About",
               "height": "fixed",
               "components": [
                 {
@@ -1266,100 +1286,280 @@
           ]
         }
       ]
+    },
+    "framework-ts": {
+      "title": "Properties",
+      "groups": [
+        {
+          "id": "props-framework-ts",
+          "title": "Properties",
+          "sections": [
+            {
+              "id": "props-framework-ts-element",
+              "title": "Element",
+              "components": [
+                {
+                  "type": "keyValueList",
+                  "items": [
+                    {
+                      "key": "id",
+                      "value": "panel-1"
+                    },
+                    {
+                      "key": "class",
+                      "value": "sf-panel sf-panel--left"
+                    },
+                    {
+                      "key": "width",
+                      "value": "260px"
+                    },
+                    {
+                      "key": "visible",
+                      "value": "true"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "id": "props-framework-ts-style",
+              "title": "Style",
+              "components": [
+                {
+                  "type": "keyValueList",
+                  "items": [
+                    {
+                      "key": "background",
+                      "value": "#252526"
+                    },
+                    {
+                      "key": "border-right",
+                      "value": "1px solid #3c3c3c"
+                    },
+                    {
+                      "key": "color",
+                      "value": "#cccccc"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "id": "props-framework-ts-events",
+              "title": "Events",
+              "height": "variable",
+              "minHeight": 60,
+              "utilities": [
+                {
+                  "id": "refresh-framework-ts",
+                  "icon": "↻",
+                  "tooltip": "Refresh"
+                }
+              ],
+              "components": [
+                {
+                  "type": "list",
+                  "items": [
+                    {
+                      "id": "props-framework-ts-ev1",
+                      "label": "collapse",
+                      "icon": "⚡"
+                    },
+                    {
+                      "id": "props-framework-ts-ev2",
+                      "label": "select-section",
+                      "icon": "⚡"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    "utils-ts": {
+      "title": "Properties",
+      "groups": [
+        {
+          "id": "props-utils-ts",
+          "title": "Properties",
+          "sections": [
+            {
+              "id": "props-utils-ts-element",
+              "title": "Element",
+              "components": [
+                {
+                  "type": "keyValueList",
+                  "items": [
+                    {
+                      "key": "id",
+                      "value": "panel-1"
+                    },
+                    {
+                      "key": "class",
+                      "value": "sf-panel sf-panel--left"
+                    },
+                    {
+                      "key": "width",
+                      "value": "260px"
+                    },
+                    {
+                      "key": "visible",
+                      "value": "true"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "id": "props-utils-ts-style",
+              "title": "Style",
+              "components": [
+                {
+                  "type": "keyValueList",
+                  "items": [
+                    {
+                      "key": "background",
+                      "value": "#252526"
+                    },
+                    {
+                      "key": "border-right",
+                      "value": "1px solid #3c3c3c"
+                    },
+                    {
+                      "key": "color",
+                      "value": "#cccccc"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "id": "props-utils-ts-events",
+              "title": "Events",
+              "height": "variable",
+              "minHeight": 60,
+              "utilities": [
+                {
+                  "id": "refresh-utils-ts",
+                  "icon": "↻",
+                  "tooltip": "Refresh"
+                }
+              ],
+              "components": [
+                {
+                  "type": "list",
+                  "items": [
+                    {
+                      "id": "props-utils-ts-ev1",
+                      "label": "collapse",
+                      "icon": "⚡"
+                    },
+                    {
+                      "id": "props-utils-ts-ev2",
+                      "label": "select-section",
+                      "icon": "⚡"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    "styles-css": {
+      "title": "Properties",
+      "groups": [
+        {
+          "id": "props-styles-css",
+          "title": "Properties",
+          "sections": [
+            {
+              "id": "props-styles-css-element",
+              "title": "Element",
+              "components": [
+                {
+                  "type": "keyValueList",
+                  "items": [
+                    {
+                      "key": "id",
+                      "value": "panel-1"
+                    },
+                    {
+                      "key": "class",
+                      "value": "sf-panel sf-panel--left"
+                    },
+                    {
+                      "key": "width",
+                      "value": "260px"
+                    },
+                    {
+                      "key": "visible",
+                      "value": "true"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "id": "props-styles-css-style",
+              "title": "Style",
+              "components": [
+                {
+                  "type": "keyValueList",
+                  "items": [
+                    {
+                      "key": "background",
+                      "value": "#252526"
+                    },
+                    {
+                      "key": "border-right",
+                      "value": "1px solid #3c3c3c"
+                    },
+                    {
+                      "key": "color",
+                      "value": "#cccccc"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "id": "props-styles-css-events",
+              "title": "Events",
+              "height": "variable",
+              "minHeight": 60,
+              "utilities": [
+                {
+                  "id": "refresh-styles-css",
+                  "icon": "↻",
+                  "tooltip": "Refresh"
+                }
+              ],
+              "components": [
+                {
+                  "type": "list",
+                  "items": [
+                    {
+                      "id": "props-styles-css-ev1",
+                      "label": "collapse",
+                      "icon": "⚡"
+                    },
+                    {
+                      "id": "props-styles-css-ev2",
+                      "label": "select-section",
+                      "icon": "⚡"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
     }
-  },
-  "right": {
-    "title": "Properties",
-    "sections": [
-      {
-        "id": "properties",
-        "label": "Properties",
-        "subSections": [
-          {
-            "id": "element-props",
-            "label": "Element",
-            "height": "fixed",
-            "components": [
-              {
-                "type": "keyValueList",
-                "items": [
-                  {
-                    "key": "id",
-                    "value": "panel-1"
-                  },
-                  {
-                    "key": "class",
-                    "value": "sf-panel sf-panel--left"
-                  },
-                  {
-                    "key": "width",
-                    "value": "260px"
-                  },
-                  {
-                    "key": "visible",
-                    "value": "true"
-                  }
-                ]
-              }
-            ]
-          },
-          {
-            "id": "style-props",
-            "label": "Style",
-            "height": "fixed",
-            "components": [
-              {
-                "type": "keyValueList",
-                "items": [
-                  {
-                    "key": "background",
-                    "value": "#252526"
-                  },
-                  {
-                    "key": "border-right",
-                    "value": "1px solid #3c3c3c"
-                  },
-                  {
-                    "key": "color",
-                    "value": "#cccccc"
-                  }
-                ]
-              }
-            ]
-          },
-          {
-            "id": "events-props",
-            "label": "Events",
-            "height": "variable",
-            "minHeight": 60,
-            "utilities": [
-              {
-                "id": "refresh",
-                "icon": "↻",
-                "tooltip": "Refresh"
-              }
-            ],
-            "components": [
-              {
-                "type": "list",
-                "items": [
-                  {
-                    "id": "ev1",
-                    "label": "collapse",
-                    "icon": "⚡"
-                  },
-                  {
-                    "id": "ev2",
-                    "label": "select-section",
-                    "icon": "⚡"
-                  }
-                ]
-              }
-            ]
-          }
-        ]
-      }
-    ]
   },
   "workspace": {
     "minTileWidth": 160,

@@ -21,6 +21,7 @@ import Docker from './components/Docker.vue';
 import Panel from './components/Panel.vue';
 import Workspace from './components/Workspace.vue';
 import StatusBar from './components/StatusBar.vue';
+import SvgIcon from './components/SvgIcon.vue';
 import {
   DEFAULT_PANEL_WIDTH,
   PANEL_MAX_WIDTH,
@@ -156,7 +157,7 @@ function onWindowResize(force = false) {
   }
   const overridden =
     (leftPanelVisible.value && dockerPanelVisible.value && !leftAutoHidden.value) ||
-    (rightPanelVisible.value && !!L.right && !rightAutoHidden.value);
+    (rightPanelVisible.value && !rightAutoHidden.value);
   if (!force && overridden && autoHideDecidedAt !== null && w >= autoHideDecidedAt) return;
   autoHideDecidedAt = w;
   const leftIntended = leftPanelVisible.value && dockerPanelVisible.value;
@@ -166,7 +167,7 @@ function onWindowResize(force = false) {
     rightAutoHidden.value = false;
   } else {
     leftAutoHidden.value = leftIntended;
-    rightAutoHidden.value = rightPanelVisible.value && !!L.right;
+    rightAutoHidden.value = rightPanelVisible.value;
   }
 }
 
@@ -179,7 +180,7 @@ function onPanelResize(side: 'left' | 'right', newWidth: number) {
 
   if (newWidth > prev && !panelResizeTriggered) {
     if (calcWorkspaceWidth(false) < MIN_WORKSPACE_WIDTH) {
-      if (side === 'left' && L.right) rightAutoHidden.value = true;
+      if (side === 'left') rightAutoHidden.value = true;
       else leftAutoHidden.value = true;
       panelResizeTriggered = true;
     }
@@ -245,16 +246,25 @@ const activeDockerItem = computed(
 );
 const dockerDef = computed(() => activeDockerItem.value?.panel ?? null);
 
-const rightDef = computed<PanelDef | null>(() => {
+type RightResolution = { kind: 'ok'; def: PanelDef } | { kind: 'missing'; name: string };
+
+const rightDef = computed<RightResolution>(() => {
   for (const root of api.roots) {
     const tile = findTile(root.node, api.focusedTileId);
     if (!tile) continue;
-    const content = api.tabDefs[tile.activeId]?.content;
-    const variant = content ? L.rightPanels?.[content] : undefined;
-    return variant ?? L.right;
+    const def = api.tabDefs[tile.activeId];
+    const name = def?.content ?? def?.id ?? 'right';
+    const variant = name ? L.rightPanels?.[name] : undefined;
+    return variant ? { kind: 'ok', def: variant } : { kind: 'missing', name };
   }
-  return L.right;
+  return { kind: 'missing', name: 'right' };
 });
+
+const rightPanelShown = computed(() => !rightAutoHidden.value && rightPanelVisible.value);
+
+const rightMissingName = computed(() =>
+  rightDef.value.kind === 'missing' ? rightDef.value.name : '',
+);
 
 function showAutoHiddenLeft() {
   leftAutoHidden.value = false;
@@ -349,9 +359,10 @@ function onMenuAction(actionId: string) {
 }
 
 function utilityClosesMobilePanel(subId: string, utilityId: string): boolean {
-  for (const panel of [dockerDef.value, rightDef.value]) {
-    for (const section of panel?.sections ?? []) {
-      for (const sub of section.subSections) {
+  const panels = [dockerDef.value, rightDef.value.kind === 'ok' ? rightDef.value.def : null];
+  for (const panel of panels) {
+    for (const group of panel?.groups ?? []) {
+      for (const sub of group.sections) {
         if (sub.id !== subId) continue;
         if (sub.utilities?.some((u) => u.id === utilityId && u.closeMobilePanel)) return true;
       }
@@ -402,7 +413,7 @@ function onPanelAction(a: PanelAction) {
         <Panel
           v-if="dockerDef"
           :title="dockerDef.title"
-          :sections="dockerDef.sections"
+          :groups="dockerDef.groups"
           :visible="effDockerPanelVisible"
           :width="leftPanelWidth"
           :state-key="'docker:' + activeDockerApp"
@@ -419,14 +430,14 @@ function onPanelAction(a: PanelAction) {
           :def="L.workspace"
           :api="api"
           :mobile="isMobile"
-          :right-panel-visible="isMobile ? mobileRightOpen : !!rightDef && !rightAutoHidden && rightPanelVisible"
+          :right-panel-visible="isMobile ? mobileRightOpen : rightPanelShown"
           @toggle-right-panel="onWorkspaceToggleRightPanel"
         />
 
         <Panel
-          v-if="rightDef && !isMobile"
-          :title="rightDef.title"
-          :sections="rightDef.sections"
+          v-if="rightDef.kind === 'ok' && !isMobile"
+          :title="rightDef.def.title"
+          :groups="rightDef.def.groups"
           :visible="effRightPanelVisible"
           :width="rightPanelWidth"
           state-key="right"
@@ -436,6 +447,17 @@ function onPanelAction(a: PanelAction) {
           @utility="onPanelUtility"
           @component-action="onPanelAction"
         />
+        <div
+          v-else-if="!isMobile"
+          class="sf-panel sf-panel--right sf-panel--missing"
+          :style="{ width: rightPanelWidth + 'px' }"
+          :class="{ 'sf-panel--hidden': !effRightPanelVisible }"
+        >
+          <div class="sf-panel-header">
+            <span class="sf-panel-title">{{ rightMissingName }}</span>
+          </div>
+          <div class="sf-panel-missing">{{ rightMissingName }} not defined</div>
+        </div>
       </div>
     </div>
 
@@ -452,7 +474,7 @@ function onPanelAction(a: PanelAction) {
       <div v-if="mobilePanelOpen && dockerDef" class="sf-mobile-panel">
         <Panel
           :title="dockerDef.title"
-          :sections="dockerDef.sections"
+          :groups="dockerDef.groups"
           :visible="true"
           :state-key="'docker:' + activeDockerApp"
           position="mobile"
@@ -461,10 +483,11 @@ function onPanelAction(a: PanelAction) {
           @component-action="onPanelAction"
         />
       </div>
-      <div v-if="mobileRightOpen && rightDef" class="sf-mobile-panel">
+      <div v-if="mobileRightOpen" class="sf-mobile-panel">
         <Panel
-          :title="rightDef.title"
-          :sections="rightDef.sections"
+          v-if="rightDef.kind === 'ok'"
+          :title="rightDef.def.title"
+          :groups="rightDef.def.groups"
           :visible="true"
           state-key="right"
           position="mobile"
@@ -472,6 +495,17 @@ function onPanelAction(a: PanelAction) {
           @utility="onPanelUtility"
           @component-action="onPanelAction"
         />
+        <div v-else class="sf-panel sf-panel--mobile sf-panel--missing">
+          <div class="sf-panel-header">
+            <span class="sf-panel-title">{{ rightMissingName }}</span>
+            <button
+              class="sf-panel-close-btn"
+              title="Close panel"
+              @click="mobileRightOpen = false"
+            ><SvgIcon name="✕" /></button>
+          </div>
+          <div class="sf-panel-missing">{{ rightMissingName }} not defined</div>
+        </div>
       </div>
     </template>
 

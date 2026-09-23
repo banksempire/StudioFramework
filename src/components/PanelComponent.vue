@@ -7,7 +7,6 @@ import type {
   PanelAction,
   PanelBannerData,
   PanelComponent,
-  PanelFormRow,
   PanelHeaderData,
   PanelListData,
   PanelListItem,
@@ -15,12 +14,13 @@ import type {
   PanelTableData,
   TreeNode,
 } from '../types/panel';
+import type { PopupField, PopupValues } from '../types/popup';
 import { readUiStringArray, writeUiValue } from '../uiState';
+import FormFields from './FormFields.vue';
 import Icon from './Icon.vue';
 import KeyValueList from './KeyValueList.vue';
 import MenuButton from './MenuButton.vue';
 import PanelBanner from './PanelBanner.vue';
-import PanelForm from './PanelForm.vue';
 import PanelHeader from './PanelHeader.vue';
 import PanelList from './PanelList.vue';
 import PanelTable from './PanelTable.vue';
@@ -96,14 +96,23 @@ const listData = computed<PanelListData>(() => {
   return { items: props.component.items ?? [], empty: props.component.empty };
 });
 
-const formData = computed<{ rows: PanelFormRow[]; empty?: string }>(() => {
-  if (props.component.type !== 'form') return { rows: [] };
-  const b = bound.value;
-  if (Array.isArray(b)) return { rows: b as PanelFormRow[], empty: props.component.empty };
-  const rec = b as { rows?: PanelFormRow[]; empty?: string } | undefined;
-  if (rec && Array.isArray(rec.rows)) return { rows: rec.rows, empty: rec.empty ?? props.component.empty };
-  return { rows: props.component.rows ?? [], empty: props.component.empty };
+const formFields = computed<PopupField[]>(() => {
+  if (props.component.type !== 'form') return [];
+  const b = bound.value as { fields?: PopupField[] } | undefined;
+  if (b && Array.isArray(b.fields)) return b.fields;
+  return props.component.fields ?? [];
 });
+
+const formValues = computed<PopupValues>(() => {
+  if (props.component.type !== 'form') return {};
+  const b = bound.value as { values?: PopupValues } | undefined;
+  if (b?.values && typeof b.values === 'object') return b.values;
+  return props.component.values ?? {};
+});
+
+const formUid = `sf-panel-form-${Math.random().toString(36).slice(2, 8)}`;
+
+const formAction = computed(() => (props.component.type === 'form' ? props.component.action : undefined));
 
 const headerData = computed<PanelHeaderData>(() => {
   if (props.component.type !== 'header') return {};
@@ -326,12 +335,16 @@ function onNodeClick(node: TreeNode) {
       @switch-toggle="(it) => emitAction(it.action, { gesture: 'switch', id: it.id, value: !(it.switch?.on ?? false) })"
     />
 
-    <PanelForm
-      v-else-if="component.type === 'form'"
-      :rows="formData.rows"
-      :empty="formData.empty"
-      @change="(row, value) => emitAction(row.action, { row: row.id, value })"
-    />
+    <template v-else-if="component.type === 'form'">
+      <div v-if="formFields.length === 0 && component.empty" class="sf-empty">{{ component.empty }}</div>
+      <FormFields
+        v-else
+        :section="{ fields: formFields }"
+        :values="formValues"
+        :uid="formUid"
+        @patch="(key, value) => emitAction(formAction, { key, value })"
+      />
+    </template>
 
     <PanelHeader
       v-else-if="component.type === 'header'"

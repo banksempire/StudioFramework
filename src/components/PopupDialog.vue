@@ -1,8 +1,8 @@
 <script setup lang="ts">
 import { computed, ref, useSlots } from 'vue';
-import type { PopupDocument, PopupField, PopupSection, PopupValues } from '../types/popup';
+import type { PopupDocument, PopupSection, PopupValues } from '../types/popup';
 import Dialog from './Dialog.vue';
-import FormFieldControl from './FormFieldControl.vue';
+import FormFields from './FormFields.vue';
 
 const props = withDefaults(
   defineProps<{
@@ -63,15 +63,6 @@ const actions = computed(
 const leftActions = computed(() => actions.value.filter((a) => a.align === 'left'));
 const rightActions = computed(() => actions.value.filter((a) => a.align !== 'left'));
 
-function sectionCols(section: PopupSection): number {
-  return Math.min(Math.max(section.columns ?? 1, 1), 4);
-}
-
-function fieldSpan(field: PopupField, section: PopupSection): string | undefined {
-  const span = Math.min(Math.max(field.span ?? 1, 1), sectionCols(section));
-  return span > 1 ? `grid-column: span ${span}` : undefined;
-}
-
 function isEmpty(value: unknown): boolean {
   if (Array.isArray(value)) return value.length === 0;
   return value === undefined || value === null || String(value).trim() === '';
@@ -81,7 +72,7 @@ function validate(): string | null {
   for (const group of groups.value) {
     for (const section of group.sections) {
       for (const field of section.fields) {
-        if (field.type === 'info' || field.type === 'slot') continue;
+        if (field.type === 'info' || field.type === 'slot' || field.type === 'switch') continue;
         const value = props.values[field.key];
         if (field.required && isEmpty(value)) return `${field.label ?? field.key} is required`;
         if (field.type === 'number' && !isEmpty(value) && !Number.isFinite(Number(value))) {
@@ -93,12 +84,8 @@ function validate(): string | null {
   return null;
 }
 
-function patch(key: string, value: string | number | Array<string | number>) {
+function patch(key: string, value: string | number | boolean | Array<string | number>) {
   emit('update:values', { ...props.values, [key]: value });
-}
-
-function fieldId(field: PopupField): string {
-  return field.id ?? `${uid}-${field.key}`;
 }
 
 function jump(groupId: string) {
@@ -180,49 +167,17 @@ defineExpose({ validate });
             :class="{ 'sf-form-section--first': si === 0 && !(hasNav && gi === 0) }"
           >
             <h3 v-if="section.title" class="sf-form-section-title">{{ section.title }}</h3>
-            <p v-if="section.note" class="sf-form-section-note">{{ section.note }}</p>
-            <div class="sf-form-grid" :data-cols="sectionCols(section)">
-              <template v-for="field in section.fields" :key="field.key">
-                <div
-                  v-if="field.type === 'info'"
-                  class="sf-form-info"
-                  :class="[field.class, {
-                    'sf-form-info--warn': field.hintTone === 'warn',
-                    'sf-form-info--error': field.hintTone === 'error',
-                  }]"
-                >{{ field.text }}</div>
-                <div
-                  v-else
-                  class="sf-form-field"
-                  :class="field.class"
-                  :data-field="field.key"
-                  :style="fieldSpan(field, section)"
-                >
-                  <label v-if="field.label" class="sf-form-label" :for="fieldId(field)">
-                    {{ field.label }}
-                    <span v-if="field.labelNote" class="sf-form-label-note">{{ field.labelNote }}</span>
-                  </label>
-                  <slot :name="`field-${field.key}`" :field="field" :values="values" :patch="patch">
-                    <FormFieldControl
-                      :field="field"
-                      :values="values"
-                      :input-id="fieldId(field)"
-                      :busy="busy"
-                      @patch="patch"
-                    />
-                  </slot>
-                  <span
-                    v-if="field.hint"
-                    class="sf-form-hint"
-                    :class="{
-                      'sf-form-hint--warn': field.hintTone === 'warn',
-                      'sf-form-hint--error': field.hintTone === 'error',
-                    }"
-                  >{{ field.hint }}</span>
-                </div>
+            <FormFields
+              :section="section"
+              :values="values"
+              :uid="uid"
+              :busy="busy"
+              @patch="patch"
+            >
+              <template v-for="(_, name) in $slots" :key="name" #[name]="slotProps">
+                <slot :name="name" v-bind="slotProps ?? {}" />
               </template>
-            </div>
-            <slot v-if="section.extraSlot" :name="section.extraSlot" />
+            </FormFields>
           </section>
         </section>
         <p v-if="error" class="sf-form-error">{{ error }}</p>

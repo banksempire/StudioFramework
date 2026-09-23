@@ -1,12 +1,12 @@
 <script setup lang="ts">
 import { computed, nextTick, onMounted, onUnmounted, reactive, ref, watch } from 'vue';
-import type { PanelAction, PanelSubSection } from '../types/panel';
+import type { PanelAction, PanelSection } from '../types/panel';
 import { readUiValue, uiEpoch, writeUiValue } from '../uiState';
 import SubSection from './SubSection.vue';
 
 const props = withDefaults(
   defineProps<{
-    subSections: PanelSubSection[];
+    sections: PanelSection[];
     hiddenIds: Set<string>;
     stateKey?: string;
     mobile?: boolean;
@@ -57,7 +57,8 @@ function readPersistedSub(subId: string): PersistedSubState | null {
 
 function persistSubState() {
   if (props.mobile || !props.stateKey) return;
-  for (const sub of props.subSections) {
+  for (const sub of props.sections) {
+    if (sub.heading === 3) continue;
     const st = states[sub.id];
     if (!st) continue;
     writeUiValue(`panel.sub.${subStateId(sub.id)}`, {
@@ -67,31 +68,39 @@ function persistSubState() {
   }
 }
 
-const visibleSubSections = computed(() => props.subSections.filter((s) => !props.hiddenIds.has(s.id)));
+const visibleSubSections = computed(() => props.sections.filter((s) => !props.hiddenIds.has(s.id)));
 
-function isResizeable(sub: PanelSubSection): boolean {
-  if (props.mobile) return false;
+function isFlat(sub: PanelSection): boolean {
+  return sub.heading === 3;
+}
+
+function isResizeable(sub: PanelSection): boolean {
+  if (props.mobile || isFlat(sub)) return false;
   const st = states[sub.id];
   return !!st && st.isExpanded && !props.hiddenIds.has(sub.id) && sub.isHeightVariable;
 }
 
-function getBodyHeight(sub: PanelSubSection): number {
+const H3_HEADER_H = 30;
+
+function getBodyHeight(sub: PanelSection): number {
   const st = states[sub.id];
+  if (isFlat(sub)) return st?.measuredHeight ?? 0;
   if (!st?.isExpanded) return 0;
   if (!sub.isHeightVariable) return st.measuredHeight;
   return Math.max(st.height, sub.minHeight ?? 0);
 }
 
-function bodyHeightFor(sub: PanelSubSection): number | null {
+function bodyHeightFor(sub: PanelSection): number | null {
+  if (isFlat(sub)) return null;
   if (!sub.isHeightVariable || props.mobile) return null;
   const st = states[sub.id];
   if (!st?.isExpanded) return 0;
   return Math.max(st.height, sub.minHeight ?? 0);
 }
 
-function findSub(id: string): PanelSubSection {
-  const sub = props.subSections.find((s) => s.id === id);
-  if (!sub) throw new Error(`SubSectionBody: unknown subsection id ${id}`);
+function findSub(id: string): PanelSection {
+  const sub = props.sections.find((s) => s.id === id);
+  if (!sub) throw new Error(`SubSectionBody: unknown section id ${id}`);
   return sub;
 }
 
@@ -116,7 +125,7 @@ function distributeHeight() {
 
   let used = 0;
   for (const sub of visible) {
-    used += TITLE_BAR_H;
+    used += isFlat(sub) ? H3_HEADER_H : TITLE_BAR_H;
     used += getBodyHeight(sub);
   }
   const unallocated = bodyHeight.value - used;
@@ -141,8 +150,10 @@ function measureAndObserve() {
   if (!body) return;
 
   const wanted = new Set(
-    props.subSections
-      .filter((s) => !s.isHeightVariable && !props.hiddenIds.has(s.id) && states[s.id]?.isExpanded)
+    props.sections
+      .filter(
+        (s) => (isFlat(s) || (!s.isHeightVariable && states[s.id]?.isExpanded)) && !props.hiddenIds.has(s.id),
+      )
       .map((s) => s.id),
   );
 
@@ -153,7 +164,7 @@ function measureAndObserve() {
     }
   }
 
-  for (const sub of props.subSections) {
+  for (const sub of props.sections) {
     if (!wanted.has(sub.id)) continue;
     const el = body.querySelector(`[data-sub-body="${sub.id}"]`) as HTMLElement | null;
     if (!el) continue;
@@ -185,7 +196,7 @@ function refresh(defer = false) {
 }
 
 watch(
-  () => props.subSections,
+  () => props.sections,
   (subs) => {
     const ids = new Set(subs.map((s) => s.id));
     for (const sub of subs) {
@@ -212,7 +223,7 @@ watch(
 );
 
 watch(uiEpoch, () => {
-  for (const sub of props.subSections) {
+  for (const sub of props.sections) {
     const persisted = readPersistedSub(sub.id);
     const st = states[sub.id];
     if (!persisted || !st) continue;
@@ -246,8 +257,8 @@ onMounted(() => {
 function toggleExpand(subId: string) {
   const st = states[subId];
   if (!st) return;
-  const sub = props.subSections.find((s) => s.id === subId);
-  if (!sub) return;
+  const sub = props.sections.find((s) => s.id === subId);
+  if (!sub || isFlat(sub)) return;
 
   if (st.isExpanded) {
     st.savedHeight = st.height;
@@ -354,7 +365,7 @@ onUnmounted(() => {
   <div ref="bodyEl" class="sf-subsection-body-container" :style="{ overflowY: ready ? 'auto' : 'hidden' }">
     <template v-for="(sub, i) in visibleSubSections" :key="sub.id">
       <SubSection
-        :sub-section="sub"
+        :section="sub"
         :is-expanded="states[sub.id]?.isExpanded ?? true"
         :body-height="bodyHeightFor(sub)"
         @toggle-expand="toggleExpand(sub.id)"

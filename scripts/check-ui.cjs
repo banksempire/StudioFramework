@@ -89,6 +89,25 @@ const ARTIFACT_DIR = path.join(__dirname, 'artifacts');
   report('status bar renders', await visible('.sf-status-bar'));
   report('workspace tabs render', await visible('.sf-tab:has-text("layout.json")'));
 
+  await page.locator('.sf-tab:has-text("Table")').first().click();
+  await page.waitForTimeout(300);
+  const missingText = await page
+    .locator('.sf-panel--right .sf-panel-missing')
+    .textContent()
+    .catch(() => null);
+  report(
+    'right panel without definition shows placeholder',
+    missingText?.includes('table-demo not defined') === true,
+    `got ${missingText}`,
+  );
+  await page.locator('.sf-tab:has-text("layout.json")').first().click();
+  await page.waitForTimeout(300);
+  report(
+    'right panel definition returns after switching back',
+    (await page.locator('.sf-panel--right .sf-panel-missing').count()) === 0 &&
+      (await page.locator('.sf-panel--right .sf-panel-title').textContent()) === 'Welcome Info',
+  );
+
   const closedAll = await page.evaluate(async () => {
     for (let i = 0; i < 8; i++) {
       const btn = document.querySelector('.sf-tab .sf-tab-close');
