@@ -86,7 +86,7 @@ utilities):
 
 Panels use the same three heading levels as popup dialogs — **H1 groups →
 H2 sections → content** — with one panel-only extra: `heading: 3` renders a
-section as a flat **H3** header (label with a separator line under it, not
+section as a flat **H3** header (a bold label with no separator lines, not
 collapsible, no drag handle, always visible).
 
 ```json
@@ -106,8 +106,8 @@ collapsible, no drag handle, always visible).
   only one group.
 - **H2 (`sections`, default)** are collapsible (chevron) and, when
   `height: "variable"`, drag-resizable; the panel's `⋯` menu can hide/show them.
-- **H3 (`sections` with `"heading": 3`)** are flat: label + separator line,
-  always expanded, no utilities restrictions but no collapse and no drag.
+- **H3 (`sections` with `"heading": 3`)** are flat: a bold label with no
+  separator lines, always expanded, no collapse and no drag.
   `height: "variable"` is rejected for H3 by the loader.
 
 ```json

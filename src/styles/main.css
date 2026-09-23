@@ -692,9 +692,7 @@ body,
 
 .sf-subsection-header--h3 {
   cursor: default;
-  border-bottom: 1px solid var(--sf-border);
-  padding-bottom: 6px;
-  margin-bottom: 2px;
+  box-shadow: none;
 }
 
 .sf-subsection-header--h3:hover {
