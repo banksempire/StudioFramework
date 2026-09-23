@@ -698,7 +698,7 @@ body,
 }
 
 .sf-subsection-label--h3 {
-  font-size: 14px;
+  font-size: 16px;
   font-weight: 600;
   color: var(--sf-text-bright);
 }
@@ -709,8 +709,8 @@ body,
   align-items: center;
   justify-content: center;
   padding: 24px;
-  font-size: 13px;
-  color: var(--sf-text-muted);
+  font-size: 16px;
+  color: var(--sf-text);
   text-align: center;
 }
 
@@ -744,7 +744,7 @@ body,
 }
 
 .sf-subsection-util-label {
-  font-size: 14px;
+  font-size: 16px;
   font-weight: 600;
   letter-spacing: 0.5px;
   white-space: nowrap;
@@ -2331,14 +2331,14 @@ body.sf-dragging-row * {
 }
 
 .sf-pl--card .sf-pl-detail {
-  color: var(--sf-text-muted);
-  font-size: 12px;
+  color: var(--sf-text);
+  font-size: 16px;
   font-variant-numeric: tabular-nums;
 }
 
 .sf-pl-note {
-  font-size: 12px;
-  color: var(--sf-text-muted);
+  font-size: 16px;
+  color: var(--sf-text);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -2390,14 +2390,14 @@ body.sf-dragging-row * {
 }
 
 .sf-pf-hint {
-  color: var(--sf-text-muted);
-  font-size: 14px;
+  color: var(--sf-text);
+  font-size: 16px;
   justify-self: end;
 }
 
 .sf-pf-note {
   grid-column: 1 / -1;
-  color: var(--sf-text-muted);
+  color: var(--sf-text);
   font-size: 16px;
   padding-top: 4px;
 }
@@ -2429,8 +2429,8 @@ body.sf-dragging-row * {
 }
 
 .sf-ph--plain .sf-ph-title {
-  color: var(--sf-text-muted);
-  font-size: 13px;
+  color: var(--sf-text);
+  font-size: 16px;
   font-weight: 400;
   flex: 1;
 }
@@ -2518,7 +2518,7 @@ body.sf-dragging-row * {
 .sf-banner--error {
   padding: 5px 7px;
   border-radius: var(--sf-radius-sm);
-  font-size: 12px;
+  font-size: 16px;
   background: color-mix(in srgb, var(--sf-status-err) 14%, transparent);
   color: var(--sf-status-err);
   white-space: normal;
@@ -2606,16 +2606,16 @@ body.sf-dragging-row * {
 
 .sf-form-section-title {
   margin: 0;
-  font-size: 14px;
+  font-size: 16px;
   font-weight: 600;
   color: var(--sf-text-bright);
 }
 
 .sf-form-section-note {
   margin: -4px 0 0;
-  font-size: 12px;
+  font-size: 16px;
   line-height: 1.5;
-  color: var(--sf-text-muted);
+  color: var(--sf-text);
 }
 
 .sf-form-grid {
@@ -2643,13 +2643,12 @@ body.sf-dragging-row * {
 }
 
 .sf-form-label {
-  font-size: 14px;
+  font-size: 16px;
   color: var(--sf-text);
 }
 
 .sf-form-label-note {
-  font-size: 12px;
-  opacity: 0.75;
+  font-size: 16px;
 }
 
 .sf-dialog-btn {
@@ -2760,8 +2759,8 @@ body.sf-dragging-row * {
 }
 
 .sf-form-hint {
-  font-size: 12px;
-  color: var(--sf-text-muted);
+  font-size: 16px;
+  color: var(--sf-text);
 }
 
 .sf-form-hint--warn {
@@ -2775,7 +2774,7 @@ body.sf-dragging-row * {
 .sf-form-error {
   margin: 0;
   color: var(--sf-status-err);
-  font-size: 12px;
+  font-size: 16px;
 }
 
 .sf-form-footnote {
@@ -2791,9 +2790,9 @@ body.sf-dragging-row * {
 .sf-form-info {
   margin: 0;
   grid-column: 1 / -1;
-  font-size: 13px;
+  font-size: 16px;
   line-height: 1.5;
-  color: var(--sf-text-muted);
+  color: var(--sf-text);
 }
 
 .sf-form-info--warn {
