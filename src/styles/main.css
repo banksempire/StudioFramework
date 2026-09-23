@@ -2645,12 +2645,12 @@ body.sf-dragging-row * {
 }
 
 .sf-form-label {
-  font-size: 12px;
-  color: var(--sf-text-muted);
+  font-size: 14px;
+  color: var(--sf-text);
 }
 
 .sf-form-label-note {
-  font-size: 11px;
+  font-size: 12px;
   opacity: 0.75;
 }
 

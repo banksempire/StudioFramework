@@ -26,7 +26,7 @@ import type {
   TreeNode,
 } from '../types/panel';
 import type { PopupField, PopupOption, PopupOptionGroup, PopupValues } from '../types/popup';
-import frameworkJson from './framework.layout.json';
+import frameworkJson from './framework.layout.json' with { type: 'json' };
 
 let sourceLabel = 'framework.layout.json';
 
@@ -574,18 +574,31 @@ function toSection(v: unknown, path: string): PanelSection {
 
 function toGroup(v: unknown, path: string): PanelGroup {
   const r = needRecord(v, path);
+  const sections = needArray(r.sections, `${path}.sections`).map((s, i) =>
+    toSection(s, `${path}.sections[${i}]`),
+  );
+  if (sections.length === 0) {
+    fail(`${path}.sections`, 'an h1 group needs at least one h2 section');
+  }
+  if (sections.every((sec) => sec.heading === 3)) {
+    fail(`${path}.sections`, 'an h1 group needs at least one h2 section (h3 alone is not enough)');
+  }
   return {
     id: needId(r.id, `${path}.id`),
     title: needString(r.title, `${path}.title`),
-    sections: needArray(r.sections, `${path}.sections`).map((s, i) => toSection(s, `${path}.sections[${i}]`)),
+    sections,
   };
 }
 
 function toPanelDef(v: unknown, path: string): PanelDef {
   const r = needRecord(v, path);
+  const groups = needArray(r.groups, `${path}.groups`).map((g, i) => toGroup(g, `${path}.groups[${i}]`));
+  if (groups.length === 0) {
+    fail(`${path}.groups`, 'a panel needs at least one h1 group');
+  }
   return {
     title: needString(r.title, `${path}.title`),
-    groups: needArray(r.groups, `${path}.groups`).map((g, i) => toGroup(g, `${path}.groups[${i}]`)),
+    groups,
   };
 }
 
