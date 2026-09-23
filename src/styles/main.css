@@ -690,12 +690,10 @@ body,
   transform: rotate(90deg);
 }
 
-.sf-subsection-header--h3 {
+.sf-subsection-header--h3,
+.sf-subsection-header--h3:hover {
   cursor: default;
   box-shadow: none;
-}
-
-.sf-subsection-header--h3:hover {
   background: transparent;
 }
 
