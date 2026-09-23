@@ -695,6 +695,7 @@ body,
   cursor: default;
   box-shadow: none;
   background: transparent;
+  position: static;
 }
 
 .sf-subsection-label--h3 {

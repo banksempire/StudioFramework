@@ -118,5 +118,6 @@ function menuItemsOf(utilId: string) {
         @action="(a) => emit('component-action', a)"
       />
     </div>
+    <slot name="trailing" />
   </div>
 </template>

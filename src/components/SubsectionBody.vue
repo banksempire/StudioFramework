@@ -291,6 +291,28 @@ const handleFlags = computed(() => {
   return flags;
 });
 
+interface SectionBlock {
+  key: string;
+  h2: PanelSection;
+  h2Index: number;
+  trailing: { sub: PanelSection; index: number }[];
+}
+
+const blocks = computed<SectionBlock[]>(() => {
+  const out: SectionBlock[] = [];
+  let current: SectionBlock | null = null;
+  visibleSubSections.value.forEach((sub, index) => {
+    if (sub.heading !== 3 || !current) {
+      const block: SectionBlock = { key: sub.id, h2: sub, h2Index: index, trailing: [] };
+      current = block;
+      out.push(block);
+    } else {
+      current.trailing.push({ sub, index });
+    }
+  });
+  return out;
+});
+
 interface DragState {
   startY: number;
   aboveIds: string[];
@@ -363,23 +385,49 @@ onUnmounted(() => {
 
 <template>
   <div ref="bodyEl" class="sf-subsection-body-container" :style="{ overflowY: ready ? 'auto' : 'hidden' }">
-    <template v-for="(sub, i) in visibleSubSections" :key="sub.id">
+    <template v-for="block in blocks" :key="block.key">
       <SubSection
-        :section="sub"
-        :is-expanded="states[sub.id]?.isExpanded ?? true"
-        :body-height="bodyHeightFor(sub)"
-        @toggle-expand="toggleExpand(sub.id)"
-        @utility="(utilityId, itemId) => emit('utility', sub.id, utilityId, itemId)"
+        :section="block.h2"
+        :is-expanded="states[block.h2.id]?.isExpanded ?? true"
+        :body-height="bodyHeightFor(block.h2)"
+        @toggle-expand="toggleExpand(block.h2.id)"
+        @utility="(utilityId, itemId) => emit('utility', block.h2.id, utilityId, itemId)"
         @content-changed="refresh(true)"
         @component-action="(a) => emit('component-action', a)"
-      />
+      >
+        <template #trailing>
+          <template v-for="entry in block.trailing" :key="entry.sub.id">
+            <SubSection
+              :section="entry.sub"
+              :is-expanded="states[entry.sub.id]?.isExpanded ?? true"
+              :body-height="bodyHeightFor(entry.sub)"
+              @toggle-expand="toggleExpand(entry.sub.id)"
+              @utility="(utilityId, itemId) => emit('utility', entry.sub.id, utilityId, itemId)"
+              @content-changed="refresh(true)"
+              @component-action="(a) => emit('component-action', a)"
+            />
+            <div
+              v-if="entry.index < visibleSubSections.length - 1 && handleFlags[entry.index]"
+              class="sf-subsection-drag-wrapper"
+            >
+              <div
+                class="sf-subsection-drag-handle"
+                @pointerdown="startDrag(entry.index, $event)"
+                @pointermove="onDragMove"
+                @pointerup="onDragEnd"
+                @pointercancel="onDragEnd"
+              />
+            </div>
+          </template>
+        </template>
+      </SubSection>
       <div
-        v-if="i < visibleSubSections.length - 1 && handleFlags[i]"
+        v-if="block.h2Index < visibleSubSections.length - 1 && handleFlags[block.h2Index]"
         class="sf-subsection-drag-wrapper"
       >
         <div
           class="sf-subsection-drag-handle"
-          @pointerdown="startDrag(i, $event)"
+          @pointerdown="startDrag(block.h2Index, $event)"
           @pointermove="onDragMove"
           @pointerup="onDragEnd"
           @pointercancel="onDragEnd"
