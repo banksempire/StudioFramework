@@ -1086,6 +1086,28 @@
                 ]
               },
               {
+                "id": "lib-controls",
+                "title": "Controls",
+                "heading": 3,
+                "components": [
+                  {
+                    "type": "input",
+                    "bind": "demo-input",
+                    "key": "text",
+                    "action": "demo-input",
+                    "placeholder": "type and press the button…",
+                    "mono": true
+                  },
+                  {
+                    "type": "button",
+                    "label": "Add demo row",
+                    "variant": "accent",
+                    "title": "Runs the same action a dialog button would",
+                    "action": "demo-add"
+                  }
+                ]
+              },
+              {
                 "id": "lib-list",
                 "title": "List",
                 "height": "variable",
@@ -1118,7 +1140,8 @@
                 "components": [
                   {
                     "type": "form",
-                    "bind": "demo-form"
+                    "bind": "demo-form",
+                    "action": "demo-form"
                   }
                 ]
               },

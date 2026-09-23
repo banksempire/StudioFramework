@@ -817,47 +817,11 @@ body.sf-dragging-row * {
   color: var(--sf-text-muted);
 }
 
-.sf-pc-input {
-  width: 100%;
-  padding: 4px 8px;
-  background: var(--sf-bg);
-  border: 1px solid var(--sf-border);
-  border-radius: 3px;
-  color: var(--sf-text);
-  font-family: var(--sf-font);
-  font-size: 16px;
-  outline: none;
-}
-
-.sf-pc-input:focus {
-  border-color: var(--sf-accent);
-}
-
 @media (pointer: coarse) {
   input,
   textarea,
   select {
     font-size: 16px;
-  }
-}
-
-.sf-pc-btn {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  padding: 4px 12px;
-  background: var(--sf-accent);
-  border: none;
-  border-radius: 3px;
-  color: var(--sf-text-on-accent);
-  font-family: var(--sf-font);
-  font-size: 16px;
-  cursor: pointer;
-}
-
-@media (hover: hover) {
-  .sf-pc-btn:hover {
-    box-shadow: inset 0 0 0 999px var(--sf-hover-overlay);
   }
 }
 
@@ -2069,16 +2033,6 @@ body.sf-dragging-row * {
   color: var(--sf-accent);
 }
 
-.sf-pc-btn--danger {
-  background: var(--sf-status-err);
-}
-
-.sf-pc-btn--ghost {
-  background: transparent;
-  border: 1px solid var(--sf-border);
-  color: var(--sf-text);
-}
-
 .sf-pc-menubtn {
   display: flex;
   align-items: center;
@@ -2700,6 +2654,63 @@ body.sf-dragging-row * {
 .sf-form-label-note {
   font-size: 11px;
   opacity: 0.75;
+}
+
+.sf-dialog-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  min-width: 88px;
+  padding: 5px 14px;
+  border: 1px solid var(--sf-border);
+  border-radius: var(--sf-radius-sm);
+  background: var(--sf-bg);
+  color: var(--sf-text);
+  font-family: var(--sf-font);
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.sf-dialog-btn:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+
+@media (hover: hover) {
+  .sf-dialog-btn:hover {
+    box-shadow: inset 0 0 0 999px var(--sf-hover-overlay);
+    color: var(--sf-text-bright);
+  }
+}
+
+.sf-dialog-btn--accent {
+  background: var(--sf-accent);
+  border-color: var(--sf-accent);
+  color: var(--sf-text-on-accent);
+}
+
+@media (hover: hover) {
+  .sf-dialog-btn--accent:hover {
+    color: var(--sf-text-on-accent);
+  }
+}
+
+.sf-dialog-btn--danger {
+  background: var(--sf-status-err);
+  border-color: var(--sf-status-err);
+  color: var(--sf-text-on-accent);
+}
+
+@media (hover: hover) {
+  .sf-dialog-btn--danger:hover {
+    color: var(--sf-text-on-accent);
+  }
+}
+
+.sf-dialog-btn--ghost {
+  background: transparent;
+  border-color: transparent;
 }
 
 .sf-form-input {

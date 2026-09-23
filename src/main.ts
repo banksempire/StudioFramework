@@ -40,6 +40,10 @@ const demo = reactive({
   enabled: false,
   level: 'medium',
   caps: 3,
+  rowLabel: 'demo row',
+  scope: 'workspace',
+  when: '',
+  typed: '',
   treeChecked: new Set<string>(['src']),
   note: 'demo banner — click rows and controls',
 });
@@ -116,12 +120,28 @@ registerPanelData('demo-form', () => ({
     },
     { key: 'caps', type: 'stepper', label: 'Concurrency', min: 1, max: 10, labelNote: 'Demo cap' },
     { key: 'pinned', type: 'switch', label: 'Pinned', labelNote: 'Toggle pin' },
+    { key: 'rowLabel', type: 'input', label: 'Row label', placeholder: 'label for the next row' },
+    {
+      key: 'scope',
+      type: 'select',
+      label: 'Scope',
+      options: [
+        { value: 'file', label: 'File' },
+        { value: 'folder', label: 'Folder' },
+        { value: 'workspace', label: 'Workspace' },
+      ],
+    },
+    { key: 'when', type: 'datetime-local', label: 'Starts at' },
+    { key: 'add', type: 'button', label: 'Add demo row', variant: 'accent', action: 'demo-add' },
     { key: 'note', type: 'info', text: demo.note },
   ] satisfies PopupField[],
   values: {
     level: demo.level,
     caps: demo.caps,
     pinned: demo.pinned,
+    rowLabel: demo.rowLabel,
+    scope: demo.scope,
+    when: demo.when,
   } satisfies PopupValues,
 }));
 
@@ -132,6 +152,8 @@ registerPanelData('demo-header', () => ({
 }));
 
 registerPanelData('demo-banner', () => demo.note);
+
+registerPanelData('demo-input', () => ({ value: demo.typed }));
 
 const demoTree: TreeNode[] = [
   {
@@ -256,6 +278,15 @@ function onAction(e: FrameworkAction) {
       if (payload?.key === 'level' && typeof payload.value === 'string') demo.level = payload.value;
       if (payload?.key === 'caps' && typeof payload.value === 'number') demo.caps = payload.value;
       if (payload?.key === 'pinned' && typeof payload.value === 'boolean') demo.pinned = payload.value;
+      if (payload?.key === 'rowLabel' && typeof payload.value === 'string') demo.rowLabel = payload.value;
+      if (payload?.key === 'scope' && typeof payload.value === 'string') demo.scope = payload.value;
+      if (payload?.key === 'when' && typeof payload.value === 'string') demo.when = payload.value;
+      break;
+    case 'demo-input':
+      if (typeof payload?.value === 'string') {
+        demo.typed = payload.value;
+        demo.note = `typed: ${payload.value || '—'}`;
+      }
       break;
     case 'demo-menu-pick': {
       const data = (e.payload as { data?: { level?: string } } | undefined)?.data;

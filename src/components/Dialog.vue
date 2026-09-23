@@ -183,54 +183,6 @@ onUnmounted(() => window.removeEventListener('keydown', onDocKey));
   border-top: 1px solid var(--sf-border);
 }
 
-.sf-dialog-foot :deep(.sf-dialog-btn) {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  min-width: 88px;
-  padding: 5px 14px;
-  border: 1px solid var(--sf-border);
-  border-radius: var(--sf-radius-sm);
-  background: var(--sf-bg);
-  color: var(--sf-text);
-  font-family: var(--sf-font);
-  font-size: 13px;
-  cursor: pointer;
-}
-
-@media (hover: hover) {
-  .sf-dialog-foot :deep(.sf-dialog-btn):hover {
-    box-shadow: inset 0 0 0 999px var(--sf-hover-overlay);
-    color: var(--sf-text-bright);
-  }
-}
-
-.sf-dialog-foot :deep(.sf-dialog-btn--accent) {
-  background: var(--sf-accent);
-  border-color: var(--sf-accent);
-  color: var(--sf-text-on-accent);
-}
-
-@media (hover: hover) {
-  .sf-dialog-foot :deep(.sf-dialog-btn--accent):hover {
-    box-shadow: inset 0 0 0 999px var(--sf-hover-overlay);
-    color: var(--sf-text-on-accent);
-  }
-}
-
-.sf-dialog-foot :deep(.sf-dialog-btn--danger) {
-  background: var(--sf-status-err);
-  border-color: var(--sf-status-err);
-  color: var(--sf-text-on-accent);
-}
-
-@media (hover: hover) {
-  .sf-dialog-foot :deep(.sf-dialog-btn--danger):hover {
-    box-shadow: inset 0 0 0 999px var(--sf-hover-overlay);
-    color: var(--sf-text-on-accent);
-  }
-}
-
 .sf-root--mobile .sf-dialog-backdrop {
   padding: 10px;
   padding-top: calc(var(--sf-safe-top, 0px) + 60px + 10px);

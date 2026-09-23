@@ -24,12 +24,17 @@ export type PopupFieldType =
   | 'multi'
   | 'switch'
   | 'stepper'
+  | 'button'
   | 'info'
   | 'slot';
+
+export type PopupButtonVariant = 'default' | 'accent' | 'danger' | 'ghost';
 
 export interface PopupField {
   key: string;
   type: PopupFieldType;
+  action?: string;
+  variant?: PopupButtonVariant;
   label?: string;
   labelNote?: string;
   placeholder?: string;

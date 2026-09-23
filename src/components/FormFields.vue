@@ -11,6 +11,7 @@ const props = defineProps<{
 
 const emit = defineEmits<{
   patch: [key: string, value: string | number | boolean | Array<string | number>];
+  action: [id: string, key: string];
 }>();
 
 function sectionCols(section: PopupSection): number {
@@ -43,6 +44,17 @@ function patch(key: string, value: string | number | boolean | Array<string | nu
           'sf-form-info--error': field.hintTone === 'error',
         }]"
       >{{ field.text }}</div>
+      <button
+        v-else-if="field.type === 'button'"
+        type="button"
+        class="sf-dialog-btn"
+        :class="field.variant && field.variant !== 'default' ? `sf-dialog-btn--${field.variant}` : undefined"
+        :disabled="field.disabled || busy"
+        :title="field.labelNote"
+        @click="emit('action', field.action ?? field.key, field.key)"
+      >
+        {{ field.label ?? field.key }}
+      </button>
       <div
         v-else
         class="sf-form-field"

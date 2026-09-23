@@ -30,6 +30,46 @@ const ARTIFACT_DIR = path.join(__dirname, 'artifacts');
   await page.waitForTimeout(300);
   report('docker app switches panel', await visible('text=VARIABLES'));
 
+  await page.click('.sf-docker-app[title="Library"]');
+  await page.waitForTimeout(400);
+  const panelBtnClass = await page.locator('.sf-panel--left .sf-dialog-btn').first().getAttribute('class');
+  report(
+    'panel button renders with the dialog button classes',
+    (panelBtnClass ?? '').includes('sf-dialog-btn--accent'),
+    `class=${panelBtnClass}`,
+  );
+  const panelInputClass = await page
+    .locator('.sf-panel--left input.sf-form-input')
+    .first()
+    .getAttribute('class');
+  report(
+    'panel input renders with the popup field input classes',
+    (panelInputClass ?? '').includes('sf-form-input'),
+    `class=${panelInputClass}`,
+  );
+  await page.locator('.sf-panel--left input.sf-form-input').first().pressSequentially('abc', { delay: 30 });
+  await page.waitForTimeout(300);
+  report(
+    'panel input emits its action while typing',
+    (await page.locator('.sf-panel--left').first().textContent())?.includes('typed: abc') === true,
+  );
+  await page.locator('.sf-panel--left .sf-dialog-btn').first().click();
+  await page.waitForTimeout(300);
+  report(
+    'panel button emits its action',
+    (await page.locator('.sf-panel--left').first().textContent())?.includes('added row 3') === true,
+  );
+  await page.locator('.sf-panel--left .sf-form-select').first().selectOption('folder');
+  await page.waitForTimeout(300);
+  report(
+    'panel dropdown accepts a choice',
+    (await page.locator('.sf-panel--left .sf-form-select').inputValue()) === 'folder',
+  );
+  report(
+    'panel form renders a time select',
+    (await page.locator('.sf-panel--left input[type="datetime-local"]').count()) > 0,
+  );
+
   await page.click('.sf-docker-app[title="Explorer"]');
   await page.waitForTimeout(300);
 

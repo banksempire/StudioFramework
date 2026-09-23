@@ -114,6 +114,25 @@ const formUid = `sf-panel-form-${Math.random().toString(36).slice(2, 8)}`;
 
 const formAction = computed(() => (props.component.type === 'form' ? props.component.action : undefined));
 
+const inputState = reactive<{ value: string }>({ value: '' });
+const inputField = computed(() => (props.component.type === 'input' ? props.component : undefined));
+watch(
+  () => [inputField.value, bound.value] as const,
+  () => {
+    const c = inputField.value;
+    if (!c) return;
+    const b = bound.value as { value?: string } | undefined;
+    inputState.value = (b && typeof b.value === 'string' ? b.value : c.value) ?? '';
+  },
+  { immediate: true },
+);
+
+function onInputInput(e: Event) {
+  inputState.value = (e.target as HTMLInputElement).value;
+  const c = inputField.value;
+  if (c?.action) emitAction(c.action, { key: c.key ?? 'value', value: inputState.value });
+}
+
 const headerData = computed<PanelHeaderData>(() => {
   if (props.component.type !== 'header') return {};
   const rec = (bound.value ?? {}) as PanelHeaderData;
@@ -267,16 +286,20 @@ function onNodeClick(node: TreeNode) {
 
     <input
       v-else-if="component.type === 'input'"
-      class="sf-pc-input"
+      v-model="inputState.value"
+      class="sf-form-input"
+      :class="{ 'sf-form-input--mono': component.mono }"
       type="text"
-      :value="component.value"
       :placeholder="component.placeholder"
+      :disabled="component.disabled"
+      :spellcheck="component.spellcheck ?? false"
+      @input="onInputInput"
     />
 
     <button
       v-else-if="component.type === 'button'"
-      class="sf-pc-btn"
-      :class="'sf-pc-btn--' + (component.variant ?? 'default')"
+      class="sf-dialog-btn"
+      :class="component.variant && component.variant !== 'default' ? `sf-dialog-btn--${component.variant}` : undefined"
       :disabled="buttonData.disabled"
       :title="buttonData.title"
       @click="emitAction(component.action)"
@@ -343,6 +366,7 @@ function onNodeClick(node: TreeNode) {
         :values="formValues"
         :uid="formUid"
         @patch="(key, value) => emitAction(formAction, { key, value })"
+        @action="(id) => emitAction(id ?? formAction, {})"
       />
     </template>
 

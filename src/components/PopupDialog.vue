@@ -34,7 +34,7 @@ const props = withDefaults(
 const emit = defineEmits<{
   (e: 'update:open', value: boolean): void;
   (e: 'update:values', value: PopupValues): void;
-  (e: 'action', id: string): void;
+  (e: 'action', id: string, key?: string): void;
   (e: 'cancel'): void;
   (e: 'close'): void;
 }>();
@@ -72,7 +72,13 @@ function validate(): string | null {
   for (const group of groups.value) {
     for (const section of group.sections) {
       for (const field of section.fields) {
-        if (field.type === 'info' || field.type === 'slot' || field.type === 'switch') continue;
+        if (
+          field.type === 'info' ||
+          field.type === 'slot' ||
+          field.type === 'switch' ||
+          field.type === 'button'
+        )
+          continue;
         const value = props.values[field.key];
         if (field.required && isEmpty(value)) return `${field.label ?? field.key} is required`;
         if (field.type === 'number' && !isEmpty(value) && !Number.isFinite(Number(value))) {
@@ -173,6 +179,7 @@ defineExpose({ validate });
               :uid="uid"
               :busy="busy"
               @patch="patch"
+              @action="(id, key) => emit('action', id, key)"
             >
               <template v-for="(_, name) in $slots" :key="name" #[name]="slotProps">
                 <slot :name="name" v-bind="slotProps ?? {}" />

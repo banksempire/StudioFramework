@@ -103,6 +103,7 @@ const POPUP_FIELD_TYPES = [
   'multi',
   'switch',
   'stepper',
+  'button',
   'info',
   'slot',
 ] as const;
@@ -230,9 +231,19 @@ function toPopupField(v: unknown, path: string): PopupField {
     });
     options = arr.length > 0 && 'group' in arr[0] ? (arr as PopupOptionGroup[]) : (arr as PopupOption[]);
   }
+  let variant: PopupField['variant'];
+  if (r.variant !== undefined) {
+    const v = optString(r.variant, `${path}.variant`);
+    if (v === undefined || !(BUTTON_VARIANTS as readonly string[]).includes(v)) {
+      fail(`${path}.variant`, `expected one of ${BUTTON_VARIANTS.join(', ')}`);
+    }
+    variant = v as PopupField['variant'];
+  }
   return {
     key: needString(r.key, `${path}.key`),
     type: type as PopupField['type'],
+    action: optString(r.action, `${path}.action`),
+    variant,
     label: optString(r.label, `${path}.label`),
     labelNote: optString(r.labelNote, `${path}.labelNote`),
     placeholder: optString(r.placeholder, `${path}.placeholder`),
@@ -327,8 +338,14 @@ function toComponent(v: unknown, path: string): PanelComponent {
     case 'input':
       base = {
         type,
-        value: needString(r.value ?? '', `${path}.value`),
+        value: r.value === undefined ? undefined : needString(r.value, `${path}.value`),
+        key: optString(r.key, `${path}.key`),
+        action: optString(r.action, `${path}.action`),
         placeholder: optString(r.placeholder, `${path}.placeholder`),
+        mono: optBool(r.mono, `${path}.mono`),
+        disabled: optBool(r.disabled, `${path}.disabled`),
+        spellcheck: optBool(r.spellcheck, `${path}.spellcheck`),
+        bind,
       };
       break;
     case 'button': {

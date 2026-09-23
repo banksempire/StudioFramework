@@ -142,7 +142,17 @@ export interface ButtonData {
 
 export type PanelComponentBase =
   | { type: 'text'; text: string; muted?: boolean; bind?: string }
-  | { type: 'input'; value: string; placeholder?: string }
+  | {
+      type: 'input';
+      value?: string;
+      key?: string;
+      action?: string;
+      placeholder?: string;
+      mono?: boolean;
+      disabled?: boolean;
+      spellcheck?: boolean;
+      bind?: string;
+    }
   | {
       type: 'button';
       label: string;
