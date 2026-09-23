@@ -262,9 +262,6 @@ const rightDef = computed<RightResolution>(() => {
 
 const rightPanelShown = computed(() => !rightAutoHidden.value && rightPanelVisible.value);
 
-const rightMissingName = computed(() =>
-  rightDef.value.kind === 'missing' ? rightDef.value.name : '',
-);
 
 function showAutoHiddenLeft() {
   leftAutoHidden.value = false;
@@ -454,9 +451,9 @@ function onPanelAction(a: PanelAction) {
           :class="{ 'sf-panel--hidden': !effRightPanelVisible }"
         >
           <div class="sf-panel-header">
-            <span class="sf-panel-title">{{ rightMissingName }}</span>
+            <span class="sf-panel-title">Info Panel</span>
           </div>
-          <div class="sf-panel-missing">{{ rightMissingName }} not defined</div>
+          <div class="sf-panel-missing">Panel layout undefined</div>
         </div>
       </div>
     </div>
@@ -497,14 +494,14 @@ function onPanelAction(a: PanelAction) {
         />
         <div v-else class="sf-panel sf-panel--mobile sf-panel--missing">
           <div class="sf-panel-header">
-            <span class="sf-panel-title">{{ rightMissingName }}</span>
+            <span class="sf-panel-title">Info Panel</span>
             <button
               class="sf-panel-close-btn"
               title="Close panel"
               @click="mobileRightOpen = false"
             ><SvgIcon name="✕" /></button>
           </div>
-          <div class="sf-panel-missing">{{ rightMissingName }} not defined</div>
+          <div class="sf-panel-missing">Panel layout undefined</div>
         </div>
       </div>
     </template>

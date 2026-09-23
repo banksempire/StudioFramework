@@ -137,7 +137,7 @@ const ARTIFACT_DIR = path.join(__dirname, 'artifacts');
     .catch(() => null);
   report(
     'right panel without definition shows placeholder',
-    missingText?.includes('table-demo not defined') === true,
+    missingText?.includes('Panel layout undefined') === true,
     `got ${missingText}`,
   );
   await page.locator('.sf-tab:has-text("layout.json")').first().click();

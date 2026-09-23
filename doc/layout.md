@@ -23,7 +23,7 @@ Validation notes:
 - `docker` must contain **at least one** item.
 - There is no default right panel. Each workspace tab gets its right panel from
   `rightPanels[content]` (falling back to `rightPanels[tab.id]`); when neither
-  exists the panel shows "`<name>` not defined" instead of guessing.
+  exists the panel shows a neutral "Info Panel / Panel layout undefined" placeholder instead of guessing.
 - `minTileWidth` / `minTileHeight` must be positive numbers; they are rounded
   and default to `160` / `100`.
 - `framework` is optional (defaults to `{ "title": "Studio Framework" }`).
