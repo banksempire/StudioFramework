@@ -375,11 +375,26 @@ const visibleRows = computed(() => {
 
 const page = ref(1);
 const sizeModel = ref(props.pageSize);
+const sizeMenu = ref<{ x: number; y: number } | null>(null);
 const injectedMobile = inject(kIsMobile, null);
 const mobile = computed(() => injectedMobile?.value ?? false);
 const effectiveSize = computed(() =>
   mobile.value && props.pageSizeOptions.length > 0 ? 50 : sizeModel.value,
 );
+function toggleSizeMenu(e: Event) {
+  if (sizeMenu.value) {
+    sizeMenu.value = null;
+    return;
+  }
+  const r = (e.currentTarget as HTMLElement).getBoundingClientRect();
+  sizeMenu.value = { x: r.left, y: r.top };
+}
+function chooseSize(size: number) {
+  sizeModel.value = size;
+  page.value = 1;
+  sizeMenu.value = null;
+  emit('page-size-change', size);
+}
 watch(
   () => props.pageSize,
   (v) => {
@@ -410,11 +425,6 @@ watch(
     page.value = 1;
   },
 );
-
-function onPageSizeChange() {
-  page.value = 1;
-  emit('page-size-change', sizeModel.value);
-}
 
 function toggleSort(c: TableColumn) {
   if (!c.sortable) return;
@@ -449,6 +459,8 @@ function togglePopover(key: string) {
 function onDocPointerDown(e: Event) {
   const el = e.target as HTMLElement | null;
   if (colMenu.value && !el?.closest('.sf-tbl-colmenu')) colMenu.value = null;
+  if (sizeMenu.value && !el?.closest('.sf-tbl-sizemenu') && !el?.closest('.sf-tbl-pager-range--size'))
+    sizeMenu.value = null;
   if (!openFilter.value) return;
   if (el?.closest('.sf-tbl-pop') || el?.closest('.sf-tbl-hbtn')) return;
   openFilter.value = null;
@@ -691,7 +703,17 @@ onBeforeUnmount(() => {
   </div>
     </div>
     <div v-if="pageCount > 1 || pageSizeOptions.length > 0" class="sf-tbl-pager">
-      <span class="sf-tbl-pager-range">{{ pagerRange }}</span>
+      <span
+        v-if="pageSizeOptions.length > 0 && !mobile"
+        class="sf-tbl-pager-range sf-tbl-pager-range--size"
+        role="button"
+        tabindex="0"
+        :aria-label="`Rows per page, currently ${effectiveSize}. Choose rows per page`"
+        @click.stop="toggleSizeMenu($event)"
+        @keydown.enter.prevent="toggleSizeMenu($event)"
+        @keydown.space.prevent="toggleSizeMenu($event)"
+      >{{ pagerRange }}</span>
+      <span v-else class="sf-tbl-pager-range">{{ pagerRange }}</span>
       <div class="sf-tbl-pager-group">
         <button
           class="sf-tbl-pager-btn"
@@ -740,16 +762,22 @@ onBeforeUnmount(() => {
           <SvgIcon name="»" />
         </button>
       </div>
-      <select
-        v-if="pageSizeOptions.length > 0 && !mobile"
-        v-model.number="sizeModel"
-        class="sf-form-input sf-form-select sf-tbl-pager-select sf-tbl-pager-size"
-        title="Rows per page"
-        aria-label="Rows per page"
-        @change="onPageSizeChange()"
-      >
-        <option v-for="o in pageSizeOptions" :key="o" :value="o">{{ o }} / page</option>
-      </select>
+    </div>
+    <div
+      v-if="sizeMenu"
+      class="sf-tbl-sizemenu"
+      :style="{ left: `${sizeMenu.x}px`, top: `${sizeMenu.y}px` }"
+      @pointerdown.stop
+    >
+      <div class="sf-tbl-colmenu-head">Rows per page</div>
+      <button
+        v-for="o in pageSizeOptions"
+        :key="o"
+        class="sf-tbl-sizemenu-act"
+        :class="{ 'sf-tbl-sizemenu-act--on': o === effectiveSize }"
+        type="button"
+        @click="chooseSize(o)"
+      >{{ o }}{{ o === effectiveSize ? ' ✓' : '' }}</button>
     </div>
   </div>
 </template>
@@ -1186,6 +1214,52 @@ onBeforeUnmount(() => {
   }
 }
 
+.sf-tbl-pager-range--size {
+  cursor: pointer;
+  padding: 2px 6px;
+  margin: -2px -6px;
+  border-radius: var(--sf-radius-sm);
+  text-decoration: underline dotted;
+  text-underline-offset: 3px;
+}
+.sf-tbl-pager-range--size:hover {
+  background: var(--sf-bg-light);
+  text-decoration-style: solid;
+}
+.sf-tbl-pager-range--size:focus-visible {
+  outline: 1px solid var(--sf-accent, #4c8dff);
+  outline-offset: 1px;
+}
+.sf-tbl-sizemenu {
+  position: fixed;
+  z-index: 30;
+  transform: translateY(calc(-100% - 6px));
+  display: flex;
+  flex-direction: column;
+  min-width: 130px;
+  padding: 6px;
+  background: var(--sf-bg-lighter);
+  border: 1px solid var(--sf-border);
+  border-radius: 8px;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.35);
+}
+.sf-tbl-sizemenu-act {
+  background: none;
+  border: none;
+  border-radius: var(--sf-radius-sm);
+  color: var(--sf-text);
+  cursor: pointer;
+  font-family: var(--sf-font);
+  font-size: 13px;
+  padding: 4px 6px;
+  text-align: left;
+}
+.sf-tbl-sizemenu-act:hover {
+  background: var(--sf-bg-light);
+}
+.sf-tbl-sizemenu-act--on {
+  font-weight: 600;
+}
 .sf-tbl-pager-select {
   width: auto;
   height: 24px;
@@ -1193,9 +1267,6 @@ onBeforeUnmount(() => {
   border-radius: var(--sf-radius-sm);
   font-size: 12px;
   padding: 0 24px 0 8px;
-}
-.sf-tbl-pager-size {
-  margin-left: 8px;
 }
 
 .sf-tbl-empty {

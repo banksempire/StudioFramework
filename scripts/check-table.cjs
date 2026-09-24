@@ -17,7 +17,18 @@ const { ensureServer, openApp, makeReporter, finish } = require('./lib/ui-test.c
     await demo.waitFor({ state: 'visible', timeout: 10000 });
     await delay(300);
     const jobsBlock = page.locator('.sf-table-demo-block--cap').first();
-    const sizeSelect = jobsBlock.locator('.sf-tbl-pager-size');
+    const sizeRange = jobsBlock.locator('.sf-tbl-pager-range--size');
+    const pickSize = async (n) => {
+      await sizeRange.click();
+      await page.locator('.sf-tbl-sizemenu').waitFor({ state: 'visible', timeout: 3000 });
+      await page
+        .locator('.sf-tbl-sizemenu-act')
+        .filter({ hasText: new RegExp(`^${n}`) })
+        .first()
+        .click();
+      await page.locator('.sf-tbl-sizemenu').waitFor({ state: 'hidden', timeout: 3000 });
+      await delay(200);
+    };
 
     const rowsIn = (sel) => page.locator(`.sf-table-demo-block:first-child ${sel}`);
 
@@ -144,11 +155,7 @@ const { ensureServer, openApp, makeReporter, finish } = require('./lib/ui-test.c
         };
       });
     const scrollBefore = await (async () => {
-      await jobsBlock
-        .locator('.sf-tbl-pager-size')
-        .selectOption('10')
-        .catch(() => {});
-      await delay(200);
+      await pickSize(10).catch(() => {});
       return jobGeom();
     })();
     await page.mouse.move(scrollBefore.x, scrollBefore.y);
@@ -881,7 +888,7 @@ const { ensureServer, openApp, makeReporter, finish } = require('./lib/ui-test.c
 
     const mobilePager = await page.evaluate(() => {
       const cap = document.querySelector('.sf-table-demo-block--cap');
-      const size = cap.querySelector('.sf-tbl-pager-size');
+      const size = cap.querySelector('.sf-tbl-pager-range--size');
       return {
         rows: cap.querySelectorAll('.sf-tbl-row').length,
         display: size ? getComputedStyle(size).display : 'absent',
@@ -910,7 +917,7 @@ const { ensureServer, openApp, makeReporter, finish } = require('./lib/ui-test.c
 
     const desktopPager = await page.evaluate(() => {
       const cap = document.querySelector('.sf-table-demo-block--cap');
-      const size = cap.querySelector('.sf-tbl-pager-size');
+      const size = cap.querySelector('.sf-tbl-pager-range--size');
       return {
         rows: cap.querySelectorAll('.sf-tbl-row').length,
         display: size ? getComputedStyle(size).display : 'absent',
@@ -922,13 +929,20 @@ const { ensureServer, openApp, makeReporter, finish } = require('./lib/ui-test.c
       JSON.stringify(desktopPager),
     );
 
-    await sizeSelect.waitFor({ state: 'visible', timeout: 5000 });
-    await sizeSelect.selectOption('5');
+    await sizeRange.waitFor({ state: 'visible', timeout: 5000 });
+    await sizeRange.click();
+    await page.locator('.sf-tbl-sizemenu').waitFor({ state: 'visible', timeout: 3000 });
+    report(
+      'the range opens a rows-per-page menu anchored above the pager',
+      (await page.locator('.sf-tbl-sizemenu-act').count()) === 2,
+    );
+    await page.locator('.sf-tbl-sizemenu-act').filter({ hasText: /^5/ }).first().click();
+    await page.locator('.sf-tbl-sizemenu').waitFor({ state: 'hidden', timeout: 3000 });
     await delay(200);
     const pageSizeRows = () =>
       page.evaluate(() => {
         const blocks = [...document.querySelectorAll('.sf-table-demo-block')];
-        const block = blocks.find((b) => b.querySelector('.sf-tbl-pager-size'));
+        const block = blocks.find((b) => b.querySelector('.sf-tbl-pager-range--size'));
         return {
           rows: block.querySelectorAll('.sf-tbl-row').length,
           range: block.querySelector('.sf-tbl-pager-range')?.textContent ?? '',
@@ -941,7 +955,7 @@ const { ensureServer, openApp, makeReporter, finish } = require('./lib/ui-test.c
       sizeInitial.rows === 5 && sizeInitial.range.startsWith('1–5'),
       JSON.stringify(sizeInitial),
     );
-    await sizeSelect.selectOption('10');
+    await pickSize(10);
     await delay(200);
     const widened = await pageSizeRows();
     report(
@@ -949,9 +963,9 @@ const { ensureServer, openApp, makeReporter, finish } = require('./lib/ui-test.c
       widened.rows === 10 && widened.range.startsWith('1–10'),
       JSON.stringify(widened),
     );
-    await jobsBlock.locator('.sf-tbl-pager-select:not(.sf-tbl-pager-size)').selectOption({ index: 1 });
+    await jobsBlock.locator('.sf-tbl-pager-select').selectOption({ index: 1 });
     await delay(200);
-    await sizeSelect.selectOption('5');
+    await pickSize(5);
     await delay(200);
     const reset = await pageSizeRows();
     report(
