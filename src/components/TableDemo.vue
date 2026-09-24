@@ -20,7 +20,7 @@ const fileColumns = ref<TableColumn[]>([
   { key: 'note', label: 'Note' },
 ]);
 
-const state = reactive({ edits: 0, removed: '', widths: '', clicked: '', selKey: '' });
+const state = reactive({ edits: 0, removed: '', widths: '', clicked: '', selKey: '', pageSize: 5 });
 
 function removeFile(row: Record<string, unknown>) {
   const i = files.findIndex((f) => f.name === row.name);
@@ -114,6 +114,9 @@ const fileRows = computed(() => files as Array<Record<string, unknown>>);
         row-key="id"
         searchable
         search-placeholder="Search jobs…"
+        :page-size="5"
+        :page-size-options="[5, 10]"
+        @page-size-change="(s) => (state.pageSize = s)"
       >
         <template #cell-on="{ row }">
           <button

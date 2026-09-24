@@ -15,6 +15,7 @@ const props = withDefaults(
     searchable?: boolean;
     searchPlaceholder?: string;
     pageSize?: number;
+    pageSizeOptions?: number[];
     resizable?: boolean;
   }>(),
   {
@@ -23,6 +24,7 @@ const props = withDefaults(
     searchable: false,
     searchPlaceholder: 'Search…',
     pageSize: 0,
+    pageSizeOptions: () => [],
     resizable: true,
   },
 );
@@ -30,6 +32,7 @@ const props = withDefaults(
 const emit = defineEmits<{
   'row-click': [row: Record<string, unknown>];
   'update:columns': [columns: TableColumn[]];
+  'page-size-change': [size: number];
 }>();
 
 const slots = useSlots();
@@ -370,16 +373,24 @@ const visibleRows = computed(() => {
 });
 
 const page = ref(1);
+const sizeModel = ref(props.pageSize);
+watch(
+  () => props.pageSize,
+  (v) => {
+    sizeModel.value = v;
+    page.value = 1;
+  },
+);
 const pageCount = computed(() =>
-  props.pageSize > 0 ? Math.max(1, Math.ceil(visibleRows.value.length / props.pageSize)) : 1,
+  sizeModel.value > 0 ? Math.max(1, Math.ceil(visibleRows.value.length / sizeModel.value)) : 1,
 );
 const pageRows = computed(() =>
-  props.pageSize > 0
-    ? visibleRows.value.slice((page.value - 1) * props.pageSize, page.value * props.pageSize)
+  sizeModel.value > 0
+    ? visibleRows.value.slice((page.value - 1) * sizeModel.value, page.value * sizeModel.value)
     : visibleRows.value,
 );
 const pagerRange = computed(() => {
-  const size = props.pageSize > 0 ? props.pageSize : visibleRows.value.length;
+  const size = sizeModel.value > 0 ? sizeModel.value : visibleRows.value.length;
   const start = visibleRows.value.length === 0 ? 0 : (page.value - 1) * size + 1;
   const end = Math.min(page.value * size, visibleRows.value.length);
   return `${start}–${end} of ${visibleRows.value.length}`;
@@ -393,6 +404,11 @@ watch(
     page.value = 1;
   },
 );
+
+function onPageSizeChange() {
+  page.value = 1;
+  emit('page-size-change', sizeModel.value);
+}
 
 function toggleSort(c: TableColumn) {
   if (!c.sortable) return;
@@ -668,7 +684,7 @@ onBeforeUnmount(() => {
     </div>
   </div>
     </div>
-    <div v-if="pageCount > 1" class="sf-tbl-pager">
+    <div v-if="pageCount > 1 || pageSizeOptions.length > 0" class="sf-tbl-pager">
       <span class="sf-tbl-pager-range">{{ pagerRange }}</span>
       <div class="sf-tbl-pager-group">
         <button
@@ -718,6 +734,16 @@ onBeforeUnmount(() => {
           <SvgIcon name="»" />
         </button>
       </div>
+      <select
+        v-if="pageSizeOptions.length > 0"
+        v-model.number="sizeModel"
+        class="sf-form-input sf-form-select sf-tbl-pager-select sf-tbl-pager-size"
+        title="Rows per page"
+        aria-label="Rows per page"
+        @change="onPageSizeChange()"
+      >
+        <option v-for="o in pageSizeOptions" :key="o" :value="o">{{ o }} / page</option>
+      </select>
     </div>
   </div>
 </template>
@@ -1161,6 +1187,9 @@ onBeforeUnmount(() => {
   border-radius: var(--sf-radius-sm);
   font-size: 12px;
   padding: 0 24px 0 8px;
+}
+.sf-tbl-pager-size {
+  margin-left: 8px;
 }
 
 .sf-tbl-empty {

@@ -16,6 +16,8 @@ const { ensureServer, openApp, makeReporter, finish } = require('./lib/ui-test.c
     const demo = page.locator('.sf-table-demo');
     await demo.waitFor({ state: 'visible', timeout: 10000 });
     await delay(300);
+    const jobsBlock = page.locator('.sf-table-demo-block--cap').first();
+    const sizeSelect = jobsBlock.locator('.sf-tbl-pager-size');
 
     const rowsIn = (sel) => page.locator(`.sf-table-demo-block:first-child ${sel}`);
 
@@ -141,7 +143,14 @@ const { ensureServer, openApp, makeReporter, finish } = require('./lib/ui-test.c
           y: scroller.getBoundingClientRect().top + scroller.getBoundingClientRect().height / 2,
         };
       });
-    const scrollBefore = await jobGeom();
+    const scrollBefore = await (async () => {
+      await jobsBlock
+        .locator('.sf-tbl-pager-size')
+        .selectOption('10')
+        .catch(() => {});
+      await delay(200);
+      return jobGeom();
+    })();
     await page.mouse.move(scrollBefore.x, scrollBefore.y);
     await page.mouse.wheel(0, 140);
     await delay(300);
@@ -152,7 +161,7 @@ const { ensureServer, openApp, makeReporter, finish } = require('./lib/ui-test.c
         scrollAfter.scrollTop > 40 &&
         Math.abs(scrollAfter.barTop - scrollBefore.barTop) <= 1 &&
         Math.abs(scrollAfter.headTop - scrollBefore.headTop) <= 1 &&
-        scrollAfter.rowTop < scrollBefore.rowTop - 100,
+        scrollAfter.rowTop < scrollBefore.rowTop - 40,
       JSON.stringify({ before: scrollBefore, after: scrollAfter }),
     );
     await rowsIn('.sf-tbl-search-input').fill('mon');
@@ -883,6 +892,44 @@ const { ensureServer, openApp, makeReporter, finish } = require('./lib/ui-test.c
       'desktop layout restored after resizing back',
       backDesktop.head === 'grid' && backDesktop.rows >= 4,
       JSON.stringify(backDesktop),
+    );
+
+    await sizeSelect.waitFor({ state: 'visible', timeout: 5000 });
+    await sizeSelect.selectOption('5');
+    await delay(200);
+    const pageSizeRows = () =>
+      page.evaluate(() => {
+        const blocks = [...document.querySelectorAll('.sf-table-demo-block')];
+        const block = blocks.find((b) => b.querySelector('.sf-tbl-pager-size'));
+        return {
+          rows: block.querySelectorAll('.sf-tbl-row').length,
+          range: block.querySelector('.sf-tbl-pager-range')?.textContent ?? '',
+          page: block.querySelector('.sf-tbl-pager-select')?.textContent ?? '',
+        };
+      });
+    const sizeInitial = await pageSizeRows();
+    report(
+      'page size dropdown renders with the configured default',
+      sizeInitial.rows === 5 && sizeInitial.range.startsWith('1–5'),
+      JSON.stringify(sizeInitial),
+    );
+    await sizeSelect.selectOption('10');
+    await delay(200);
+    const widened = await pageSizeRows();
+    report(
+      'choosing a larger page size shows more rows and resets to page 1',
+      widened.rows === 10 && widened.range.startsWith('1–10'),
+      JSON.stringify(widened),
+    );
+    await jobsBlock.locator('.sf-tbl-pager-select:not(.sf-tbl-pager-size)').selectOption({ index: 1 });
+    await delay(200);
+    await sizeSelect.selectOption('5');
+    await delay(200);
+    const reset = await pageSizeRows();
+    report(
+      'changing page size jumps back to page 1',
+      reset.rows === 5 && reset.range.startsWith('1–5'),
+      JSON.stringify(reset),
     );
   } catch (err) {
     console.error(err);
