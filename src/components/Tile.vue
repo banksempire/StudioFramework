@@ -9,6 +9,7 @@ import Icon from './Icon.vue';
 import Menu from './Menu.vue';
 import SvgIcon from './SvgIcon.vue';
 import TabDropdown from './TabDropdown.vue';
+import TilePlaceholder from './TilePlaceholder.vue';
 
 const props = defineProps<{ tile: TileNode }>();
 const ws = useWorkspaceContext();
@@ -282,24 +283,27 @@ function onTileMousedown() {
     </div>
 
     <div class="sf-tile-content">
-      <div v-if="!activeTab" class="sf-tile-empty">
-        <component v-if="emptyComp" :is="emptyComp" />
-        <div v-else class="sf-tile-empty-inner">
-          <p>No tab open</p>
-          <p class="sf-tile-empty-hint">Drag a tab here, or press <kbd>+</kbd></p>
-        </div>
-      </div>
-      <div v-else-if="contentComp" class="sf-tile-custom">
-        <component :is="contentComp" v-bind="activeTab.props ?? {}" />
-      </div>
-      <div v-else class="sf-tile-placeholder">
-        <div class="sf-tile-lines">
-          <div v-for="n in 12" :key="n" class="sf-tile-line">
-            <span class="sf-line-number">{{ n }}</span>
-            <span class="sf-line-text">{{ n === 1 ? '// ' + activeTab.label : '' }}</span>
+      <KeepAlive :max="32">
+        <div v-if="!activeTab" key="sf-tile-empty" class="sf-tile-empty">
+          <component v-if="emptyComp" :is="emptyComp" />
+          <div v-else class="sf-tile-empty-inner">
+            <p>No tab open</p>
+            <p class="sf-tile-empty-hint">Drag a tab here, or press <kbd>+</kbd></p>
           </div>
         </div>
-      </div>
+        <component
+          v-else-if="contentComp"
+          :is="contentComp"
+          :key="activeTab.id"
+          class="sf-tile-custom"
+          v-bind="activeTab.props ?? {}"
+        />
+        <TilePlaceholder
+          v-else
+          key="sf-tile-placeholder"
+          :label="activeTab.label"
+        />
+      </KeepAlive>
     </div>
   </div>
 </template>
