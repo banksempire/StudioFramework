@@ -1216,15 +1216,15 @@ onBeforeUnmount(() => {
 
 .sf-tbl-pager-range--size {
   cursor: pointer;
-  padding: 2px 6px;
-  margin: -2px -6px;
+  padding: 2px 8px;
+  margin: -3px -8px;
+  border: 1px solid var(--sf-border);
   border-radius: var(--sf-radius-sm);
-  text-decoration: underline dotted;
-  text-underline-offset: 3px;
+  background: var(--sf-bg-dark);
+  line-height: 17px;
 }
 .sf-tbl-pager-range--size:hover {
   background: var(--sf-bg-light);
-  text-decoration-style: solid;
 }
 .sf-tbl-pager-range--size:focus-visible {
   outline: 1px solid var(--sf-accent, #4c8dff);
