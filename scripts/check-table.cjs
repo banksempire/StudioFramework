@@ -879,6 +879,20 @@ const { ensureServer, openApp, makeReporter, finish } = require('./lib/ui-test.c
       JSON.stringify(jobCard),
     );
 
+    const mobilePager = await page.evaluate(() => {
+      const cap = document.querySelector('.sf-table-demo-block--cap');
+      const size = cap.querySelector('.sf-tbl-pager-size');
+      return {
+        rows: cap.querySelectorAll('.sf-tbl-row').length,
+        display: size ? getComputedStyle(size).display : 'absent',
+      };
+    });
+    report(
+      'mobile: page-size dropdown hidden and rows forced to 50/page',
+      (mobilePager.display === 'none' || mobilePager.display === 'absent') && mobilePager.rows === 12,
+      JSON.stringify(mobilePager),
+    );
+
     await page.setViewportSize({ width: 1440, height: 900 });
     await delay(300);
     const backDesktop = await page.evaluate(() => {
@@ -892,6 +906,20 @@ const { ensureServer, openApp, makeReporter, finish } = require('./lib/ui-test.c
       'desktop layout restored after resizing back',
       backDesktop.head === 'grid' && backDesktop.rows >= 4,
       JSON.stringify(backDesktop),
+    );
+
+    const desktopPager = await page.evaluate(() => {
+      const cap = document.querySelector('.sf-table-demo-block--cap');
+      const size = cap.querySelector('.sf-tbl-pager-size');
+      return {
+        rows: cap.querySelectorAll('.sf-tbl-row').length,
+        display: size ? getComputedStyle(size).display : 'absent',
+      };
+    });
+    report(
+      'desktop: page-size dropdown returns with the selected size',
+      desktopPager.display !== 'none' && desktopPager.display !== 'absent' && desktopPager.rows === 5,
+      JSON.stringify(desktopPager),
     );
 
     await sizeSelect.waitFor({ state: 'visible', timeout: 5000 });

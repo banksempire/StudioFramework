@@ -1,5 +1,6 @@
 <script setup lang="ts">
-import { computed, nextTick, onBeforeUnmount, onMounted, reactive, ref, useSlots, watch } from 'vue';
+import { computed, inject, nextTick, onBeforeUnmount, onMounted, reactive, ref, useSlots, watch } from 'vue';
+import { kIsMobile } from '../composables/useWorkspace';
 import type { TableColumn } from '../types/table';
 import SvgIcon from './SvgIcon.vue';
 
@@ -374,6 +375,11 @@ const visibleRows = computed(() => {
 
 const page = ref(1);
 const sizeModel = ref(props.pageSize);
+const injectedMobile = inject(kIsMobile, null);
+const mobile = computed(() => injectedMobile?.value ?? false);
+const effectiveSize = computed(() =>
+  mobile.value && props.pageSizeOptions.length > 0 ? 50 : sizeModel.value,
+);
 watch(
   () => props.pageSize,
   (v) => {
@@ -382,15 +388,15 @@ watch(
   },
 );
 const pageCount = computed(() =>
-  sizeModel.value > 0 ? Math.max(1, Math.ceil(visibleRows.value.length / sizeModel.value)) : 1,
+  effectiveSize.value > 0 ? Math.max(1, Math.ceil(visibleRows.value.length / effectiveSize.value)) : 1,
 );
 const pageRows = computed(() =>
-  sizeModel.value > 0
-    ? visibleRows.value.slice((page.value - 1) * sizeModel.value, page.value * sizeModel.value)
+  effectiveSize.value > 0
+    ? visibleRows.value.slice((page.value - 1) * effectiveSize.value, page.value * effectiveSize.value)
     : visibleRows.value,
 );
 const pagerRange = computed(() => {
-  const size = sizeModel.value > 0 ? sizeModel.value : visibleRows.value.length;
+  const size = effectiveSize.value > 0 ? effectiveSize.value : visibleRows.value.length;
   const start = visibleRows.value.length === 0 ? 0 : (page.value - 1) * size + 1;
   const end = Math.min(page.value * size, visibleRows.value.length);
   return `${start}–${end} of ${visibleRows.value.length}`;
@@ -735,7 +741,7 @@ onBeforeUnmount(() => {
         </button>
       </div>
       <select
-        v-if="pageSizeOptions.length > 0"
+        v-if="pageSizeOptions.length > 0 && !mobile"
         v-model.number="sizeModel"
         class="sf-form-input sf-form-select sf-tbl-pager-select sf-tbl-pager-size"
         title="Rows per page"
