@@ -217,8 +217,10 @@ const templateColumns = computed(() => {
   ].join(' ');
 });
 
-const sizerObserver = new ResizeObserver(() => {
-  if (sizerEl.value) actionsWidth.value = sizerEl.value.offsetWidth;
+const sizerObserver = new ResizeObserver((entries) => {
+  const w = entries[entries.length - 1]?.contentRect.width ?? 0;
+  if (!sizerEl.value || w === 0) return;
+  actionsWidth.value = sizerEl.value.offsetWidth;
 });
 
 function setSizerEl(el: unknown) {
@@ -239,7 +241,11 @@ watch(
   { immediate: true },
 );
 
-const tblObserver = new ResizeObserver(() => {
+let lastTblWidth = -1;
+const tblObserver = new ResizeObserver((entries) => {
+  const w = entries[entries.length - 1]?.contentRect.width ?? 0;
+  if (w === 0 || w === lastTblWidth) return;
+  lastTblWidth = w;
   if (visibleVars().some((c) => restWidths[c.key] === undefined)) measureAutoColumns();
   else distribute();
 });
