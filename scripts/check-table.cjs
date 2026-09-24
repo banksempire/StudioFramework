@@ -949,6 +949,17 @@ const { ensureServer, openApp, makeReporter, finish } = require('./lib/ui-test.c
           page: block.querySelector('.sf-tbl-pager-select')?.textContent ?? '',
         };
       });
+    const blockBox = await jobsBlock.boundingBox();
+    const rangeBox = await sizeRange.boundingBox();
+    const groupBox = await jobsBlock.locator('.sf-tbl-pager-group').first().boundingBox();
+    report(
+      'the rows-per-page button stays pinned to the bottom left',
+      rangeBox.x - blockBox.x < 80 && groupBox.x - (rangeBox.x + rangeBox.width) > 100,
+      JSON.stringify({
+        left: Math.round(rangeBox.x - blockBox.x),
+        gap: Math.round(groupBox.x - rangeBox.x - rangeBox.width),
+      }),
+    );
     const sizeInitial = await pageSizeRows();
     report(
       'page size dropdown renders with the configured default',
