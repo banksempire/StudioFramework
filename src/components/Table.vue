@@ -1217,7 +1217,7 @@ onBeforeUnmount(() => {
 .sf-tbl-pager-range--size {
   cursor: pointer;
   padding: 2px 8px;
-  margin: -3px -8px;
+  margin: -3px -8px -3px 0;
   margin-right: auto;
   border: 1px solid var(--sf-border);
   border-radius: var(--sf-radius-sm);

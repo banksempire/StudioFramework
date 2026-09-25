@@ -949,14 +949,17 @@ const { ensureServer, openApp, makeReporter, finish } = require('./lib/ui-test.c
           page: block.querySelector('.sf-tbl-pager-select')?.textContent ?? '',
         };
       });
-    const blockBox = await jobsBlock.boundingBox();
+    const pagerBox = await jobsBlock.locator('.sf-tbl-pager').first().boundingBox();
     const rangeBox = await sizeRange.boundingBox();
-    const groupBox = await jobsBlock.locator('.sf-tbl-pager-group').first().boundingBox();
+    const groupBox = await jobsBlock.locator('.sf-tbl-pager-group').last().boundingBox();
+    const leftPad = rangeBox.x - pagerBox.x;
+    const rightPad = pagerBox.x + pagerBox.width - (groupBox.x + groupBox.width);
     report(
       'the rows-per-page button stays pinned to the bottom left',
-      rangeBox.x - blockBox.x < 80 && groupBox.x - (rangeBox.x + rangeBox.width) > 100,
+      leftPad < 80 && groupBox.x - (rangeBox.x + rangeBox.width) > 100 && Math.abs(leftPad - rightPad) < 3,
       JSON.stringify({
-        left: Math.round(rangeBox.x - blockBox.x),
+        left: Math.round(leftPad),
+        right: Math.round(rightPad),
         gap: Math.round(groupBox.x - rangeBox.x - rangeBox.width),
       }),
     );
