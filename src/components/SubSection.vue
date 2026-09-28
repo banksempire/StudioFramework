@@ -1,12 +1,12 @@
 <script setup lang="ts">
-import { ref } from 'vue';
-import { getUtilityMenu } from '../registry';
+import { computed, ref } from 'vue';
+import { getPanelData, getUtilityMenu } from '../registry';
 import type { PanelAction, PanelH2 } from '../types/panel';
 import Menu from './Menu.vue';
 import PanelComponent from './PanelComponent.vue';
 import SvgIcon from './SvgIcon.vue';
 
-defineProps<{
+const props = defineProps<{
   section: PanelH2;
   isExpanded: boolean;
   bodyHeight: number | null;
@@ -20,6 +20,14 @@ const emit = defineEmits<{
 }>();
 
 const openMenuId = ref<string | null>(null);
+
+const displayTitle = computed(() => {
+  const list = props.section.components.find((c) => c.type === 'list') as { bind?: string } | undefined;
+  if (!list?.bind) return props.section.title;
+  const getter = getPanelData(list.bind);
+  const rec = getter ? (getter() as { title?: string } | undefined) : undefined;
+  return rec?.title || props.section.title;
+});
 
 function menuItemsOf(utilId: string) {
   return getUtilityMenu(utilId)?.();
@@ -35,7 +43,7 @@ function menuItemsOf(utilId: string) {
       v-if="section.heading === 3"
       class="sf-subsection-header sf-subsection-header--h3"
     >
-      <span class="sf-subsection-label sf-subsection-label--h3">{{ section.title }}</span>
+      <span class="sf-subsection-label sf-subsection-label--h3">{{ displayTitle }}</span>
       <div v-if="section.utilities?.length" class="sf-subsection-utils">
         <template v-for="util in section.utilities" :key="util.id">
           <Menu
@@ -70,7 +78,7 @@ function menuItemsOf(utilId: string) {
     </div>
     <div v-else class="sf-subsection-header" @click="emit('toggle-expand')">
       <span class="sf-subsection-arrow" :class="{ 'sf-subsection-arrow--expanded': isExpanded }"><SvgIcon name="❯" /></span>
-      <span class="sf-subsection-label">{{ section.title }}</span>
+      <span class="sf-subsection-label">{{ displayTitle }}</span>
       <div v-if="section.utilities?.length" class="sf-subsection-utils" @click.stop>
         <template v-for="util in section.utilities" :key="util.id">
           <Menu

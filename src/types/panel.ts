@@ -102,6 +102,7 @@ export interface PanelListData {
   items: PanelListItem[];
   empty?: string;
   bulk?: PanelListBulk;
+  title?: string;
 }
 
 export interface PanelHeaderData {
