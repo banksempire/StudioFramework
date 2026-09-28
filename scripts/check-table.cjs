@@ -987,6 +987,13 @@ const { ensureServer, openApp, makeReporter, finish } = require('./lib/ui-test.c
     await navSelect.hover();
     const hoverShadow = await navSelect.evaluate((e) => getComputedStyle(e).boxShadow);
     await page.mouse.move(0, 0);
+    const colorScheme = await navSelect.evaluate((e) => getComputedStyle(e).colorScheme);
+    await navSelect.focus();
+    const focusRing = await navSelect.evaluate((e) => {
+      const st = getComputedStyle(e);
+      return { style: st.outlineStyle, color: st.outlineColor };
+    });
+    await navSelect.evaluate((e) => e.blur());
     report(
       'page navigation is one gapless strip with an arrowless centered select',
       seams.every((g) => Math.abs(g) < 1) &&
@@ -995,8 +1002,17 @@ const { ensureServer, openApp, makeReporter, finish } = require('./lib/ui-test.c
         selStyle.align === 'center' &&
         selStyle.last === 'center' &&
         selStyle.sep === '1px' &&
-        hoverShadow !== 'none',
-      JSON.stringify({ seams: seams.map((g) => Math.round(g)), ...selStyle, hoverShadow }),
+        hoverShadow !== 'none' &&
+        colorScheme === 'dark' &&
+        focusRing.style === 'solid' &&
+        focusRing.color === 'rgb(0, 122, 204)',
+      JSON.stringify({
+        seams: seams.map((g) => Math.round(g)),
+        ...selStyle,
+        hoverShadow,
+        colorScheme,
+        focusRing,
+      }),
     );
     const sizeInitial = await pageSizeRows();
     report(

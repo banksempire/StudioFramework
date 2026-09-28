@@ -97,8 +97,13 @@ defineProps<{ pageCount: number }>();
   font-size: 12px;
   padding: 0 8px;
   cursor: pointer;
+  outline: none;
   text-align: center;
   text-align-last: center;
+}
+.sf-pagenav-page:focus-visible {
+  outline: 1px solid var(--sf-accent);
+  outline-offset: -1px;
 }
 .sf-root--mobile .sf-pagenav {
   border-radius: 8px;

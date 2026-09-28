@@ -26,6 +26,7 @@
 }
 
 :root {
+  color-scheme: dark;
   --sf-bg: #1e1e1e;
   --sf-bg-dark: #181818;
   --sf-bg-light: #252526;
