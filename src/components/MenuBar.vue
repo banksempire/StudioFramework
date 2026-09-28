@@ -199,18 +199,18 @@ function onItemAction(item: MenuNodeDef) {
     </div>
 
     <div class="sf-menu-actions">
-      <button
-        v-if="props.canEvenlySpace"
-        class="sf-menu-action-btn sf-menu-merge"
-        title="Merge all tiles into one"
-        @click="emit('merge-all')"
-      ><SvgIcon name="□" /></button>
-      <button
-        v-if="props.canEvenlySpace"
-        class="sf-menu-action-btn sf-menu-even"
-        :title="props.evenlyTitle ?? 'Evenly space'"
-        @click="emit('evenly-space')"
-      ><SvgIcon name="⇔" /></button>
+      <div v-if="props.canEvenlySpace" class="sf-menu-btn-group">
+        <button
+          class="sf-menu-action-btn"
+          title="Merge all tiles into one"
+          @click="emit('merge-all')"
+        ><SvgIcon name="□" /></button>
+        <button
+          class="sf-menu-action-btn"
+          :title="props.evenlyTitle ?? 'Evenly space'"
+          @click="emit('evenly-space')"
+        ><SvgIcon name="⇔" /></button>
+      </div>
       <button
         class="sf-menu-action-btn sf-menu-rp"
         :title="props.rightPanelVisible ? 'Collapse Right Panel' : 'Expand Right Panel'"

@@ -302,6 +302,32 @@ body,
   border-radius: var(--sf-radius) 0 0 var(--sf-radius);
 }
 
+.sf-menu-btn-group {
+  display: flex;
+  align-items: center;
+  height: calc(100% - 8px);
+  flex-shrink: 0;
+  border-radius: var(--sf-radius);
+  overflow: hidden;
+  background: var(--sf-bg);
+  margin-right: 4px;
+}
+
+.sf-menu-btn-group .sf-menu-action-btn {
+  padding: 0 6px;
+}
+
+.sf-menu-btn-group .sf-menu-action-btn:not(:last-child) {
+  border-right: 1px solid var(--sf-border);
+}
+
+.sf-menu-rp {
+  width: 48px;
+  justify-content: flex-end;
+  padding-right: 17px;
+  border-radius: 0 var(--sf-radius) var(--sf-radius) 0;
+}
+
 .sf-workbench {
   display: flex;
   flex: 1;
