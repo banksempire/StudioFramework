@@ -2,6 +2,7 @@
 import { computed, inject, nextTick, onBeforeUnmount, onMounted, reactive, ref, useSlots, watch } from 'vue';
 import { kIsMobile } from '../composables/useWorkspace';
 import type { TableColumn } from '../types/table';
+import PageNav from './PageNav.vue';
 import SvgIcon from './SvgIcon.vue';
 
 const props = withDefaults(
@@ -714,54 +715,7 @@ onBeforeUnmount(() => {
         @keydown.space.prevent="toggleSizeMenu($event)"
       >{{ pagerRange }}</span>
       <span v-else class="sf-tbl-pager-range">{{ pagerRange }}</span>
-      <div class="sf-tbl-pager-group">
-        <button
-          class="sf-tbl-pager-btn"
-          type="button"
-          title="First page"
-          :disabled="page <= 1"
-          @click="page = 1"
-        >
-          <SvgIcon name="«" />
-        </button>
-        <button
-          class="sf-tbl-pager-btn"
-          type="button"
-          title="Previous page"
-          :disabled="page <= 1"
-          @click="page -= 1"
-        >
-          <SvgIcon name="‹" />
-        </button>
-      </div>
-      <select
-        v-model.number="page"
-        class="sf-form-input sf-form-select sf-tbl-pager-select"
-        title="Select page"
-        :aria-label="`Page select, ${pageCount} pages`"
-      >
-        <option v-for="p in pageCount" :key="p" :value="p">{{ p }} / {{ pageCount }}</option>
-      </select>
-      <div class="sf-tbl-pager-group">
-        <button
-          class="sf-tbl-pager-btn"
-          type="button"
-          title="Next page"
-          :disabled="page >= pageCount"
-          @click="page += 1"
-        >
-          <SvgIcon name="›" />
-        </button>
-        <button
-          class="sf-tbl-pager-btn"
-          type="button"
-          title="Last page"
-          :disabled="page >= pageCount"
-          @click="page = pageCount"
-        >
-          <SvgIcon name="»" />
-        </button>
-      </div>
+      <PageNav v-model:page="page" :page-count="pageCount" />
     </div>
     <div
       v-if="sizeMenu"
@@ -1173,47 +1127,6 @@ onBeforeUnmount(() => {
   font-variant-numeric: tabular-nums;
 }
 
-.sf-tbl-pager-group {
-  display: flex;
-  align-items: center;
-  flex-shrink: 0;
-  border-radius: var(--sf-radius-sm);
-  overflow: hidden;
-  background: var(--sf-bar);
-}
-
-.sf-tbl-pager-btn {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 28px;
-  height: 24px;
-  background: none;
-  border: none;
-  border-radius: 0;
-  color: var(--sf-text);
-  font-family: var(--sf-font);
-  font-size: 16px;
-  line-height: 1;
-  padding: 0;
-  cursor: pointer;
-}
-
-.sf-tbl-pager-btn:not(:first-child) {
-  border-left: 1px solid var(--sf-border);
-}
-
-.sf-tbl-pager-btn:disabled {
-  opacity: 0.45;
-  cursor: default;
-}
-
-@media (hover: hover) {
-  .sf-tbl-pager-btn:not(:disabled):hover {
-    box-shadow: inset 0 0 0 999px var(--sf-hover-overlay);
-  }
-}
-
 .sf-tbl-pager-range--size {
   cursor: pointer;
   padding: 2px 8px;
@@ -1261,15 +1174,6 @@ onBeforeUnmount(() => {
 .sf-tbl-sizemenu-act--on {
   font-weight: 600;
 }
-.sf-tbl-pager-select {
-  width: auto;
-  height: 24px;
-  box-sizing: border-box;
-  border-radius: var(--sf-radius-sm);
-  font-size: 12px;
-  padding: 0 24px 0 8px;
-}
-
 .sf-tbl-empty {
   padding: 24px 8px;
   text-align: center;
@@ -1449,22 +1353,6 @@ onBeforeUnmount(() => {
   .sf-root--mobile .sf-tbl-pager-range {
     display: none;
   }
-}
-
-.sf-root--mobile .sf-tbl-pager-group {
-  border-radius: 8px;
-}
-
-.sf-root--mobile .sf-tbl-pager-btn {
-  width: 56px;
-  height: 44px;
-  font-size: 20px;
-}
-
-.sf-root--mobile .sf-tbl-pager-select {
-  height: 44px;
-  font-size: 16px;
-  border-radius: 8px;
 }
 
 .sf-root--mobile .sf-tbl-search-box {

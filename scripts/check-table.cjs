@@ -946,12 +946,12 @@ const { ensureServer, openApp, makeReporter, finish } = require('./lib/ui-test.c
         return {
           rows: block.querySelectorAll('.sf-tbl-row').length,
           range: block.querySelector('.sf-tbl-pager-range')?.textContent ?? '',
-          page: block.querySelector('.sf-tbl-pager-select')?.textContent ?? '',
+          page: block.querySelector('.sf-pagenav-page')?.textContent ?? '',
         };
       });
     const pagerBox = await jobsBlock.locator('.sf-tbl-pager').first().boundingBox();
     const rangeBox = await sizeRange.boundingBox();
-    const groupBox = await jobsBlock.locator('.sf-tbl-pager-group').last().boundingBox();
+    const groupBox = await jobsBlock.locator('.sf-pagenav').last().boundingBox();
     const leftPad = rangeBox.x - pagerBox.x;
     const rightPad = pagerBox.x + pagerBox.width - (groupBox.x + groupBox.width);
     report(
@@ -962,6 +962,35 @@ const { ensureServer, openApp, makeReporter, finish } = require('./lib/ui-test.c
         right: Math.round(rightPad),
         gap: Math.round(groupBox.x - rangeBox.x - rangeBox.width),
       }),
+    );
+    const navButtons = jobsBlock.locator('.sf-pagenav-btn');
+    const navSelect = jobsBlock.locator('.sf-pagenav-page').first();
+    const navBox = [];
+    for (let i = 0; i < 4; i++) navBox.push(await navButtons.nth(i).boundingBox());
+    const nsb = await navSelect.boundingBox();
+    const seams = [
+      navBox[1].x - (navBox[0].x + navBox[0].width),
+      nsb.x - (navBox[1].x + navBox[1].width),
+      navBox[2].x - (nsb.x + nsb.width),
+      navBox[3].x - (navBox[2].x + navBox[2].width),
+    ];
+    const selStyle = await navSelect.evaluate((e) => {
+      const st = getComputedStyle(e);
+      return {
+        appearance: st.appearance,
+        align: st.textAlign,
+        last: st.textAlignLast,
+        bgimg: st.backgroundImage,
+      };
+    });
+    report(
+      'page navigation is one gapless strip with an arrowless centered select',
+      seams.every((g) => Math.abs(g) < 1) &&
+        selStyle.appearance === 'none' &&
+        selStyle.bgimg === 'none' &&
+        selStyle.align === 'center' &&
+        selStyle.last === 'center',
+      JSON.stringify({ seams: seams.map((g) => Math.round(g)), ...selStyle }),
     );
     const sizeInitial = await pageSizeRows();
     report(
@@ -977,7 +1006,7 @@ const { ensureServer, openApp, makeReporter, finish } = require('./lib/ui-test.c
       widened.rows === 10 && widened.range.startsWith('1–10'),
       JSON.stringify(widened),
     );
-    await jobsBlock.locator('.sf-tbl-pager-select').selectOption({ index: 1 });
+    await jobsBlock.locator('.sf-pagenav-page').selectOption({ index: 1 });
     await delay(200);
     await pickSize(5);
     await delay(200);
