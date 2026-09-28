@@ -362,7 +362,7 @@ function onNodeClick(node: TreeNode) {
       <div v-if="formFields.length === 0 && component.empty" class="sf-empty">{{ component.empty }}</div>
       <FormFields
         v-else
-        :section="{ fields: formFields }"
+        :h2="{ fields: formFields }"
         :values="formValues"
         :uid="formUid"
         @patch="(key, value) => emitAction(formAction, { key, value })"

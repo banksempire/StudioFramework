@@ -57,7 +57,7 @@ export interface PopupField {
   inputClass?: string;
 }
 
-export interface PopupSection {
+export interface PopupH2 {
   title?: string;
   note?: string;
   fields: PopupField[];
@@ -65,10 +65,10 @@ export interface PopupSection {
   extraSlot?: string;
 }
 
-export interface PopupGroup {
+export interface PopupH1 {
   id: string;
   title: string;
-  sections: PopupSection[];
+  h2: PopupH2[];
 }
 
 export type PopupActionTone = 'default' | 'accent' | 'danger';
@@ -86,8 +86,8 @@ export interface PopupAction {
 
 export interface PopupDocument {
   title: string;
-  groups?: PopupGroup[];
-  sections?: PopupSection[];
+  h1?: PopupH1[];
+  h2?: PopupH2[];
   actions?: PopupAction[];
 }
 

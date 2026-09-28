@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed, ref, useSlots } from 'vue';
-import type { PopupDocument, PopupSection, PopupValues } from '../types/popup';
+import type { PopupDocument, PopupH2, PopupValues } from '../types/popup';
 import Dialog from './Dialog.vue';
 import FormFields from './FormFields.vue';
 
@@ -44,13 +44,13 @@ const uid = `sf-form-${Math.random().toString(36).slice(2, 8)}`;
 const activeGroup = ref('');
 const contentEl = ref<HTMLElement | null>(null);
 
-const groups = computed(() =>
-  props.doc.groups && props.doc.groups.length > 0
-    ? props.doc.groups
-    : [{ id: 'main', title: props.doc.title, sections: props.doc.sections ?? [] }],
+const h1s = computed(() =>
+  props.doc.h1 && props.doc.h1.length > 0
+    ? props.doc.h1
+    : [{ id: 'main', title: props.doc.title, h2: props.doc.h2 ?? [] }],
 );
 
-const hasNav = computed(() => (props.doc.groups?.length ?? 0) > 1);
+const hasNav = computed(() => (props.doc.h1?.length ?? 0) > 1);
 
 const actions = computed(
   () =>
@@ -69,8 +69,8 @@ function isEmpty(value: unknown): boolean {
 }
 
 function validate(): string | null {
-  for (const group of groups.value) {
-    for (const section of group.sections) {
+  for (const group of h1s.value) {
+    for (const section of group.h2) {
       for (const field of section.fields) {
         if (
           field.type === 'info' ||
@@ -103,7 +103,7 @@ function jump(groupId: string) {
 
 function onContentScroll() {
   if (!hasNav.value || !contentEl.value) return;
-  const tops = groups.value
+  const tops = h1s.value
     .map((g) => ({
       id: g.id,
       top: contentEl.value?.querySelector(`[data-popup-group="${g.id}"]`)?.getBoundingClientRect().top ?? 0,
@@ -147,7 +147,7 @@ defineExpose({ validate });
     <div class="sf-form" :class="{ 'sf-form--nav': hasNav }">
       <nav v-if="hasNav" class="sf-form-nav">
         <button
-          v-for="g in doc.groups"
+          v-for="g in doc.h1"
           :key="g.id"
           type="button"
           class="sf-form-nav-item"
@@ -160,21 +160,21 @@ defineExpose({ validate });
       <div ref="contentEl" class="sf-form-content" @scroll.passive="onContentScroll">
         <slot name="preamble" />
         <section
-          v-for="(group, gi) in groups"
+          v-for="(group, gi) in h1s"
           :key="group.id"
           class="sf-form-group"
           :data-popup-group="group.id"
         >
           <h2 v-if="hasNav && group.title" class="sf-form-group-title">{{ group.title }}</h2>
           <section
-            v-for="(section, si) in group.sections"
+            v-for="(section, si) in group.h2"
             :key="section.title ?? si"
             class="sf-form-section"
             :class="{ 'sf-form-section--first': si === 0 && !(hasNav && gi === 0) }"
           >
             <h3 v-if="section.title" class="sf-form-section-title">{{ section.title }}</h3>
             <FormFields
-              :section="section"
+              :h2="section"
               :values="values"
               :uid="uid"
               :busy="busy"

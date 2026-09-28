@@ -1,9 +1,9 @@
 <script setup lang="ts">
-import type { PopupField, PopupSection, PopupValues } from '../types/popup';
+import type { PopupField, PopupH2, PopupValues } from '../types/popup';
 import FormFieldControl from './FormFieldControl.vue';
 
 const props = defineProps<{
-  section: PopupSection;
+  h2: PopupH2;
   values: PopupValues;
   uid: string;
   busy?: boolean;
@@ -14,12 +14,12 @@ const emit = defineEmits<{
   action: [id: string, key: string];
 }>();
 
-function sectionCols(section: PopupSection): number {
-  return Math.min(Math.max(section.columns ?? 1, 1), 4);
+function h2Cols(h2: PopupH2): number {
+  return Math.min(Math.max(h2.columns ?? 1, 1), 4);
 }
 
 function fieldSpan(field: PopupField): string | undefined {
-  const span = Math.min(Math.max(field.span ?? 1, 1), sectionCols(props.section));
+  const span = Math.min(Math.max(field.span ?? 1, 1), h2Cols(props.h2));
   return span > 1 ? `grid-column: span ${span}` : undefined;
 }
 
@@ -33,9 +33,9 @@ function patch(key: string, value: string | number | boolean | Array<string | nu
 </script>
 
 <template>
-  <p v-if="section.note" class="sf-form-section-note">{{ section.note }}</p>
-  <div class="sf-form-grid" :data-cols="sectionCols(section)">
-    <template v-for="field in section.fields" :key="field.key">
+  <p v-if="h2.note" class="sf-form-section-note">{{ h2.note }}</p>
+  <div class="sf-form-grid" :data-cols="h2Cols(h2)">
+    <template v-for="field in h2.fields" :key="field.key">
       <div
         v-if="field.type === 'info'"
         class="sf-form-info"
@@ -91,5 +91,5 @@ function patch(key: string, value: string | number | boolean | Array<string | nu
       </div>
     </template>
   </div>
-  <slot v-if="section.extraSlot" :name="section.extraSlot" />
+  <slot v-if="h2.extraSlot" :name="h2.extraSlot" />
 </template>
