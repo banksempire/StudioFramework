@@ -23,9 +23,10 @@ const { ensureServer, makeReporter, finish } = require('./lib/ui-test.cjs');
   });
   const { report, isFailed } = makeReporter();
 
-  const row = (label) => page.locator('.sf-sm-row', { hasText: label }).first();
+  const demo = page.locator('.single-menu-demo');
+  const row = (label) => demo.locator('.sf-sm-row', { hasText: label }).first();
   const status = () => page.locator('.single-menu-demo-status').textContent();
-  const rowCount = () => page.locator('.sf-sm-row').count();
+  const rowCount = () => demo.locator('.sf-sm-row').count();
   const churnToggle = page.locator('.single-menu-demo-refresh');
   const dropArm = page.locator('.single-menu-demo-drop-next');
   const isOn = (loc) => loc.evaluate((el) => el.classList.contains('single-menu-demo-refresh--on'));
@@ -204,7 +205,8 @@ const { ensureServer, makeReporter, finish } = require('./lib/ui-test.cjs');
   await page.waitForTimeout(300);
   report(
     'mobile: demo list reachable in the docker panel',
-    (await rowCount()) === 5 && (await page.locator('.sf-mobile-panel .sf-sm-row').count()) === 5,
+    (await rowCount()) === 5 &&
+      (await page.locator('.sf-mobile-panel .single-menu-demo .sf-sm-row').count()) === 5,
   );
 
   const touch = (type, touchPoints) => cdp.send('Input.dispatchTouchEvent', { type, touchPoints });
@@ -219,7 +221,7 @@ const { ensureServer, makeReporter, finish } = require('./lib/ui-test.cjs');
 
   report(
     'mobile: every row shows an always-visible ⋮ button',
-    (await page.locator('.sf-sm-row .sf-sm-more').count()) === 5,
+    (await demo.locator('.sf-sm-row .sf-sm-more').count()) === 5,
   );
   const touchBox = await boxOf(row('welcome.md').locator('.sf-sm-more'));
   report(

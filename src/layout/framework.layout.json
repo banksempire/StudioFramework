@@ -389,6 +389,17 @@
                 ]
               },
               {
+                "id": "bulk",
+                "title": "Bulk",
+                "height": "fixed",
+                "components": [
+                  {
+                    "type": "component",
+                    "key": "bulk-list-demo"
+                  }
+                ]
+              },
+              {
                 "id": "selectors",
                 "title": "Selectors",
                 "height": "fixed",

@@ -83,9 +83,25 @@ export interface PanelListItem {
   dragText?: string;
 }
 
+export interface PanelBulkAction {
+  id: string;
+  label: string;
+  icon?: IconDef;
+  danger?: boolean;
+  disabled?: boolean;
+}
+
+export interface PanelListBulk {
+  active: boolean;
+  selected: string[];
+  entry?: PanelBulkAction;
+  actions?: PanelBulkAction[];
+}
+
 export interface PanelListData {
   items: PanelListItem[];
   empty?: string;
+  bulk?: PanelListBulk;
 }
 
 export interface PanelHeaderData {

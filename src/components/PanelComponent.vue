@@ -44,6 +44,10 @@ function emitAction(action?: string, payload?: unknown) {
   emit('action', { source: props.component.type, action, payload });
 }
 
+function emitBulk(gesture: string, extra: Record<string, unknown>) {
+  emitAction('bulk', { gesture, bind: bindKeyOf(props.component), ...extra });
+}
+
 const warned = new Set<string>();
 const bindKeyOf = (c: PanelComponent): string | undefined => (c as { bind?: string }).bind;
 const bound = computed<unknown>(() => {
@@ -92,7 +96,8 @@ const listData = computed<PanelListData>(() => {
   const b = bound.value;
   if (Array.isArray(b)) return { items: b as PanelListItem[], empty: props.component.empty };
   const rec = b as PanelListData | undefined;
-  if (rec && Array.isArray(rec.items)) return { items: rec.items, empty: rec.empty ?? props.component.empty };
+  if (rec && Array.isArray(rec.items))
+    return { items: rec.items, empty: rec.empty ?? props.component.empty, bulk: rec.bulk };
   return { items: props.component.items ?? [], empty: props.component.empty };
 });
 
@@ -352,10 +357,15 @@ function onNodeClick(node: TreeNode) {
       :empty="listData.empty"
       :variant="component.variant"
       :dismiss-on-activate="component.dismissOnActivate"
+      :bulk="listData.bulk"
       @activate="(it) => emitAction(it.action, { gesture: 'activate', id: it.id })"
       @menu="(it, optionId) => emitAction(it.action, { gesture: 'menu', id: it.id, option: optionId })"
       @button="(it, buttonId) => emitAction(it.action, { gesture: 'button', id: it.id, button: buttonId })"
       @switch-toggle="(it) => emitAction(it.action, { gesture: 'switch', id: it.id, value: !(it.switch?.on ?? false) })"
+      @bulk-entry="emitBulk('entry', {})"
+      @bulk-action="(actionId) => emitBulk('action', { option: actionId })"
+      @bulk-change="(selected) => emitBulk('toggle', { selected })"
+      @bulk-reorder="(fromId, toId) => emitBulk('reorder', { from: fromId, to: toId })"
     />
 
     <template v-else-if="component.type === 'form'">

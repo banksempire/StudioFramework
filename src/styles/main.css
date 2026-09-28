@@ -2257,6 +2257,82 @@ body.sf-dragging-row * {
   }
 }
 
+.sf-pl-bulkbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  padding: 2px 4px 6px;
+}
+
+.sf-pl-bulkbar-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  background: var(--sf-bg);
+  border: 1px solid var(--sf-border);
+  border-radius: var(--sf-radius-sm);
+  color: var(--sf-text);
+  font-family: var(--sf-font);
+  font-size: 12.5px;
+  padding: 2px 8px;
+  cursor: pointer;
+}
+
+.sf-pl-bulkbar-btn--danger {
+  color: var(--sf-danger);
+}
+
+.sf-pl-bulkbar-btn:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+.sf-pl-check {
+  flex-shrink: 0;
+  width: 15px;
+  height: 15px;
+  border: 1.5px solid var(--sf-border);
+  border-radius: 50%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 10px;
+  line-height: 1;
+  color: #fff;
+}
+
+.sf-pl-check--on {
+  background: var(--sf-accent);
+  border-color: var(--sf-accent);
+}
+
+.sf-pl-check--on::after {
+  content: "\2713";
+}
+
+.sf-pl-grip {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  cursor: grab;
+  opacity: 0.55;
+}
+
+.sf-pl-grip:active {
+  cursor: grabbing;
+}
+
+@media (hover: hover) {
+  .sf-pl-grip:hover {
+    opacity: 1;
+  }
+}
+
+.sf-pl-item--drop {
+  outline: 1px dashed var(--sf-accent);
+  outline-offset: -1px;
+}
+
 .sf-pl-btn--danger:hover {
   color: var(--sf-status-err);
 }

@@ -78,6 +78,16 @@ const ICONS: Record<string, IconSpec> = {
   '☰': {
     paths: [{ d: 'M3 12h18' }, { d: 'M3 6h18' }, { d: 'M3 18h18' }],
   },
+  grip: {
+    circles: [
+      { cx: 9, cy: 6, r: 1.7 },
+      { cx: 15, cy: 6, r: 1.7 },
+      { cx: 9, cy: 12, r: 1.7 },
+      { cx: 15, cy: 12, r: 1.7 },
+      { cx: 9, cy: 18, r: 1.7 },
+      { cx: 15, cy: 18, r: 1.7 },
+    ],
+  },
   '«': {
     paths: [{ d: 'm11 17-5-5 5-5' }, { d: 'm18 17-5-5 5-5' }],
   },

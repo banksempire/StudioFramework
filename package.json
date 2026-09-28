@@ -27,7 +27,8 @@
     "typecheck": "vue-tsc --noEmit",
     "lint": "biome check .",
     "format": "biome format --write .",
-    "check:keepalive": "node scripts/check-keepalive.cjs"
+    "check:keepalive": "node scripts/check-keepalive.cjs",
+    "check:bulklist": "node scripts/check-bulklist.cjs"
   },
   "devDependencies": {
     "@biomejs/biome": "^2.5.8",

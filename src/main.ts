@@ -1,4 +1,5 @@
 import { createApp, reactive } from 'vue';
+import BulkListDemo from './components/BulkListDemo.vue';
 import DialogDemo from './components/DialogDemo.vue';
 import SelectorDemo from './components/SelectorDemo.vue';
 import SingleMenuDemo from './components/SingleMenuDemo.vue';
@@ -23,6 +24,7 @@ registerTabContent('table-demo', TableDemo);
 registerPanelComponent('workspace-panel', WorkspacePanel);
 
 registerPanelComponent('single-menu-demo', SingleMenuDemo);
+registerPanelComponent('bulk-list-demo', BulkListDemo);
 
 registerPanelComponent('selector-demo', SelectorDemo);
 

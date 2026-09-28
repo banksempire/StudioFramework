@@ -1,9 +1,10 @@
 <script setup lang="ts">
-import { computed, inject } from 'vue';
+import { computed, inject, ref, watch } from 'vue';
 import { kMobilePanelDismiss } from '../composables/useWorkspace';
-import type { PanelListItem } from '../types/panel';
+import type { PanelListBulk, PanelListItem } from '../types/panel';
 import Icon from './Icon.vue';
 import SingleMenu from './SingleMenu.vue';
+import SvgIcon from './SvgIcon.vue';
 import SwitchToggle from './SwitchToggle.vue';
 
 const props = defineProps<{
@@ -11,6 +12,7 @@ const props = defineProps<{
   empty?: string;
   variant?: 'plain' | 'card';
   dismissOnActivate?: boolean;
+  bulk?: PanelListBulk;
 }>();
 
 const emit = defineEmits<{
@@ -20,6 +22,10 @@ const emit = defineEmits<{
   'switch-toggle': [item: PanelListItem];
   dragstart: [item: PanelListItem, event: DragEvent];
   dragend: [event: DragEvent];
+  'bulk-entry': [];
+  'bulk-action': [actionId: string];
+  'bulk-change': [selected: string[]];
+  'bulk-reorder': [fromId: string, toId: string];
 }>();
 
 const dismissMobilePanel = inject<(() => void) | null>(kMobilePanelDismiss, null);
@@ -64,10 +70,97 @@ function onDragStart(item: PanelListItem, e: DragEvent) {
   dt.effectAllowed = 'copy';
   emit('dragstart', item, e);
 }
+
+const bulkActive = computed(() => props.bulk?.active === true);
+const lastToggle = ref<{ index: number; state: boolean }>({ index: -1, state: false });
+
+watch(
+  () => props.bulk?.active,
+  (on) => {
+    lastToggle.value = { index: -1, state: false };
+    if (!on) {
+      dragId.value = null;
+      overId.value = null;
+    }
+  },
+);
+
+function onRowClick(item: PanelListItem, e: MouseEvent) {
+  if (!bulkActive.value) return;
+  e.stopPropagation();
+  e.preventDefault();
+  const ids = props.items.map((i) => i.id);
+  const idx = ids.indexOf(item.id);
+  if (idx < 0) return;
+  const picked = new Set(props.bulk?.selected ?? []);
+  if (e.shiftKey && lastToggle.value.index >= 0) {
+    const lo = Math.min(lastToggle.value.index, idx);
+    const hi = Math.max(lastToggle.value.index, idx);
+    for (let i = lo; i <= hi; i++) {
+      if (lastToggle.value.state) picked.add(ids[i]);
+      else picked.delete(ids[i]);
+    }
+  } else {
+    const state = !picked.has(item.id);
+    if (state) picked.add(item.id);
+    else picked.delete(item.id);
+    lastToggle.value = { index: idx, state };
+  }
+  emit(
+    'bulk-change',
+    props.items.filter((i) => picked.has(i.id)).map((i) => i.id),
+  );
+}
+
+const dragId = ref<string | null>(null);
+const overId = ref<string | null>(null);
+
+function onGripStart(item: PanelListItem, e: DragEvent) {
+  dragId.value = item.id;
+  e.dataTransfer?.setData('text/plain', item.id);
+  if (e.dataTransfer) e.dataTransfer.effectAllowed = 'move';
+}
+
+function onGripEnd() {
+  dragId.value = null;
+  overId.value = null;
+}
+
+function onRowDrop(item: PanelListItem) {
+  const from = dragId.value;
+  dragId.value = null;
+  overId.value = null;
+  if (from && from !== item.id) emit('bulk-reorder', from, item.id);
+}
 </script>
 
 <template>
-  <div v-if="props.items.length === 0 && props.empty" class="sf-empty">{{ props.empty }}</div>
+    <div v-if="props.bulk" class="sf-pl-bulkbar">
+      <button
+        v-if="!bulkActive && props.bulk.entry"
+        class="sf-pl-bulkbar-btn"
+        type="button"
+        @click="emit('bulk-entry')"
+      >
+        <Icon v-if="props.bulk.entry.icon" :icon="props.bulk.entry.icon" />
+        {{ props.bulk.entry.label }}
+      </button>
+      <template v-else-if="bulkActive">
+        <button
+          v-for="a in props.bulk.actions ?? []"
+          :key="a.id"
+          class="sf-pl-bulkbar-btn"
+          :class="{ 'sf-pl-bulkbar-btn--danger': a.danger }"
+          type="button"
+          :disabled="a.disabled"
+          @click="emit('bulk-action', a.id)"
+        >
+          <Icon v-if="a.icon" :icon="a.icon" />
+          {{ a.label }}
+        </button>
+      </template>
+    </div>
+  <div v-if="props.items.length === 0 && props.empty && !props.bulk" class="sf-empty">{{ props.empty }}</div>
   <div v-else-if="!rich" class="sf-pc-list">
     <div
       v-for="item in props.items"
@@ -84,7 +177,7 @@ function onDragStart(item: PanelListItem, e: DragEvent) {
   <div v-else class="sf-pl" :class="'sf-pl--' + (props.variant ?? 'plain')">
     <SingleMenu
       :items="props.items"
-      :options="(it: PanelListItem) => it.options ?? []"
+      :options="(it: PanelListItem) => (bulkActive ? [] : it.options ?? [])"
       :key-of="(it: PanelListItem) => it.id"
       :title-of="(it: PanelListItem) => it.label"
       :draggable="hasDrag"
@@ -99,11 +192,21 @@ function onDragStart(item: PanelListItem, e: DragEvent) {
           :class="{
             'sf-pl-item--active': it.active,
             'sf-pl-item--muted': it.muted,
+            'sf-pl-item--drop': bulkActive && dragId !== null && overId === it.id,
           }"
           :data-id="it.id"
           :title="it.title"
+          @click.capture="onRowClick(it, $event)"
+          @dragover.prevent="dragId !== null && (overId = it.id)"
+          @drop.prevent="onRowDrop(it)"
         >
           <div class="sf-pl-top">
+            <span
+              v-if="bulkActive"
+              class="sf-pl-check"
+              :class="{ 'sf-pl-check--on': props.bulk?.selected.includes(it.id) }"
+            />
+
             <SwitchToggle
               v-if="it.switch"
               :on="it.switch.on"
@@ -132,6 +235,16 @@ function onDragStart(item: PanelListItem, e: DragEvent) {
               >
                 <Icon :icon="b.icon" />
               </button>
+            </span>
+            <span
+              v-if="bulkActive"
+              class="sf-pl-grip"
+              draggable="true"
+              title="Drag to reorder"
+              @dragstart.stop="onGripStart(it, $event)"
+              @dragend="onGripEnd"
+            >
+              <SvgIcon name="grip" />
             </span>
           </div>
           <div v-if="it.detail" class="sf-pl-sub">
