@@ -940,15 +940,11 @@ const { ensureServer, openApp, makeReporter, finish } = require('./lib/ui-test.c
     await page.locator('.sf-tbl-sizemenu').waitFor({ state: 'hidden', timeout: 3000 });
     await delay(200);
     const pageSizeRows = () =>
-      page.evaluate(() => {
-        const blocks = [...document.querySelectorAll('.sf-table-demo-block')];
-        const block = blocks.find((b) => b.querySelector('.sf-tbl-pager-range--size'));
-        return {
-          rows: block.querySelectorAll('.sf-tbl-row').length,
-          range: block.querySelector('.sf-tbl-pager-range')?.textContent ?? '',
-          page: block.querySelector('.sf-pagenav-page')?.textContent ?? '',
-        };
-      });
+      jobsBlock.evaluate((block) => ({
+        rows: block.querySelectorAll('.sf-tbl-row').length,
+        range: block.querySelector('.sf-tbl-pager-range')?.textContent ?? '',
+        page: block.querySelector('.sf-pagenav-page')?.textContent ?? '',
+      }));
     const pagerBox = await jobsBlock.locator('.sf-tbl-pager').first().boundingBox();
     const rangeBox = await sizeRange.boundingBox();
     const groupBox = await jobsBlock.locator('.sf-pagenav').last().boundingBox();
@@ -1023,6 +1019,24 @@ const { ensureServer, openApp, makeReporter, finish } = require('./lib/ui-test.c
       'single-page tables keep the navigation panel',
       navText === '1 / 1' && firstDisabled === true && lastDisabled === true,
       JSON.stringify({ page: navText, first: firstDisabled, last: lastDisabled }),
+    );
+    const filesRange = page.locator('.sf-table-demo-block:first-child .sf-tbl-pager-range--size');
+    await filesRange.click();
+    await page.locator('.sf-tbl-sizemenu').waitFor({ state: 'visible', timeout: 3000 });
+    const fileChoices = await page.locator('.sf-tbl-sizemenu-act').allTextContents();
+    await page.locator('.sf-tbl-sizemenu-act').filter({ hasText: /^50/ }).first().click();
+    await page.locator('.sf-tbl-sizemenu').waitFor({ state: 'hidden', timeout: 3000 });
+    await delay(200);
+    const filesRangeText = await page
+      .locator('.sf-table-demo-block:first-child .sf-tbl-pager-range')
+      .textContent();
+    report(
+      'tables without size options get the default choices and the compact range format',
+      fileChoices.length === 4 &&
+        fileChoices.some((t) => t.startsWith('25')) &&
+        fileChoices.some((t) => t.startsWith('250')) &&
+        /\d+–\d+\/\d+/.test(filesRangeText ?? ''),
+      JSON.stringify({ choices: fileChoices, range: filesRangeText }),
     );
     const sizeInitial = await pageSizeRows();
     report(

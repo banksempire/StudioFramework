@@ -376,12 +376,14 @@ const visibleRows = computed(() => {
 
 const page = ref(1);
 const sizeModel = ref(props.pageSize);
+const DEFAULT_SIZE_CHOICES = [25, 50, 100, 250];
+const sizeChoices = computed(() =>
+  props.pageSizeOptions.length > 0 ? props.pageSizeOptions : DEFAULT_SIZE_CHOICES,
+);
 const sizeMenu = ref<{ x: number; y: number } | null>(null);
 const injectedMobile = inject(kIsMobile, null);
 const mobile = computed(() => injectedMobile?.value ?? false);
-const effectiveSize = computed(() =>
-  mobile.value && props.pageSizeOptions.length > 0 ? 50 : sizeModel.value,
-);
+const effectiveSize = computed(() => (mobile.value ? 50 : sizeModel.value));
 function toggleSizeMenu(e: Event) {
   if (sizeMenu.value) {
     sizeMenu.value = null;
@@ -415,7 +417,7 @@ const pagerRange = computed(() => {
   const size = effectiveSize.value > 0 ? effectiveSize.value : visibleRows.value.length;
   const start = visibleRows.value.length === 0 ? 0 : (page.value - 1) * size + 1;
   const end = Math.min(page.value * size, visibleRows.value.length);
-  return `${start}–${end} of ${visibleRows.value.length}`;
+  return `${start}–${end}/${visibleRows.value.length}`;
 });
 watch(pageCount, (count) => {
   if (page.value > count) page.value = count;
@@ -705,7 +707,7 @@ onBeforeUnmount(() => {
     </div>
     <div class="sf-tbl-pager">
       <span
-        v-if="pageSizeOptions.length > 0 && !mobile"
+        v-if="!mobile"
         class="sf-tbl-pager-range sf-tbl-pager-range--size"
         role="button"
         tabindex="0"
@@ -725,7 +727,7 @@ onBeforeUnmount(() => {
     >
       <div class="sf-tbl-colmenu-head">Rows per page</div>
       <button
-        v-for="o in pageSizeOptions"
+        v-for="o in sizeChoices"
         :key="o"
         class="sf-tbl-sizemenu-act"
         :class="{ 'sf-tbl-sizemenu-act--on': o === effectiveSize }"
