@@ -703,7 +703,7 @@ onBeforeUnmount(() => {
     </div>
   </div>
     </div>
-    <div v-if="pageCount > 1 || pageSizeOptions.length > 0" class="sf-tbl-pager">
+    <div class="sf-tbl-pager">
       <span
         v-if="pageSizeOptions.length > 0 && !mobile"
         class="sf-tbl-pager-range sf-tbl-pager-range--size"

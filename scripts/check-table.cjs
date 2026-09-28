@@ -1014,6 +1014,16 @@ const { ensureServer, openApp, makeReporter, finish } = require('./lib/ui-test.c
         focusRing,
       }),
     );
+    const filesNav = page.locator('.sf-table-demo-block:first-child .sf-pagenav-page');
+    const filesBtns = page.locator('.sf-table-demo-block:first-child .sf-pagenav-btn');
+    const navText = await filesNav.textContent().catch(() => null);
+    const firstDisabled = navText ? await filesBtns.nth(0).isDisabled() : null;
+    const lastDisabled = navText ? await filesBtns.nth(3).isDisabled() : null;
+    report(
+      'single-page tables keep the navigation panel',
+      navText === '1 / 1' && firstDisabled === true && lastDisabled === true,
+      JSON.stringify({ page: navText, first: firstDisabled, last: lastDisabled }),
+    );
     const sizeInitial = await pageSizeRows();
     report(
       'page size dropdown renders with the configured default',
