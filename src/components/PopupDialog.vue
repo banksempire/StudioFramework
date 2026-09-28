@@ -41,7 +41,7 @@ const emit = defineEmits<{
 
 const slots = useSlots();
 const uid = `sf-form-${Math.random().toString(36).slice(2, 8)}`;
-const activeGroup = ref('');
+const activeH1 = ref('');
 const contentEl = ref<HTMLElement | null>(null);
 
 const h1s = computed(() =>
@@ -69,9 +69,9 @@ function isEmpty(value: unknown): boolean {
 }
 
 function validate(): string | null {
-  for (const group of h1s.value) {
-    for (const section of group.h2) {
-      for (const field of section.fields) {
+  for (const h1 of h1s.value) {
+    for (const h2 of h1.h2) {
+      for (const field of h2.fields) {
         if (
           field.type === 'info' ||
           field.type === 'slot' ||
@@ -94,10 +94,10 @@ function patch(key: string, value: string | number | boolean | Array<string | nu
   emit('update:values', { ...props.values, [key]: value });
 }
 
-function jump(groupId: string) {
-  activeGroup.value = groupId;
+function jump(h1Id: string) {
+  activeH1.value = h1Id;
   contentEl.value
-    ?.querySelector(`[data-popup-group="${groupId}"]`)
+    ?.querySelector(`[data-popup-h1="${h1Id}"]`)
     ?.scrollIntoView({ behavior: 'smooth', block: 'start' });
 }
 
@@ -106,11 +106,11 @@ function onContentScroll() {
   const tops = h1s.value
     .map((g) => ({
       id: g.id,
-      top: contentEl.value?.querySelector(`[data-popup-group="${g.id}"]`)?.getBoundingClientRect().top ?? 0,
+      top: contentEl.value?.querySelector(`[data-popup-h1="${g.id}"]`)?.getBoundingClientRect().top ?? 0,
     }))
     .filter((g) => g.top > 0);
   if (tops.length === 0) return;
-  activeGroup.value = tops[0].id;
+  activeH1.value = tops[0].id;
 }
 
 function runAction(id: string) {
@@ -151,7 +151,7 @@ defineExpose({ validate });
           :key="g.id"
           type="button"
           class="sf-form-nav-item"
-          :class="{ 'sf-form-nav-item--on': activeGroup === g.id }"
+          :class="{ 'sf-form-nav-item--on': activeH1 === g.id }"
           @click="jump(g.id)"
         >
           {{ g.title }}
@@ -160,21 +160,21 @@ defineExpose({ validate });
       <div ref="contentEl" class="sf-form-content" @scroll.passive="onContentScroll">
         <slot name="preamble" />
         <section
-          v-for="(group, gi) in h1s"
-          :key="group.id"
+          v-for="(h1, gi) in h1s"
+          :key="h1.id"
           class="sf-form-group"
-          :data-popup-group="group.id"
+          :data-popup-h1="h1.id"
         >
-          <h2 v-if="hasNav && group.title" class="sf-form-group-title">{{ group.title }}</h2>
+          <h2 v-if="hasNav && h1.title" class="sf-form-group-title">{{ h1.title }}</h2>
           <section
-            v-for="(section, si) in group.h2"
-            :key="section.title ?? si"
+            v-for="(h2, si) in h1.h2"
+            :key="h2.title ?? si"
             class="sf-form-section"
             :class="{ 'sf-form-section--first': si === 0 && !(hasNav && gi === 0) }"
           >
-            <h3 v-if="section.title" class="sf-form-section-title">{{ section.title }}</h3>
+            <h3 v-if="h2.title" class="sf-form-section-title">{{ h2.title }}</h3>
             <FormFields
-              :h2="section"
+              :h2="h2"
               :values="values"
               :uid="uid"
               :busy="busy"
