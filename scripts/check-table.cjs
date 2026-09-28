@@ -984,6 +984,9 @@ const { ensureServer, openApp, makeReporter, finish } = require('./lib/ui-test.c
         sep: st.borderLeftWidth,
       };
     });
+    await navSelect.hover();
+    const hoverShadow = await navSelect.evaluate((e) => getComputedStyle(e).boxShadow);
+    await page.mouse.move(0, 0);
     report(
       'page navigation is one gapless strip with an arrowless centered select',
       seams.every((g) => Math.abs(g) < 1) &&
@@ -991,8 +994,9 @@ const { ensureServer, openApp, makeReporter, finish } = require('./lib/ui-test.c
         selStyle.bgimg === 'none' &&
         selStyle.align === 'center' &&
         selStyle.last === 'center' &&
-        selStyle.sep === '1px',
-      JSON.stringify({ seams: seams.map((g) => Math.round(g)), ...selStyle }),
+        selStyle.sep === '1px' &&
+        hoverShadow !== 'none',
+      JSON.stringify({ seams: seams.map((g) => Math.round(g)), ...selStyle, hoverShadow }),
     );
     const sizeInitial = await pageSizeRows();
     report(

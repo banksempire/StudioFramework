@@ -76,7 +76,8 @@ defineProps<{ pageCount: number }>();
   cursor: default;
 }
 @media (hover: hover) {
-  .sf-pagenav-btn:not(:disabled):hover {
+  .sf-pagenav-btn:not(:disabled):hover,
+  .sf-pagenav-page:hover {
     box-shadow: inset 0 0 0 999px var(--sf-hover-overlay);
   }
 }
