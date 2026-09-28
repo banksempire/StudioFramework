@@ -31,6 +31,8 @@ Task-specific manual for the StudioFramework repo. The workspace-level contract 
 
 "panel" not "sidebar"; "RightPanel" not "PropertyPanel"; Workspace = central box; Tile = split-tree node; Tab = items in a tile; the whole UI shell = the **"framework"** (not "app"); each icon on the Docker bar = an **"app"** (not "tag" / "docker icon").
 
+Panel heading levels (defined in [`doc/layout.md`](doc/layout.md), same words in requests): **H1 = panel `groups`** — they render as the panel's tab row and hide when a panel has a single group; **H2 = `sections`** — the collapsible chevron rows inside a group; **H3 = section with `heading: 3`** — a flat bold label. So "add an H1" always means a panel TAB (a group), never a subsection; in code the H1 type is `PanelGroup`, the H2 type is `PanelSection` (`PanelHeading` is `2 | 3` — H1 is structural, not a per-section flag).
+
 ## Icons
 
 Icon additions to `SvgIcon.vue` are generic even when motivated by the product (e.g. `sort` + `⏰` were added for the scheduler UI). Docker icons must fill the 24×24 viewBox (~18+ units, centered) — enforced by geometry assertions (`check:dockericons` in pi-agent-studio, `check:utils` here).
