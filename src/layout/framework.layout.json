@@ -394,8 +394,8 @@
                 "height": "fixed",
                 "components": [
                   {
-                    "type": "component",
-                    "key": "bulk-list-demo"
+                    "type": "list",
+                    "bind": "bulk-demo"
                   }
                 ]
               },

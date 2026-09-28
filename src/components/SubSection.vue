@@ -1,7 +1,8 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue';
 import { getPanelData, getUtilityMenu } from '../registry';
-import type { PanelAction, PanelH2 } from '../types/panel';
+import type { PanelAction, PanelBulkAction, PanelH2 } from '../types/panel';
+import Icon from './Icon.vue';
 import Menu from './Menu.vue';
 import PanelComponent from './PanelComponent.vue';
 import SvgIcon from './SvgIcon.vue';
@@ -20,6 +21,26 @@ const emit = defineEmits<{
 }>();
 
 const openMenuId = ref<string | null>(null);
+
+const bulkEntry = computed<{ bind: string; entry: PanelBulkAction } | null>(() => {
+  const list = props.section.components.find((c) => c.type === 'list') as { bind?: string } | undefined;
+  if (!list?.bind) return null;
+  const getter = getPanelData(list.bind);
+  const rec = getter
+    ? (getter() as { bulk?: { active?: boolean; entry?: PanelBulkAction } } | undefined)
+    : undefined;
+  if (!rec?.bulk || rec.bulk.active || !rec.bulk.entry) return null;
+  return { bind: list.bind, entry: rec.bulk.entry };
+});
+
+function emitBulkEntry() {
+  if (!bulkEntry.value) return;
+  emit('component-action', {
+    source: 'list',
+    action: 'bulk',
+    payload: { gesture: 'entry', bind: bulkEntry.value.bind },
+  });
+}
 
 const displayTitle = computed(() => {
   const list = props.section.components.find((c) => c.type === 'list') as { bind?: string } | undefined;
@@ -79,7 +100,24 @@ function menuItemsOf(utilId: string) {
     <div v-else class="sf-subsection-header" @click="emit('toggle-expand')">
       <span class="sf-subsection-arrow" :class="{ 'sf-subsection-arrow--expanded': isExpanded }"><SvgIcon name="❯" /></span>
       <span class="sf-subsection-label">{{ displayTitle }}</span>
-      <div v-if="section.utilities?.length" class="sf-subsection-utils" @click.stop>
+      <div v-if="section.utilities?.length || bulkEntry" class="sf-subsection-utils" @click.stop>
+        <button
+          v-if="bulkEntry"
+          class="sf-subsection-bulk-entry"
+          type="button"
+          @click="emitBulkEntry"
+        >
+          <Icon
+            v-if="bulkEntry.entry.icon && typeof bulkEntry.entry.icon === 'string'"
+            :icon="bulkEntry.entry.icon"
+          />
+          <img
+            v-else-if="bulkEntry.entry.icon && typeof bulkEntry.entry.icon !== 'string'"
+            :src="bulkEntry.entry.icon.url"
+            alt=""
+          />
+          {{ bulkEntry.entry.label }}
+        </button>
         <template v-for="util in section.utilities" :key="util.id">
           <Menu
             v-if="menuItemsOf(util.id)"

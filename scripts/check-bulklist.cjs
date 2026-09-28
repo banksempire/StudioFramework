@@ -23,11 +23,10 @@ const { ensureServer, makeReporter, finish } = require('./lib/ui-test.cjs');
   });
   const { report, isFailed } = makeReporter();
 
-  const demo = page.locator('.bulk-list-demo');
+  const demo = page.locator('.sf-subsection', { has: page.locator('[data-sub-body="bulk"]') }).first();
   await demo.scrollIntoViewIfNeeded();
-  const status = () => demo.locator('.bulk-list-demo-status').textContent();
   const row = (label) => demo.locator('.sf-sm-row', { hasText: label }).first();
-  const editBtn = demo.locator('.sf-pl-bulkbar-btn', { hasText: 'Edit' });
+  const editBtn = demo.locator('.sf-subsection-bulk-entry');
   const barBtn = (label) => demo.locator('.sf-pl-bulkbar-btn', { hasText: label });
   const checks = () => demo.locator('.sf-pl-check');
   const checkOn = (label) =>
@@ -39,8 +38,10 @@ const { ensureServer, makeReporter, finish } = require('./lib/ui-test.cjs');
       .then((n) => n === 1);
 
   report(
-    'edit button shows while bulk mode is off',
-    (await editBtn.count()) === 1 && (await checks().count()) === 0,
+    'edit button sits in the title bar while bulk mode is off',
+    (await editBtn.count()) === 1 &&
+      (await editBtn.evaluate((el) => el.closest('.sf-subsection-header') !== null)) &&
+      (await checks().count()) === 0,
   );
 
   await editBtn.click();
@@ -55,9 +56,7 @@ const { ensureServer, makeReporter, finish } = require('./lib/ui-test.cjs');
   await page.waitForTimeout(120);
   report(
     'click selects a row and arms the bulk buttons',
-    (await checkOn('alpha.log')) &&
-      (await status()).startsWith('toggle 1') &&
-      (await barBtn('Pin (1)').count()) === 1,
+    (await checkOn('alpha.log')) && (await barBtn('Pin (1)').count()) === 1,
   );
 
   await row('charlie.txt').click({ modifiers: ['Shift'] });
@@ -81,8 +80,7 @@ const { ensureServer, makeReporter, finish } = require('./lib/ui-test.cjs');
   await page.waitForTimeout(120);
   report(
     'bulk pin marks the selected rows pinned',
-    (await status()).startsWith('pin alpha,charlie') &&
-      (await demo.locator('.sf-sm-row', { hasText: 'pinned' }).count()) === 2,
+    (await demo.locator('.sf-sm-row', { hasText: 'pinned' }).count()) === 2,
   );
 
   const grip = demo.locator('.sf-sm-row', { hasText: 'echo.ndjson' }).first().locator('.sf-pl-grip');
@@ -92,18 +90,14 @@ const { ensureServer, makeReporter, finish } = require('./lib/ui-test.cjs');
   await page.waitForTimeout(200);
   report(
     'dragging the grip reorders the row',
-    (await status()).startsWith('reorder echo->alpha') &&
-      (await demo.locator('.sf-sm-row').first().textContent()).includes('echo.ndjson'),
+    (await demo.locator('.sf-sm-row').first().textContent()).includes('echo.ndjson'),
   );
 
   await row('delta.json').click();
   await page.waitForTimeout(120);
   await barBtn('Delete (3)').click();
   await page.waitForTimeout(150);
-  report(
-    'bulk delete removes the selected rows',
-    (await row('charlie.txt').count()) === 0 && (await status()).startsWith('delete alpha,charlie,delta'),
-  );
+  report('bulk delete removes the selected rows', (await row('charlie.txt').count()) === 0);
 
   await barBtn('Done').click();
   await page.waitForTimeout(150);

@@ -362,7 +362,6 @@ function onNodeClick(node: TreeNode) {
       @menu="(it, optionId) => emitAction(it.action, { gesture: 'menu', id: it.id, option: optionId })"
       @button="(it, buttonId) => emitAction(it.action, { gesture: 'button', id: it.id, button: buttonId })"
       @switch-toggle="(it) => emitAction(it.action, { gesture: 'switch', id: it.id, value: !(it.switch?.on ?? false) })"
-      @bulk-entry="emitBulk('entry', {})"
       @bulk-action="(actionId) => emitBulk('action', { option: actionId })"
       @bulk-change="(selected) => emitBulk('toggle', { selected })"
       @bulk-reorder="(fromId, toId) => emitBulk('reorder', { from: fromId, to: toId })"

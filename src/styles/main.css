@@ -2257,6 +2257,20 @@ body.sf-dragging-row * {
   }
 }
 
+.sf-subsection-bulk-entry {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  background: var(--sf-bg-light);
+  border: 1px solid var(--sf-border);
+  border-radius: var(--sf-radius-sm);
+  color: var(--sf-text);
+  font-family: var(--sf-font);
+  font-size: 12px;
+  padding: 1px 8px;
+  cursor: pointer;
+}
+
 .sf-pl-bulkbar {
   display: flex;
   flex-wrap: wrap;

@@ -1,5 +1,4 @@
 import { createApp, reactive } from 'vue';
-import BulkListDemo from './components/BulkListDemo.vue';
 import DialogDemo from './components/DialogDemo.vue';
 import SelectorDemo from './components/SelectorDemo.vue';
 import SingleMenuDemo from './components/SingleMenuDemo.vue';
@@ -24,7 +23,6 @@ registerTabContent('table-demo', TableDemo);
 registerPanelComponent('workspace-panel', WorkspacePanel);
 
 registerPanelComponent('single-menu-demo', SingleMenuDemo);
-registerPanelComponent('bulk-list-demo', BulkListDemo);
 
 registerPanelComponent('selector-demo', SelectorDemo);
 
@@ -90,6 +88,42 @@ registerPanelData('demo-list', () => {
     });
   }
   return { items };
+});
+
+const bulkDemo = reactive({
+  tasks: [
+    { id: 'alpha', name: 'alpha.log', size: '12 KB', pinned: false },
+    { id: 'bravo', name: 'bravo.csv', size: '4 MB', pinned: false },
+    { id: 'charlie', name: 'charlie.txt', size: '318 B', pinned: true },
+    { id: 'delta', name: 'delta.json', size: '88 KB', pinned: false },
+    { id: 'echo', name: 'echo.ndjson', size: '1.2 MB', pinned: false },
+  ],
+  on: false,
+  selected: [] as string[],
+});
+
+registerPanelData('bulk-demo', () => {
+  const n = bulkDemo.selected.length;
+  return {
+    items: bulkDemo.tasks.map((t) => ({
+      id: t.id,
+      label: t.name,
+      meta: t.size,
+      detail: t.pinned ? 'pinned' : 'task',
+      action: 'bulk-demo-open',
+      options: [{ id: 'remove', label: 'Remove', icon: '🗑', danger: true }],
+    })),
+    bulk: {
+      active: bulkDemo.on,
+      selected: bulkDemo.selected,
+      entry: { id: 'edit', label: 'Edit', icon: '✎' },
+      actions: [
+        { id: 'pin', label: n ? `Pin (${n})` : 'Pin', icon: 'pin', disabled: n === 0 },
+        { id: 'delete', label: n ? `Delete (${n})` : 'Delete', icon: '🗑', danger: true, disabled: n === 0 },
+        { id: 'done', label: 'Done' },
+      ],
+    },
+  };
 });
 
 registerPanelData('demo-cards', () => [
@@ -251,6 +285,41 @@ registerPanelData('demo-menu', () => [
 ]);
 
 function onAction(e: FrameworkAction) {
+  if (e.source === 'panel' && e.action === 'bulk') {
+    const p = e.payload as {
+      gesture?: string;
+      option?: string;
+      selected?: string[];
+      from?: string;
+      to?: string;
+    };
+    if (p.gesture === 'entry') {
+      bulkDemo.on = true;
+      bulkDemo.selected = [];
+    } else if (p.gesture === 'toggle') {
+      bulkDemo.selected = p.selected ?? [];
+    } else if (p.gesture === 'reorder' && p.from && p.to) {
+      const ids = bulkDemo.tasks.map((t) => t.id);
+      const from = ids.indexOf(p.from);
+      const to = ids.indexOf(p.to);
+      if (from >= 0 && to >= 0 && from !== to) {
+        ids.splice(to, 0, ids.splice(from, 1)[0]);
+        const byId = new Map(bulkDemo.tasks.map((t) => [t.id, t]));
+        bulkDemo.tasks = ids.map((id) => byId.get(id) as (typeof bulkDemo.tasks)[number]);
+      }
+    } else if (p.gesture === 'action' && p.option === 'done') {
+      bulkDemo.on = false;
+      bulkDemo.selected = [];
+    } else if (p.gesture === 'action' && p.option === 'pin') {
+      bulkDemo.tasks = bulkDemo.tasks.map((t) =>
+        bulkDemo.selected.includes(t.id) ? { ...t, pinned: true } : t,
+      );
+    } else if (p.gesture === 'action' && p.option === 'delete') {
+      bulkDemo.tasks = bulkDemo.tasks.filter((t) => !bulkDemo.selected.includes(t.id));
+      bulkDemo.selected = [];
+    }
+    return;
+  }
   if (e.source === 'utility' && e.action === 'demo-filter' && typeof e.payload === 'string') {
     const key = e.payload as keyof typeof demoFilter;
     demoFilter[key] = !demoFilter[key];

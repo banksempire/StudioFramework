@@ -22,7 +22,6 @@ const emit = defineEmits<{
   'switch-toggle': [item: PanelListItem];
   dragstart: [item: PanelListItem, event: DragEvent];
   dragend: [event: DragEvent];
-  'bulk-entry': [];
   'bulk-action': [actionId: string];
   'bulk-change': [selected: string[]];
   'bulk-reorder': [fromId: string, toId: string];
@@ -135,30 +134,19 @@ function onRowDrop(item: PanelListItem) {
 </script>
 
 <template>
-    <div v-if="props.bulk" class="sf-pl-bulkbar">
+    <div v-if="bulkActive" class="sf-pl-bulkbar">
       <button
-        v-if="!bulkActive && props.bulk.entry"
+        v-for="a in props.bulk?.actions ?? []"
+        :key="a.id"
         class="sf-pl-bulkbar-btn"
+        :class="{ 'sf-pl-bulkbar-btn--danger': a.danger }"
         type="button"
-        @click="emit('bulk-entry')"
+        :disabled="a.disabled"
+        @click="emit('bulk-action', a.id)"
       >
-        <Icon v-if="props.bulk.entry.icon" :icon="props.bulk.entry.icon" />
-        {{ props.bulk.entry.label }}
+        <Icon v-if="a.icon" :icon="a.icon" />
+        {{ a.label }}
       </button>
-      <template v-else-if="bulkActive">
-        <button
-          v-for="a in props.bulk.actions ?? []"
-          :key="a.id"
-          class="sf-pl-bulkbar-btn"
-          :class="{ 'sf-pl-bulkbar-btn--danger': a.danger }"
-          type="button"
-          :disabled="a.disabled"
-          @click="emit('bulk-action', a.id)"
-        >
-          <Icon v-if="a.icon" :icon="a.icon" />
-          {{ a.label }}
-        </button>
-      </template>
     </div>
   <div v-if="props.items.length === 0 && props.empty && !props.bulk" class="sf-empty">{{ props.empty }}</div>
   <div v-else-if="!rich" class="sf-pc-list">
