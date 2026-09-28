@@ -68,8 +68,7 @@ defineProps<{ pageCount: number }>();
   padding: 0;
   cursor: pointer;
 }
-.sf-pagenav-btn:not(:first-child),
-.sf-pagenav-page {
+.sf-pagenav-btn:not(:first-child) {
   border-left: 1px solid var(--sf-border);
 }
 .sf-pagenav-btn:disabled {
@@ -88,6 +87,7 @@ defineProps<{ pageCount: number }>();
   height: 24px;
   box-sizing: border-box;
   border: none;
+  border-left: 1px solid var(--sf-border);
   border-radius: 0;
   background: none;
   background-image: none;

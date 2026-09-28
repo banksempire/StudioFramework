@@ -981,6 +981,7 @@ const { ensureServer, openApp, makeReporter, finish } = require('./lib/ui-test.c
         align: st.textAlign,
         last: st.textAlignLast,
         bgimg: st.backgroundImage,
+        sep: st.borderLeftWidth,
       };
     });
     report(
@@ -989,7 +990,8 @@ const { ensureServer, openApp, makeReporter, finish } = require('./lib/ui-test.c
         selStyle.appearance === 'none' &&
         selStyle.bgimg === 'none' &&
         selStyle.align === 'center' &&
-        selStyle.last === 'center',
+        selStyle.last === 'center' &&
+        selStyle.sep === '1px',
       JSON.stringify({ seams: seams.map((g) => Math.round(g)), ...selStyle }),
     );
     const sizeInitial = await pageSizeRows();
