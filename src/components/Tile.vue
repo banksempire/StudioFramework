@@ -137,11 +137,6 @@ const contentComp = computed(() => {
 });
 const emptyComp = computed(() => (ws.emptyContent ? (getTabContent(ws.emptyContent) ?? null) : null));
 const focused = computed(() => ws.focusedTileId === props.tile.id);
-const isTopRight = computed(() => ws.topRightTileId === props.tile.id);
-const canEvenlySpace = computed(() => ws.roots.length > 1);
-const evenlySpaceTitle = computed(() =>
-  ws.rootDir === 'column' ? 'Evenly space rows' : 'Evenly space columns',
-);
 
 function onTabDragStart(e: DragEvent, tabId: string) {
   if (synthetic.value) return;
@@ -258,27 +253,6 @@ function onTileMousedown() {
           ><SvgIcon name="✕" /></span>
         </div>
         </div>
-        <template v-if="isTopRight">
-          <div v-if="canEvenlySpace" class="sf-btn-group">
-            <button
-              class="sf-tab-panel-toggle"
-              title="Merge all tiles into one"
-              @click="ws.ops.mergeAll()"
-            ><SvgIcon name="□" /></button>
-            <button
-              class="sf-tab-panel-toggle"
-              :title="evenlySpaceTitle"
-              @click="ws.ops.evenlySpace()"
-            ><SvgIcon name="⇔" /></button>
-          </div>
-          <div v-if="rpToggle" class="sf-btn-group">
-            <button
-              class="sf-tab-panel-toggle"
-              :title="rpToggle.visible ? 'Collapse Right Panel' : 'Expand Right Panel'"
-              @click="rpToggle.toggle()"
-            ><SvgIcon :name="rpToggle.visible ? '\u25E8' : '\u25EB'" /></button>
-          </div>
-        </template>
       </template>
     </div>
 

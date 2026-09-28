@@ -134,10 +134,16 @@ onUnmounted(() => {
 const props = defineProps<{
   menus: MenuNodeDef[];
   leftPanelVisible?: boolean;
+  rightPanelVisible?: boolean;
+  canEvenlySpace?: boolean;
+  evenlyTitle?: string;
 }>();
 
 const emit = defineEmits<{
   'toggle-left-panel': [];
+  'merge-all': [];
+  'evenly-space': [];
+  'toggle-right-panel': [];
   'menu-action': [actionId: string];
 }>();
 
@@ -190,6 +196,26 @@ function onItemAction(item: MenuNodeDef) {
           </div>
         </template>
       </Menu>
+    </div>
+
+    <div class="sf-menu-actions">
+      <button
+        v-if="props.canEvenlySpace"
+        class="sf-menu-action-btn sf-menu-merge"
+        title="Merge all tiles into one"
+        @click="emit('merge-all')"
+      ><SvgIcon name="□" /></button>
+      <button
+        v-if="props.canEvenlySpace"
+        class="sf-menu-action-btn sf-menu-even"
+        :title="props.evenlyTitle ?? 'Evenly space'"
+        @click="emit('evenly-space')"
+      ><SvgIcon name="⇔" /></button>
+      <button
+        class="sf-menu-action-btn sf-menu-rp"
+        :title="props.rightPanelVisible ? 'Collapse Right Panel' : 'Expand Right Panel'"
+        @click="emit('toggle-right-panel')"
+      ><SvgIcon :name="props.rightPanelVisible ? '\u25E8' : '\u25EB'" /></button>
     </div>
   </div>
 </template>

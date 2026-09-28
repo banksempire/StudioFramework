@@ -324,7 +324,7 @@ const PANEL = '.sf-ws-panel';
   );
 
   const rightPanel = page.locator('.sf-panel--right');
-  const rpBtn = (title) => page.locator(`.sf-tab-panel-toggle[title="${title}"]`);
+  const rpBtn = (title) => page.locator(`.sf-menu-rp[title="${title}"]`);
   report('right panel starts visible', await rightPanel.isVisible());
 
   await rpBtn('Collapse Right Panel').click();

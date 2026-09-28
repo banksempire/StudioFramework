@@ -120,7 +120,7 @@ const { ensureServer, openApp, makeReporter, finish } = require('./lib/ui-test.c
     await page.locator('.sf-menu-action-btn').first().click();
     await page.waitForTimeout(100);
     report('left group reopened after reload', (await panelDisplayed('left')) === true);
-    await page.locator('.sf-tab-panel-toggle').click();
+    await page.locator('.sf-menu-rp').click();
     await page.waitForTimeout(100);
     report('right collapsed by user', (await panelDisplayed('right')) === false);
 

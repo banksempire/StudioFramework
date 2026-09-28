@@ -394,7 +394,13 @@ function onPanelAction(a: PanelAction) {
       v-if="!isMobile"
       :menus="L.menu"
       :left-panel-visible="leftPanelVisible"
+      :right-panel-visible="rightPanelShown"
+      :can-evenly-space="api.roots.length > 1"
+      :evenly-title="api.rootDir === 'column' ? 'Evenly space rows' : 'Evenly space columns'"
       @toggle-left-panel="toggleLeftPanel"
+      @merge-all="api.ops.mergeAll()"
+      @evenly-space="api.ops.evenlySpace()"
+      @toggle-right-panel="toggleRightPanel"
       @menu-action="onMenuAction"
     />
 

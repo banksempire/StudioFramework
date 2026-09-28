@@ -1244,51 +1244,6 @@ body.sf-dragging-row * {
   }
 }
 
-.sf-btn-group {
-  display: flex;
-  align-items: center;
-  height: calc(100% - 8px);
-  flex-shrink: 0;
-  border-radius: var(--sf-radius);
-  overflow: hidden;
-  background: var(--sf-bg);
-  margin-left: auto;
-}
-
-.sf-btn-group + .sf-btn-group {
-  margin-left: 4px;
-}
-
-.sf-btn-group:last-child {
-  margin-right: var(--sf-gap);
-}
-
-.sf-tab-panel-toggle {
-  background: none;
-  border: none;
-  color: var(--sf-text);
-  cursor: pointer;
-  font-size: 16px;
-  width: 28px;
-  height: 100%;
-  flex-shrink: 0;
-  border-radius: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.sf-btn-group .sf-tab-panel-toggle:not(:last-child) {
-  border-right: 1px solid var(--sf-border);
-}
-
-@media (hover: hover) {
-  .sf-tab-panel-toggle:hover {
-    color: var(--sf-text-bright);
-    box-shadow: inset 0 0 0 999px var(--sf-hover-overlay);
-  }
-}
-
 .sf-welcome {
   display: flex;
   align-items: center;
