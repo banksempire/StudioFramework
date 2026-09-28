@@ -1,13 +1,13 @@
 <script setup lang="ts">
 import { ref } from 'vue';
 import { getUtilityMenu } from '../registry';
-import type { PanelAction, PanelSection } from '../types/panel';
+import type { PanelAction, PanelH2 } from '../types/panel';
 import Menu from './Menu.vue';
 import PanelComponent from './PanelComponent.vue';
 import SvgIcon from './SvgIcon.vue';
 
 defineProps<{
-  section: PanelSection;
+  section: PanelH2;
   isExpanded: boolean;
   bodyHeight: number | null;
 }>();

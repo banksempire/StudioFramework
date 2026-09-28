@@ -84,29 +84,29 @@ utilities):
 
 ### PanelDef
 
-Panels use the same three heading levels as popup dialogs — **H1 groups →
-H2 sections → content** — with one panel-only extra: `heading: 3` renders a
-section as a flat **H3** header (a bold label with no separator lines, not
+Panels use the same three heading levels as popup dialogs — **H1 → H2 →
+content** — with one panel-only extra: `heading: 3` renders a
+column as a flat **H3** header (a bold label with no separator lines, not
 collapsible, no drag handle, always visible).
 
 ```json
 {
   "title": "Files",
-  "groups": [
+  "h1": [
     {
       "id": "files",
       "title": "Files",
-      "sections": [ { "id": "open-editors", "title": "Open Editors", "components": [ ... ] } ]
+      "h2": [ { "id": "open-editors", "title": "Open Editors", "components": [ ... ] } ]
     }
   ]
 }
 ```
 
-- **H1 (`groups`)** render as the panel tab bar and auto-hide when a panel has
+- **H1 (`h1`)** render as the panel tab bar and auto-hide when a panel has
   only one group.
-- **H2 (`sections`, default)** are collapsible (chevron) and, when
+- **H2 (`h2`, default)** are collapsible (chevron) and, when
   `height: "variable"`, drag-resizable; the panel's `⋯` menu can hide/show them.
-- **H3 (`sections` with `"heading": 3`)** are flat: a bold label with no
+- **H3 (`h2` with `"heading": 3`)** are flat: a bold label with no
   separator lines, always expanded, no collapse and no drag.
   `height: "variable"` is rejected for H3 by the loader.
 
@@ -248,7 +248,7 @@ they stay generic and reusable.
 ## Adding a new docker panel
 
 1. Add an entry to `"docker": [ ... ]` with `id`, `displayName`, `icon`,
-   `panel` (title + sections + subSections + components).
+   `panel` (title + h1 groups + h2 sections + components).
 2. Done — the Docker bar renders it, clicking it switches and opens the panel.
 
 ## Customizing

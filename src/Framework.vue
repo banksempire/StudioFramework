@@ -358,8 +358,8 @@ function onMenuAction(actionId: string) {
 function utilityClosesMobilePanel(subId: string, utilityId: string): boolean {
   const panels = [dockerDef.value, rightDef.value.kind === 'ok' ? rightDef.value.def : null];
   for (const panel of panels) {
-    for (const group of panel?.groups ?? []) {
-      for (const sub of group.sections) {
+    for (const group of panel?.h1 ?? []) {
+      for (const sub of group.h2) {
         if (sub.id !== subId) continue;
         if (sub.utilities?.some((u) => u.id === utilityId && u.closeMobilePanel)) return true;
       }
@@ -410,7 +410,7 @@ function onPanelAction(a: PanelAction) {
         <Panel
           v-if="dockerDef"
           :title="dockerDef.title"
-          :groups="dockerDef.groups"
+          :h1s="dockerDef.h1"
           :visible="effDockerPanelVisible"
           :width="leftPanelWidth"
           :state-key="'docker:' + activeDockerApp"
@@ -434,7 +434,7 @@ function onPanelAction(a: PanelAction) {
         <Panel
           v-if="rightDef.kind === 'ok' && !isMobile"
           :title="rightDef.def.title"
-          :groups="rightDef.def.groups"
+          :h1s="rightDef.def.h1"
           :visible="effRightPanelVisible"
           :width="rightPanelWidth"
           state-key="right"
@@ -471,7 +471,7 @@ function onPanelAction(a: PanelAction) {
       <div v-if="mobilePanelOpen && dockerDef" class="sf-mobile-panel">
         <Panel
           :title="dockerDef.title"
-          :groups="dockerDef.groups"
+          :h1s="dockerDef.h1"
           :visible="true"
           :state-key="'docker:' + activeDockerApp"
           position="mobile"
@@ -484,7 +484,7 @@ function onPanelAction(a: PanelAction) {
         <Panel
           v-if="rightDef.kind === 'ok'"
           :title="rightDef.def.title"
-          :groups="rightDef.def.groups"
+          :h1s="rightDef.def.h1"
           :visible="true"
           state-key="right"
           position="mobile"

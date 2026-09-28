@@ -229,7 +229,7 @@ export interface PanelAction {
 
 export type PanelHeading = 2 | 3;
 
-export interface PanelSection {
+export interface PanelH2 {
   id: string;
   title: string;
   heading?: PanelHeading;
@@ -239,8 +239,8 @@ export interface PanelSection {
   components: PanelComponent[];
 }
 
-export interface PanelGroup {
+export interface PanelH1 {
   id: string;
   title: string;
-  sections: PanelSection[];
+  h2: PanelH2[];
 }

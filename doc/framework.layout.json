@@ -328,11 +328,11 @@
       "icon": "📁",
       "panel": {
         "title": "Files",
-        "groups": [
+        "h1": [
           {
             "id": "files",
             "title": "Files",
-            "sections": [
+            "h2": [
               {
                 "id": "open-editors",
                 "title": "Open Editors",
@@ -616,7 +616,7 @@
           {
             "id": "npm",
             "title": "NPM Scripts",
-            "sections": [
+            "h2": [
               {
                 "id": "scripts",
                 "title": "Scripts",
@@ -646,7 +646,7 @@
           {
             "id": "todo",
             "title": "TODO",
-            "sections": [
+            "h2": [
               {
                 "id": "todos",
                 "title": "TODOs",
@@ -681,11 +681,11 @@
       "icon": "🔍",
       "panel": {
         "title": "Search",
-        "groups": [
+        "h1": [
           {
             "id": "search",
             "title": "Search",
-            "sections": [
+            "h2": [
               {
                 "id": "search-input",
                 "title": "Search",
@@ -740,11 +740,11 @@
       "badge": "3",
       "panel": {
         "title": "Source Control",
-        "groups": [
+        "h1": [
           {
             "id": "scm",
             "title": "SCM",
-            "sections": [
+            "h2": [
               {
                 "id": "changes",
                 "title": "Changes",
@@ -814,11 +814,11 @@
       "icon": "🐛",
       "panel": {
         "title": "Debug",
-        "groups": [
+        "h1": [
           {
             "id": "variables",
             "title": "Variables",
-            "sections": [
+            "h2": [
               {
                 "id": "vars",
                 "title": "Variables",
@@ -848,7 +848,7 @@
           {
             "id": "watch",
             "title": "Watch",
-            "sections": [
+            "h2": [
               {
                 "id": "watch-list",
                 "title": "Watch",
@@ -867,7 +867,7 @@
           {
             "id": "callstack",
             "title": "Call Stack",
-            "sections": [
+            "h2": [
               {
                 "id": "stack",
                 "title": "Call Stack",
@@ -900,11 +900,11 @@
       "icon": "🧩",
       "panel": {
         "title": "Extensions",
-        "groups": [
+        "h1": [
           {
             "id": "extensions",
             "title": "Extensions",
-            "sections": [
+            "h2": [
               {
                 "id": "installed",
                 "title": "Installed",
@@ -966,11 +966,11 @@
       "icon": "⚙️",
       "panel": {
         "title": "Settings",
-        "groups": [
+        "h1": [
           {
             "id": "editor",
             "title": "Editor",
-            "sections": [
+            "h2": [
               {
                 "id": "appearance",
                 "title": "Appearance",
@@ -1028,7 +1028,7 @@
           {
             "id": "workspace",
             "title": "Workspace",
-            "sections": [
+            "h2": [
               {
                 "id": "features",
                 "title": "Features",
@@ -1060,11 +1060,11 @@
       "icon": "🧱",
       "panel": {
         "title": "Panel Library",
-        "groups": [
+        "h1": [
           {
             "id": "library",
             "title": "Components",
-            "sections": [
+            "h2": [
               {
                 "id": "lib-general",
                 "title": "General",
@@ -1255,11 +1255,11 @@
       "icon": "🗂",
       "panel": {
         "title": "Workspaces",
-        "groups": [
+        "h1": [
           {
             "id": "workspaces",
             "title": "Workspaces",
-            "sections": [
+            "h2": [
               {
                 "id": "ws-panel",
                 "title": "Saved Workspaces",
@@ -1281,11 +1281,11 @@
   "rightPanels": {
     "welcome": {
       "title": "Welcome Info",
-      "groups": [
+      "h1": [
         {
           "id": "welcome-info",
           "title": "Welcome",
-          "sections": [
+          "h2": [
             {
               "id": "welcome-about",
               "title": "About",
@@ -1312,11 +1312,11 @@
     },
     "framework-ts": {
       "title": "Properties",
-      "groups": [
+      "h1": [
         {
           "id": "props-framework-ts",
           "title": "Properties",
-          "sections": [
+          "h2": [
             {
               "id": "props-framework-ts-element",
               "title": "Element",
@@ -1403,11 +1403,11 @@
     },
     "utils-ts": {
       "title": "Properties",
-      "groups": [
+      "h1": [
         {
           "id": "props-utils-ts",
           "title": "Properties",
-          "sections": [
+          "h2": [
             {
               "id": "props-utils-ts-element",
               "title": "Element",
@@ -1494,11 +1494,11 @@
     },
     "styles-css": {
       "title": "Properties",
-      "groups": [
+      "h1": [
         {
           "id": "props-styles-css",
           "title": "Properties",
-          "sections": [
+          "h2": [
             {
               "id": "props-styles-css-element",
               "title": "Element",

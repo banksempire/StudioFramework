@@ -1,12 +1,12 @@
 <script setup lang="ts">
 import { computed, nextTick, onMounted, onUnmounted, reactive, ref, watch } from 'vue';
-import type { PanelAction, PanelSection } from '../types/panel';
+import type { PanelAction, PanelH2 } from '../types/panel';
 import { readUiValue, uiEpoch, writeUiValue } from '../uiState';
 import SubSection from './SubSection.vue';
 
 const props = withDefaults(
   defineProps<{
-    sections: PanelSection[];
+    h2s: PanelH2[];
     hiddenIds: Set<string>;
     stateKey?: string;
     mobile?: boolean;
@@ -57,7 +57,7 @@ function readPersistedSub(subId: string): PersistedSubState | null {
 
 function persistSubState() {
   if (props.mobile || !props.stateKey) return;
-  for (const sub of props.sections) {
+  for (const sub of props.h2s) {
     if (sub.heading === 3) continue;
     const st = states[sub.id];
     if (!st) continue;
@@ -68,13 +68,13 @@ function persistSubState() {
   }
 }
 
-const visibleSubSections = computed(() => props.sections.filter((s) => !props.hiddenIds.has(s.id)));
+const visibleSubSections = computed(() => props.h2s.filter((s) => !props.hiddenIds.has(s.id)));
 
-function isFlat(sub: PanelSection): boolean {
+function isFlat(sub: PanelH2): boolean {
   return sub.heading === 3;
 }
 
-function isResizeable(sub: PanelSection): boolean {
+function isResizeable(sub: PanelH2): boolean {
   if (props.mobile || isFlat(sub)) return false;
   const st = states[sub.id];
   return !!st && st.isExpanded && !props.hiddenIds.has(sub.id) && sub.isHeightVariable;
@@ -82,7 +82,7 @@ function isResizeable(sub: PanelSection): boolean {
 
 const H3_HEADER_H = 30;
 
-function getBodyHeight(sub: PanelSection): number {
+function getBodyHeight(sub: PanelH2): number {
   const st = states[sub.id];
   if (isFlat(sub)) return st?.measuredHeight ?? 0;
   if (!st?.isExpanded) return 0;
@@ -90,7 +90,7 @@ function getBodyHeight(sub: PanelSection): number {
   return Math.max(st.height, sub.minHeight ?? 0);
 }
 
-function bodyHeightFor(sub: PanelSection): number | null {
+function bodyHeightFor(sub: PanelH2): number | null {
   if (isFlat(sub)) return null;
   if (!sub.isHeightVariable || props.mobile) return null;
   const st = states[sub.id];
@@ -98,8 +98,8 @@ function bodyHeightFor(sub: PanelSection): number | null {
   return Math.max(st.height, sub.minHeight ?? 0);
 }
 
-function findSub(id: string): PanelSection {
-  const sub = props.sections.find((s) => s.id === id);
+function findSub(id: string): PanelH2 {
+  const sub = props.h2s.find((s) => s.id === id);
   if (!sub) throw new Error(`SubSectionBody: unknown section id ${id}`);
   return sub;
 }
@@ -150,7 +150,7 @@ function measureAndObserve() {
   if (!body) return;
 
   const wanted = new Set(
-    props.sections
+    props.h2s
       .filter(
         (s) => (isFlat(s) || (!s.isHeightVariable && states[s.id]?.isExpanded)) && !props.hiddenIds.has(s.id),
       )
@@ -164,7 +164,7 @@ function measureAndObserve() {
     }
   }
 
-  for (const sub of props.sections) {
+  for (const sub of props.h2s) {
     if (!wanted.has(sub.id)) continue;
     const el = body.querySelector(`[data-sub-body="${sub.id}"]`) as HTMLElement | null;
     if (!el) continue;
@@ -196,7 +196,7 @@ function refresh(defer = false) {
 }
 
 watch(
-  () => props.sections,
+  () => props.h2s,
   (subs) => {
     const ids = new Set(subs.map((s) => s.id));
     for (const sub of subs) {
@@ -223,7 +223,7 @@ watch(
 );
 
 watch(uiEpoch, () => {
-  for (const sub of props.sections) {
+  for (const sub of props.h2s) {
     const persisted = readPersistedSub(sub.id);
     const st = states[sub.id];
     if (!persisted || !st) continue;
@@ -257,7 +257,7 @@ onMounted(() => {
 function toggleExpand(subId: string) {
   const st = states[subId];
   if (!st) return;
-  const sub = props.sections.find((s) => s.id === subId);
+  const sub = props.h2s.find((s) => s.id === subId);
   if (!sub || isFlat(sub)) return;
 
   if (st.isExpanded) {
@@ -293,9 +293,9 @@ const handleFlags = computed(() => {
 
 interface SectionBlock {
   key: string;
-  h2: PanelSection;
+  h2: PanelH2;
   h2Index: number;
-  trailing: { sub: PanelSection; index: number }[];
+  trailing: { sub: PanelH2; index: number }[];
 }
 
 const blocks = computed<SectionBlock[]>(() => {

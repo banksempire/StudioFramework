@@ -14,12 +14,12 @@ import type {
   KeyValueItem,
   PanelComponent,
   PanelComponentBase,
-  PanelGroup,
+  PanelH1,
+  PanelH2,
   PanelHeaderAction,
   PanelListButton,
   PanelListItem,
   PanelListOption,
-  PanelSection,
   PanelTableColumn,
   PanelUtility,
   TreeCheckState,
@@ -538,7 +538,7 @@ function toUtility(v: unknown, path: string): PanelUtility {
   };
 }
 
-function toSection(v: unknown, path: string): PanelSection {
+function toH2(v: unknown, path: string): PanelH2 {
   const r = needRecord(v, path);
   const height = optString(r.height, `${path}.height`) ?? 'fixed';
   if (height !== 'fixed' && height !== 'variable') {
@@ -572,33 +572,31 @@ function toSection(v: unknown, path: string): PanelSection {
   };
 }
 
-function toGroup(v: unknown, path: string): PanelGroup {
+function toH1(v: unknown, path: string): PanelH1 {
   const r = needRecord(v, path);
-  const sections = needArray(r.sections, `${path}.sections`).map((s, i) =>
-    toSection(s, `${path}.sections[${i}]`),
-  );
-  if (sections.length === 0) {
-    fail(`${path}.sections`, 'an h1 group needs at least one h2 section');
+  const h2 = needArray(r.h2, `${path}.h2`).map((s, i) => toH2(s, `${path}.h2[${i}]`));
+  if (h2.length === 0) {
+    fail(`${path}.h2`, 'an h1 group needs at least one h2 section');
   }
-  if (sections.every((sec) => sec.heading === 3)) {
-    fail(`${path}.sections`, 'an h1 group needs at least one h2 section (h3 alone is not enough)');
+  if (h2.every((sec) => sec.heading === 3)) {
+    fail(`${path}.h2`, 'an h1 group needs at least one h2 section (h3 alone is not enough)');
   }
   return {
     id: needId(r.id, `${path}.id`),
     title: needString(r.title, `${path}.title`),
-    sections,
+    h2,
   };
 }
 
 function toPanelDef(v: unknown, path: string): PanelDef {
   const r = needRecord(v, path);
-  const groups = needArray(r.groups, `${path}.groups`).map((g, i) => toGroup(g, `${path}.groups[${i}]`));
-  if (groups.length === 0) {
-    fail(`${path}.groups`, 'a panel needs at least one h1 group');
+  const h1 = needArray(r.h1, `${path}.h1`).map((g, i) => toH1(g, `${path}.h1[${i}]`));
+  if (h1.length === 0) {
+    fail(`${path}.h1`, 'a panel needs at least one h1 group');
   }
   return {
     title: needString(r.title, `${path}.title`),
-    groups,
+    h1,
   };
 }
 

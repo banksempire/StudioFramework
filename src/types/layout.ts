@@ -1,4 +1,4 @@
-import type { IconDef, PanelGroup } from './panel';
+import type { IconDef, PanelH1 } from './panel';
 
 export interface MenuNodeDef {
   id?: string;
@@ -17,7 +17,7 @@ export interface MenuNodeDef {
 
 export interface PanelDef {
   title: string;
-  groups: PanelGroup[];
+  h1: PanelH1[];
 }
 
 export interface DockerAppDef {
