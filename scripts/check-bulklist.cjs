@@ -26,7 +26,8 @@ const { ensureServer, makeReporter, finish } = require('./lib/ui-test.cjs');
   const demo = page.locator('.sf-subsection', { has: page.locator('[data-sub-body="bulk"]') }).first();
   await demo.scrollIntoViewIfNeeded();
   const row = (label) => demo.locator('.sf-sm-row', { hasText: label }).first();
-  const editBtn = demo.locator('.sf-subsection-bulk-entry');
+  const editBtn = demo.locator('.sf-subsection-header .sf-subsection-util[title="Edit"]');
+  const doneBtn = demo.locator('.sf-subsection-header .sf-subsection-util[title="Done"]');
   const barBtn = (label) => demo.locator('.sf-pl-bulkbar-btn', { hasText: label });
   const checks = () => demo.locator('.sf-pl-check');
   const checkOn = (label) =>
@@ -47,8 +48,8 @@ const { ensureServer, makeReporter, finish } = require('./lib/ui-test.cjs');
   await editBtn.click();
   await page.waitForTimeout(150);
   report(
-    'entering bulk mode swaps Edit for Pin/Delete/Done',
-    (await editBtn.count()) === 0 && (await barBtn('Done').count()) === 1,
+    'entering bulk mode swaps Edit for a header tick and Pin/Delete in the bar',
+    (await editBtn.count()) === 0 && (await doneBtn.count()) === 1 && (await barBtn('Done').count()) === 0,
   );
   report('every row shows a selection circle', (await checks().count()) === 5);
 
@@ -117,7 +118,7 @@ const { ensureServer, makeReporter, finish } = require('./lib/ui-test.cjs');
   await page.waitForTimeout(150);
   report('bulk delete removes the selected rows', (await row('charlie.txt').count()) === 0);
 
-  await barBtn('Done').click();
+  await doneBtn.click();
   await page.waitForTimeout(150);
   report(
     'done exits bulk mode and clears circles',

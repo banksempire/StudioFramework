@@ -85,8 +85,9 @@ export interface PanelListItem {
 
 export interface PanelBulkAction {
   id: string;
-  label: string;
+  label?: string;
   icon?: IconDef;
+  tooltip?: string;
   danger?: boolean;
   disabled?: boolean;
 }
@@ -95,6 +96,7 @@ export interface PanelListBulk {
   active: boolean;
   selected: string[];
   entry?: PanelBulkAction;
+  done?: PanelBulkAction;
   actions?: PanelBulkAction[];
 }
 
