@@ -19,6 +19,7 @@ import type { LayoutDefinition } from './types/layout';
 import MenuBar from './components/MenuBar.vue';
 import Docker from './components/Docker.vue';
 import Panel from './components/Panel.vue';
+import PanelMissing from './components/PanelMissing.vue';
 import Workspace from './components/Workspace.vue';
 import StatusBar from './components/StatusBar.vue';
 import SvgIcon from './components/SvgIcon.vue';
@@ -450,17 +451,14 @@ function onPanelAction(a: PanelAction) {
           @utility="onPanelUtility"
           @component-action="onPanelAction"
         />
-        <div
+        <PanelMissing
           v-else-if="!isMobile"
-          class="sf-panel sf-panel--right sf-panel--missing"
-          :style="{ width: rightPanelWidth + 'px' }"
-          :class="{ 'sf-panel--hidden': !effRightPanelVisible }"
-        >
-          <div class="sf-panel-header">
-            <span class="sf-panel-title">Info Panel</span>
-          </div>
-          <div class="sf-panel-missing">Panel layout undefined</div>
-        </div>
+          :width="rightPanelWidth"
+          :visible="effRightPanelVisible"
+          position="right"
+          @resize="onPanelResize('right', $event)"
+          @collapse="rightPanelVisible = false"
+        />
       </div>
     </div>
 
@@ -498,17 +496,15 @@ function onPanelAction(a: PanelAction) {
           @utility="onPanelUtility"
           @component-action="onPanelAction"
         />
-        <div v-else class="sf-panel sf-panel--mobile sf-panel--missing">
-          <div class="sf-panel-header">
-            <span class="sf-panel-title">Info Panel</span>
-            <button
-              class="sf-panel-close-btn"
-              title="Close panel"
-              @click="mobileRightOpen = false"
-            ><SvgIcon name="✕" /></button>
-          </div>
-          <div class="sf-panel-missing">Panel layout undefined</div>
-        </div>
+        <PanelMissing
+          v-else
+          :width="rightPanelWidth"
+          :visible="true"
+          :title="'Info Panel'"
+          mobile-close
+          @resize="onPanelResize('right', $event)"
+          @close="mobileRightOpen = false"
+        />
       </div>
     </template>
 
