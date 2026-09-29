@@ -2,12 +2,19 @@
 import SvgIcon from './SvgIcon.vue';
 
 const page = defineModel<number>('page', { required: true });
-defineProps<{ pageCount: number }>();
+defineProps<{ pageCount: number; jumps?: boolean }>();
 </script>
 
 <template>
   <div class="sf-pagenav">
-    <button class="sf-pagenav-btn" type="button" title="First page" :disabled="page <= 1" @click="page = 1">
+    <button
+      v-if="jumps !== false"
+      class="sf-pagenav-btn"
+      type="button"
+      title="First page"
+      :disabled="page <= 1"
+      @click="page = 1"
+    >
       <SvgIcon name="«" />
     </button>
     <button class="sf-pagenav-btn" type="button" title="Previous page" :disabled="page <= 1" @click="page -= 1">
@@ -31,6 +38,7 @@ defineProps<{ pageCount: number }>();
       <SvgIcon name="›" />
     </button>
     <button
+      v-if="jumps !== false"
       class="sf-pagenav-btn"
       type="button"
       title="Last page"

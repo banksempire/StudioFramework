@@ -717,7 +717,7 @@ onBeforeUnmount(() => {
         @keydown.space.prevent="toggleSizeMenu($event)"
       >{{ pagerRange }}</span>
       <span v-else class="sf-tbl-pager-range">{{ pagerRange }}</span>
-      <PageNav v-model:page="page" :page-count="pageCount" />
+      <PageNav v-model:page="page" :page-count="pageCount" :jumps="!mobile" />
     </div>
     <div
       v-if="sizeMenu"

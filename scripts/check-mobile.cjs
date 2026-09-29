@@ -40,6 +40,7 @@ const WS = '.sf-workspace';
     await page.setViewportSize({ width: w, height: 900 });
     await page.waitForTimeout(300);
   };
+  const pagerButtons = () => page.locator('.sf-pagenav-btn').count();
 
   report(
     'desktop: menu bar + status bar visible',
@@ -51,6 +52,14 @@ const WS = '.sf-workspace';
     (await page.locator('.sf-docker').count()) === 1 &&
       (await page.locator('.sf-panel--right').count()) === 1,
   );
+  await tab('Table').click();
+  await page.waitForTimeout(400);
+  report(
+    'desktop: pager shows first/last jumps',
+    (await pagerButtons()) === 4 * (await page.locator('.sf-tbl-pager').count()),
+  );
+  await tab('framework.ts').click();
+  await page.waitForTimeout(300);
   const desktopUtils = await page.evaluate(() => {
     const utils = Array.from(document.querySelectorAll('.sf-panel--right .sf-subsection-utils'));
     return {
@@ -94,6 +103,15 @@ const WS = '.sf-workspace';
   );
   report('mobile: right panel hidden', (await page.locator('.sf-panel--right').count()) === 0);
   report('mobile: ONE tile', (await tileCount()) === 1);
+  await page.locator('.sf-mobile-tab-label').click();
+  await page.waitForTimeout(200);
+  await page.locator('.sf-tab-dropdown-row', { hasText: 'Table' }).click();
+  await page.waitForTimeout(400);
+  report(
+    'mobile: pager hides the first/last jumps, keeps prev/next',
+    (await pagerButtons()) === 2 * (await page.locator('.sf-tbl-pager').count()) &&
+      (await page.locator('.sf-pagenav-page').count()) === (await page.locator('.sf-tbl-pager').count()),
+  );
   const dvhChain = await page.evaluate(() => {
     const findDvhHeight = (selector) => {
       const scan = (rules) => {
@@ -438,6 +456,10 @@ const WS = '.sf-workspace';
     (await tileCount()) === 2 &&
       JSON.stringify(await tileTabs(0)) === JSON.stringify(desktopTiles[0]) &&
       JSON.stringify(await tileTabs(1)) === JSON.stringify(desktopTiles[1]),
+  );
+  report(
+    'desktop: pager jumps return after leaving mobile',
+    (await pagerButtons()) === 4 * (await page.locator('.sf-tbl-pager').count()),
   );
   report(
     'menu bar + status bar back',
