@@ -19,6 +19,7 @@ const props = withDefaults(
     pageSize?: number;
     pageSizeOptions?: number[];
     resizable?: boolean;
+    paged?: boolean;
   }>(),
   {
     emptyText: 'No rows.',
@@ -28,6 +29,7 @@ const props = withDefaults(
     pageSize: 0,
     pageSizeOptions: () => [],
     resizable: true,
+    paged: true,
   },
 );
 
@@ -383,7 +385,9 @@ const sizeChoices = computed(() =>
 const sizeMenu = ref<{ x: number; y: number } | null>(null);
 const injectedMobile = inject(kIsMobile, null);
 const mobile = computed(() => injectedMobile?.value ?? false);
-const effectiveSize = computed(() => (mobile.value ? 50 : sizeModel.value));
+const effectiveSize = computed(() =>
+  !props.paged ? Math.max(visibleRows.value.length, 1) : mobile.value ? 50 : sizeModel.value,
+);
 function toggleSizeMenu(e: Event) {
   if (sizeMenu.value) {
     sizeMenu.value = null;
@@ -705,7 +709,7 @@ onBeforeUnmount(() => {
     </div>
   </div>
     </div>
-    <div class="sf-tbl-pager">
+    <div v-if="props.paged" class="sf-tbl-pager">
       <span
         v-if="!mobile"
         class="sf-tbl-pager-range sf-tbl-pager-range--size"

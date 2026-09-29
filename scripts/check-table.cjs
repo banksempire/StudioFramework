@@ -1062,6 +1062,19 @@ const { ensureServer, openApp, makeReporter, finish } = require('./lib/ui-test.c
       reset.rows === 5 && reset.range.startsWith('1–5'),
       JSON.stringify(reset),
     );
+    await page.locator('.sf-docker-app[title="Library"]').click();
+    await delay(400);
+    const panelTable = page.locator('.sf-panel--left .sf-pt');
+    await panelTable.waitFor({ state: 'visible', timeout: 5000 });
+    report(
+      'panel table: no pager chrome',
+      (await panelTable.locator('.sf-tbl-pager').count()) === 0 &&
+        (await panelTable.locator('.sf-tbl-row').count()) > 0,
+    );
+    report(
+      'workspace table: pager still present',
+      (await page.locator('.sf-table-demo-block').first().locator('.sf-tbl-pager').count()) === 1,
+    );
   } catch (err) {
     console.error(err);
     process.exitCode = 1;
