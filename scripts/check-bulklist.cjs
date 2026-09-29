@@ -86,6 +86,24 @@ const { ensureServer, makeReporter, finish } = require('./lib/ui-test.cjs');
   const grip = demo.locator('.sf-sm-row', { hasText: 'echo.ndjson' }).first().locator('.sf-pl-grip');
   report('bulk rows show a drag grip', (await grip.count()) === 1);
 
+  const centered = await demo.evaluate((el) => {
+    const r = [...el.querySelectorAll('.sf-pl-item--bulk')].find((x) => x.textContent.includes('pinned'));
+    if (!r) return null;
+    const row = r.getBoundingClientRect();
+    const mid = (n) => (n.getBoundingClientRect().top + n.getBoundingClientRect().bottom) / 2 - row.top;
+    return {
+      rowH: row.height,
+      check: mid(r.querySelector('.sf-pl-check')),
+      grip: mid(r.querySelector('.sf-pl-grip')),
+    };
+  });
+  report(
+    'bulk circle and grip sit at the vertical middle of the row',
+    centered !== null &&
+      Math.abs(centered.check - centered.rowH / 2) < 2 &&
+      Math.abs(centered.grip - centered.rowH / 2) < 2,
+  );
+
   await grip.dragTo(row('alpha.log'));
   await page.waitForTimeout(200);
   report(
