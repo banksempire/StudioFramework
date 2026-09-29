@@ -1695,6 +1695,9 @@ body.sf-dragging-row * {
   padding: 0 14px;
   cursor: pointer;
   touch-action: pan-y;
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
 }
 .sf-tab-dropdown-row:active {
   box-shadow: inset 0 0 0 999px var(--sf-hover-overlay);
@@ -1730,7 +1733,7 @@ body.sf-dragging-row * {
   color: var(--sf-text);
 }
 
-.sf-tab-dropdown-more {
+.sf-tab-dropdown-rowclose {
   flex-shrink: 0;
   width: 30px;
   height: 30px;
@@ -1744,13 +1747,30 @@ body.sf-dragging-row * {
   cursor: pointer;
   -webkit-tap-highlight-color: transparent;
 }
-.sf-tab-dropdown-more:active {
+.sf-tab-dropdown-rowclose:active {
   box-shadow: inset 0 0 0 999px var(--sf-hover-overlay);
 }
 @media (hover: hover) {
-  .sf-tab-dropdown-more:hover {
+  .sf-tab-dropdown-rowclose:hover {
     box-shadow: inset 0 0 0 999px var(--sf-hover-overlay);
   }
+}
+
+.sf-tab-dropdown-body--dragging {
+  overflow: hidden;
+  touch-action: none;
+}
+.sf-tab-dropdown-list--reordering .sf-tab-dropdown-row {
+  transition: transform 160ms ease;
+}
+.sf-tab-dropdown-list--reordering .sf-tab-dropdown-row:active {
+  box-shadow: none;
+}
+.sf-tab-dropdown-list--reordering .sf-tab-dropdown-row--dragging {
+  transition: none;
+  z-index: 1;
+  background: var(--sf-bar);
+  box-shadow: 0 6px 22px rgb(0 0 0 / 0.55);
 }
 
 .sf-docker--bottom {

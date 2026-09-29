@@ -541,13 +541,18 @@ const WS = '.sf-workspace';
   await touch('touchEnd', []);
   await page.waitForTimeout(250);
   report('vertical pan on a row scrolls the list natively (no JS scroll)', scrolledMidDrag);
+  report(
+    'vertical pan does not reorder',
+    JSON.stringify(await page.locator('.sf-tab-dropdown .sf-tab-dropdown-label').allTextContents()) ===
+      JSON.stringify(rowsA),
+  );
 
   report(
-    'every tab row shows an always-visible ⋮ button',
-    (await page.locator('.sf-tab-dropdown-row .sf-tab-dropdown-more').count()) === 6,
+    'every tab row shows an always-visible ✕ close button',
+    (await page.locator('.sf-tab-dropdown-row .sf-tab-dropdown-rowclose').count()) === 6,
   );
   const tabBox = await sheetRow('styles.css')
-    .locator('.sf-tab-dropdown-more')
+    .locator('.sf-tab-dropdown-rowclose')
     .evaluate((el) => {
       const cs = getComputedStyle(el);
       const hex = cs.getPropertyValue('--sf-text').trim();
@@ -562,7 +567,7 @@ const WS = '.sf-workspace';
       };
     });
   report(
-    'tab ⋮ button box: #292929 fill + border + radius, dots not dimmed',
+    'tab ✕ button box: #292929 fill + border + radius, glyph not dimmed',
     parseFloat(tabBox.bw) >= 1 &&
       tabBox.br !== '0px' &&
       tabBox.bg === 'rgb(41, 41, 41)' &&
@@ -570,38 +575,18 @@ const WS = '.sf-workspace';
     JSON.stringify(tabBox),
   );
 
-  const moreStyles = sheetRow('styles.css').locator('.sf-tab-dropdown-more');
-  await tapEl(moreStyles);
-  await page.waitForTimeout(250);
-  report(
-    'tapping ⋮ opens the popup with the tab title + Close + Cancel',
-    (await page.locator('.sf-sm-dialog').count()) === 1 &&
-      (await page.locator('.sf-sm-dialog-title').textContent()) === 'styles.css' &&
-      JSON.stringify(await page.locator('.sf-sm-dialog .sf-sm-menu-row').allTextContents()) ===
-        JSON.stringify(['Close']) &&
-      (await page.locator('.sf-sm-dialog-cancel').count()) === 1,
-  );
-  await tapEl(page.locator('.sf-sm-dialog-cancel'));
-  await page.waitForTimeout(200);
-  report(
-    'Cancel keeps the tab and closes the popup',
-    (await page.locator('.sf-sm-dialog').count()) === 0 && (await sheetRow('styles.css').count()) === 1,
-  );
+  const tapRowClose = (label) => tapEl(sheetRow(label).locator('.sf-tab-dropdown-rowclose'));
 
-  await tapEl(moreStyles);
-  await page.waitForTimeout(200);
-  await tapEl(page.locator('.sf-sm-dialog .sf-sm-menu-row', { hasText: 'Close' }));
-  await page.waitForTimeout(200);
+  await tapRowClose('styles.css');
+  await page.waitForTimeout(250);
   const rowsB = await page.locator('.sf-tab-dropdown-label').allTextContents();
   report(
-    'Close from the popup removes the tab (5 left), active tab untouched',
+    'tapping ✕ closes the tab in one tap (5 left), active tab untouched',
     rowsB.length === 5 && !rowsB.includes('styles.css') && (await mobileBarLabel()) === 'layout.json',
   );
 
-  await tapEl(sheetRow('layout.json').locator('.sf-tab-dropdown-more'));
-  await page.waitForTimeout(200);
-  await tapEl(page.locator('.sf-sm-dialog .sf-sm-menu-row', { hasText: 'Close' }));
-  await page.waitForTimeout(200);
+  await tapRowClose('layout.json');
+  await page.waitForTimeout(250);
   const newActive = await mobileBarLabel();
   const rowsC = await page.locator('.sf-tab-dropdown-label').allTextContents();
   report(
@@ -616,6 +601,32 @@ const WS = '.sf-workspace';
     'selection marker follows the new active tab',
     (await page.locator('.sf-tab-dropdown-mark').count()) === 1 && markedMatches,
   );
+
+  const rowsBeforeDrag = await page.locator('.sf-tab-dropdown-label').allTextContents();
+  const dragLabel = rowsBeforeDrag[1];
+  const sb = await sheetRow(dragLabel).boundingBox();
+  const sx = sb.x + sb.width / 2;
+  const sy = sb.y + sb.height / 2;
+  await touch('touchStart', [{ x: sx, y: sy }]);
+  await page.waitForTimeout(700);
+  report(
+    'long-press lifts a row into reorder mode',
+    (await page.locator('.sf-tab-dropdown-row--dragging').count()) === 1,
+  );
+  for (let i = 1; i <= 6; i += 1) {
+    await touch('touchMove', [{ x: sx, y: sy - (i * 73) / 6 }]);
+    await page.waitForTimeout(16);
+  }
+  await touch('touchEnd', []);
+  await page.waitForTimeout(300);
+  const rowsAfterDrag = await page.locator('.sf-tab-dropdown-label').allTextContents();
+  const withoutDragged = (rows) => JSON.stringify(rows.filter((l) => l !== dragLabel));
+  report(
+    'dropping the lifted row one slot up reorders the list',
+    rowsAfterDrag.indexOf(dragLabel) === 0 &&
+      withoutDragged(rowsAfterDrag) === withoutDragged(rowsBeforeDrag),
+  );
+  report('reorder keeps the active tab', (await mobileBarLabel()) === newActive);
 
   const drow = sheetRow(rowsC.find((l) => !l.includes('framework.t')));
   const db = await drow.boundingBox();

@@ -152,6 +152,15 @@ function onTabClick(tabId: string) {
   ws.ops.activateTab(resolveTileId(tabId), tabId);
 }
 
+function onTabReorder(tabId: string, toIndex: number) {
+  const tileId = resolveTileId(tabId);
+  const activeId = props.tile.activeId;
+  ws.ops.moveTab(tabId, tileId, toIndex);
+  if (activeId && activeId !== tabId && props.tile.tabs.includes(activeId)) {
+    ws.ops.activateTab(tileId, activeId);
+  }
+}
+
 function onTabMousedown(e: MouseEvent, tabId: string) {
   if (e.button !== 1) return;
   e.preventDefault();
@@ -191,6 +200,7 @@ function onTileMousedown() {
           @update:open="(v) => (tabMenuOpen = v)"
           @select="onTabClick"
           @close="ws.ops.closeTab"
+          @reorder="onTabReorder"
         />
         <span
           class="sf-mobile-tab-label"
