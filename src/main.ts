@@ -116,11 +116,11 @@ registerPanelData('bulk-demo', () => {
     bulk: {
       active: bulkDemo.on,
       selected: bulkDemo.selected,
-      entry: { id: 'edit', label: 'Edit', icon: '✎' },
+      entry: { id: 'edit', icon: '✎', tooltip: 'Edit' },
+      done: { id: 'done', icon: '✓', tooltip: 'Done' },
       actions: [
         { id: 'pin', label: n ? `Pin (${n})` : 'Pin', icon: 'pin', disabled: n === 0 },
         { id: 'delete', label: n ? `Delete (${n})` : 'Delete', icon: '🗑', danger: true, disabled: n === 0 },
-        { id: 'done', label: 'Done' },
       ],
     },
   };

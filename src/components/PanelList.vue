@@ -180,6 +180,7 @@ function onRowDrop(item: PanelListItem) {
           :class="{
             'sf-pl-item--active': it.active,
             'sf-pl-item--muted': it.muted,
+            'sf-pl-item--bulk': bulkActive,
             'sf-pl-item--drop': bulkActive && dragId !== null && overId === it.id,
           }"
           :data-id="it.id"
@@ -188,61 +189,68 @@ function onRowDrop(item: PanelListItem) {
           @dragover.prevent="dragId !== null && (overId = it.id)"
           @drop.prevent="onRowDrop(it)"
         >
-          <div class="sf-pl-top">
-            <span
-              v-if="bulkActive"
-              class="sf-pl-check"
-              :class="{ 'sf-pl-check--on': props.bulk?.selected.includes(it.id) }"
-            />
+          <span
+            v-if="bulkActive"
+            class="sf-pl-check"
+            :class="{ 'sf-pl-check--on': props.bulk?.selected.includes(it.id) }"
+          />
 
-            <SwitchToggle
-              v-if="it.switch"
-              :on="it.switch.on"
-              :title="it.switch.title"
-              @toggle="emit('switch-toggle', it)"
-            />
-            <span v-if="it.icon" class="sf-pl-icon" :class="{ 'sf-pl-icon--blink': it.iconBlink }">
-              <Icon :icon="it.icon" />
-            </span>
-            <span v-else-if="it.dot" class="sf-pl-dot" :class="'sf-pl-dot--' + it.dot" />
-            <span class="sf-pl-label">{{ it.label }}</span>
-            <span v-if="it.meta" class="sf-pl-meta">{{ it.meta }}</span>
-            <span v-if="it.badge && !it.detail" class="sf-pl-badge" :class="'sf-pl-badge--' + (it.badgeTone ?? 'muted')">
-              {{ it.badge }}
-            </span>
-            <span class="sf-pl-actions">
-              <button
-                v-for="b in it.buttons ?? []"
-                :key="b.id"
-                class="sf-pl-btn"
-                :class="{ 'sf-pl-btn--danger': b.danger }"
-                type="button"
-                :title="b.title ?? b.id"
-                :disabled="b.disabled"
-                @click.stop="emit('button', it, b.id)"
+          <div class="sf-pl-main">
+              <div class="sf-pl-top">
+                <SwitchToggle
+                  v-if="it.switch"
+                  :on="it.switch.on"
+                  :title="it.switch.title"
+                  @toggle="emit('switch-toggle', it)"
+                />
+                <span v-if="it.icon" class="sf-pl-icon" :class="{ 'sf-pl-icon--blink': it.iconBlink }">
+                  <Icon :icon="it.icon" />
+                </span>
+                <span v-else-if="it.dot" class="sf-pl-dot" :class="'sf-pl-dot--' + it.dot" />
+              <span class="sf-pl-label">{{ it.label }}</span>
+              <span v-if="it.meta" class="sf-pl-meta">{{ it.meta }}</span>
+              <span
+                v-if="it.badge && !it.detail"
+                class="sf-pl-badge"
+                :class="'sf-pl-badge--' + (it.badgeTone ?? 'muted')"
               >
-                <Icon :icon="b.icon" />
-              </button>
-            </span>
-            <span
-              v-if="bulkActive"
-              class="sf-pl-grip"
-              draggable="true"
-              title="Drag to reorder"
-              @dragstart.stop="onGripStart(it, $event)"
-              @dragend="onGripEnd"
-            >
-              <SvgIcon name="grip" />
-            </span>
+                {{ it.badge }}
+              </span>
+              <span class="sf-pl-actions">
+                <button
+                  v-for="b in it.buttons ?? []"
+                  :key="b.id"
+                  class="sf-pl-btn"
+                  :class="{ 'sf-pl-btn--danger': b.danger }"
+                  type="button"
+                  :title="b.title ?? b.id"
+                  :disabled="b.disabled"
+                  @click.stop="emit('button', it, b.id)"
+                >
+                  <Icon :icon="b.icon" />
+                </button>
+              </span>
+            </div>
+            <div v-if="it.detail" class="sf-pl-sub">
+              <span v-if="it.badge" class="sf-pl-badge" :class="'sf-pl-badge--' + (it.badgeTone ?? 'muted')">
+                {{ it.badge }}
+              </span>
+              <span class="sf-pl-detail">{{ it.detail }}</span>
+              <span v-if="it.detailMeta" class="sf-pl-detail-meta">{{ it.detailMeta }}</span>
+            </div>
+            <div v-if="it.note" class="sf-pl-note">{{ it.note }}</div>
           </div>
-          <div v-if="it.detail" class="sf-pl-sub">
-            <span v-if="it.badge" class="sf-pl-badge" :class="'sf-pl-badge--' + (it.badgeTone ?? 'muted')">
-              {{ it.badge }}
-            </span>
-            <span class="sf-pl-detail">{{ it.detail }}</span>
-            <span v-if="it.detailMeta" class="sf-pl-detail-meta">{{ it.detailMeta }}</span>
-          </div>
-          <div v-if="it.note" class="sf-pl-note">{{ it.note }}</div>
+
+          <span
+            v-if="bulkActive"
+            class="sf-pl-grip"
+            draggable="true"
+            title="Drag to reorder"
+            @dragstart.stop="onGripStart(it, $event)"
+            @dragend="onGripEnd"
+          >
+            <SvgIcon name="grip" />
+          </span>
         </div>
       </template>
     </SingleMenu>

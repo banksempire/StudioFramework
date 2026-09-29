@@ -2,7 +2,6 @@
 import { computed, ref } from 'vue';
 import { getPanelData, getUtilityMenu } from '../registry';
 import type { PanelAction, PanelBulkAction, PanelH2 } from '../types/panel';
-import Icon from './Icon.vue';
 import Menu from './Menu.vue';
 import PanelComponent from './PanelComponent.vue';
 import SvgIcon from './SvgIcon.vue';
@@ -22,15 +21,29 @@ const emit = defineEmits<{
 
 const openMenuId = ref<string | null>(null);
 
-const bulkEntry = computed<{ bind: string; entry: PanelBulkAction } | null>(() => {
+interface BulkRec {
+  active?: boolean;
+  entry?: PanelBulkAction;
+  done?: PanelBulkAction;
+}
+
+const bulkList = computed<{ bind: string; bulk: BulkRec } | null>(() => {
   const list = props.section.components.find((c) => c.type === 'list') as { bind?: string } | undefined;
   if (!list?.bind) return null;
   const getter = getPanelData(list.bind);
-  const rec = getter
-    ? (getter() as { bulk?: { active?: boolean; entry?: PanelBulkAction } } | undefined)
-    : undefined;
-  if (!rec?.bulk || rec.bulk.active || !rec.bulk.entry) return null;
-  return { bind: list.bind, entry: rec.bulk.entry };
+  const rec = getter ? (getter() as { bulk?: BulkRec } | undefined) : undefined;
+  if (!rec?.bulk) return null;
+  return { bind: list.bind, bulk: rec.bulk };
+});
+
+const bulkEntry = computed(() => {
+  const b = bulkList.value;
+  return b && !b.bulk.active && b.bulk.entry ? { bind: b.bind, entry: b.bulk.entry } : null;
+});
+
+const bulkDone = computed(() => {
+  const b = bulkList.value;
+  return b?.bulk.active && b.bulk.done ? { bind: b.bind, done: b.bulk.done } : null;
 });
 
 function emitBulkEntry() {
@@ -39,6 +52,15 @@ function emitBulkEntry() {
     source: 'list',
     action: 'bulk',
     payload: { gesture: 'entry', bind: bulkEntry.value.bind },
+  });
+}
+
+function emitBulkDone() {
+  if (!bulkDone.value) return;
+  emit('component-action', {
+    source: 'list',
+    action: 'bulk',
+    payload: { gesture: 'action', option: bulkDone.value.done.id, bind: bulkDone.value.bind },
   });
 }
 
@@ -100,23 +122,32 @@ function menuItemsOf(utilId: string) {
     <div v-else class="sf-subsection-header" @click="emit('toggle-expand')">
       <span class="sf-subsection-arrow" :class="{ 'sf-subsection-arrow--expanded': isExpanded }"><SvgIcon name="❯" /></span>
       <span class="sf-subsection-label">{{ displayTitle }}</span>
-      <div v-if="section.utilities?.length || bulkEntry" class="sf-subsection-utils" @click.stop>
+      <div
+        v-if="section.utilities?.length || bulkEntry || bulkDone"
+        class="sf-subsection-utils"
+        @click.stop
+      >
         <button
           v-if="bulkEntry"
-          class="sf-subsection-bulk-entry"
+          class="sf-subsection-util"
           type="button"
+          :title="bulkEntry.entry.tooltip"
           @click="emitBulkEntry"
         >
-          <Icon
-            v-if="bulkEntry.entry.icon && typeof bulkEntry.entry.icon === 'string'"
-            :icon="bulkEntry.entry.icon"
-          />
-          <img
-            v-else-if="bulkEntry.entry.icon && typeof bulkEntry.entry.icon !== 'string'"
-            :src="bulkEntry.entry.icon.url"
-            alt=""
-          />
-          {{ bulkEntry.entry.label }}
+          <SvgIcon v-if="typeof bulkEntry.entry.icon === 'string'" :name="bulkEntry.entry.icon" />
+          <img v-else-if="bulkEntry.entry.icon" :src="bulkEntry.entry.icon.url" alt="" />
+          <span v-if="bulkEntry.entry.label" class="sf-subsection-util-label">{{ bulkEntry.entry.label }}</span>
+        </button>
+        <button
+          v-if="bulkDone"
+          class="sf-subsection-util"
+          type="button"
+          :title="bulkDone.done.tooltip"
+          @click="emitBulkDone"
+        >
+          <SvgIcon v-if="typeof bulkDone.done.icon === 'string'" :name="bulkDone.done.icon" />
+          <img v-else-if="bulkDone.done.icon" :src="bulkDone.done.icon.url" alt="" />
+          <span v-if="bulkDone.done.label" class="sf-subsection-util-label">{{ bulkDone.done.label }}</span>
         </button>
         <template v-for="util in section.utilities" :key="util.id">
           <Menu
