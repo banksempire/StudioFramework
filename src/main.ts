@@ -119,8 +119,8 @@ registerPanelData('bulk-demo', () => {
       entry: { id: 'edit', icon: '✎', tooltip: 'Edit' },
       done: { id: 'done', icon: '✓', tooltip: 'Done' },
       actions: [
-        { id: 'pin', label: n ? `Pin (${n})` : 'Pin', icon: 'pin', disabled: n === 0 },
-        { id: 'delete', label: n ? `Delete (${n})` : 'Delete', icon: '🗑', danger: true, disabled: n === 0 },
+        { id: 'pin', icon: 'pin', tooltip: 'Pin', disabled: n === 0 },
+        { id: 'delete', icon: '🗑', tooltip: 'Delete', danger: true, disabled: n === 0 },
       ],
     },
   };

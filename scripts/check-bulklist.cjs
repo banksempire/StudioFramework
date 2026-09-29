@@ -28,7 +28,8 @@ const { ensureServer, makeReporter, finish } = require('./lib/ui-test.cjs');
   const row = (label) => demo.locator('.sf-sm-row', { hasText: label }).first();
   const editBtn = demo.locator('.sf-subsection-header .sf-subsection-util[title="Edit"]');
   const doneBtn = demo.locator('.sf-subsection-header .sf-subsection-util[title="Done"]');
-  const barBtn = (label) => demo.locator('.sf-pl-bulkbar-btn', { hasText: label });
+  const barBtn = (label) => demo.locator(`.sf-subsection-header .sf-subsection-util[title="${label}"]`);
+  const bulkBar = demo.locator('.sf-pl-bulkbar');
   const checks = () => demo.locator('.sf-pl-check');
   const checkOn = (label) =>
     demo
@@ -48,8 +49,14 @@ const { ensureServer, makeReporter, finish } = require('./lib/ui-test.cjs');
   await editBtn.click();
   await page.waitForTimeout(150);
   report(
-    'entering bulk mode swaps Edit for a header tick and Pin/Delete in the bar',
-    (await editBtn.count()) === 0 && (await doneBtn.count()) === 1 && (await barBtn('Done').count()) === 0,
+    'entering bulk mode swaps Edit for a header tick with Pin/Delete beside it',
+    (await editBtn.count()) === 0 &&
+      (await doneBtn.count()) === 1 &&
+      (await barBtn('Pin').count()) === 1 &&
+      (await barBtn('Delete').count()) === 1 &&
+      (await barBtn('Pin').isDisabled()) &&
+      (await barBtn('Delete').isDisabled()) &&
+      (await bulkBar.count()) === 0,
   );
   report('every row shows a selection circle', (await checks().count()) === 5);
 
@@ -57,7 +64,9 @@ const { ensureServer, makeReporter, finish } = require('./lib/ui-test.cjs');
   await page.waitForTimeout(120);
   report(
     'click selects a row and arms the bulk buttons',
-    (await checkOn('alpha.log')) && (await barBtn('Pin (1)').count()) === 1,
+    (await checkOn('alpha.log')) &&
+      (await barBtn('Pin').count()) === 1 &&
+      !(await barBtn('Pin').isDisabled()),
   );
 
   await row('charlie.txt').click({ modifiers: ['Shift'] });
@@ -74,10 +83,10 @@ const { ensureServer, makeReporter, finish } = require('./lib/ui-test.cjs');
   await page.waitForTimeout(120);
   report(
     'plain click inside range unselects just that row',
-    !(await checkOn('bravo.csv')) && (await checkOn('alpha.log')) && (await barBtn('Pin (2)').count()) === 1,
+    !(await checkOn('bravo.csv')) && (await checkOn('alpha.log')),
   );
 
-  await barBtn('Pin (2)').click();
+  await barBtn('Pin').click();
   await page.waitForTimeout(120);
   report(
     'bulk pin marks the selected rows pinned',
@@ -114,7 +123,7 @@ const { ensureServer, makeReporter, finish } = require('./lib/ui-test.cjs');
 
   await row('delta.json').click();
   await page.waitForTimeout(120);
-  await barBtn('Delete (3)').click();
+  await barBtn('Delete').click();
   await page.waitForTimeout(150);
   report('bulk delete removes the selected rows', (await row('charlie.txt').count()) === 0);
 

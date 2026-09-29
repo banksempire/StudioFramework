@@ -25,6 +25,7 @@ interface BulkRec {
   active?: boolean;
   entry?: PanelBulkAction;
   done?: PanelBulkAction;
+  actions?: PanelBulkAction[];
 }
 
 const bulkList = computed<{ bind: string; bulk: BulkRec } | null>(() => {
@@ -46,6 +47,12 @@ const bulkDone = computed(() => {
   return b?.bulk.active && b.bulk.done ? { bind: b.bind, done: b.bulk.done } : null;
 });
 
+const bulkActions = computed(() => {
+  const b = bulkList.value;
+  const actions = b?.bulk.active ? b.bulk.actions : undefined;
+  return b && actions?.length ? { bind: b.bind, actions } : null;
+});
+
 function emitBulkEntry() {
   if (!bulkEntry.value) return;
   emit('component-action', {
@@ -61,6 +68,16 @@ function emitBulkDone() {
     source: 'list',
     action: 'bulk',
     payload: { gesture: 'action', option: bulkDone.value.done.id, bind: bulkDone.value.bind },
+  });
+}
+
+function emitBulkAction(id: string) {
+  const b = bulkList.value;
+  if (!b) return;
+  emit('component-action', {
+    source: 'list',
+    action: 'bulk',
+    payload: { gesture: 'action', option: id, bind: b.bind },
   });
 }
 
@@ -148,6 +165,20 @@ function menuItemsOf(utilId: string) {
           <SvgIcon v-if="typeof bulkDone.done.icon === 'string'" :name="bulkDone.done.icon" />
           <img v-else-if="bulkDone.done.icon" :src="bulkDone.done.icon.url" alt="" />
           <span v-if="bulkDone.done.label" class="sf-subsection-util-label">{{ bulkDone.done.label }}</span>
+        </button>
+        <button
+          v-for="a in bulkActions?.actions ?? []"
+          :key="a.id"
+          class="sf-subsection-util"
+          :class="{ 'sf-subsection-util--danger': a.danger }"
+          type="button"
+          :disabled="a.disabled"
+          :title="a.tooltip ?? a.label"
+          @click="emitBulkAction(a.id)"
+        >
+          <SvgIcon v-if="typeof a.icon === 'string'" :name="a.icon" />
+          <img v-else-if="a.icon" :src="a.icon.url" alt="" />
+          <span v-if="a.label" class="sf-subsection-util-label">{{ a.label }}</span>
         </button>
         <template v-for="util in section.utilities" :key="util.id">
           <Menu

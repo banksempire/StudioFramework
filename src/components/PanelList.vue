@@ -134,20 +134,6 @@ function onRowDrop(item: PanelListItem) {
 </script>
 
 <template>
-    <div v-if="bulkActive" class="sf-pl-bulkbar">
-      <button
-        v-for="a in props.bulk?.actions ?? []"
-        :key="a.id"
-        class="sf-pl-bulkbar-btn"
-        :class="{ 'sf-pl-bulkbar-btn--danger': a.danger }"
-        type="button"
-        :disabled="a.disabled"
-        @click="emit('bulk-action', a.id)"
-      >
-        <Icon v-if="a.icon" :icon="a.icon" />
-        {{ a.label }}
-      </button>
-    </div>
   <div v-if="props.items.length === 0 && props.empty && !props.bulk" class="sf-empty">{{ props.empty }}</div>
   <div v-else-if="!rich" class="sf-pc-list">
     <div

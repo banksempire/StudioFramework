@@ -755,6 +755,7 @@ body,
 
 .sf-subsection-utils {
   display: flex;
+  flex-shrink: 0;
   gap: 2px;
 }
 
@@ -777,6 +778,15 @@ body,
   letter-spacing: 0.5px;
   white-space: nowrap;
   margin-left: 4px;
+}
+
+.sf-subsection-util--danger {
+  color: var(--sf-danger);
+}
+
+.sf-subsection-util:disabled {
+  opacity: 0.5;
+  cursor: default;
 }
 
 @media (hover: hover) {
