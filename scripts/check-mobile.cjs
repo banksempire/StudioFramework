@@ -40,7 +40,8 @@ const WS = '.sf-workspace';
     await page.setViewportSize({ width: w, height: 900 });
     await page.waitForTimeout(300);
   };
-  const pagerButtons = () => page.locator('.sf-pagenav-btn').count();
+  const pagerButtons = () => page.locator('.sf-table-demo .sf-pagenav-btn').count();
+  const demoPagers = () => page.locator('.sf-table-demo .sf-tbl-pager').count();
 
   report(
     'desktop: menu bar + status bar visible',
@@ -54,10 +55,7 @@ const WS = '.sf-workspace';
   );
   await tab('Table').click();
   await page.waitForTimeout(400);
-  report(
-    'desktop: pager shows first/last jumps',
-    (await pagerButtons()) === 4 * (await page.locator('.sf-tbl-pager').count()),
-  );
+  report('desktop: pager shows first/last jumps', (await pagerButtons()) === 4 * (await demoPagers()));
   await tab('framework.ts').click();
   await page.waitForTimeout(300);
   const desktopUtils = await page.evaluate(() => {
@@ -109,8 +107,8 @@ const WS = '.sf-workspace';
   await page.waitForTimeout(400);
   report(
     'mobile: pager hides the first/last jumps, keeps prev/next',
-    (await pagerButtons()) === 2 * (await page.locator('.sf-tbl-pager').count()) &&
-      (await page.locator('.sf-pagenav-page').count()) === (await page.locator('.sf-tbl-pager').count()),
+    (await pagerButtons()) === 2 * (await demoPagers()) &&
+      (await page.locator('.sf-pagenav-page').count()) === (await demoPagers()),
   );
   const dvhChain = await page.evaluate(() => {
     const findDvhHeight = (selector) => {
@@ -459,7 +457,7 @@ const WS = '.sf-workspace';
   );
   report(
     'desktop: pager jumps return after leaving mobile',
-    (await pagerButtons()) === 4 * (await page.locator('.sf-tbl-pager').count()),
+    (await pagerButtons()) === 4 * (await demoPagers()),
   );
   report(
     'menu bar + status bar back',

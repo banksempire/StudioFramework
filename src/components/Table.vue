@@ -19,7 +19,7 @@ const props = withDefaults(
     pageSize?: number;
     pageSizeOptions?: number[];
     resizable?: boolean;
-    paged?: boolean;
+    pager?: 'full' | 'nav' | 'none';
   }>(),
   {
     emptyText: 'No rows.',
@@ -29,7 +29,7 @@ const props = withDefaults(
     pageSize: 0,
     pageSizeOptions: () => [],
     resizable: true,
-    paged: true,
+    pager: 'full',
   },
 );
 
@@ -386,7 +386,7 @@ const sizeMenu = ref<{ x: number; y: number } | null>(null);
 const injectedMobile = inject(kIsMobile, null);
 const mobile = computed(() => injectedMobile?.value ?? false);
 const effectiveSize = computed(() =>
-  !props.paged ? Math.max(visibleRows.value.length, 1) : mobile.value ? 50 : sizeModel.value,
+  props.pager === 'full' ? (mobile.value ? 50 : sizeModel.value) : Math.max(visibleRows.value.length, 1),
 );
 function toggleSizeMenu(e: Event) {
   if (sizeMenu.value) {
@@ -709,9 +709,9 @@ onBeforeUnmount(() => {
     </div>
   </div>
     </div>
-    <div v-if="props.paged" class="sf-tbl-pager">
+    <div v-if="props.pager !== 'none'" class="sf-tbl-pager">
       <span
-        v-if="!mobile"
+        v-if="props.pager === 'full' && !mobile"
         class="sf-tbl-pager-range sf-tbl-pager-range--size"
         role="button"
         tabindex="0"
@@ -720,8 +720,12 @@ onBeforeUnmount(() => {
         @keydown.enter.prevent="toggleSizeMenu($event)"
         @keydown.space.prevent="toggleSizeMenu($event)"
       >{{ pagerRange }}</span>
-      <span v-else class="sf-tbl-pager-range">{{ pagerRange }}</span>
-      <PageNav v-model:page="page" :page-count="pageCount" :jumps="!mobile" />
+      <span v-else-if="props.pager === 'full'" class="sf-tbl-pager-range">{{ pagerRange }}</span>
+      <PageNav
+        v-model:page="page"
+        :page-count="pageCount"
+        :jumps="props.pager === 'full' && !mobile"
+      />
     </div>
     <div
       v-if="sizeMenu"

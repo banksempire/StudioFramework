@@ -1067,8 +1067,11 @@ const { ensureServer, openApp, makeReporter, finish } = require('./lib/ui-test.c
     const panelTable = page.locator('.sf-panel--left .sf-pt');
     await panelTable.waitFor({ state: 'visible', timeout: 5000 });
     report(
-      'panel table: no pager chrome',
-      (await panelTable.locator('.sf-tbl-pager').count()) === 0 &&
+      'panel table: nav-only pager',
+      (await panelTable.locator('.sf-tbl-pager').count()) === 1 &&
+        (await panelTable.locator('.sf-tbl-pager-range').count()) === 0 &&
+        (await panelTable.locator('.sf-pagenav-btn').count()) === 2 &&
+        (await panelTable.locator('.sf-pagenav-page').count()) === 1 &&
         (await panelTable.locator('.sf-tbl-row').count()) > 0,
     );
     report(

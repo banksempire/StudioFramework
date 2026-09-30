@@ -38,7 +38,7 @@ function cellTitle(row: Record<string, unknown>, col: PanelTableColumn): string 
       :rows="tableRows"
       row-key="__id"
       :resizable="resizable ?? true"
-      :paged="false"
+      pager="nav"
       :empty-text="empty ?? 'No rows.'"
     >
       <template v-for="col in columns" :key="col.key" #[`cell-${col.key}`]="{ row }">
