@@ -141,7 +141,7 @@ collapsible, no drag handle, always visible).
 
 ### Components
 
-Six types (see `src/types/panel.ts` and `PanelComponent.vue`):
+Twelve types (see `src/types/panel.ts` and `PanelComponent.vue`):
 
 ```json
 { "type": "text", "text": "3 results", "muted": true }
@@ -151,9 +151,21 @@ Six types (see `src/types/panel.ts` and `PanelComponent.vue`):
     "children": [ { "id": "main", "label": "main.ts", "icon": "📄" } ] } ] }
 { "type": "keyValueList", "items": [ { "key": "dev", "value": "vite" } ] }
 { "type": "list", "items": [ { "id": "1", "label": "main.ts", "icon": "📄", "badge": "3" } ] }
+{ "type": "form", "fields": [], "action": "submit-form" }
+{ "type": "header", "title": "History", "variant": "bar" }
+{ "type": "banner", "text": "Feed disabled", "tone": "error" }
+{ "type": "table", "bind": "job-runs", "columns": [ { "key": "status", "label": "Status" } ] }
+{ "type": "menuButton", "label": "Options", "items": [] }
+{ "type": "component", "key": "my-widget" }
 ```
 
 Tree nodes: `{ id, label, icon?, badge?, children? }` — children are recursive.
+
+Panel tables render every row they are given — no pager, ever. The
+range/size control and the page navigation are workspace-table
+affordances; the layout schema exposes no option to page a panel
+table. Summarize (counts, caps) in the bound data when a panel could
+otherwise grow unbounded.
 
 ## Menu actions
 
