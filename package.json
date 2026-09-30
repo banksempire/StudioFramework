@@ -28,7 +28,8 @@
     "lint": "biome check .",
     "format": "biome format --write .",
     "check:keepalive": "node scripts/check-keepalive.cjs",
-    "check:bulklist": "node scripts/check-bulklist.cjs"
+    "check:bulklist": "node scripts/check-bulklist.cjs",
+    "check:nested": "node scripts/check-nested.cjs"
   },
   "devDependencies": {
     "@biomejs/biome": "^2.5.8",

@@ -70,6 +70,23 @@ function persistSubState() {
 
 const visibleSubSections = computed(() => props.h2s.filter((s) => !props.hiddenIds.has(s.id)));
 
+const collapseHides = computed(() => {
+  const hiddenTrailers = new Set<string>();
+  const collapsedLeaders = new Set<string>();
+  let leader: PanelH2 | null = null;
+  for (const sub of visibleSubSections.value) {
+    if (sub.heading !== 3 || !leader) {
+      leader = sub;
+      continue;
+    }
+    if (leader.heading !== 3 && !(states[leader.id]?.isExpanded ?? true)) {
+      hiddenTrailers.add(sub.id);
+      collapsedLeaders.add(leader.id);
+    }
+  }
+  return { hiddenTrailers, collapsedLeaders };
+});
+
 function isFlat(sub: PanelH2): boolean {
   return sub.heading === 3;
 }
@@ -125,6 +142,7 @@ function distributeHeight() {
 
   let used = 0;
   for (const sub of visible) {
+    if (collapseHides.value.hiddenTrailers.has(sub.id)) continue;
     used += isFlat(sub) ? H3_HEADER_H : TITLE_BAR_H;
     used += getBodyHeight(sub);
   }
@@ -152,7 +170,10 @@ function measureAndObserve() {
   const wanted = new Set(
     props.h2s
       .filter(
-        (s) => (isFlat(s) || (!s.isHeightVariable && states[s.id]?.isExpanded)) && !props.hiddenIds.has(s.id),
+        (s) =>
+          (isFlat(s) || (!s.isHeightVariable && states[s.id]?.isExpanded)) &&
+          !props.hiddenIds.has(s.id) &&
+          !collapseHides.value.hiddenTrailers.has(s.id),
       )
       .map((s) => s.id),
   );
@@ -396,28 +417,30 @@ onUnmounted(() => {
         @component-action="(a) => emit('component-action', a)"
       >
         <template #trailing>
-          <template v-for="entry in block.trailing" :key="entry.sub.id">
-            <SubSection
-              :section="entry.sub"
-              :is-expanded="states[entry.sub.id]?.isExpanded ?? true"
-              :body-height="bodyHeightFor(entry.sub)"
-              @toggle-expand="toggleExpand(entry.sub.id)"
-              @utility="(utilityId, itemId) => emit('utility', entry.sub.id, utilityId, itemId)"
-              @content-changed="refresh(true)"
-              @component-action="(a) => emit('component-action', a)"
-            />
-            <div
-              v-if="entry.index < visibleSubSections.length - 1 && handleFlags[entry.index]"
-              class="sf-subsection-drag-wrapper"
-            >
-              <div
-                class="sf-subsection-drag-handle"
-                @pointerdown="startDrag(entry.index, $event)"
-                @pointermove="onDragMove"
-                @pointerup="onDragEnd"
-                @pointercancel="onDragEnd"
+          <template v-if="!collapseHides.collapsedLeaders.has(block.h2.id)">
+            <template v-for="entry in block.trailing" :key="entry.sub.id">
+              <SubSection
+                :section="entry.sub"
+                :is-expanded="states[entry.sub.id]?.isExpanded ?? true"
+                :body-height="bodyHeightFor(entry.sub)"
+                @toggle-expand="toggleExpand(entry.sub.id)"
+                @utility="(utilityId, itemId) => emit('utility', entry.sub.id, utilityId, itemId)"
+                @content-changed="refresh(true)"
+                @component-action="(a) => emit('component-action', a)"
               />
-            </div>
+              <div
+                v-if="entry.index < visibleSubSections.length - 1 && handleFlags[entry.index]"
+                class="sf-subsection-drag-wrapper"
+              >
+                <div
+                  class="sf-subsection-drag-handle"
+                  @pointerdown="startDrag(entry.index, $event)"
+                  @pointermove="onDragMove"
+                  @pointerup="onDragEnd"
+                  @pointercancel="onDragEnd"
+                />
+              </div>
+            </template>
           </template>
         </template>
       </SubSection>

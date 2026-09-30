@@ -1119,6 +1119,38 @@
                 ]
               },
               {
+                "id": "lib-nested",
+                "title": "Nested",
+                "height": "fixed",
+                "components": [
+                  {
+                    "type": "keyValueList",
+                    "items": [
+                      {
+                        "key": "h3 sections",
+                        "value": "trail their h2"
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
+                "id": "lib-nested-details",
+                "title": "Details",
+                "heading": 3,
+                "components": [
+                  {
+                    "type": "keyValueList",
+                    "items": [
+                      {
+                        "key": "collapse",
+                        "value": "hides the h3s below"
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
                 "id": "lib-list",
                 "title": "List",
                 "height": "variable",
