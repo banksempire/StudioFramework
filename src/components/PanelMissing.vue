@@ -6,7 +6,7 @@ import SvgIcon from './SvgIcon.vue';
 const props = defineProps<{
   width: number;
   visible: boolean;
-  position?: 'left' | 'right';
+  position?: 'left' | 'right' | 'mobile';
   title?: string;
   mobileClose?: boolean;
 }>();
@@ -14,6 +14,7 @@ const props = defineProps<{
 const emit = defineEmits<{ resize: [width: number]; collapse: []; close: [] }>();
 
 const side = computed(() => props.position ?? 'right');
+const resizable = computed(() => side.value !== 'mobile');
 const oppositeEdge = computed(() => (side.value === 'left' ? 'left' : 'right'));
 const resizeDir = computed(() => (side.value === 'left' ? 'right' : 'left'));
 const {
@@ -46,9 +47,10 @@ const {
         'sf-panel--hidden': !visible,
       },
     ]"
-    :style="{ width: panelWidth + 'px' }"
+    :style="resizable ? { width: panelWidth + 'px' } : undefined"
   >
     <div
+      v-if="resizable"
       class="sf-panel-resize-handle"
       :class="'sf-panel-resize-handle--' + resizeDir"
       @pointerdown="onPointerDown"

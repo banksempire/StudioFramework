@@ -500,6 +500,7 @@ function onPanelAction(a: PanelAction) {
           v-else
           :width="rightPanelWidth"
           :visible="true"
+          position="mobile"
           :title="'Info Panel'"
           mobile-close
           @resize="onPanelResize('right', $event)"

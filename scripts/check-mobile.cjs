@@ -317,6 +317,49 @@ const WS = '.sf-workspace';
   await page.waitForTimeout(300);
   report('overlay ✕ closes it', (await page.locator('.sf-mobile-panel').count()) === 0);
 
+  await page.locator('.sf-mobile-tab-label').click();
+  await page.waitForTimeout(200);
+  await page.locator('.sf-tab-dropdown-row', { hasText: 'Untitled' }).click();
+  await page.waitForTimeout(300);
+  await page.locator('.sf-mobile-rp-btn').click();
+  await page.waitForTimeout(300);
+  report(
+    'right-panel button on a tab without a variant shows the missing panel as a mobile sheet',
+    (await page.locator('.sf-mobile-panel').isVisible()) &&
+      (await page.locator('.sf-mobile-panel .sf-panel--mobile.sf-panel--missing').count()) === 1,
+  );
+  const missingGeom = await page.evaluate(() => {
+    const panel = document.querySelector('.sf-mobile-panel .sf-panel--missing');
+    const sheet = document.querySelector('.sf-mobile-panel');
+    if (!panel || !sheet) return null;
+    const pr = panel.getBoundingClientRect();
+    const sr = sheet.getBoundingClientRect();
+    return {
+      panelW: Math.round(pr.width),
+      sheetW: Math.round(sr.width),
+      handles: document.querySelectorAll('.sf-mobile-panel .sf-panel-resize-handle').length,
+    };
+  });
+  report(
+    'missing panel fills the mobile sheet (no desktop width, no resize handle)',
+    missingGeom !== null &&
+      missingGeom.sheetW > 0 &&
+      missingGeom.panelW === missingGeom.sheetW &&
+      missingGeom.handles === 0,
+    JSON.stringify(missingGeom),
+  );
+  report(
+    'missing panel shows the placeholder text',
+    (await page.locator('.sf-mobile-panel .sf-panel-missing').textContent()) === 'Panel layout undefined',
+  );
+  await page.locator('.sf-mobile-panel .sf-panel-close-btn').click();
+  await page.waitForTimeout(300);
+  report('overlay ✕ closes the missing panel', (await page.locator('.sf-mobile-panel').count()) === 0);
+  await page.locator('.sf-mobile-tab-label').click();
+  await page.waitForTimeout(200);
+  await page.locator('.sf-tab-dropdown-row', { hasText: 'layout.json' }).click();
+  await page.waitForTimeout(200);
+
   const explorer = page.locator('.sf-docker-app[title="Explorer"]');
   await explorer.click();
   await page.waitForTimeout(300);
