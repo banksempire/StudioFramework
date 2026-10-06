@@ -32,6 +32,26 @@ const { ensureServer, openApp, makeReporter, finish } = require('./lib/ui-test.c
 
     const rowsIn = (sel) => page.locator(`.sf-table-demo-block:first-child ${sel}`);
 
+    const fileSearch = page.locator('.sf-table-demo-block:first-child .sf-tbl-search-input');
+    await fileSearch.fill('baogao');
+    await delay(250);
+    const fileRows = page.locator('.sf-table-demo-block:first-child .sf-tbl-row');
+    const baogaoCount = await fileRows.count();
+    report(
+      'table search matches extra search text',
+      baogaoCount === 1 && (await fileRows.first().textContent()).includes('report-final.md'),
+      `rows=${baogaoCount}`,
+    );
+    await fileSearch.fill('release notes');
+    await delay(250);
+    report(
+      'table search still matches visible cells',
+      (await fileRows.count()) === 1 && (await fileRows.first().textContent()).includes('report-final.md'),
+    );
+    await fileSearch.fill('');
+    await delay(250);
+    report('clearing table search restores all rows', (await fileRows.count()) === 5);
+
     await page.waitForFunction(
       () => {
         const row = document.querySelector('.sf-table-demo-block .sf-tbl-row');

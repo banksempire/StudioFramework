@@ -2112,6 +2112,25 @@ body.sf-dragging-row * {
   padding: 4px 0;
 }
 
+.sf-pl-search {
+  flex-shrink: 0;
+  padding: 6px 8px;
+  border-bottom: 1px solid var(--sf-border);
+  background: var(--sf-bg-lighter);
+}
+
+.sf-pl-search-input {
+  width: 100%;
+  background: var(--sf-bg);
+  border: 1px solid var(--sf-border);
+  border-radius: var(--sf-radius-sm);
+  color: var(--sf-text);
+  font-family: var(--sf-font);
+  font-size: 13px;
+  padding: 3px 8px;
+  outline: none;
+}
+
 .sf-pl--card {
   padding: 8px;
 }

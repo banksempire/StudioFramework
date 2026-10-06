@@ -13,6 +13,8 @@ const props = defineProps<{
   variant?: 'plain' | 'card';
   dismissOnActivate?: boolean;
   bulk?: PanelListBulk;
+  searchable?: boolean;
+  searchPlaceholder?: string;
 }>();
 
 const emit = defineEmits<{
@@ -48,6 +50,18 @@ const rich = computed(
 );
 
 const hasDrag = computed(() => props.items.some((it) => it.dragType));
+
+const query = ref('');
+
+const visibleItems = computed(() => {
+  const q = query.value.trim().toLowerCase();
+  if (!q) return props.items;
+  return props.items.filter((it) =>
+    [it.label, it.meta, it.detail, it.search].some((v) => v?.toLowerCase().includes(q)),
+  );
+});
+
+const noMatch = computed(() => query.value.trim() !== '' && visibleItems.value.length === 0);
 
 function onActivate(item: PanelListItem) {
   if (item.action) {
@@ -136,8 +150,18 @@ function onRowDrop(item: PanelListItem) {
 <template>
   <div v-if="props.items.length === 0 && props.empty && !props.bulk" class="sf-empty">{{ props.empty }}</div>
   <div v-else-if="!rich" class="sf-pc-list">
+    <div v-if="props.searchable" class="sf-pl-search">
+      <input
+        v-model="query"
+        class="sf-pl-search-input"
+        type="text"
+        :placeholder="props.searchPlaceholder ?? 'Search…'"
+        @keydown.esc="query = ''"
+      />
+    </div>
+    <div v-if="noMatch" class="sf-empty">No match</div>
     <div
-      v-for="item in props.items"
+      v-for="item in visibleItems"
       :key="item.id"
       class="sf-pc-list-item"
       :data-id="item.id"
@@ -149,8 +173,18 @@ function onRowDrop(item: PanelListItem) {
     </div>
   </div>
   <div v-else class="sf-pl" :class="'sf-pl--' + (props.variant ?? 'plain')">
-    <SingleMenu
-      :items="props.items"
+    <div v-if="props.searchable" class="sf-pl-search">
+      <input
+        v-model="query"
+        class="sf-pl-search-input"
+        type="text"
+        :placeholder="props.searchPlaceholder ?? 'Search…'"
+        @keydown.esc="query = ''"
+      />
+    </div>
+    <div v-if="noMatch" class="sf-empty">No match</div>
+    <SingleMenu v-else
+      :items="visibleItems"
       :options="(it: PanelListItem) => (bulkActive ? [] : it.options ?? [])"
       :key-of="(it: PanelListItem) => it.id"
       :title-of="(it: PanelListItem) => it.label"

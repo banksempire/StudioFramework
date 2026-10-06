@@ -65,6 +65,7 @@ export interface PanelListItem {
   meta?: string;
   detail?: string;
   detailMeta?: string;
+  search?: string;
   note?: string;
   badge?: string;
   badgeTone?: BadgeTone;
@@ -105,6 +106,8 @@ export interface PanelListData {
   empty?: string;
   bulk?: PanelListBulk;
   title?: string;
+  searchable?: boolean;
+  searchPlaceholder?: string;
 }
 
 export interface PanelHeaderData {

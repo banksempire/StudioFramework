@@ -92,11 +92,11 @@ registerPanelData('demo-list', () => {
 
 const bulkDemo = reactive({
   tasks: [
-    { id: 'alpha', name: 'alpha.log', size: '12 KB', pinned: false },
-    { id: 'bravo', name: 'bravo.csv', size: '4 MB', pinned: false },
-    { id: 'charlie', name: 'charlie.txt', size: '318 B', pinned: true },
-    { id: 'delta', name: 'delta.json', size: '88 KB', pinned: false },
-    { id: 'echo', name: 'echo.ndjson', size: '1.2 MB', pinned: false },
+    { id: 'alpha', name: 'alpha.log', size: '12 KB', hidden: 'zeta', pinned: false },
+    { id: 'bravo', name: 'bravo.csv', size: '4 MB', hidden: 'yankee', pinned: false },
+    { id: 'charlie', name: 'charlie.txt', size: '318 B', hidden: 'xray', pinned: true },
+    { id: 'delta', name: 'delta.json', size: '88 KB', hidden: 'whiskey', pinned: false },
+    { id: 'echo', name: 'echo.ndjson', size: '1.2 MB', hidden: 'victor', pinned: false },
   ],
   on: false,
   selected: [] as string[],
@@ -105,11 +105,13 @@ const bulkDemo = reactive({
 registerPanelData('bulk-demo', () => {
   const n = bulkDemo.selected.length;
   return {
+    searchable: true,
     items: bulkDemo.tasks.map((t) => ({
       id: t.id,
       label: t.name,
       meta: t.size,
       detail: t.pinned ? 'pinned' : 'task',
+      search: t.hidden,
       action: 'bulk-demo-open',
       options: [{ id: 'remove', label: 'Remove', icon: '🗑', danger: true }],
     })),

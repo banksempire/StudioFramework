@@ -31,6 +31,30 @@ const { ensureServer, makeReporter, finish } = require('./lib/ui-test.cjs');
   const barBtn = (label) => demo.locator(`.sf-subsection-header .sf-subsection-util[title="${label}"]`);
   const bulkBar = demo.locator('.sf-pl-bulkbar');
   const checks = () => demo.locator('.sf-pl-check');
+  const searchInput = demo.locator('.sf-pl-search-input');
+  await searchInput.fill('xray');
+  await page.waitForTimeout(200);
+  report(
+    'list search matches hidden search text',
+    (await demo.locator('.sf-sm-row').count()) === 1 &&
+      (await demo.locator('.sf-sm-row').first().textContent()).includes('charlie.txt'),
+  );
+  await searchInput.fill('bravo');
+  await page.waitForTimeout(200);
+  report(
+    'list search matches visible labels',
+    (await demo.locator('.sf-sm-row').count()) === 1 &&
+      (await demo.locator('.sf-sm-row').first().textContent()).includes('bravo.csv'),
+  );
+  await searchInput.fill('zzz');
+  await page.waitForTimeout(200);
+  report(
+    'list search shows No match when nothing matches',
+    (await demo.locator('.sf-empty').count()) === 1 && (await demo.locator('.sf-sm-row').count()) === 0,
+  );
+  await searchInput.fill('');
+  await page.waitForTimeout(200);
+  report('clearing list search restores all rows', (await demo.locator('.sf-sm-row').count()) === 5);
   const checkOn = (label) =>
     demo
       .locator('.sf-sm-row', { hasText: label })

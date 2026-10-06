@@ -16,6 +16,7 @@ const props = withDefaults(
     rowNumbers?: boolean;
     searchable?: boolean;
     searchPlaceholder?: string;
+    searchText?: (row: Record<string, unknown>) => string;
     pageSize?: number;
     pageSizeOptions?: number[];
     resizable?: boolean;
@@ -350,7 +351,11 @@ const visibleRows = computed(() => {
   const gq = globalQuery.value.trim().toLowerCase();
   const out: Array<{ row: Record<string, unknown>; index: number }> = [];
   props.rows.forEach((row, index) => {
-    if (gq && !visibleColumns.value.some((c) => valueText(row[c.key]).toLowerCase().includes(gq))) return;
+    if (gq) {
+      const inColumns = visibleColumns.value.some((c) => valueText(row[c.key]).toLowerCase().includes(gq));
+      const extra = (props.searchText?.(row) ?? '').toLowerCase();
+      if (!inColumns && !extra.includes(gq)) return;
+    }
     for (const c of visibleColumns.value) {
       if (c.filter) {
         const q = (queries[c.key] ?? '').trim().toLowerCase();

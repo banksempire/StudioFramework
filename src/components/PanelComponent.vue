@@ -97,7 +97,13 @@ const listData = computed<PanelListData>(() => {
   if (Array.isArray(b)) return { items: b as PanelListItem[], empty: props.component.empty };
   const rec = b as PanelListData | undefined;
   if (rec && Array.isArray(rec.items))
-    return { items: rec.items, empty: rec.empty ?? props.component.empty, bulk: rec.bulk };
+    return {
+      items: rec.items,
+      empty: rec.empty ?? props.component.empty,
+      bulk: rec.bulk,
+      searchable: rec.searchable,
+      searchPlaceholder: rec.searchPlaceholder,
+    };
   return { items: props.component.items ?? [], empty: props.component.empty };
 });
 
@@ -358,6 +364,8 @@ function onNodeClick(node: TreeNode) {
       :variant="component.variant"
       :dismiss-on-activate="component.dismissOnActivate"
       :bulk="listData.bulk"
+      :searchable="listData.searchable"
+      :search-placeholder="listData.searchPlaceholder"
       @activate="(it) => emitAction(it.action, { gesture: 'activate', id: it.id })"
       @menu="(it, optionId) => emitAction(it.action, { gesture: 'menu', id: it.id, option: optionId })"
       @button="(it, buttonId) => emitAction(it.action, { gesture: 'button', id: it.id, button: buttonId })"

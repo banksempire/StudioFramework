@@ -5,11 +5,11 @@ import SvgIcon from './SvgIcon.vue';
 import Table from './Table.vue';
 
 const files = reactive([
-  { name: 'report-final.md', kind: 'doc', size: 48, days: 'Mon–Fri', note: 'release notes' },
-  { name: 'budget.xlsx', kind: 'sheet', size: 312, days: 'Mon–Fri', note: '2026 plan' },
-  { name: 'avatar.png', kind: 'image', size: 96, days: 'daily', note: '' },
-  { name: 'index.ts', kind: 'code', size: 12, days: 'Mon–Fri', note: 'entry point' },
-  { name: 'archive.zip', kind: 'image', size: 2048, days: 'weekend', note: 'old backup' },
+  { name: 'report-final.md', kind: 'doc', size: 48, days: 'Mon–Fri', note: 'release notes', py: 'baogao' },
+  { name: 'budget.xlsx', kind: 'sheet', size: 312, days: 'Mon–Fri', note: '2026 plan', py: 'yusuan' },
+  { name: 'avatar.png', kind: 'image', size: 96, days: 'daily', note: '', py: 'toux' },
+  { name: 'index.ts', kind: 'code', size: 12, days: 'Mon–Fri', note: 'entry point', py: 'ruko' },
+  { name: 'archive.zip', kind: 'image', size: 2048, days: 'weekend', note: 'old backup', py: 'dangan' },
 ]);
 
 const fileColumns = ref<TableColumn[]>([
@@ -67,6 +67,7 @@ const fileRows = computed(() => files as Array<Record<string, unknown>>);
         row-numbers
         searchable
         search-placeholder="Search files…"
+        :search-text="(row) => String(row.py ?? '')"
         :row-title="(row) => String(row.name)"
         :row-class="(row) => ({ 'sf-table-demo--sel': row.name === state.selKey })"
         empty-text="No files."
