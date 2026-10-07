@@ -840,6 +840,10 @@ body.sf-dragging-row * {
   padding: 0 8px;
 }
 
+.sf-subsection-body > .sf-pc + .sf-pc {
+  margin-top: 10px;
+}
+
 .sf-pc-text {
   display: block;
   padding: 2px 0;
