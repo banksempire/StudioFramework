@@ -2508,8 +2508,12 @@ body.sf-dragging-row * {
 }
 
 .sf-pf-ctl .sf-stepper-input {
-  width: fit-content;
-  margin-left: auto;
+  width: 100%;
+}
+
+.sf-pf-ctl .sf-stepper-input-box {
+  flex: 1;
+  width: auto;
 }
 
 .sf-pf-hint {
