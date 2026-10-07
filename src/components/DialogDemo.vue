@@ -1,6 +1,8 @@
 <script setup lang="ts">
 import { ref } from 'vue';
+import type { PopupField } from '../types/popup';
 import Dialog from './Dialog.vue';
+import FormFields from './FormFields.vue';
 import PillSelector from './PillSelector.vue';
 
 const open = ref(false);
@@ -15,8 +17,47 @@ const scopeOptions = [
   { value: 'workspace', label: 'Workspace', title: 'Whole workspace' },
 ];
 
+const formFields: PopupField[] = [
+  {
+    key: 'size',
+    type: 'select',
+    label: 'Size',
+    options: [
+      { value: 's', label: 'Small' },
+      { value: 'm', label: 'Medium' },
+      { value: 'l', label: 'Large' },
+      { value: 'x', label: 'Extra large', disabled: true },
+    ],
+  },
+  {
+    key: 'tier',
+    type: 'select',
+    label: 'Tier',
+    options: [
+      {
+        group: 'Core',
+        options: [
+          { value: 'a', label: 'Alpha' },
+          { value: 'b', label: 'Beta' },
+        ],
+      },
+      {
+        group: 'Edge',
+        options: [{ value: 'g', label: 'Gamma' }],
+      },
+    ],
+  },
+];
+
+const formValues = ref<Record<string, string>>({ size: 'm', tier: 'b' });
+
+function patchForm(key: string, value: string | number | boolean | Array<string | number>) {
+  formValues.value[key] = String(value);
+}
+
 function save() {
-  lastResult.value = `saved ${name.value.trim() || '—'} · ${scope.value}`;
+  const form = formFields.map((f) => `${f.key}:${formValues.value[f.key] ?? ''}`).join(' ');
+  lastResult.value = `saved ${name.value.trim() || '—'} · ${scope.value} · ${form}`;
   open.value = false;
 }
 </script>
@@ -37,6 +78,7 @@ function save() {
         <span class="sf-dialog-demo-label">Scope</span>
         <PillSelector v-model="scope" :options="scopeOptions" />
       </div>
+      <FormFields :h2="{ fields: formFields }" :values="formValues" uid="sf-dialog-demo" @patch="patchForm" />
       <template #actions="{ close }">
         <button class="sf-dialog-btn" type="button" @click="close()">Cancel</button>
         <button class="sf-dialog-btn sf-dialog-btn--accent" type="button" @click="save">Save</button>

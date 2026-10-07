@@ -2,6 +2,7 @@ export interface PopupOption {
   value: string | number;
   label: string;
   title?: string;
+  disabled?: boolean;
 }
 
 export interface PopupOptionGroup {

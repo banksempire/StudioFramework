@@ -2875,6 +2875,10 @@ body.sf-dragging-row * {
 .sf-form-select {
   appearance: none;
   -webkit-appearance: none;
+  text-align: left;
+  text-overflow: ellipsis;
+  overflow: hidden;
+  white-space: nowrap;
   padding-right: 32px;
   cursor: pointer;
   background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'><path d='M1 1l4 4 4-4' stroke='%23858585' stroke-width='1.5' fill='none' stroke-linecap='round'/></svg>");
@@ -2883,9 +2887,87 @@ body.sf-dragging-row * {
   background-size: 10px 6px;
 }
 
-.sf-form-select option {
-  background-color: #252526;
-  color: #cccccc;
+.sf-form-select--blank {
+  color: var(--sf-text-muted);
+}
+
+.sf-select-pop {
+  position: fixed;
+  z-index: 1200;
+  box-sizing: border-box;
+  background: var(--sf-bg-lighter);
+  border: 1px solid var(--sf-border);
+  border-radius: var(--sf-radius);
+  box-shadow: var(--sf-shadow);
+  padding: 4px;
+  overflow-y: auto;
+  max-height: 320px;
+  font-size: 16px;
+  -webkit-app-region: no-drag;
+  outline: none;
+}
+
+.sf-select-group {
+  padding: 6px 8px 2px;
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--sf-text-muted);
+  user-select: none;
+}
+
+.sf-select-row {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 8px;
+  border-radius: 3px;
+  cursor: pointer;
+  white-space: nowrap;
+  color: var(--sf-text);
+}
+
+@media (hover: hover) {
+  .sf-select-row:not(.sf-select-row--disabled):hover {
+    box-shadow: inset 0 0 0 999px var(--sf-hover-overlay);
+  }
+}
+
+.sf-select-row--active {
+  box-shadow: inset 0 0 0 999px var(--sf-hover-overlay);
+}
+
+.sf-select-row--selected {
+  color: var(--sf-accent);
+}
+
+.sf-select-row--selected::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 3px;
+  background: var(--sf-accent);
+  pointer-events: none;
+}
+
+.sf-select-row--disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+
+.sf-select-row-label {
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.sf-select-mark {
+  font-size: 16px;
+  line-height: 1;
 }
 
 .sf-form-textarea {
