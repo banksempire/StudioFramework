@@ -201,7 +201,7 @@ function onRowDrop(item: PanelListItem) {
             'sf-pl-item--active': it.active,
             'sf-pl-item--muted': it.muted,
             'sf-pl-item--bulk': bulkActive,
-            'sf-pl-item--drop': bulkActive && dragId !== null && overId === it.id,
+            'sf-pl-item--drop': dragId !== null && overId === it.id,
           }"
           :data-id="it.id"
           :title="it.title"
@@ -262,7 +262,7 @@ function onRowDrop(item: PanelListItem) {
           </div>
 
           <span
-            v-if="bulkActive"
+            v-if="bulkActive || it.dragType"
             class="sf-pl-grip"
             draggable="true"
             title="Drag to reorder"
