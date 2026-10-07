@@ -204,10 +204,8 @@ onMounted(() => {
 });
 onUnmounted(() => window.removeEventListener('resize', onResize));
 
-type NavStandalone = Navigator & { standalone?: boolean };
 const standaloneMq = window.matchMedia('(display-mode: standalone)');
-const isStandaloneDisplay = () =>
-  standaloneMq.matches || (window.navigator as NavStandalone).standalone === true;
+const isStandaloneDisplay = () => standaloneMq.matches;
 const applyAppHeight = () => {
   if (!isStandaloneDisplay()) {
     document.documentElement.style.removeProperty('--sf-app-height');

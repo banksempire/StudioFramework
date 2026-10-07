@@ -945,6 +945,34 @@ const WS = '.sf-workspace';
   report('pwa standalone: no console/page errors', pwaErrors.length === 0, pwaErrors.join('; '));
   await pwa.close();
 
+  const legacy = await browser.newContext({ viewport: { width: 390, height: 852 } });
+  await legacy.addInitScript(() => {
+    Object.defineProperty(window.navigator, 'standalone', {
+      value: true,
+      configurable: true,
+    });
+  });
+  const lpage = await legacy.newPage();
+  await lpage.goto(`http://localhost:${process.env.SF_TEST_PORT || '7493'}/`, {
+    waitUntil: 'networkidle',
+    timeout: 15000,
+  });
+  await lpage.waitForFunction(() => (document.getElementById('framework')?.innerHTML.length ?? 0) > 1000, {
+    timeout: 10000,
+  });
+  const legacyH = await lpage.evaluate(() => ({
+    varSet: document.documentElement.style.getPropertyValue('--sf-app-height'),
+    rootH: document.querySelector('.sf-root')?.getBoundingClientRect().height,
+    innerH: window.innerHeight,
+  }));
+  report(
+    'browser mode ignores legacy navigator.standalone and keeps dvh height',
+    !legacyH.varSet && Math.round(legacyH.rootH) === Math.round(legacyH.innerH),
+    JSON.stringify(legacyH),
+  );
+  await lpage.close();
+  await legacy.close();
+
   report('no console/page errors', errors.length === 0, errors.join('; '));
 
   await finish(browser, serverProc, isFailed(), 'MOBILE CHECKS');
