@@ -78,6 +78,8 @@ body,
   height: var(--sf-app-height, 100%);
   width: 100%;
   overflow: hidden;
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
   background: #000;
   color: var(--sf-text);
   font-family: var(--sf-font);

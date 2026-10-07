@@ -514,6 +514,25 @@ const WS = '.sf-workspace';
   );
   report('mobile activation survived (layout.json active)', (await activeTabLabel()) === 'layout.json');
 
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.waitForTimeout(400);
+  report(
+    'mobile: iOS text inflation disabled on the document',
+    await page.evaluate(() => {
+      const cs = getComputedStyle(document.documentElement);
+      return (cs.webkitTextSizeAdjust || cs.textSizeAdjust) === '100%';
+    }),
+  );
+  report(
+    'mobile: shell fills the viewport exactly (no page overflow)',
+    await page.evaluate(() => {
+      const root = document.querySelector('.sf-root');
+      return (
+        document.documentElement.scrollHeight === window.innerHeight &&
+        root.getBoundingClientRect().height === window.innerHeight
+      );
+    }),
+  );
   await resizeTo(450);
   report('mobile again: one flat tile, 5 tabs', (await tileCount()) === 1);
   await page.locator('.sf-mobile-tab-label').click();
