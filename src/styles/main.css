@@ -1219,7 +1219,7 @@ body.sf-dragging-row * {
 }
 
 @media (hover: hover) {
-  .sf-tab:hover {
+  .sf-tab:hover:not(.active) {
     background: linear-gradient(var(--sf-hover-overlay), var(--sf-hover-overlay)), #292929;
   }
 }
