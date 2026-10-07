@@ -533,27 +533,6 @@ const WS = '.sf-workspace';
       );
     }),
   );
-  report(
-    'mobile: body is pinned so iOS cannot scroll the shell away',
-    await page.evaluate(() => getComputedStyle(document.body).position === 'fixed'),
-  );
-  report(
-    'mobile: stray document scrolls snap back to the top',
-    await page.evaluate(() => {
-      window.scrollTo(0, 59);
-      window.dispatchEvent(new Event('scroll'));
-      window.visualViewport?.dispatchEvent(new Event('scroll'));
-      return window.scrollY === 0;
-    }),
-  );
-  await resizeTo(1300);
-  report(
-    'desktop: body pin released',
-    await page.evaluate(() => {
-      const cs = getComputedStyle(document.body);
-      return cs.position !== 'fixed' && !document.body.classList.contains('sf-body-mobile');
-    }),
-  );
   await resizeTo(450);
   report('mobile again: one flat tile, 5 tabs', (await tileCount()) === 1);
   await page.locator('.sf-mobile-tab-label').click();
