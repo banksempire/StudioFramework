@@ -64,6 +64,14 @@ const rightPanelVisible = ref(true);
 const MOBILE_BREAKPOINT = 500;
 const isMobile = ref(window.innerWidth < MOBILE_BREAKPOINT);
 provide(kIsMobile, isMobile);
+watch(
+  isMobile,
+  (mobile) => document.body.classList.toggle('sf-body-mobile', mobile),
+  { immediate: true },
+);
+const resetDocumentScroll = () => {
+  if (window.scrollY !== 0) window.scrollTo(0, 0);
+};
 const mobilePanelOpen = ref(false);
 const mobileRightOpen = ref(false);
 provide(kMobilePanelDismiss, () => {
@@ -220,9 +228,13 @@ const applyAppHeight = () => {
 onMounted(() => {
   const vv = window.visualViewport;
   vv?.addEventListener('resize', applyAppHeight);
-  vv?.addEventListener('scroll', applyAppHeight);
+  vv?.addEventListener('scroll', () => {
+    applyAppHeight();
+    resetDocumentScroll();
+  });
   window.addEventListener('resize', applyAppHeight);
   window.addEventListener('orientationchange', applyAppHeight);
+  window.addEventListener('scroll', resetDocumentScroll);
   standaloneMq.addEventListener('change', applyAppHeight);
   applyAppHeight();
 });
@@ -230,6 +242,7 @@ onUnmounted(() => {
   const vv = window.visualViewport;
   vv?.removeEventListener('resize', applyAppHeight);
   vv?.removeEventListener('scroll', applyAppHeight);
+  window.removeEventListener('scroll', resetDocumentScroll);
   window.removeEventListener('resize', applyAppHeight);
   window.removeEventListener('orientationchange', applyAppHeight);
   standaloneMq.removeEventListener('change', applyAppHeight);

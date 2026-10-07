@@ -95,6 +95,21 @@ body,
   }
 }
 
+body.sf-body-mobile {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: var(--sf-app-height, 100%);
+  overflow: hidden;
+}
+
+@supports (height: 100dvh) {
+  body.sf-body-mobile {
+    height: var(--sf-app-height, 100dvh);
+  }
+}
+
 .sf-root {
   display: flex;
   flex-direction: column;
