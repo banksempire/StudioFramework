@@ -124,6 +124,7 @@ function isEmpty(value: unknown): boolean {
   />
   <SwitchToggle
     v-else-if="field.type === 'switch'"
+    :id="inputId"
     :on="switchOn()"
     :title="field.labelNote"
     @toggle="emit('patch', field.key, !switchOn())"

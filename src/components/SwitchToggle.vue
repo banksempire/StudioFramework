@@ -1,5 +1,6 @@
 <script setup lang="ts">
 defineProps<{
+  id?: string;
   on: boolean;
   title?: string;
 }>();
@@ -9,6 +10,7 @@ const emit = defineEmits<{ toggle: [] }>();
 
 <template>
   <button
+    :id="id"
     class="sf-switch"
     :class="{ 'sf-switch--on': on }"
     type="button"
