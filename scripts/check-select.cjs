@@ -71,6 +71,11 @@ const { ensureServer, openApp, makeReporter, finish } = require('./lib/ui-test.c
       const themeBg = probeStyle.backgroundColor;
       const themeBorder = probeStyle.borderColor;
       probe.remove();
+      const textProbe = document.createElement('div');
+      textProbe.style.color = 'var(--sf-text)';
+      document.body.appendChild(textProbe);
+      const textColor = getComputedStyle(textProbe).color;
+      textProbe.remove();
       return {
         inBody: document.body.contains(pop),
         fixed: style.position,
@@ -83,7 +88,9 @@ const { ensureServer, openApp, makeReporter, finish } = require('./lib/ui-test.c
         onScreen: popRect.bottom <= window.innerHeight && popRect.top >= 0,
         rowCount: rows.length,
         selectedLabel: selected?.querySelector('.sf-select-row-label')?.textContent,
-        selectedMark: selected?.querySelector('.sf-select-mark') !== null,
+        selectedColor: selected ? getComputedStyle(selected).color : '',
+        marks: pop.querySelectorAll('.sf-select-mark').length,
+        textColor,
         disabledLabel: disabled?.querySelector('.sf-select-row-label')?.textContent,
         disabledAria: disabled?.getAttribute('aria-disabled'),
       };
@@ -100,10 +107,11 @@ const { ensureServer, openApp, makeReporter, finish } = require('./lib/ui-test.c
       JSON.stringify(openState),
     );
     report(
-      'options carry selected mark and disabled state',
+      'selected option keeps text color with no mark',
       openState.rowCount === 4 &&
         openState.selectedLabel === 'Medium' &&
-        openState.selectedMark &&
+        openState.selectedColor === openState.textColor &&
+        openState.marks === 0 &&
         openState.disabledLabel === 'Extra large' &&
         openState.disabledAria === 'true',
       JSON.stringify(openState),

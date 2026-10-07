@@ -263,7 +263,6 @@ onUnmounted(() => {
             @click="choose(row.option)"
           >
             <span class="sf-select-row-label">{{ row.option.label }}</span>
-            <SvgIcon v-if="row.index === currentIndex" class="sf-select-mark" name="✓" />
           </div>
         </template>
       </div>
@@ -288,7 +287,6 @@ onUnmounted(() => {
           @click="choose(row.option)"
         >
           <span class="sf-select-row-label">{{ row.option.label }}</span>
-          <SvgIcon v-if="row.index === currentIndex" class="sf-select-mark" name="✓" />
         </div>
       </template>
     </div>
