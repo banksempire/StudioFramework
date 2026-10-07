@@ -1201,10 +1201,10 @@ body.sf-dragging-row * {
   padding: 0 12px;
   height: 100%;
   cursor: pointer;
-  background: var(--sf-panel-bg);
+  background: #292929;
   border-top: 2px solid transparent;
   border-bottom: 2px solid transparent;
-  border-right: 1px solid var(--sf-border);
+  border-right: 1px solid #4d4d4d;
   color: var(--sf-text);
   white-space: nowrap;
   font-size: 16px;
@@ -1220,17 +1220,18 @@ body.sf-dragging-row * {
 
 @media (hover: hover) {
   .sf-tab:hover {
-    background: linear-gradient(var(--sf-hover-overlay), var(--sf-hover-overlay)), var(--sf-panel-bg);
+    background: linear-gradient(var(--sf-hover-overlay), var(--sf-hover-overlay)), #292929;
   }
 }
 
 .sf-tab.active {
   color: var(--sf-text);
+  background: var(--sf-panel-bg);
   border-bottom-color: var(--sf-accent);
 }
 
 .sf-tile:not(.sf-tile--focused) .sf-tab.active {
-  border-bottom-color: var(--sf-accent-dim);
+  border-bottom-color: transparent;
 }
 
 .sf-tab-icon {
