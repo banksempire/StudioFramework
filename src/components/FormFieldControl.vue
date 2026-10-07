@@ -130,6 +130,7 @@ function isEmpty(value: unknown): boolean {
   />
   <StepperInput
     v-else-if="field.type === 'stepper'"
+    :id="inputId"
     :model-value="stepperValue()"
     :min="field.min ?? 1"
     :max="field.max ?? 100"

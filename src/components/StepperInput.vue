@@ -5,13 +5,14 @@ import SvgIcon from './SvgIcon.vue';
 const props = withDefaults(
   defineProps<{
     modelValue: number;
+    id?: string;
     min?: number;
     max?: number;
     step?: number;
     disabled?: boolean;
     title?: string;
   }>(),
-  { min: 1, max: 100, step: 1, disabled: false, title: undefined },
+  { min: 1, max: 100, step: 1, disabled: false, title: undefined, id: undefined },
 );
 
 const emit = defineEmits<(e: 'update:modelValue', value: number) => void>();
@@ -46,6 +47,7 @@ function adjust(dir: number) {
 <template>
   <div class="sf-stepper-input" :class="{ 'sf-stepper-input--disabled': disabled }">
     <input
+      :id="id"
       class="sf-stepper-input-box"
       type="number"
       :value="boxValue"
