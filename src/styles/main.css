@@ -1198,7 +1198,7 @@ body.sf-dragging-row * {
   display: flex;
   align-items: center;
   gap: 6px;
-  padding: 0 12px;
+  padding: 0 6px 0 12px;
   height: 100%;
   cursor: pointer;
   background: #292929;
