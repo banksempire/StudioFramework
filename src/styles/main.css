@@ -2970,6 +2970,94 @@ body.sf-dragging-row * {
   line-height: 1;
 }
 
+.sf-select-sheet {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: calc(60px + var(--sf-status-slot) * var(--sf-status-reveal, 1) + var(--sf-safe-bottom, 0px));
+  z-index: 1150;
+  display: flex;
+  flex-direction: column;
+  border-radius: var(--sf-radius) var(--sf-radius) 0 0;
+  background: var(--sf-panel-bg);
+  padding-top: var(--sf-safe-top, 0px);
+}
+
+.sf-select-sheet-bar {
+  display: flex;
+  align-items: center;
+  height: 60px;
+  flex-shrink: 0;
+  border-bottom: 1px solid var(--sf-border);
+  position: relative;
+  border-radius: var(--sf-radius) var(--sf-radius) 0 0;
+  background: var(--sf-bar);
+}
+
+.sf-select-sheet-title {
+  position: absolute;
+  left: 60px;
+  right: 60px;
+  text-align: center;
+  min-width: 0;
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--sf-text);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.sf-select-sheet-close {
+  margin-left: auto;
+  width: 60px;
+  height: 60px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  border-left: 1px solid var(--sf-border);
+  border-radius: 0 var(--sf-radius) 0 0;
+  background: none;
+  color: var(--sf-text);
+  font-family: var(--sf-font);
+  font-size: 18px;
+  cursor: pointer;
+}
+
+@media (hover: hover) {
+  .sf-select-sheet-close:hover {
+    box-shadow: inset 0 0 0 999px var(--sf-hover-overlay);
+  }
+}
+
+.sf-select-sheet-body {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  padding: 10px 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  outline: none;
+}
+
+.sf-root--mobile .sf-select-sheet .sf-select-row {
+  padding: 12px 14px;
+  border-radius: 8px;
+  font-size: 16px;
+}
+
+.sf-root--mobile .sf-select-sheet .sf-select-row--selected::before {
+  border-radius: 8px 0 0 8px;
+}
+
+.sf-root--mobile .sf-select-sheet .sf-select-group {
+  padding: 10px 14px 4px;
+  font-size: 13px;
+}
+
 .sf-form-textarea {
   height: auto;
   resize: vertical;

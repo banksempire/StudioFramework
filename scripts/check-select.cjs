@@ -7,16 +7,20 @@ const { ensureServer, openApp, makeReporter, finish } = require('./lib/ui-test.c
 
   const delay = (ms) => new Promise((r) => setTimeout(r, ms));
 
-  async function openDemoDialog() {
-    const panelHidden = await page.evaluate(() =>
-      document.querySelector('.sf-panel--left')?.classList.contains('sf-panel--hidden'),
-    );
-    if (panelHidden) await page.locator('.sf-docker-app[title="Explorer"]').click();
-    const demo = page.locator('.sf-dialog-demo');
+  async function openDemoDialog(target = page) {
+    const demoVisible = await target
+      .locator('.sf-dialog-demo')
+      .isVisible()
+      .catch(() => false);
+    if (!demoVisible) {
+      await target.locator('.sf-docker-app[title="Explorer"]').click();
+      await delay(300);
+    }
+    const demo = target.locator('.sf-dialog-demo');
     await demo.scrollIntoViewIfNeeded();
     await demo.waitFor({ state: 'visible', timeout: 10000 });
-    await page.locator('.sf-dialog-demo-open').click();
-    await page.locator('.sf-dialog').waitFor({ state: 'visible', timeout: 5000 });
+    await target.locator('.sf-dialog-demo-open').click();
+    await target.locator('.sf-dialog').waitFor({ state: 'visible', timeout: 5000 });
     await delay(150);
   }
 
@@ -277,6 +281,86 @@ const { ensureServer, openApp, makeReporter, finish } = require('./lib/ui-test.c
     );
 
     report('no page errors', errors.length === 0, errors.slice(0, 3).join(' | '));
+
+    const mobileErrors = [];
+    const mobileCtx = await browser.newContext({ viewport: { width: 390, height: 844 }, hasTouch: true });
+    const mpage = await mobileCtx.newPage();
+    mpage.on('pageerror', (e) => mobileErrors.push(`pageerror: ${e.message}`));
+    mpage.on('console', (m) => {
+      if (m.type() === 'error') mobileErrors.push(`console: ${m.text()}`);
+    });
+    await mpage.goto(`http://localhost:${process.env.SF_TEST_PORT || '7493'}/`, {
+      waitUntil: 'networkidle',
+      timeout: 15000,
+    });
+    await mpage.waitForFunction(() => (document.getElementById('framework')?.innerHTML.length ?? 0) > 1000, {
+      timeout: 10000,
+    });
+
+    await openDemoDialog(mpage);
+    const mtrigger = mpage.locator('#sf-dialog-demo-size');
+    await mtrigger.tap();
+    await mpage.locator('.sf-select-sheet').waitFor({ state: 'visible', timeout: 5000 });
+    await delay(150);
+    const sheet = await mpage.evaluate(() => {
+      const sh = document.querySelector('.sf-select-sheet');
+      const bar = sh?.querySelector('.sf-select-sheet-bar');
+      const rows = sh?.querySelectorAll('.sf-select-row').length ?? 0;
+      const style = getComputedStyle(sh);
+      const inRoot = !!document.querySelector('.sf-root .sf-select-sheet');
+      return {
+        inRoot,
+        bottomSheet: style.borderTopLeftRadius !== '0px' && style.position === 'absolute',
+        title: bar?.querySelector('.sf-select-sheet-title')?.textContent,
+        close: bar?.querySelector('.sf-select-sheet-close') !== null,
+        rows,
+        pop: document.querySelectorAll('.sf-select-pop').length,
+      };
+    });
+    report(
+      'mobile mode opens the listbox as a bottom sheet',
+      sheet.inRoot &&
+        sheet.title === 'Size' &&
+        sheet.close &&
+        sheet.rows === 4 &&
+        sheet.pop === 0 &&
+        sheet.bottomSheet,
+      JSON.stringify(sheet),
+    );
+
+    await mpage
+      .locator('.sf-select-sheet .sf-select-row')
+      .filter({ hasText: /^Large$/ })
+      .tap();
+    await delay(150);
+    const pickedMobile = await mpage.evaluate(() => ({
+      sheet: document.querySelector('.sf-select-sheet') !== null,
+      label: document.querySelector('#sf-dialog-demo-size')?.textContent?.trim(),
+    }));
+    report(
+      'picking from the sheet patches the value and closes',
+      !pickedMobile.sheet && pickedMobile.label === 'Large',
+      JSON.stringify(pickedMobile),
+    );
+
+    await mtrigger.tap();
+    await mpage.locator('.sf-select-sheet').waitFor({ state: 'visible', timeout: 5000 });
+    await mpage.locator('.sf-select-sheet-close').tap();
+    await delay(150);
+    const closedMobile = await mpage.evaluate(() => ({
+      sheet: document.querySelector('.sf-select-sheet') !== null,
+      label: document.querySelector('#sf-dialog-demo-size')?.textContent?.trim(),
+    }));
+    report(
+      'the sheet close button keeps the value',
+      !closedMobile.sheet && closedMobile.label === 'Large',
+      JSON.stringify(closedMobile),
+    );
+
+    const mnative = await mpage.evaluate(() => document.querySelectorAll('.sf-dialog select').length);
+    report('mobile mode renders no native selects in dialogs', mnative === 0);
+    report('mobile: no page errors', mobileErrors.length === 0, mobileErrors.slice(0, 3).join(' | '));
+    await mobileCtx.close();
   } catch (e) {
     report('suite completed', false, String(e));
   } finally {

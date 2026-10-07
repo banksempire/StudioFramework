@@ -1,5 +1,6 @@
 <script setup lang="ts">
-import { computed, nextTick, onUnmounted, ref } from 'vue';
+import { computed, inject, nextTick, onMounted, onUnmounted, type Ref, ref } from 'vue';
+import { kIsMobile } from '../composables/useWorkspace';
 import type { PopupField, PopupOption, PopupValues } from '../types/popup';
 import SvgIcon from './SvgIcon.vue';
 
@@ -19,11 +20,19 @@ interface ChoiceGroup {
   options: PopupOption[];
 }
 
+const injectedMobile = inject(kIsMobile, null);
+const mobile = computed(() => injectedMobile?.value ?? false);
+
+const sheetTarget = ref<HTMLElement | 'body'>('body');
+onMounted(() => {
+  sheetTarget.value = (document.querySelector('.sf-root') as HTMLElement | null) ?? 'body';
+});
+
 const open = ref(false);
 const active = ref(-1);
 const popStyle = ref<{ left: string; top: string; width: string }>({ left: '0px', top: '0px', width: '0px' });
 const triggerEl = ref<HTMLButtonElement | null>(null);
-const popEl = ref<HTMLDivElement | null>(null);
+const popEl = ref<HTMLElement | null>(null);
 let typeBuffer = '';
 let typeTimer: ReturnType<typeof setTimeout> | undefined;
 
@@ -49,8 +58,7 @@ const optionRows = computed(() =>
 
 const currentIndex = computed(() => {
   const v = props.values[props.field.key];
-  const at = optionRows.value.findIndex((r) => String(r.option.value) === String(v ?? ''));
-  return at;
+  return optionRows.value.findIndex((r) => String(r.option.value) === String(v ?? ''));
 });
 
 const triggerLabel = computed(() => {
@@ -97,6 +105,11 @@ async function openPopup() {
   if (props.field.disabled || props.busy || open.value) return;
   open.value = true;
   active.value = currentIndex.value >= 0 ? currentIndex.value : firstEnabled(0);
+  if (mobile.value) {
+    await nextTick();
+    scrollActive();
+    return;
+  }
   await nextTick();
   positionPopup();
   popEl.value?.focus({ preventScroll: true });
@@ -107,7 +120,7 @@ function closePopup(refocus = true) {
   if (!open.value) return;
   open.value = false;
   typeBuffer = '';
-  if (refocus) triggerEl.value?.focus({ preventScroll: true });
+  if (refocus && !mobile.value) triggerEl.value?.focus({ preventScroll: true });
 }
 
 function choose(option: PopupOption) {
@@ -186,7 +199,7 @@ function onPopKey(e: KeyboardEvent) {
 }
 
 function onDocDown(e: MouseEvent) {
-  if (!open.value) return;
+  if (!open.value || mobile.value) return;
   const t = e.target as Node;
   if (triggerEl.value?.contains(t) || popEl.value?.contains(t)) return;
   closePopup(false);
@@ -217,8 +230,45 @@ onUnmounted(() => {
     @keydown.enter.prevent="openPopup()"
     @keydown.space.prevent="openPopup()"
   >{{ triggerLabel }}</button>
-  <Teleport to="body">
-    <div v-if="open" :id="popId" ref="popEl" class="sf-select-pop" :style="popStyle" role="listbox" tabindex="-1" :aria-activedescendant="active >= 0 ? optionId(active) : undefined" @keydown="onPopKey">
+  <Teleport :to="sheetTarget">
+    <div v-if="open && mobile" class="sf-select-sheet">
+      <div class="sf-select-sheet-bar">
+        <span class="sf-select-sheet-title">{{ field.label ?? '' }}</span>
+        <button class="sf-select-sheet-close" title="Close" @click="closePopup()"><SvgIcon name="✕" /></button>
+      </div>
+      <div
+        :id="popId"
+        ref="popEl"
+        class="sf-select-sheet-body"
+        role="listbox"
+        tabindex="-1"
+        :aria-activedescendant="active >= 0 ? optionId(active) : undefined"
+        @keydown="onPopKey"
+      >
+        <template v-for="(row, i) in rows" :key="row.kind === 'group' ? `m-group-${row.label}-${i}` : optionId(row.index)">
+          <div v-if="row.kind === 'group'" class="sf-select-group">{{ row.label }}</div>
+          <div
+            v-else
+            :id="optionId(row.index)"
+            class="sf-select-row"
+            :class="{
+              'sf-select-row--selected': row.index === currentIndex,
+              'sf-select-row--active': row.index === active,
+              'sf-select-row--disabled': row.option.disabled,
+            }"
+            role="option"
+            :aria-selected="row.index === currentIndex"
+            :aria-disabled="row.option.disabled || undefined"
+            :title="row.option.title"
+            @click="choose(row.option)"
+          >
+            <span class="sf-select-row-label">{{ row.option.label }}</span>
+            <SvgIcon v-if="row.index === currentIndex" class="sf-select-mark" name="✓" />
+          </div>
+        </template>
+      </div>
+    </div>
+    <div v-else-if="open" :id="popId" ref="popEl" class="sf-select-pop" :style="popStyle" role="listbox" tabindex="-1" :aria-activedescendant="active >= 0 ? optionId(active) : undefined" @keydown="onPopKey">
       <template v-for="(row, i) in rows" :key="row.kind === 'group' ? `group-${row.label}-${i}` : optionId(row.index)">
         <div v-if="row.kind === 'group'" class="sf-select-group">{{ row.label }}</div>
         <div
