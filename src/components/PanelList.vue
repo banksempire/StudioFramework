@@ -246,6 +246,16 @@ function onButtonClick(
             :class="{ 'sf-pl-check--on': props.bulk?.selected.includes(it.id) }"
           />
 
+          <span
+            v-if="bulkActive || it.dragType"
+            class="sf-pl-grip"
+            draggable="true"
+            title="Drag to reorder"
+            @dragstart.stop="onGripStart(it, $event)"
+            @dragend="onGripEnd"
+          >
+            <SvgIcon name="grip" />
+          </span>
           <div class="sf-pl-main">
               <div class="sf-pl-top">
                 <SwitchToggle
@@ -299,16 +309,6 @@ function onButtonClick(
             <div v-if="it.note" class="sf-pl-note">{{ it.note }}</div>
           </div>
 
-          <span
-            v-if="bulkActive || it.dragType"
-            class="sf-pl-grip"
-            draggable="true"
-            title="Drag to reorder"
-            @dragstart.stop="onGripStart(it, $event)"
-            @dragend="onGripEnd"
-          >
-            <SvgIcon name="grip" />
-          </span>
         </div>
       </template>
     </SingleMenu>

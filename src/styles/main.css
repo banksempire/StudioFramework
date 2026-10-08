@@ -2147,22 +2147,16 @@ body.sf-dragging-row * {
 }
 
 .sf-pl-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
   cursor: pointer;
   min-width: 0;
 }
 
-.sf-pl-item--bulk {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-}
-
 .sf-pl-main {
-  min-width: 0;
-}
-
-.sf-pl-item--bulk .sf-pl-main {
   flex: 1;
+  min-width: 0;
 }
 
 .sf-pl--plain .sf-pl-item {
