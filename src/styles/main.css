@@ -1411,7 +1411,7 @@ body.sf-dragging-row * {
   --sf-radius-inner: max(calc(var(--sf-radius) - 2px), 0px);
   --sf-status-reveal: 1;
   --sf-status-slot: 38px;
-  padding: var(--sf-safe-top) 0 0;
+  padding: var(--sf-safe-top) 0 var(--sf-safe-bottom);
   gap: 0;
   position: relative;
 }
@@ -1864,13 +1864,11 @@ body.sf-dragging-row * {
 .sf-root--mobile .sf-status-bar {
   margin-top: var(--sf-gap);
   padding-right: 25px;
-  height: calc(30px + var(--sf-safe-bottom));
-  padding-bottom: var(--sf-safe-bottom);
-  border-radius: 0;
+  height: 30px;
 }
 
 .sf-root--mobile .sf-docker--bottom {
-  margin-bottom: calc((var(--sf-status-reveal) - 1) * (var(--sf-status-slot) + var(--sf-safe-bottom)));
+  margin-bottom: calc(var(--sf-status-reveal) * var(--sf-status-slot) - var(--sf-status-slot));
   position: relative;
   z-index: 2;
 }
