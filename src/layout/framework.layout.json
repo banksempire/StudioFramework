@@ -1330,6 +1330,33 @@
           }
         ]
       }
+    },
+    {
+      "id": "fields",
+      "displayName": "Fields",
+      "icon": "☰",
+      "panel": {
+        "title": "Fields",
+        "h1": [
+          {
+            "id": "fields",
+            "title": "Fields",
+            "h2": [
+              {
+                "id": "fields-list",
+                "title": "Field manager",
+                "height": "fixed",
+                "components": [
+                  {
+                    "type": "list",
+                    "bind": "fields-demo"
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      }
     }
   ],
   "rightPanels": {

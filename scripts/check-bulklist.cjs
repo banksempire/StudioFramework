@@ -163,21 +163,28 @@ const { ensureServer, makeReporter, finish } = require('./lib/ui-test.cjs');
   const fieldRow = (label) => fields.locator('.sf-pl-item', { hasText: label }).first();
   const rowByLabel = (label) => fields.locator('.sf-sm-row', { hasText: label }).first();
   report(
-    'field rows render text buttons for options and delete',
-    (await fields.locator('.sf-pl-btn', { hasText: 'Options' }).count()) === 2 &&
+    'desktop hides mobile-only buttons and keeps delete',
+    (await fields.locator('.sf-pl-btn', { hasText: 'Options' }).count()) === 0 &&
       (await fields.locator('.sf-pl-btn', { hasText: 'Delete' }).count()) === 2,
   );
-  await fieldRow('Tick').locator('.sf-pl-btn', { hasText: 'Options' }).click();
+  report(
+    'content area hosts extra lines with meta',
+    (await fields.locator('.sf-pl-line').count()) === 2 &&
+      (await fields.locator('.sf-pl-line', { hasText: 'visible on the table' }).count()) === 2 &&
+      (await fields.locator('.sf-pl-line-meta', { hasText: 'tick' }).count()) === 1,
+  );
+  await rowByLabel('Tick').click({ button: 'right' });
   await page.waitForTimeout(200);
   const hideOpt = page.locator('.sf-sm-menu .sf-sm-menu-row', { hasText: 'Hide' }).first();
-  report('options button opens the row menu', await hideOpt.isVisible());
+  report('right-click opens the row menu on desktop', await hideOpt.isVisible());
   await hideOpt.click();
   await page.waitForTimeout(200);
   report(
-    'hide option mutes the row',
-    (await fieldRow('Tick').getAttribute('class'))?.includes('sf-pl-item--muted') === true,
+    'hide option mutes the row and its line',
+    (await fieldRow('Tick').getAttribute('class'))?.includes('sf-pl-item--muted') === true &&
+      (await fields.locator('.sf-pl-line', { hasText: 'hidden on the table' }).count()) === 1,
   );
-  await fieldRow('Tick').locator('.sf-pl-btn', { hasText: 'Options' }).click();
+  await rowByLabel('Tick').click({ button: 'right' });
   await page.waitForTimeout(200);
   await page.locator('.sf-sm-menu .sf-sm-menu-row', { hasText: 'Show' }).first().click();
   await page.waitForTimeout(200);
@@ -199,6 +206,36 @@ const { ensureServer, makeReporter, finish } = require('./lib/ui-test.cjs');
     .click();
   await page.waitForTimeout(200);
   report('empty list shows the footer hint', (await fields.locator('.sf-empty').count()) === 1);
+
+  const mobileCtx = await browser.newContext({ viewport: { width: 390, height: 844 }, hasTouch: true });
+  const mpage = await mobileCtx.newPage();
+  await mpage.goto(`http://localhost:${process.env.SF_TEST_PORT || '7493'}/`, {
+    waitUntil: 'networkidle',
+    timeout: 15000,
+  });
+  await mpage.waitForFunction(() => (document.getElementById('framework')?.innerHTML.length ?? 0) > 1000, {
+    timeout: 10000,
+  });
+  await mpage.locator('.sf-docker-app[title="Fields"]').tap();
+  await mpage.locator('.sf-mobile-panel').waitFor({ state: 'visible', timeout: 5000 });
+  const mfields = mpage.locator('.sf-mobile-panel .sf-pl-item');
+  await mfields.first().waitFor({ state: 'visible', timeout: 5000 });
+  report(
+    'mobile shows mobile-only option buttons',
+    (await mfields.locator('.sf-pl-btn', { hasText: 'Options' }).count()) === 2 &&
+      (await mfields.locator('.sf-pl-btn', { hasText: 'Delete' }).count()) === 2,
+  );
+  await mfields.locator('.sf-pl-btn', { hasText: 'Options' }).first().tap();
+  await page.waitForTimeout(200);
+  const mobileMenu = mpage.locator('.sf-sm-menu .sf-sm-menu-row', { hasText: 'Hide' }).first();
+  report('mobile options button opens the row menu', await mobileMenu.isVisible());
+  await mobileMenu.click();
+  await page.waitForTimeout(200);
+  report(
+    'mobile hide option mutes the row',
+    (await mfields.first().getAttribute('class'))?.includes('sf-pl-item--muted') === true,
+  );
+  await mobileCtx.close();
 
   report('no page errors during the run', errors.length === 0, errors.join(' | '));
   await finish(browser, serverProc, isFailed() || errors.length > 0, 'BULK-LIST CHECKS');

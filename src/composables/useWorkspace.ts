@@ -152,6 +152,9 @@ export const kIsMobile: InjectionKey<Ref<boolean>> = Symbol('sf.isMobile');
 
 export const kMobilePanelDismiss: InjectionKey<() => void> = Symbol('sf.mobilePanelDismiss');
 
+export const kSingleMenuOpen: InjectionKey<(item: unknown, x: number, y: number) => boolean> =
+  Symbol('sf.singleMenuOpen');
+
 export function useWorkspaceContext(): WorkspaceContext {
   const api = inject(kWorkspace);
   if (!api) throw new Error('useWorkspaceContext: workspace context not provided');

@@ -2302,6 +2302,31 @@ body.sf-dragging-row * {
   cursor: default;
 }
 
+.sf-pl-lines {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin-top: 2px;
+}
+
+.sf-pl-line {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+  font-size: 12px;
+  line-height: 16px;
+}
+
+.sf-pl-line--muted {
+  color: var(--sf-text-muted, #778);
+}
+
+.sf-pl-line-meta {
+  flex: none;
+  color: var(--sf-text-muted, #778);
+}
+
 .sf-pl-footer {
   padding: 8px;
   border-top: 1px solid var(--sf-border);

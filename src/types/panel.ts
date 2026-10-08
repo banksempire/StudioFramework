@@ -38,6 +38,8 @@ export type DotTone = 'muted' | 'ok' | 'ok-pulse' | 'err' | 'warn' | 'accent';
 
 export type BadgeTone = 'ok' | 'ok-blink' | 'accent' | 'accent-soft' | 'err' | 'muted';
 
+export type PanelButtonVisibility = 'always' | 'mobile' | 'desktop' | 'edit';
+
 export interface PanelListButton {
   id: string;
   icon?: IconDef;
@@ -46,6 +48,13 @@ export interface PanelListButton {
   danger?: boolean;
   disabled?: boolean;
   menu?: boolean;
+  visibility?: PanelButtonVisibility;
+}
+
+export interface PanelListLine {
+  text: string;
+  meta?: string;
+  muted?: boolean;
 }
 
 export interface PanelListOption {
@@ -80,6 +89,7 @@ export interface PanelListItem {
   switch?: PanelListItemSwitch;
   buttons?: PanelListButton[];
   options?: PanelListOption[];
+  lines?: PanelListLine[];
   action?: string;
   dragType?: string;
   dragData?: string;

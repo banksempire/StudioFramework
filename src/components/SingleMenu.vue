@@ -77,6 +77,14 @@ function onMore(row: RowView<T>) {
   dialogItem.value = row.item;
 }
 
+function openRow(row: RowView<T>, x: number, y: number) {
+  if (row.opts.length === 0) return;
+  dialogItem.value = null;
+  ctxItem.value = row.item;
+  ctxX.value = x;
+  ctxY.value = y;
+}
+
 let lastPointerType = '';
 
 const ctxItem = ref(null) as Ref<T | null>;
@@ -91,10 +99,7 @@ function onCtx(e: MouseEvent, row: RowView<T>) {
   const fromTouch = lastPointerType !== '' && lastPointerType !== 'mouse';
   lastPointerType = '';
   if (fromTouch) return;
-  dialogItem.value = null;
-  ctxItem.value = row.item;
-  ctxX.value = e.clientX;
-  ctxY.value = e.clientY;
+  openRow(row, e.clientX, e.clientY);
 }
 
 watch(ctxItem, async (v) => {
@@ -171,7 +176,12 @@ if (typeof window !== 'undefined') {
         @dragend="emit('dragend', $event)"
       >
         <div class="sf-sm-content">
-          <slot name="item" :item="row.item" :index="row.index" />
+          <slot
+          name="item"
+          :item="row.item"
+          :index="row.index"
+          :open-menu="(x: number, y: number) => openRow(row, x, y)"
+        />
         </div>
         <button
           v-if="isMobile && row.opts.length > 0"

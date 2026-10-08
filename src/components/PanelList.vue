@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed, inject, ref, watch } from 'vue';
-import { kMobilePanelDismiss } from '../composables/useWorkspace';
-import type { PanelListBulk, PanelListButton, PanelListItem } from '../types/panel';
+import { kIsMobile, kMobilePanelDismiss } from '../composables/useWorkspace';
+import type { PanelListBulk, PanelListButton, PanelListItem, PanelListLine } from '../types/panel';
 import Icon from './Icon.vue';
 import SingleMenu from './SingleMenu.vue';
 import SvgIcon from './SvgIcon.vue';
@@ -87,6 +87,22 @@ function onDragStart(item: PanelListItem, e: DragEvent) {
 }
 
 const bulkActive = computed(() => props.bulk?.active === true);
+const injectedMobile = inject(kIsMobile, null);
+const isMobile = computed(() => injectedMobile?.value ?? false);
+
+function visibleButtons(it: PanelListItem): PanelListButton[] {
+  return (it.buttons ?? []).filter((b) => {
+    const v = b.visibility ?? 'always';
+    if (v === 'mobile') return isMobile.value;
+    if (v === 'desktop') return !isMobile.value;
+    if (v === 'edit') return bulkActive.value;
+    return true;
+  });
+}
+
+function lineClass(line: PanelListLine) {
+  return { 'sf-pl-line--muted': line.muted === true };
+}
 const lastToggle = ref<{ index: number; state: boolean }>({ index: -1, state: false });
 
 watch(
@@ -148,15 +164,17 @@ function onRowDrop(item: PanelListItem) {
   if (from && from !== item.id) emit('bulk-reorder', from, item.id);
 }
 
-function onButtonClick(it: PanelListItem, b: PanelListButton, e: MouseEvent) {
+function onButtonClick(
+  it: PanelListItem,
+  b: PanelListButton,
+  e: MouseEvent,
+  openMenu?: (x: number, y: number) => void,
+) {
   if (!b.menu) {
     emit('button', it, b.id);
     return;
   }
-  const slide = (e.currentTarget as HTMLElement | null)?.closest('.sf-sm-slide');
-  slide?.dispatchEvent(
-    new MouseEvent('contextmenu', { cancelable: true, clientX: e.clientX, clientY: e.clientY }),
-  );
+  openMenu?.(e.clientX, e.clientY);
 }
 </script>
 
@@ -207,7 +225,7 @@ function onButtonClick(it: PanelListItem, b: PanelListButton, e: MouseEvent) {
       @dragstart="onDragStart"
       @dragend="(e: DragEvent) => emit('dragend', e)"
     >
-      <template #item="{ item: it }">
+      <template #item="{ item: it, openMenu }">
         <div
           class="sf-pl-item"
           :class="{
@@ -249,16 +267,16 @@ function onButtonClick(it: PanelListItem, b: PanelListButton, e: MouseEvent) {
               >
                 {{ it.badge }}
               </span>
-              <span class="sf-pl-actions">
+              <span v-if="visibleButtons(it).length > 0" class="sf-pl-actions">
                 <button
-                  v-for="b in it.buttons ?? []"
+                  v-for="b in visibleButtons(it)"
                   :key="b.id"
                   class="sf-pl-btn"
                   :class="{ 'sf-pl-btn--danger': b.danger }"
                   type="button"
                   :title="b.title ?? b.label ?? b.id"
                   :disabled="b.disabled"
-                  @click.stop="onButtonClick(it, b, $event)"
+                  @click.stop="onButtonClick(it, b, $event, openMenu)"
                 >
                   <Icon v-if="b.icon" :icon="b.icon" />
                   <template v-else>{{ b.label }}</template>
@@ -271,6 +289,12 @@ function onButtonClick(it: PanelListItem, b: PanelListButton, e: MouseEvent) {
               </span>
               <span class="sf-pl-detail">{{ it.detail }}</span>
               <span v-if="it.detailMeta" class="sf-pl-detail-meta">{{ it.detailMeta }}</span>
+            </div>
+            <div v-if="it.lines?.length" class="sf-pl-lines">
+              <div v-for="(ln, i) in it.lines" :key="i" class="sf-pl-line" :class="lineClass(ln)">
+                <span class="sf-pl-line-text">{{ ln.text }}</span>
+                <span v-if="ln.meta" class="sf-pl-line-meta">{{ ln.meta }}</span>
+              </div>
             </div>
             <div v-if="it.note" class="sf-pl-note">{{ it.note }}</div>
           </div>
@@ -288,17 +312,17 @@ function onButtonClick(it: PanelListItem, b: PanelListButton, e: MouseEvent) {
         </div>
       </template>
     </SingleMenu>
-    <div v-if="props.footer" class="sf-pl-footer">
-      <button
-        class="sf-pl-footer-btn"
-        type="button"
-        :title="props.footer.title ?? props.footer.label ?? props.footer.id"
-        :disabled="props.footer.disabled"
-        @click="emit('footer', props.footer.id)"
-      >
-        <Icon v-if="props.footer.icon" :icon="props.footer.icon" />
-        <template v-else>{{ props.footer.label }}</template>
-      </button>
-    </div>
+  </div>
+  <div v-if="props.footer" class="sf-pl-footer">
+    <button
+      class="sf-pl-footer-btn"
+      type="button"
+      :title="props.footer.title ?? props.footer.label ?? props.footer.id"
+      :disabled="props.footer.disabled"
+      @click="emit('footer', props.footer.id)"
+    >
+      <Icon v-if="props.footer.icon" :icon="props.footer.icon" />
+      <template v-else>{{ props.footer.label }}</template>
+    </button>
   </div>
 </template>
