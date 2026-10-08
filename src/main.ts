@@ -122,7 +122,9 @@ registerPanelData('fields-demo', () => ({
       { id: 'delete', icon: '✕', title: 'Delete', danger: true },
     ],
     options: [{ id: r.hidden ? 'show' : 'hide', label: r.hidden ? 'Show' : 'Hide' }],
-    lines: [{ text: r.hidden ? 'hidden on the table' : 'visible on the table', meta: r.id }],
+    lines: [
+      { text: r.hidden ? 'hidden on the table' : 'visible on the table', meta: r.id, truncate: 'meta' },
+    ],
     dragType: 'application/x-fields-demo',
   })),
   footer: { id: 'add', label: 'Add', action: 'fields-demo-add' },

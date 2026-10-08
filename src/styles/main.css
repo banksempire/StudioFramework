@@ -2194,7 +2194,19 @@ body.sf-dragging-row * {
 .sf-pl-meta {
   font-size: 16px;
   color: var(--sf-text-muted);
-  flex-shrink: 0;
+  flex: none;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.sf-pl-item--trunc-meta .sf-pl-label {
+  flex: none;
+}
+
+.sf-pl-item--trunc-meta .sf-pl-meta {
+  flex: 1 1 auto;
+  min-width: 0;
 }
 
 .sf-pl-btn-group {
@@ -2259,12 +2271,32 @@ body.sf-dragging-row * {
   line-height: 16px;
 }
 
+.sf-pl-line-text {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.sf-pl-line--trunc-meta .sf-pl-line-text {
+  flex: none;
+}
+
+.sf-pl-line--trunc-meta .sf-pl-line-meta {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
 .sf-pl-line--muted {
   color: var(--sf-text-muted, #778);
 }
 
 .sf-pl-line-meta {
   flex: none;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
   color: var(--sf-text-muted, #778);
 }
 
@@ -2441,6 +2473,9 @@ body.sf-dragging-row * {
 
 .sf-pl-detail-meta {
   flex-shrink: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
   font-size: 16px;
   font-variant-numeric: tabular-nums;
   color: var(--sf-text);

@@ -54,6 +54,7 @@ export interface PanelListLine {
   text: string;
   meta?: string;
   muted?: boolean;
+  truncate?: 'text' | 'meta';
 }
 
 export interface PanelListOption {
@@ -70,6 +71,7 @@ export interface PanelListItemSwitch {
 }
 
 export interface PanelListItem {
+  truncate?: 'label' | 'meta';
   id: string;
   label: string;
   meta?: string;

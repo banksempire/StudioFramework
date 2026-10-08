@@ -191,6 +191,33 @@ const { ensureServer, makeReporter, finish } = require('./lib/ui-test.cjs');
     'icon-only row buttons are 30px squares like the chat more button',
     rowGeom !== null && rowGeom.square < 0.5 && rowGeom.size === 30,
   );
+  const wrap = await page.evaluate(() => {
+    const item = document.querySelector('[data-sub-body="fields"] .sf-pl-item');
+    const label = item?.querySelector('.sf-pl-label');
+    const meta = document.querySelector('.sf-pl-meta');
+    const line = item?.querySelector('.sf-pl-line');
+    const lineText = line?.querySelector('.sf-pl-line-text');
+    const cs = (el) => (el ? getComputedStyle(el) : null);
+    return {
+      label: cs(label),
+      meta: cs(meta),
+      lineText: cs(lineText),
+      truncMetaLine: !!item?.querySelector('.sf-pl-line--trunc-meta'),
+    };
+  });
+  report(
+    'row text never wraps: label truncates with ellipsis, meta stays natural width',
+    wrap.label?.whiteSpace === 'nowrap' &&
+      wrap.label?.textOverflow === 'ellipsis' &&
+      wrap.meta?.whiteSpace === 'nowrap' &&
+      String(wrap.meta?.flexShrink) === '0',
+    JSON.stringify({ label: wrap.label?.whiteSpace, meta: wrap.meta?.whiteSpace }),
+  );
+  report(
+    'line text truncates and flagged lines let the meta absorb the space',
+    wrap.lineText?.whiteSpace === 'nowrap' && wrap.truncMetaLine,
+    JSON.stringify({ lineText: wrap.lineText?.whiteSpace, truncMetaLine: wrap.truncMetaLine }),
+  );
   report(
     'content area hosts extra lines with meta',
     (await fields.locator('.sf-pl-line').count()) === 2 &&

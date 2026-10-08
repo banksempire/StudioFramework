@@ -165,9 +165,14 @@ function toListItem(v: unknown, path: string): PanelListItem {
     fail(`${path}.badgeTone`, `unknown badge tone "${badgeTone}"`);
   }
   const sw = r.switch === undefined ? undefined : needRecord(r.switch, `${path}.switch`);
+  const truncate = optString(r.truncate, `${path}.truncate`);
+  if (truncate !== undefined && truncate !== 'label' && truncate !== 'meta') {
+    fail(`${path}.truncate`, `expected "label" or "meta", got "${truncate}"`);
+  }
   return {
     id: needId(r.id, `${path}.id`),
     label: needString(r.label, `${path}.label`),
+    truncate: truncate as PanelListItem['truncate'],
     meta: optString(r.meta, `${path}.meta`),
     detail: optString(r.detail, `${path}.detail`),
     note: optString(r.note, `${path}.note`),

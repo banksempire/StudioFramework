@@ -106,7 +106,10 @@ function visibleButtons(it: PanelListItem): PanelListButton[] {
 }
 
 function lineClass(line: PanelListLine) {
-  return { 'sf-pl-line--muted': line.muted === true };
+  return {
+    'sf-pl-line--muted': line.muted === true,
+    'sf-pl-line--trunc-meta': line.truncate === 'meta',
+  };
 }
 const lastToggle = ref<{ index: number; state: boolean }>({ index: -1, state: false });
 
@@ -232,6 +235,7 @@ function onButtonClick(
           :class="{
             'sf-pl-item--active': it.active,
             'sf-pl-item--muted': it.muted,
+            'sf-pl-item--trunc-meta': it.truncate === 'meta',
             'sf-pl-item--bulk': bulkActive,
             'sf-pl-item--drop': dragId !== null && overId === it.id,
           }"
