@@ -2157,6 +2157,14 @@ body.sf-dragging-row * {
 .sf-pl-main {
   flex: 1;
   min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.sf-pl-col {
+  flex: 1;
+  min-width: 0;
 }
 
 .sf-pl--plain .sf-pl-item {
@@ -2269,13 +2277,6 @@ body.sf-dragging-row * {
   flex-shrink: 0;
 }
 
-.sf-pl-actions {
-  margin-left: auto;
-  display: flex;
-  gap: 4px;
-  flex-shrink: 0;
-}
-
 .sf-pl-btn-group {
   display: inline-flex;
   align-items: center;
@@ -2292,6 +2293,13 @@ body.sf-dragging-row * {
 
 .sf-pl-btn-group .sf-pl-btn:not(:last-child) {
   border-right: 1px solid var(--sf-border);
+}
+
+.sf-pl-btn--icon {
+  width: 22px;
+  height: 22px;
+  padding: 0;
+  flex: none;
 }
 
 .sf-pl-btn {

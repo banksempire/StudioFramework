@@ -165,13 +165,28 @@ const { ensureServer, makeReporter, finish } = require('./lib/ui-test.cjs');
   report(
     'desktop hides mobile-only buttons and keeps delete',
     (await fields.locator('.sf-pl-btn', { hasText: 'Options' }).count()) === 0 &&
-      (await fields.locator('.sf-pl-btn', { hasText: 'Delete' }).count()) === 2,
+      (await fields.locator('.sf-pl-btn[title="Delete"]').count()) === 2,
   );
   report(
     'row buttons pack into one group per row',
     (await fields.locator('.sf-pl-btn-group').count()) === 2 &&
       (await fields.locator('.sf-pl-btn-group').first().locator('.sf-pl-btn').count()) === 1,
   );
+  const rowGeom = await page.evaluate(() => {
+    const item = document.querySelector('[data-sub-body="fields"] .sf-pl-item');
+    const group = item?.querySelector('.sf-pl-btn-group');
+    const btn = item?.querySelector('.sf-pl-btn--icon') ?? group?.querySelector('.sf-pl-btn');
+    if (!item || !group || !btn) return null;
+    const ir = item.getBoundingClientRect();
+    const gr = group.getBoundingClientRect();
+    const br = btn.getBoundingClientRect();
+    return {
+      centered: Math.abs(gr.top + gr.height / 2 - (ir.top + ir.height / 2)),
+      square: Math.abs(br.width - br.height),
+    };
+  });
+  report('button group sits centered in the row', rowGeom !== null && rowGeom.centered < 2);
+  report('icon-only row buttons are square', rowGeom !== null && rowGeom.square < 0.5);
   report(
     'content area hosts extra lines with meta',
     (await fields.locator('.sf-pl-line').count()) === 2 &&
@@ -197,18 +212,15 @@ const { ensureServer, makeReporter, finish } = require('./lib/ui-test.cjs');
     'show option restores the row',
     (await fieldRow('Tick').getAttribute('class'))?.includes('sf-pl-item--muted') === false,
   );
-  await fieldRow('Tick').locator('.sf-pl-btn', { hasText: 'Delete' }).click();
+  await fieldRow('Tick').locator('.sf-pl-btn[title="Delete"]').click();
   await page.waitForTimeout(200);
   report('delete button removes the row', (await rowByLabel('Tick').count()) === 0);
   await fields.locator('.sf-pl-footer-btn', { hasText: 'Add' }).click();
   await page.waitForTimeout(200);
   report('footer add appends a new row', (await fields.locator('.sf-pl-item').count()) === 2);
-  await fieldRow('Book').locator('.sf-pl-btn', { hasText: 'Delete' }).click();
+  await fieldRow('Book').locator('.sf-pl-btn[title="Delete"]').click();
   await page.waitForTimeout(150);
-  await fields
-    .locator('.sf-pl-item', { hasText: 'Field 1' })
-    .locator('.sf-pl-btn', { hasText: 'Delete' })
-    .click();
+  await fields.locator('.sf-pl-item', { hasText: 'Field 1' }).locator('.sf-pl-btn[title="Delete"]').click();
   await page.waitForTimeout(200);
   report('empty list shows the footer hint', (await fields.locator('.sf-empty').count()) === 1);
   report(
@@ -232,7 +244,7 @@ const { ensureServer, makeReporter, finish } = require('./lib/ui-test.cjs');
   report(
     'mobile shows mobile-only option buttons',
     (await mfields.locator('.sf-pl-btn', { hasText: 'Options' }).count()) === 2 &&
-      (await mfields.locator('.sf-pl-btn', { hasText: 'Delete' }).count()) === 2,
+      (await mfields.locator('.sf-pl-btn[title="Delete"]').count()) === 2,
   );
   await mfields.locator('.sf-pl-btn', { hasText: 'Options' }).first().tap();
   await page.waitForTimeout(200);

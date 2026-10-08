@@ -258,6 +258,7 @@ function onButtonClick(
             <SvgIcon name="grip" />
           </span>
           <div class="sf-pl-main">
+            <div class="sf-pl-col">
               <div class="sf-pl-top">
                 <SwitchToggle
                   v-if="it.switch"
@@ -278,21 +279,6 @@ function onButtonClick(
               >
                 {{ it.badge }}
               </span>
-              <span v-if="visibleButtons(it).length > 0" class="sf-pl-btn-group">
-                <button
-                  v-for="b in visibleButtons(it)"
-                  :key="b.id"
-                  class="sf-pl-btn"
-                  :class="{ 'sf-pl-btn--danger': b.danger }"
-                  type="button"
-                  :title="b.title ?? b.label ?? b.id"
-                  :disabled="b.disabled"
-                  @click.stop="onButtonClick(it, b, $event, openMenu)"
-                >
-                  <Icon v-if="b.icon" :icon="b.icon" />
-                  <template v-else>{{ b.label }}</template>
-                </button>
-              </span>
             </div>
             <div v-if="it.detail" class="sf-pl-sub">
               <span v-if="it.badge" class="sf-pl-badge" :class="'sf-pl-badge--' + (it.badgeTone ?? 'muted')">
@@ -308,6 +294,22 @@ function onButtonClick(
               </div>
             </div>
             <div v-if="it.note" class="sf-pl-note">{{ it.note }}</div>
+            </div>
+            <span v-if="visibleButtons(it).length > 0" class="sf-pl-btn-group">
+              <button
+                v-for="b in visibleButtons(it)"
+                :key="b.id"
+                class="sf-pl-btn"
+                :class="{ 'sf-pl-btn--danger': b.danger, 'sf-pl-btn--icon': b.icon && !b.label }"
+                type="button"
+                :title="b.title ?? b.label ?? b.id"
+                :disabled="b.disabled"
+                @click.stop="onButtonClick(it, b, $event, openMenu)"
+              >
+                <Icon v-if="b.icon" :icon="b.icon" />
+                <template v-else>{{ b.label }}</template>
+              </button>
+            </span>
           </div>
 
         </div>

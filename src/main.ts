@@ -119,7 +119,7 @@ registerPanelData('fields-demo', () => ({
     action: 'fields-demo-row',
     buttons: [
       { id: 'options', label: 'Options', menu: true, visibility: 'mobile' },
-      { id: 'delete', label: 'Delete', danger: true },
+      { id: 'delete', icon: '✕', title: 'Delete', danger: true },
     ],
     options: [{ id: r.hidden ? 'show' : 'hide', label: r.hidden ? 'Show' : 'Hide' }],
     lines: [{ text: r.hidden ? 'hidden on the table' : 'visible on the table', meta: r.id }],
