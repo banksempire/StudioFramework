@@ -211,8 +211,7 @@ const applyAppHeight = () => {
     document.documentElement.style.removeProperty('--sf-app-height');
     return;
   }
-  const portrait = window.matchMedia('(orientation: portrait)').matches;
-  const full = portrait ? window.screen.height : window.screen.width;
+  const full = document.documentElement.clientHeight;
   document.documentElement.style.setProperty('--sf-app-height', `${full}px`);
 };
 onMounted(() => {

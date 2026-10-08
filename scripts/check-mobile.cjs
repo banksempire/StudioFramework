@@ -878,6 +878,14 @@ const WS = '.sf-workspace';
     Object.defineProperty(window, 'screen', {
       value: { width: 393, height: 852, availWidth: 393, availHeight: 852 },
     });
+    window.__sfSetInsetViewport = (h) => {
+      window.__sfFakeClientH = h;
+      Object.defineProperty(document.documentElement, 'clientHeight', {
+        configurable: true,
+        get: () => window.__sfFakeClientH ?? 852,
+      });
+      window.dispatchEvent(new Event('resize'));
+    };
     const vvListeners = {};
     const track = (t, f) => {
       if (!vvListeners[t]) vvListeners[t] = [];
@@ -935,6 +943,14 @@ const WS = '.sf-workspace';
   report(
     'pwa standalone: blur keeps the full screen height',
     ah.varSet === '852px' && ah.rootH === 852,
+    JSON.stringify(ah),
+  );
+  await pwaPage.evaluate(() => window.__sfSetInsetViewport(798));
+  await pwaPage.waitForTimeout(100);
+  ah = await pwaHeight();
+  report(
+    'pwa standalone: an inset (non-translucent) viewport pins to its own height',
+    ah.varSet === '798px' && ah.rootH === 798,
     JSON.stringify(ah),
   );
   report('pwa standalone: no console/page errors', pwaErrors.length === 0, pwaErrors.join('; '));
