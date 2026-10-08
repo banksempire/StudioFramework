@@ -2296,10 +2296,11 @@ body.sf-dragging-row * {
 }
 
 .sf-pl-btn--icon {
-  width: 22px;
-  height: 22px;
+  width: 30px;
+  height: 30px;
   padding: 0;
   flex: none;
+  background: #292929;
 }
 
 .sf-pl-btn {

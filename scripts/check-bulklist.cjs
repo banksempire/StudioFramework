@@ -183,10 +183,14 @@ const { ensureServer, makeReporter, finish } = require('./lib/ui-test.cjs');
     return {
       centered: Math.abs(gr.top + gr.height / 2 - (ir.top + ir.height / 2)),
       square: Math.abs(br.width - br.height),
+      size: Math.round(br.width),
     };
   });
   report('button group sits centered in the row', rowGeom !== null && rowGeom.centered < 2);
-  report('icon-only row buttons are square', rowGeom !== null && rowGeom.square < 0.5);
+  report(
+    'icon-only row buttons are 30px squares like the chat more button',
+    rowGeom !== null && rowGeom.square < 0.5 && rowGeom.size === 30,
+  );
   report(
     'content area hosts extra lines with meta',
     (await fields.locator('.sf-pl-line').count()) === 2 &&
