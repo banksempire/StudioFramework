@@ -2295,7 +2295,7 @@ body.sf-dragging-row * {
   border-right: 1px solid var(--sf-border);
 }
 
-.sf-pl-btn--icon {
+.sf-pl-btn.sf-pl-btn--icon {
   width: 30px;
   height: 30px;
   padding: 0;
