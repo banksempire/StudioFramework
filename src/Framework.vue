@@ -211,7 +211,17 @@ const applyAppHeight = () => {
     document.documentElement.style.removeProperty('--sf-app-height');
     return;
   }
-  const full = document.documentElement.clientHeight;
+  const rootEl = document.querySelector('.sf-root');
+  const safeTop = rootEl
+    ? Number.parseFloat(getComputedStyle(rootEl).getPropertyValue('--sf-safe-top'))
+    : Number.NaN;
+  const fullBleed = Number.isFinite(safeTop) && safeTop > 0;
+  const portrait = window.matchMedia('(orientation: portrait)').matches;
+  const full = fullBleed
+    ? portrait
+      ? window.screen.height
+      : window.screen.width
+    : document.documentElement.clientHeight;
   document.documentElement.style.setProperty('--sf-app-height', `${full}px`);
 };
 onMounted(() => {

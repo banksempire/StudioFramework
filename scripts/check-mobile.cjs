@@ -953,6 +953,17 @@ const WS = '.sf-workspace';
     ah.varSet === '798px' && ah.rootH === 798,
     JSON.stringify(ah),
   );
+  await pwaPage.evaluate(() => {
+    document.querySelector('.sf-root').style.setProperty('--sf-safe-top', '54px');
+    window.dispatchEvent(new Event('resize'));
+  });
+  await pwaPage.waitForTimeout(100);
+  ah = await pwaHeight();
+  report(
+    'pwa standalone: a full-bleed shell pins to the screen height despite the inset viewport',
+    ah.varSet === '852px' && ah.rootH === 852,
+    JSON.stringify(ah),
+  );
   report('pwa standalone: no console/page errors', pwaErrors.length === 0, pwaErrors.join('; '));
   await pwa.close();
 

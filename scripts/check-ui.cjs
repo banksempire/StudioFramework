@@ -59,11 +59,17 @@ const ARTIFACT_DIR = path.join(__dirname, 'artifacts');
     'panel button emits its action',
     (await page.locator('.sf-panel--left').first().textContent())?.includes('added row 3') === true,
   );
-  await page.locator('.sf-panel--left .sf-form-select').first().selectOption('folder');
+  await page.locator('.sf-panel--left .sf-form-select').first().click();
+  await page.waitForTimeout(300);
+  await page
+    .locator('.sf-select-row')
+    .filter({ hasText: /^Folder$/ })
+    .click();
   await page.waitForTimeout(300);
   report(
     'panel dropdown accepts a choice',
-    (await page.locator('.sf-panel--left .sf-form-select').inputValue()) === 'folder',
+    ((await page.locator('.sf-panel--left .sf-form-select').first().textContent())?.trim() ?? '') ===
+      'Folder',
   );
   report(
     'panel form renders a time select',
