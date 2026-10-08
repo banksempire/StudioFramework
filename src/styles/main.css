@@ -1864,8 +1864,7 @@ body.sf-dragging-row * {
 .sf-root--mobile .sf-status-bar {
   margin-top: var(--sf-gap);
   padding-right: 25px;
-  min-height: 30px;
-  height: auto;
+  height: calc(30px + var(--sf-safe-bottom));
   padding-bottom: var(--sf-safe-bottom);
   border-radius: 0;
 }
