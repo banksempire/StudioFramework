@@ -168,6 +168,11 @@ const { ensureServer, makeReporter, finish } = require('./lib/ui-test.cjs');
       (await fields.locator('.sf-pl-btn', { hasText: 'Delete' }).count()) === 2,
   );
   report(
+    'row buttons pack into one group per row',
+    (await fields.locator('.sf-pl-btn-group').count()) === 2 &&
+      (await fields.locator('.sf-pl-btn-group').first().locator('.sf-pl-btn').count()) === 1,
+  );
+  report(
     'content area hosts extra lines with meta',
     (await fields.locator('.sf-pl-line').count()) === 2 &&
       (await fields.locator('.sf-pl-line', { hasText: 'visible on the table' }).count()) === 2 &&

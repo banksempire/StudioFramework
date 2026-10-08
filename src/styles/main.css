@@ -2276,6 +2276,24 @@ body.sf-dragging-row * {
   flex-shrink: 0;
 }
 
+.sf-pl-btn-group {
+  display: inline-flex;
+  align-items: center;
+  flex-shrink: 0;
+  border: 1px solid var(--sf-border);
+  border-radius: var(--sf-radius-sm);
+  overflow: hidden;
+}
+
+.sf-pl-btn-group .sf-pl-btn {
+  border: none;
+  border-radius: 0;
+}
+
+.sf-pl-btn-group .sf-pl-btn:not(:last-child) {
+  border-right: 1px solid var(--sf-border);
+}
+
 .sf-pl-btn {
   display: inline-flex;
   align-items: center;

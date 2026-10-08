@@ -278,7 +278,7 @@ function onButtonClick(
               >
                 {{ it.badge }}
               </span>
-              <span v-if="visibleButtons(it).length > 0" class="sf-pl-actions">
+              <span v-if="visibleButtons(it).length > 0" class="sf-pl-btn-group">
                 <button
                   v-for="b in visibleButtons(it)"
                   :key="b.id"
