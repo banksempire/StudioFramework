@@ -1728,14 +1728,5 @@
         "label": "Errors: 0 ⚠ 0"
       }
     ]
-  },
-  "titleBarActions": [
-    [
-      {
-        "id": "demo-tb",
-        "icon": "✦",
-        "title": "Demo title-bar action"
-      }
-    ]
-  ]
+  }
 }

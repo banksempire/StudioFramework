@@ -55,17 +55,9 @@ export interface StatusItemDef {
   props?: Record<string, unknown>;
 }
 
-export interface TitleBarActionDef {
-  id: string;
-  icon: IconDef;
-  title?: string;
-  danger?: boolean;
-}
-
 export interface LayoutDefinition {
   framework: { title: string };
   menu: MenuNodeDef[];
-  titleBarActions?: TitleBarActionDef[][];
   docker: DockerAppDef[];
   rightPanels?: Record<string, PanelDef>;
   workspace: WorkspaceDef;

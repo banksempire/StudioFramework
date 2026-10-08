@@ -1,7 +1,6 @@
 <script setup lang="ts">
 import { onMounted, onUnmounted, ref } from 'vue';
-import type { MenuNodeDef, TitleBarActionDef } from '../types/layout';
-import Icon from './Icon.vue';
+import type { MenuNodeDef } from '../types/layout';
 import Menu from './Menu.vue';
 import SvgIcon from './SvgIcon.vue';
 
@@ -138,7 +137,6 @@ const props = defineProps<{
   rightPanelVisible?: boolean;
   canEvenlySpace?: boolean;
   evenlyTitle?: string;
-  actionGroups?: TitleBarActionDef[][];
 }>();
 
 const emit = defineEmits<{
@@ -201,39 +199,23 @@ function onItemAction(item: MenuNodeDef) {
     </div>
 
     <div class="sf-menu-actions">
-      <div
-        v-for="(grp, gi) in props.actionGroups ?? []"
-        :key="gi"
-        class="sf-menu-btn-group"
-      >
+      <div v-if="props.canEvenlySpace" class="sf-menu-btn-group">
         <button
-          v-for="a in grp"
-          :key="a.id"
-          class="sf-menu-action-btn"
-          :class="{ 'sf-menu-action-btn--danger': a.danger === true }"
-          :title="a.title ?? a.id"
-          @click="emit('menu-action', a.id)"
-        ><Icon :icon="a.icon" /></button>
-      </div>
-      <div class="sf-menu-btn-group">
-        <button
-          v-if="props.canEvenlySpace"
           class="sf-menu-action-btn"
           title="Merge all tiles into one"
           @click="emit('merge-all')"
         ><SvgIcon name="□" /></button>
         <button
-          v-if="props.canEvenlySpace"
           class="sf-menu-action-btn"
           :title="props.evenlyTitle ?? 'Evenly space'"
           @click="emit('evenly-space')"
         ><SvgIcon name="⇔" /></button>
-        <button
-          class="sf-menu-action-btn sf-menu-rp"
-          :title="props.rightPanelVisible ? 'Collapse Right Panel' : 'Expand Right Panel'"
-          @click="emit('toggle-right-panel')"
-        ><SvgIcon :name="props.rightPanelVisible ? '\u25E8' : '\u25EB'" /></button>
       </div>
+      <button
+        class="sf-menu-action-btn sf-menu-rp"
+        :title="props.rightPanelVisible ? 'Collapse Right Panel' : 'Expand Right Panel'"
+        @click="emit('toggle-right-panel')"
+      ><SvgIcon :name="props.rightPanelVisible ? '\u25E8' : '\u25EB'" /></button>
     </div>
   </div>
 </template>

@@ -665,21 +665,6 @@ export function loadLayout(json: unknown = frameworkJson, label = 'framework.lay
   const root = needRecord(json, '<root>');
 
   const menu = needArray(root.menu ?? [], '<root>.menu').map((m, i) => toMenuNode(m, `<root>.menu[${i}]`));
-  const titleBarActions = (() => {
-    const src = root.titleBarActions;
-    if (src === undefined || src === null) return undefined;
-    const groups = needArray(src, '<root>.titleBarActions').map((g, gi) =>
-      needArray(g, `<root>.titleBarActions[${gi}]`).map((a, ai) => {
-        const rec = needRecord(a, `<root>.titleBarActions[${gi}][${ai}]`);
-        const id = needString(rec.id, `<root>.titleBarActions[${gi}][${ai}].id`);
-        const icon = needString(rec.icon, `<root>.titleBarActions[${gi}][${ai}].icon`);
-        const title = optString(rec.title, `<root>.titleBarActions[${gi}][${ai}].title`);
-        const danger = rec.danger === true;
-        return { id, icon, title, danger };
-      }),
-    );
-    return groups;
-  })();
   const docker = needArray(root.docker ?? [], '<root>.docker').map((d, i) =>
     toDockerApp(d, `<root>.docker[${i}]`),
   );
@@ -693,7 +678,6 @@ export function loadLayout(json: unknown = frameworkJson, label = 'framework.lay
       ),
     },
     menu,
-    titleBarActions,
     docker,
     rightPanels: (() => {
       const src = root.rightPanels;

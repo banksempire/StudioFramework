@@ -392,7 +392,6 @@ function onPanelAction(a: PanelAction) {
     <MenuBar
       v-if="!isMobile"
       :menus="L.menu"
-      :action-groups="L.titleBarActions"
       :left-panel-visible="leftPanelVisible"
       :right-panel-visible="rightPanelShown"
       :can-evenly-space="api.roots.length > 1"
