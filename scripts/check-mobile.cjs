@@ -875,32 +875,6 @@ const WS = '.sf-workspace';
       }
       return m;
     };
-    Object.defineProperty(window, 'screen', {
-      value: { width: 393, height: 852, availWidth: 393, availHeight: 852 },
-    });
-    window.__sfSetInsetViewport = (h) => {
-      window.__sfFakeClientH = h;
-      Object.defineProperty(document.documentElement, 'clientHeight', {
-        configurable: true,
-        get: () => window.__sfFakeClientH ?? 852,
-      });
-      window.dispatchEvent(new Event('resize'));
-    };
-    const vvListeners = {};
-    const track = (t, f) => {
-      if (!vvListeners[t]) vvListeners[t] = [];
-      vvListeners[t].push(f);
-    };
-    const untrack = (t, f) => {
-      vvListeners[t] = (vvListeners[t] || []).filter((x) => x !== f);
-    };
-    Object.defineProperty(window, 'visualViewport', {
-      value: {
-        height: 400,
-        addEventListener: track,
-        removeEventListener: untrack,
-      },
-    });
   });
   const pwaPage = await pwa.newPage();
   const pwaErrors = [];
@@ -914,13 +888,13 @@ const WS = '.sf-workspace';
   });
   const pwaHeight = () =>
     pwaPage.evaluate(() => ({
-      varSet: document.documentElement.style.getPropertyValue('--sf-app-height'),
+      marked: document.documentElement.classList.contains('sf-standalone'),
       rootH: Math.round(document.querySelector('.sf-root').getBoundingClientRect().height),
     }));
   let ah = await pwaHeight();
   report(
-    'pwa standalone: shell pinned to the full screen height (dvh inset gap on iOS)',
-    ah.varSet === '852px' && ah.rootH === 852,
+    'pwa standalone: the shell spans the viewport plus the safe zones',
+    ah.marked && ah.rootH === 852,
     JSON.stringify(ah),
   );
   await pwaPage.evaluate(() => {
@@ -933,35 +907,23 @@ const WS = '.sf-workspace';
   await pwaPage.waitForTimeout(100);
   ah = await pwaHeight();
   report(
-    'pwa standalone: keyboard focus keeps the shell pinned (no shrink, no pan hole)',
-    ah.varSet === '852px' && ah.rootH === 852,
+    'pwa standalone: keyboard focus keeps the shell sized (no shrink, no pan hole)',
+    ah.marked && ah.rootH === 852,
     JSON.stringify(ah),
   );
   await pwaPage.evaluate(() => document.activeElement.blur());
   await pwaPage.waitForTimeout(100);
   ah = await pwaHeight();
-  report(
-    'pwa standalone: blur keeps the full screen height',
-    ah.varSet === '852px' && ah.rootH === 852,
-    JSON.stringify(ah),
-  );
-  await pwaPage.evaluate(() => window.__sfSetInsetViewport(798));
-  await pwaPage.waitForTimeout(100);
-  ah = await pwaHeight();
-  report(
-    'pwa standalone: an inset (non-translucent) viewport pins to its own height',
-    ah.varSet === '798px' && ah.rootH === 798,
-    JSON.stringify(ah),
-  );
+  report('pwa standalone: blur keeps the shell sized', ah.marked && ah.rootH === 852, JSON.stringify(ah));
   await pwaPage.evaluate(() => {
-    document.querySelector('.sf-root').style.setProperty('--sf-safe-top', '54px');
-    window.dispatchEvent(new Event('resize'));
+    document.documentElement.style.setProperty('--sf-safe-top', '54px');
+    document.documentElement.style.setProperty('--sf-safe-bottom', '34px');
   });
   await pwaPage.waitForTimeout(100);
   ah = await pwaHeight();
   report(
-    'pwa standalone: a full-bleed shell pins to the screen height despite the inset viewport',
-    ah.varSet === '852px' && ah.rootH === 852,
+    'pwa standalone: the shell grows by the resolved safe insets',
+    ah.marked && ah.rootH === 940,
     JSON.stringify(ah),
   );
   report('pwa standalone: no console/page errors', pwaErrors.length === 0, pwaErrors.join('; '));
@@ -983,13 +945,13 @@ const WS = '.sf-workspace';
     timeout: 10000,
   });
   const legacyH = await lpage.evaluate(() => ({
-    varSet: document.documentElement.style.getPropertyValue('--sf-app-height'),
+    marked: document.documentElement.classList.contains('sf-standalone'),
     rootH: document.querySelector('.sf-root')?.getBoundingClientRect().height,
     innerH: window.innerHeight,
   }));
   report(
-    'navigator.standalone alone engages the pin (iOS never matches the media query)',
-    legacyH.varSet === '852px' && Math.round(legacyH.rootH) === 852,
+    'navigator.standalone alone marks the shell standalone (iOS never matches the media query)',
+    legacyH.marked === true && Math.round(legacyH.rootH) === 852,
     JSON.stringify(legacyH),
   );
   await lpage.close();
@@ -1009,16 +971,6 @@ const WS = '.sf-workspace';
       value: true,
       configurable: true,
     });
-    Object.defineProperty(window, 'screen', {
-      value: { width: 440, height: 956, availWidth: 440, availHeight: 956 },
-    });
-    window.__sfSetIosClient = (h) => {
-      Object.defineProperty(document.documentElement, 'clientHeight', {
-        configurable: true,
-        get: () => h,
-      });
-      window.dispatchEvent(new Event('resize'));
-    };
   });
   const iosPage = await ios.newPage();
   const iosErrors = [];
@@ -1030,29 +982,26 @@ const WS = '.sf-workspace';
   await iosPage.waitForFunction(() => (document.getElementById('framework')?.innerHTML.length ?? 0) > 1000, {
     timeout: 10000,
   });
-  await iosPage.evaluate(() => window.__sfSetIosClient(894));
-  await iosPage.waitForTimeout(100);
-  const insetIos = await iosPage.evaluate(() => ({
-    varSet: document.documentElement.style.getPropertyValue('--sf-app-height'),
+  const iosMarked = await iosPage.evaluate(() => ({
+    marked: document.documentElement.classList.contains('sf-standalone'),
     rootH: Math.round(document.querySelector('.sf-root').getBoundingClientRect().height),
   }));
   report(
-    'ios wpa: inset layout viewport pins to clientHeight',
-    insetIos.varSet === '894px' && insetIos.rootH === 894,
-    JSON.stringify(insetIos),
+    'ios wpa: navigator.standalone marks the shell without the media query',
+    iosMarked.marked && iosMarked.rootH === 894,
+    JSON.stringify(iosMarked),
   );
   await iosPage.evaluate(() => {
-    document.querySelector('.sf-root').style.setProperty('--sf-safe-top', '62px');
-    window.dispatchEvent(new Event('resize'));
+    document.documentElement.style.setProperty('--sf-safe-top', '62px');
+    document.documentElement.style.setProperty('--sf-safe-bottom', '34px');
   });
   await iosPage.waitForTimeout(100);
   const iosFull = await iosPage.evaluate(() => ({
-    varSet: document.documentElement.style.getPropertyValue('--sf-app-height'),
     rootH: Math.round(document.querySelector('.sf-root').getBoundingClientRect().height),
   }));
   report(
-    'ios wpa: full-bleed shell pins to the 956 screen height',
-    iosFull.varSet === '956px' && iosFull.rootH === 956,
+    'ios wpa: the shell reaches the 990 full-bleed screen through the safe insets',
+    iosFull.rootH === 990,
     JSON.stringify(iosFull),
   );
   report('ios wpa: no console/page errors', iosErrors.length === 0, iosErrors.join('; '));

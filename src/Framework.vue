@@ -205,42 +205,17 @@ onMounted(() => {
 onUnmounted(() => window.removeEventListener('resize', onResize));
 
 const standaloneMq = window.matchMedia('(display-mode: standalone)');
-const isStandaloneDisplay = () =>
-  standaloneMq.matches || (window.navigator as { standalone?: boolean }).standalone === true;
-const applyAppHeight = () => {
-  if (!isStandaloneDisplay()) {
-    document.documentElement.style.removeProperty('--sf-app-height');
-    return;
-  }
-  const rootEl = document.querySelector('.sf-root');
-  const safeTop = rootEl
-    ? Number.parseFloat(getComputedStyle(rootEl).getPropertyValue('--sf-safe-top'))
-    : Number.NaN;
-  const fullBleed = Number.isFinite(safeTop) && safeTop > 0;
-  const portrait = window.matchMedia('(orientation: portrait)').matches;
-  const full = fullBleed
-    ? portrait
-      ? window.screen.height
-      : window.screen.width
-    : document.documentElement.clientHeight;
-  document.documentElement.style.setProperty('--sf-app-height', `${full}px`);
+const syncStandalone = () => {
+  const active =
+    standaloneMq.matches || (window.navigator as { standalone?: boolean }).standalone === true;
+  document.documentElement.classList.toggle('sf-standalone', active);
 };
 onMounted(() => {
-  const vv = window.visualViewport;
-  vv?.addEventListener('resize', applyAppHeight);
-  vv?.addEventListener('scroll', applyAppHeight);
-  window.addEventListener('resize', applyAppHeight);
-  window.addEventListener('orientationchange', applyAppHeight);
-  standaloneMq.addEventListener('change', applyAppHeight);
-  applyAppHeight();
+  standaloneMq.addEventListener('change', syncStandalone);
+  syncStandalone();
 });
 onUnmounted(() => {
-  const vv = window.visualViewport;
-  vv?.removeEventListener('resize', applyAppHeight);
-  vv?.removeEventListener('scroll', applyAppHeight);
-  window.removeEventListener('resize', applyAppHeight);
-  window.removeEventListener('orientationchange', applyAppHeight);
-  standaloneMq.removeEventListener('change', applyAppHeight);
+  standaloneMq.removeEventListener('change', syncStandalone);
 });
 
 const effDockerPanelVisible = computed(() =>
