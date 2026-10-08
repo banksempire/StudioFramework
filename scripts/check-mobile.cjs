@@ -922,8 +922,8 @@ const WS = '.sf-workspace';
   await pwaPage.waitForTimeout(100);
   ah = await pwaHeight();
   report(
-    'pwa standalone: the shell grows by the resolved safe insets',
-    ah.marked && ah.rootH === 940,
+    'pwa standalone: the shell grows by the top inset only (the bottom zone is inside the viewport)',
+    ah.marked && ah.rootH === 906,
     JSON.stringify(ah),
   );
   report('pwa standalone: no console/page errors', pwaErrors.length === 0, pwaErrors.join('; '));
@@ -1000,8 +1000,8 @@ const WS = '.sf-workspace';
     rootH: Math.round(document.querySelector('.sf-root').getBoundingClientRect().height),
   }));
   report(
-    'ios wpa: the shell reaches the 990 full-bleed screen through the safe insets',
-    iosFull.rootH === 990,
+    'ios wpa: the shell reaches the 956 full-bleed screen through the top inset',
+    iosFull.rootH === 956,
     JSON.stringify(iosFull),
   );
   report('ios wpa: no console/page errors', iosErrors.length === 0, iosErrors.join('; '));

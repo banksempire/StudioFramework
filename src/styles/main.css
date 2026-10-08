@@ -98,7 +98,7 @@ body,
 }
 
 html.sf-standalone {
-  height: calc(100% + var(--sf-safe-top) + var(--sf-safe-bottom));
+  height: calc(100% + var(--sf-safe-top));
 }
 
 html.sf-standalone body,
