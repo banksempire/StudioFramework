@@ -323,11 +323,8 @@ body,
   border-right: 1px solid var(--sf-border);
 }
 
-.sf-menu-rp {
-  width: 48px;
-  justify-content: flex-end;
-  padding-right: 17px;
-  border-radius: 0 var(--sf-radius) var(--sf-radius) 0;
+.sf-menu-action-btn--danger {
+  color: var(--sf-danger);
 }
 
 .sf-workbench {

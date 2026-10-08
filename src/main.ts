@@ -365,6 +365,10 @@ function onAction(e: FrameworkAction) {
     }
     return;
   }
+  if (e.source === 'menu' && e.action === 'demo-tb') {
+    document.body.dataset.demoTb = document.body.dataset.demoTb === 'fired' ? 'idle' : 'fired';
+    return;
+  }
   if (e.source === 'utility' && e.action === 'demo-filter' && typeof e.payload === 'string') {
     const key = e.payload as keyof typeof demoFilter;
     demoFilter[key] = !demoFilter[key];

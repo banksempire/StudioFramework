@@ -158,6 +158,22 @@ const { ensureServer, makeReporter, finish } = require('./lib/ui-test.cjs');
     (await editBtn.count()) === 1 && (await checks().count()) === 0,
   );
 
+  const tbGroup = page.locator('.sf-menu-actions .sf-menu-btn-group').first();
+  const tbBtn = tbGroup.locator('.sf-menu-action-btn[title="Demo title-bar action"]');
+  report('title bar renders the custom action group', (await tbBtn.count()) === 1);
+  await tbBtn.click();
+  await page.waitForTimeout(150);
+  const tbNote = await page.evaluate(() => document.body.dataset.demoTb === 'fired');
+  report('title bar custom action fires the menu pipeline', tbNote === true);
+  const rpInGroup = await page.evaluate(() => {
+    const groups = [...document.querySelectorAll('.sf-menu-actions .sf-menu-btn-group')];
+    const last = groups[groups.length - 1];
+    if (!last) return false;
+    const btns = [...last.querySelectorAll('.sf-menu-action-btn')];
+    return btns.length >= 1 && btns[btns.length - 1].title.includes('Right Panel');
+  });
+  report('built-in actions pack into the trailing group', rpInGroup);
+
   const fields = page.locator('.sf-subsection', { has: page.locator('[data-sub-body="fields"]') }).first();
   await fields.scrollIntoViewIfNeeded();
   const fieldRow = (label) => fields.locator('.sf-pl-item', { hasText: label }).first();
