@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed, inject, ref, watch } from 'vue';
 import { kMobilePanelDismiss } from '../composables/useWorkspace';
-import type { PanelListBulk, PanelListItem } from '../types/panel';
+import type { PanelListBulk, PanelListButton, PanelListItem } from '../types/panel';
 import Icon from './Icon.vue';
 import SingleMenu from './SingleMenu.vue';
 import SvgIcon from './SvgIcon.vue';
@@ -15,6 +15,7 @@ const props = defineProps<{
   bulk?: PanelListBulk;
   searchable?: boolean;
   searchPlaceholder?: string;
+  footer?: PanelListButton;
 }>();
 
 const emit = defineEmits<{
@@ -22,6 +23,7 @@ const emit = defineEmits<{
   menu: [item: PanelListItem, optionId: string];
   button: [item: PanelListItem, buttonId: string];
   'switch-toggle': [item: PanelListItem];
+  footer: [buttonId: string];
   dragstart: [item: PanelListItem, event: DragEvent];
   dragend: [event: DragEvent];
   'bulk-action': [actionId: string];
@@ -145,6 +147,17 @@ function onRowDrop(item: PanelListItem) {
   overId.value = null;
   if (from && from !== item.id) emit('bulk-reorder', from, item.id);
 }
+
+function onButtonClick(it: PanelListItem, b: PanelListButton, e: MouseEvent) {
+  if (!b.menu) {
+    emit('button', it, b.id);
+    return;
+  }
+  const slide = (e.currentTarget as HTMLElement | null)?.closest('.sf-sm-slide');
+  slide?.dispatchEvent(
+    new MouseEvent('contextmenu', { cancelable: true, clientX: e.clientX, clientY: e.clientY }),
+  );
+}
 </script>
 
 <template>
@@ -243,11 +256,12 @@ function onRowDrop(item: PanelListItem) {
                   class="sf-pl-btn"
                   :class="{ 'sf-pl-btn--danger': b.danger }"
                   type="button"
-                  :title="b.title ?? b.id"
+                  :title="b.title ?? b.label ?? b.id"
                   :disabled="b.disabled"
-                  @click.stop="emit('button', it, b.id)"
+                  @click.stop="onButtonClick(it, b, $event)"
                 >
-                  <Icon :icon="b.icon" />
+                  <Icon v-if="b.icon" :icon="b.icon" />
+                  <template v-else>{{ b.label }}</template>
                 </button>
               </span>
             </div>
@@ -274,5 +288,17 @@ function onRowDrop(item: PanelListItem) {
         </div>
       </template>
     </SingleMenu>
+    <div v-if="props.footer" class="sf-pl-footer">
+      <button
+        class="sf-pl-footer-btn"
+        type="button"
+        :title="props.footer.title ?? props.footer.label ?? props.footer.id"
+        :disabled="props.footer.disabled"
+        @click="emit('footer', props.footer.id)"
+      >
+        <Icon v-if="props.footer.icon" :icon="props.footer.icon" />
+        <template v-else>{{ props.footer.label }}</template>
+      </button>
+    </div>
   </div>
 </template>

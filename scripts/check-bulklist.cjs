@@ -158,6 +158,48 @@ const { ensureServer, makeReporter, finish } = require('./lib/ui-test.cjs');
     (await editBtn.count()) === 1 && (await checks().count()) === 0,
   );
 
+  const fields = page.locator('.sf-subsection', { has: page.locator('[data-sub-body="fields"]') }).first();
+  await fields.scrollIntoViewIfNeeded();
+  const fieldRow = (label) => fields.locator('.sf-pl-item', { hasText: label }).first();
+  const rowByLabel = (label) => fields.locator('.sf-sm-row', { hasText: label }).first();
+  report(
+    'field rows render text buttons for options and delete',
+    (await fields.locator('.sf-pl-btn', { hasText: 'Options' }).count()) === 2 &&
+      (await fields.locator('.sf-pl-btn', { hasText: 'Delete' }).count()) === 2,
+  );
+  await fieldRow('Tick').locator('.sf-pl-btn', { hasText: 'Options' }).click();
+  await page.waitForTimeout(200);
+  const hideOpt = page.locator('.sf-sm-menu .sf-sm-menu-row', { hasText: 'Hide' }).first();
+  report('options button opens the row menu', await hideOpt.isVisible());
+  await hideOpt.click();
+  await page.waitForTimeout(200);
+  report(
+    'hide option mutes the row',
+    (await fieldRow('Tick').getAttribute('class'))?.includes('sf-pl-item--muted') === true,
+  );
+  await fieldRow('Tick').locator('.sf-pl-btn', { hasText: 'Options' }).click();
+  await page.waitForTimeout(200);
+  await page.locator('.sf-sm-menu .sf-sm-menu-row', { hasText: 'Show' }).first().click();
+  await page.waitForTimeout(200);
+  report(
+    'show option restores the row',
+    (await fieldRow('Tick').getAttribute('class'))?.includes('sf-pl-item--muted') === false,
+  );
+  await fieldRow('Tick').locator('.sf-pl-btn', { hasText: 'Delete' }).click();
+  await page.waitForTimeout(200);
+  report('delete button removes the row', (await rowByLabel('Tick').count()) === 0);
+  await fields.locator('.sf-pl-footer-btn', { hasText: 'Add' }).click();
+  await page.waitForTimeout(200);
+  report('footer add appends a new row', (await fields.locator('.sf-pl-item').count()) === 2);
+  await fieldRow('Book').locator('.sf-pl-btn', { hasText: 'Delete' }).click();
+  await page.waitForTimeout(150);
+  await fields
+    .locator('.sf-pl-item', { hasText: 'Field 1' })
+    .locator('.sf-pl-btn', { hasText: 'Delete' })
+    .click();
+  await page.waitForTimeout(200);
+  report('empty list shows the footer hint', (await fields.locator('.sf-empty').count()) === 1);
+
   report('no page errors during the run', errors.length === 0, errors.join(' | '));
   await finish(browser, serverProc, isFailed() || errors.length > 0, 'BULK-LIST CHECKS');
 })().catch((e) => {

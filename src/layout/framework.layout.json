@@ -400,6 +400,17 @@
                 ]
               },
               {
+                "id": "fields",
+                "title": "Field manager",
+                "height": "fixed",
+                "components": [
+                  {
+                    "type": "list",
+                    "bind": "fields-demo"
+                  }
+                ]
+              },
+              {
                 "id": "selectors",
                 "title": "Selectors",
                 "height": "fixed",

@@ -103,6 +103,7 @@ const listData = computed<PanelListData>(() => {
       bulk: rec.bulk,
       searchable: rec.searchable,
       searchPlaceholder: rec.searchPlaceholder,
+      footer: rec.footer,
     };
   return { items: props.component.items ?? [], empty: props.component.empty };
 });
@@ -366,10 +367,12 @@ function onNodeClick(node: TreeNode) {
       :bulk="listData.bulk"
       :searchable="listData.searchable"
       :search-placeholder="listData.searchPlaceholder"
+      :footer="listData.footer"
       @activate="(it) => emitAction(it.action, { gesture: 'activate', id: it.id })"
       @menu="(it, optionId) => emitAction(it.action, { gesture: 'menu', id: it.id, option: optionId })"
       @button="(it, buttonId) => emitAction(it.action, { gesture: 'button', id: it.id, button: buttonId })"
       @switch-toggle="(it) => emitAction(it.action, { gesture: 'switch', id: it.id, value: !(it.switch?.on ?? false) })"
+      @footer="(buttonId) => emitAction(listData.footer?.action, { gesture: 'button', button: buttonId })"
       @bulk-action="(actionId) => emitBulk('action', { option: actionId })"
       @bulk-change="(selected) => emitBulk('toggle', { selected })"
       @bulk-reorder="(fromId, toId) => emitBulk('reorder', { from: fromId, to: toId })"

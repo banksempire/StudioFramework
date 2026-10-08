@@ -102,6 +102,30 @@ const bulkDemo = reactive({
   selected: [] as string[],
 });
 
+const fieldsDemo = reactive({
+  rows: [
+    { id: 'tick', label: 'Tick', hidden: false },
+    { id: 'book', label: 'Book', hidden: false },
+  ],
+  added: 0,
+});
+
+registerPanelData('fields-demo', () => ({
+  empty: 'No fields — add one below',
+  items: fieldsDemo.rows.map((r) => ({
+    id: r.id,
+    label: r.label,
+    muted: r.hidden,
+    action: 'fields-demo-row',
+    buttons: [
+      { id: 'options', label: 'Options', menu: true },
+      { id: 'delete', label: 'Delete', danger: true },
+    ],
+    options: [{ id: r.hidden ? 'show' : 'hide', label: r.hidden ? 'Show' : 'Hide' }],
+  })),
+  footer: { id: 'add', label: 'Add', action: 'fields-demo-add' },
+}));
+
 registerPanelData('bulk-demo', () => {
   const n = bulkDemo.selected.length;
   return {
@@ -319,6 +343,23 @@ function onAction(e: FrameworkAction) {
     } else if (p.gesture === 'action' && p.option === 'delete') {
       bulkDemo.tasks = bulkDemo.tasks.filter((t) => !bulkDemo.selected.includes(t.id));
       bulkDemo.selected = [];
+    }
+    return;
+  }
+  if (e.source === 'panel' && e.action === 'fields-demo-add') {
+    fieldsDemo.added += 1;
+    const id = `extra-${fieldsDemo.added}`;
+    fieldsDemo.rows = [...fieldsDemo.rows, { id, label: `Field ${fieldsDemo.added}`, hidden: false }];
+    return;
+  }
+  if (e.source === 'panel' && e.action === 'fields-demo-row') {
+    const p = e.payload as { gesture?: string; id?: string; option?: string; button?: string };
+    if (p.gesture === 'menu' && p.id && (p.option === 'show' || p.option === 'hide')) {
+      fieldsDemo.rows = fieldsDemo.rows.map((r) =>
+        r.id === p.id ? { ...r, hidden: p.option === 'hide' } : r,
+      );
+    } else if (p.gesture === 'button' && p.button === 'delete' && p.id) {
+      fieldsDemo.rows = fieldsDemo.rows.filter((r) => r.id !== p.id);
     }
     return;
   }

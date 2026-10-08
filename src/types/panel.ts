@@ -40,10 +40,12 @@ export type BadgeTone = 'ok' | 'ok-blink' | 'accent' | 'accent-soft' | 'err' | '
 
 export interface PanelListButton {
   id: string;
-  icon: IconDef;
+  icon?: IconDef;
+  label?: string;
   title?: string;
   danger?: boolean;
   disabled?: boolean;
+  menu?: boolean;
 }
 
 export interface PanelListOption {
@@ -108,6 +110,7 @@ export interface PanelListData {
   title?: string;
   searchable?: boolean;
   searchPlaceholder?: string;
+  footer?: PanelListButton & { action?: string };
 }
 
 export interface PanelHeaderData {
