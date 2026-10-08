@@ -372,7 +372,17 @@ function onNodeClick(node: TreeNode) {
       :draggable="listData.draggable"
       @activate="(it) => emitAction(it.action, { gesture: 'activate', id: it.id })"
       @menu="(it, optionId) => emitAction(it.action, { gesture: 'menu', id: it.id, option: optionId })"
-      @button="(it, buttonId) => emitAction(it.action, { gesture: 'button', id: it.id, button: buttonId })"
+      @button="
+        (it, buttonId, click) =>
+          emitAction(it.action, {
+            gesture: 'button',
+            id: it.id,
+            button: buttonId,
+            x: click?.x,
+            y: click?.y,
+            open: click?.openMenu,
+          })
+      "
       @switch-toggle="(it) => emitAction(it.action, { gesture: 'switch', id: it.id, value: !(it.switch?.on ?? false) })"
       @footer="(buttonId) => emitAction(listData.footer?.action, { gesture: 'button', button: buttonId })"
       @bulk-action="(actionId) => emitBulk('action', { option: actionId })"

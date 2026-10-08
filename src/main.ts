@@ -118,7 +118,7 @@ registerPanelData('fields-demo', () => ({
     muted: r.hidden,
     action: 'fields-demo-row',
     buttons: [
-      { id: 'options', label: 'Options', menu: true, visibility: 'mobile' },
+      { id: 'options', label: 'Options', visibility: 'mobile' },
       { id: 'delete', icon: '✕', title: 'Delete', danger: true },
     ],
     options: [{ id: r.hidden ? 'show' : 'hide', label: r.hidden ? 'Show' : 'Hide' }],
@@ -355,11 +355,21 @@ function onAction(e: FrameworkAction) {
     return;
   }
   if (e.source === 'panel' && e.action === 'fields-demo-row') {
-    const p = e.payload as { gesture?: string; id?: string; option?: string; button?: string };
+    const p = e.payload as {
+      gesture?: string;
+      id?: string;
+      option?: string;
+      button?: string;
+      x?: number;
+      y?: number;
+      open?: (x: number, y: number) => void;
+    };
     if (p.gesture === 'menu' && p.id && (p.option === 'show' || p.option === 'hide')) {
       fieldsDemo.rows = fieldsDemo.rows.map((r) =>
         r.id === p.id ? { ...r, hidden: p.option === 'hide' } : r,
       );
+    } else if (p.gesture === 'button' && p.button === 'options' && p.id) {
+      p.open?.(p.x ?? 0, p.y ?? 0);
     } else if (p.gesture === 'button' && p.button === 'delete' && p.id) {
       fieldsDemo.rows = fieldsDemo.rows.filter((r) => r.id !== p.id);
     }

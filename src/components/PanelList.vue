@@ -22,7 +22,11 @@ const props = defineProps<{
 const emit = defineEmits<{
   activate: [item: PanelListItem];
   menu: [item: PanelListItem, optionId: string];
-  button: [item: PanelListItem, buttonId: string];
+  button: [
+    item: PanelListItem,
+    buttonId: string,
+    click: { x: number; y: number; openMenu: (x: number, y: number) => void },
+  ];
   'switch-toggle': [item: PanelListItem];
   footer: [buttonId: string];
   dragstart: [item: PanelListItem, event: DragEvent];
@@ -169,13 +173,9 @@ function onButtonClick(
   it: PanelListItem,
   b: PanelListButton,
   e: MouseEvent,
-  openMenu?: (x: number, y: number) => void,
+  openMenu: (x: number, y: number) => void,
 ) {
-  if (!b.menu) {
-    emit('button', it, b.id);
-    return;
-  }
-  openMenu?.(e.clientX, e.clientY);
+  emit('button', it, b.id, { x: e.clientX, y: e.clientY, openMenu });
 }
 </script>
 

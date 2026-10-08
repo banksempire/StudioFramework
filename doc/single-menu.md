@@ -5,11 +5,15 @@ options (no sub-levels, unlike the multi-level [`Menu.vue`](../src/components/Me
 The content of each item is fully customizable via the `#item` slot.
 
 - **Mouse-keyboard device**: right-click an item → its options open in a small
-  menu at the cursor.
+  menu at the cursor (`openMenu`, also exposed to the `#item` slot).
 - **Touch device**: swipe an item left →
   - one option → the option is revealed directly as a button behind the row
     (tap it to run it);
-  - several options → a centered popup dialog lists the options.
+  - several options → the menu opens centered.
+- SingleMenu renders no buttons of its own. A visible affordance for the
+  options (e.g. a "⋮" button) belongs to the app — declare it as a
+  [`PanelList`](../src/components/PanelList.vue) row button and open the menu
+  from the button's click payload (`open` in the action) or anything else.
 - Long-press (`contextmenu` from touch) is suppressed so the swipe stays the
   only touch path.
 - Vertical pans stay native (the row never captures the pointer for vertical
@@ -42,7 +46,7 @@ interface SingleMenuOption {
 | Event | Payload | Description |
 |:---|:---|:---|
 | `activate` | `item: T` | Row tapped/clicked (not fired for the synthetic click after a swipe) |
-| `select` | `item: T, option: SingleMenuOption` | An option was chosen (menu, dialog, or revealed button) |
+| `select` | `item: T, option: SingleMenuOption` | An option was chosen (menu or revealed button) |
 | `dragstart` | `item: T, event: DragEvent` | HTML5 drag started on a row (`draggable` rows) |
 | `dragend` | `event: DragEvent` | HTML5 drag ended |
 
@@ -50,7 +54,7 @@ interface SingleMenuOption {
 
 | Slot | Scope | Description |
 |:---|:---|:---|
-| `item` | `{ item: T, index: number }` | Row content — anything you want |
+| `item` | `{ item: T, index: number, openMenu: (x: number, y: number) => void }` | Row content — anything you want; `openMenu` opens the row's options menu |
 
 ## Example
 
@@ -81,5 +85,5 @@ interface SingleMenuOption {
   (registered in `src/main.ts` as `single-menu-demo`). `scratch.txt` carries a
   single option, all other rows three.
 - Checks: `npm run check:singlemenu` (honors `SF_TEST_PORT`) — desktop
-  right-click flow, touch swipe → dialog / revealed button, click suppression,
+  right-click flow, touch swipe → revealed button, click suppression,
   native vertical pan, long-press suppression.

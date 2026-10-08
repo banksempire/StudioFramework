@@ -468,24 +468,19 @@ const WS = '.sf-workspace';
     const item = document.querySelector('.sf-mobile-panel .sf-pl-item--active');
     if (!item) return null;
     const slide = item.closest('.sf-sm-slide');
-    const more = slide?.querySelector('.sf-sm-more');
-    const s = slide?.getBoundingClientRect();
-    const m = more?.getBoundingClientRect();
     return {
       slideShadow: slide ? getComputedStyle(slide).boxShadow : null,
       itemShadow: getComputedStyle(item).boxShadow,
-      hasMore: !!more,
-      moreInside: !!(s && m && m.right <= s.right + 0.5 && m.left >= s.left - 0.5),
+      builtinButtons: document.querySelectorAll('.sf-mobile-panel .sf-sm-more').length,
     };
   });
   report(
-    'active row: highlight painted on the whole slide (⋮ button inside the highlight)',
+    'active row: highlight painted on the whole slide (no built-in row buttons)',
     !!activeRow &&
-      activeRow.hasMore &&
       activeRow.slideShadow !== 'none' &&
       activeRow.slideShadow.includes('inset') &&
       activeRow.itemShadow === 'none' &&
-      activeRow.moreInside,
+      activeRow.builtinButtons === 0,
     JSON.stringify(activeRow),
   );
   await page.locator('.sf-panel-close-btn').click();

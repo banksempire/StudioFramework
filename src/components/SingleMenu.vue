@@ -1,9 +1,7 @@
 <script setup lang="ts" generic="T">
 import { computed, inject, nextTick, onMounted, onUnmounted, type Ref, ref, watch } from 'vue';
-import { kIsMobile } from '../composables/useWorkspace';
 import type { SingleMenuOption } from '../types/singleMenu';
 import Icon from './Icon.vue';
-import SvgIcon from './SvgIcon.vue';
 
 defineOptions({ inheritAttrs: false });
 
@@ -26,9 +24,6 @@ const emit = defineEmits<{
   dragstart: [item: T, event: DragEvent];
   dragend: [event: DragEvent];
 }>();
-
-const injectedMobile = inject(kIsMobile, null);
-const isMobile = computed(() => injectedMobile?.value ?? false);
 
 function stableKey(item: T): string | null {
   if (props.keyOf) return props.keyOf(item);
@@ -67,19 +62,8 @@ function optsOf(item: T): SingleMenuOption[] {
   return optsByKey.value.get(key) ?? [];
 }
 
-const dialogItem = ref(null) as Ref<T | null>;
-const dialogTitle = computed(() => {
-  const item = dialogItem.value;
-  return item !== null && props.titleOf ? String(props.titleOf(item) ?? '') : '';
-});
-
-function onMore(row: RowView<T>) {
-  dialogItem.value = row.item;
-}
-
 function openRow(row: RowView<T>, x: number, y: number) {
   if (row.opts.length === 0) return;
-  dialogItem.value = null;
   ctxItem.value = row.item;
   ctxX.value = x;
   ctxY.value = y;
@@ -116,7 +100,6 @@ watch(ctxItem, async (v) => {
 
 function closeAll() {
   ctxItem.value = null;
-  dialogItem.value = null;
 }
 
 function pick(item: T | null, opt: SingleMenuOption) {
@@ -145,7 +128,6 @@ watch(rowViews, (rows) => {
     return hit ? hit.item : null;
   };
   ctxItem.value = rebind(ctxItem.value);
-  dialogItem.value = rebind(dialogItem.value);
 });
 
 const sheetTarget = ref<HTMLElement | 'body'>('body');
@@ -183,15 +165,6 @@ if (typeof window !== 'undefined') {
           :open-menu="(x: number, y: number) => openRow(row, x, y)"
         />
         </div>
-        <button
-          v-if="isMobile && row.opts.length > 0"
-          class="sf-sm-more"
-          title="More"
-          aria-label="More actions"
-          @click.stop="onMore(row)"
-        >
-          <SvgIcon name="⋮" />
-        </button>
       </div>
     </div>
   </div>
@@ -215,25 +188,5 @@ if (typeof window !== 'undefined') {
       </button>
     </div>
 
-    <div v-if="dialogItem !== null" class="sf-sm-dialog-backdrop" @click.self="dialogItem = null">
-      <div class="sf-sm-dialog" role="dialog">
-        <div v-if="dialogTitle" class="sf-sm-dialog-title">{{ dialogTitle }}</div>
-        <button
-          v-for="opt in optsOf(dialogItem)"
-          :key="opt.id"
-          class="sf-sm-menu-row sf-sm-dialog-row"
-          :class="{
-            'sf-sm-menu-row--danger': opt.danger,
-            'sf-sm-menu-row--disabled': opt.disabled,
-          }"
-          :disabled="opt.disabled"
-          @click="pick(dialogItem, opt)"
-        >
-          <Icon :icon="opt.icon" />
-          <span>{{ opt.label ?? opt.id }}</span>
-        </button>
-        <button class="sf-sm-dialog-cancel" @click="dialogItem = null">Cancel</button>
-      </div>
-    </div>
   </Teleport>
 </template>

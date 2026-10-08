@@ -47,7 +47,6 @@ export interface PanelListButton {
   title?: string;
   danger?: boolean;
   disabled?: boolean;
-  menu?: boolean;
   visibility?: PanelButtonVisibility;
 }
 

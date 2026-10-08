@@ -149,40 +149,6 @@ const { ensureServer, makeReporter, finish } = require('./lib/ui-test.cjs');
   await page.waitForTimeout(400);
   await page.locator('.sf-docker--bottom .sf-docker-app').first().click();
   await page.waitForTimeout(300);
-  const boxOf = (loc) =>
-    loc.evaluate((el) => {
-      const cs = getComputedStyle(el);
-      const hex = cs.getPropertyValue('--sf-text').trim();
-      const m = /^#([0-9a-f]{6})$/i.exec(hex);
-      const want = m ? `rgb(${[1, 3, 5].map((i) => parseInt(hex.substr(i, 2), 16)).join(', ')})` : null;
-      return {
-        bw: cs.borderTopWidth,
-        br: cs.borderTopLeftRadius,
-        bg: cs.backgroundColor,
-        color: cs.color,
-        shadow: cs.boxShadow,
-        want,
-      };
-    });
-  const hoverBtn = row('welcome.md').locator('.sf-sm-more');
-  const idle = await boxOf(hoverBtn);
-  report(
-    '⋮ button box: #292929 fill + border + radius, dots not dimmed',
-    parseFloat(idle.bw) >= 1 &&
-      idle.br !== '0px' &&
-      idle.bg === 'rgb(41, 41, 41)' &&
-      idle.color === idle.want,
-    JSON.stringify(idle),
-  );
-  report('⋮ button carries no highlight layer at rest', idle.shadow === 'none', idle.shadow);
-  await hoverBtn.hover();
-  await page.waitForTimeout(150);
-  const hovered = await hoverBtn.evaluate((el) => getComputedStyle(el).boxShadow);
-  report(
-    '⋮ button gains the standard inset highlight layer on hover',
-    hovered.includes('999px') && hovered.includes('inset'),
-    hovered,
-  );
   await page.mouse.move(0, 0);
   await page.locator('.sf-panel-close-btn').first().click();
   await page.waitForTimeout(300);
@@ -220,79 +186,53 @@ const { ensureServer, makeReporter, finish } = require('./lib/ui-test.cjs');
   };
 
   report(
-    'mobile: every row shows an always-visible ⋮ button',
-    (await demo.locator('.sf-sm-row .sf-sm-more').count()) === 5,
+    'mobile: SingleMenu renders no built-in row buttons',
+    (await demo.locator('.sf-sm-row .sf-sm-more').count()) === 0,
   );
-  const touchBox = await boxOf(row('welcome.md').locator('.sf-sm-more'));
-  report(
-    '⋮ button keeps its #292929 box with undimmed dots in touch mode',
-    parseFloat(touchBox.bw) >= 1 &&
-      touchBox.br !== '0px' &&
-      touchBox.bg === 'rgb(41, 41, 41)' &&
-      touchBox.color === touchBox.want,
-    JSON.stringify(touchBox),
-  );
+
+  const rclick = async (label) => {
+    const b = await row(label).boundingBox();
+    await page.mouse.click(b.x + 40, b.y + b.height / 2, { button: 'right' });
+    await page.waitForTimeout(250);
+  };
 
   const st0 = await status();
-  await tapEl(row('welcome.md').locator('.sf-sm-more'));
-  await page.waitForTimeout(250);
+  await rclick('welcome.md');
   report(
-    'tapping ⋮ opens the popup dialog without activating the row',
-    (await page.locator('.sf-sm-dialog').count()) === 1 && (await status()) === st0,
+    'right-click opens the option menu without activating the row',
+    (await page.locator('.sf-sm-menu').count()) === 1 && (await status()) === st0,
   );
-  report(
-    'popup shows the item title + its options + cancel',
-    (await page.locator('.sf-sm-dialog-title').textContent()) === 'welcome.md' &&
-      JSON.stringify(await page.locator('.sf-sm-dialog .sf-sm-menu-row').allTextContents()) ===
-        JSON.stringify(['Open', 'Rename', 'Delete']) &&
-      (await page.locator('.sf-sm-dialog-cancel').count()) === 1,
-  );
-  const dbox = await page.locator('.sf-sm-dialog').boundingBox();
-  report(
-    'popup is centered in the viewport',
-    Math.abs(dbox.x + dbox.width / 2 - 225) <= 4 && Math.abs(dbox.y + dbox.height / 2 - 450) <= 80,
-  );
-  await tapEl(page.locator('.sf-sm-dialog-cancel'));
+  await page.keyboard.press('Escape');
   await page.waitForTimeout(200);
-  report(
-    'Cancel closes the popup without acting',
-    (await page.locator('.sf-sm-dialog').count()) === 0 && (await status()) === st0,
-  );
 
-  await tapEl(row('welcome.md').locator('.sf-sm-more'));
-  await page.waitForTimeout(250);
-  await tapEl(page.locator('.sf-sm-dialog .sf-sm-menu-row', { hasText: 'Rename' }));
+  await rclick('welcome.md');
+  await page.locator('.sf-sm-menu .sf-sm-menu-row', { hasText: 'Rename' }).click();
   await page.waitForTimeout(200);
   report(
-    'choosing Rename in the popup starts inline rename',
-    (await page.locator('.sf-sm-dialog').count()) === 0 &&
+    'choosing Rename starts inline rename',
+    (await page.locator('.sf-sm-menu').count()) === 0 &&
       (await page.locator('.single-menu-demo-input').count()) === 1,
   );
-  await tapEl(page.locator('.single-menu-demo-input'));
+  await page.locator('.single-menu-demo-input').click();
   await page.keyboard.type('welcome2.md');
   await page.keyboard.press('Enter');
   await page.waitForTimeout(100);
-  report('rename from the popup commits', (await row('welcome2.md').count()) === 1);
+  report('rename commits', (await row('welcome2.md').count()) === 1);
 
   await churnToggle.evaluate((el) => el.click());
   if (!(await isOn(churnToggle))) throw new Error('mobile churn toggle failed to turn on');
-  await tapEl(row('framework.layout.json').locator('.sf-sm-more'));
-  await page.waitForTimeout(250);
-  report('churn: ⋮ popup open before the re-sync lands', (await page.locator('.sf-sm-dialog').count()) === 1);
+  await rclick('framework.layout.json');
+  report('churn: menu open before the re-sync lands', (await page.locator('.sf-sm-menu').count()) === 1);
   await page.waitForTimeout(2400);
   report(
-    '⋮ popup stays open by itself while the list re-syncs underneath (mobile menu vanishing bug)',
-    (await page.locator('.sf-sm-dialog').count()) === 1,
+    'menu stays open by itself while the list re-syncs underneath (mobile menu vanishing bug)',
+    (await page.locator('.sf-sm-menu').count()) === 1,
   );
-  report(
-    'churned popup still shows the right item',
-    (await page.locator('.sf-sm-dialog-title').textContent()) === 'framework.layout.json',
-  );
-  await tapEl(page.locator('.sf-sm-dialog .sf-sm-menu-row', { hasText: 'Open' }));
+  await page.locator('.sf-sm-menu .sf-sm-menu-row', { hasText: 'Open' }).click();
   await page.waitForTimeout(200);
   report(
-    'churned popup still dispatches select for the right item',
-    (await page.locator('.sf-sm-dialog').count()) === 0 && (await status()) === 'open framework.layout.json',
+    'churned menu still dispatches select for the right item',
+    (await page.locator('.sf-sm-menu').count()) === 0 && (await status()) === 'open framework.layout.json',
   );
   await churnToggle.evaluate((el) => el.click());
   if (await isOn(churnToggle)) throw new Error('mobile churn toggle failed to turn off');
@@ -313,7 +253,6 @@ const { ensureServer, makeReporter, finish } = require('./lib/ui-test.cjs');
     'swipe gestures are fully removed: a leftward drag moves nothing and shows no action layer',
     (await page.locator('.sf-sm-under, .sf-sm-act').count()) === 0 &&
       (await drow.locator('.sf-sm-slide').evaluate((el) => getComputedStyle(el).transform)) === 'none' &&
-      (await page.locator('.sf-sm-dialog').count()) === 0 &&
       (await status()) === stDrag,
   );
 
@@ -365,14 +304,13 @@ const { ensureServer, makeReporter, finish } = require('./lib/ui-test.cjs');
   );
   await page.waitForTimeout(150);
 
-  await tapEl(row('notes.txt').locator('.sf-sm-more'));
-  await page.waitForTimeout(250);
+  await rclick('notes.txt');
   report(
-    'single-option item popup lists exactly one option',
-    JSON.stringify(await page.locator('.sf-sm-dialog .sf-sm-menu-row').allTextContents()) ===
+    'single-option item menu lists exactly one option',
+    JSON.stringify(await page.locator('.sf-sm-menu .sf-sm-menu-row').allTextContents()) ===
       JSON.stringify(['Delete']),
   );
-  await tapEl(page.locator('.sf-sm-dialog .sf-sm-menu-row', { hasText: 'Delete' }));
+  await page.locator('.sf-sm-menu .sf-sm-menu-row', { hasText: 'Delete' }).click();
   await page.waitForTimeout(300);
   report(
     'choosing Delete removes the row',
@@ -418,16 +356,18 @@ const { ensureServer, makeReporter, finish } = require('./lib/ui-test.cjs');
 
   await dropArm.evaluate((el) => el.click());
   await churnOn();
-  await tapEl(row('SingleMenu.vue').locator('.sf-sm-more'));
+  const vrow = row('SingleMenu.vue');
+  const vb = await vrow.boundingBox();
+  await page.mouse.click(vb.x + 40, vb.y + vb.height / 2, { button: 'right' });
   await page.waitForTimeout(500);
   report(
-    'removal setup: ⋮ popup open on the row about to vanish',
-    (await page.locator('.sf-sm-dialog').count()) === 1,
+    'removal setup: menu open on the row about to vanish',
+    (await page.locator('.sf-sm-menu').count()) === 1,
   );
   await page.waitForTimeout(2500);
   report(
-    '⋮ popup closes when its row is removed by an external sync',
-    (await page.locator('.sf-sm-dialog').count()) === 0 && (await row('SingleMenu.vue').count()) === 0,
+    'menu closes when its row is removed by an external sync',
+    (await page.locator('.sf-sm-menu').count()) === 0 && (await row('SingleMenu.vue').count()) === 0,
   );
   await churnOff();
 
