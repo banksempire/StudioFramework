@@ -988,12 +988,76 @@ const WS = '.sf-workspace';
     innerH: window.innerHeight,
   }));
   report(
-    'browser mode ignores legacy navigator.standalone and keeps dvh height',
-    !legacyH.varSet && Math.round(legacyH.rootH) === Math.round(legacyH.innerH),
+    'navigator.standalone alone engages the pin (iOS never matches the media query)',
+    legacyH.varSet === '852px' && Math.round(legacyH.rootH) === 852,
     JSON.stringify(legacyH),
   );
   await lpage.close();
   await legacy.close();
+
+  const ios = await browser.newContext({ viewport: { width: 440, height: 894 } });
+  await ios.addInitScript(() => {
+    const realMq = window.matchMedia.bind(window);
+    window.matchMedia = (q) => {
+      const m = realMq(q);
+      if (q.includes('display-mode')) {
+        Object.defineProperty(m, 'matches', { value: false });
+      }
+      return m;
+    };
+    Object.defineProperty(window.navigator, 'standalone', {
+      value: true,
+      configurable: true,
+    });
+    Object.defineProperty(window, 'screen', {
+      value: { width: 440, height: 956, availWidth: 440, availHeight: 956 },
+    });
+    window.__sfSetIosClient = (h) => {
+      Object.defineProperty(document.documentElement, 'clientHeight', {
+        configurable: true,
+        get: () => h,
+      });
+      window.dispatchEvent(new Event('resize'));
+    };
+  });
+  const iosPage = await ios.newPage();
+  const iosErrors = [];
+  iosPage.on('pageerror', (e) => iosErrors.push(`pageerror: ${e.message}`));
+  await iosPage.goto(`http://localhost:${process.env.SF_TEST_PORT || '7493'}/`, {
+    waitUntil: 'networkidle',
+    timeout: 15000,
+  });
+  await iosPage.waitForFunction(() => (document.getElementById('framework')?.innerHTML.length ?? 0) > 1000, {
+    timeout: 10000,
+  });
+  await iosPage.evaluate(() => window.__sfSetIosClient(894));
+  await iosPage.waitForTimeout(100);
+  const insetIos = await iosPage.evaluate(() => ({
+    varSet: document.documentElement.style.getPropertyValue('--sf-app-height'),
+    rootH: Math.round(document.querySelector('.sf-root').getBoundingClientRect().height),
+  }));
+  report(
+    'ios wpa: inset layout viewport pins to clientHeight',
+    insetIos.varSet === '894px' && insetIos.rootH === 894,
+    JSON.stringify(insetIos),
+  );
+  await iosPage.evaluate(() => {
+    document.querySelector('.sf-root').style.setProperty('--sf-safe-top', '62px');
+    window.dispatchEvent(new Event('resize'));
+  });
+  await iosPage.waitForTimeout(100);
+  const iosFull = await iosPage.evaluate(() => ({
+    varSet: document.documentElement.style.getPropertyValue('--sf-app-height'),
+    rootH: Math.round(document.querySelector('.sf-root').getBoundingClientRect().height),
+  }));
+  report(
+    'ios wpa: full-bleed shell pins to the 956 screen height',
+    iosFull.varSet === '956px' && iosFull.rootH === 956,
+    JSON.stringify(iosFull),
+  );
+  report('ios wpa: no console/page errors', iosErrors.length === 0, iosErrors.join('; '));
+  await iosPage.close();
+  await ios.close();
 
   report('no console/page errors', errors.length === 0, errors.join('; '));
 
