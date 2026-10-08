@@ -16,6 +16,7 @@ const props = defineProps<{
   searchable?: boolean;
   searchPlaceholder?: string;
   footer?: PanelListButton;
+  draggable?: boolean;
 }>();
 
 const emit = defineEmits<{
@@ -51,7 +52,7 @@ const rich = computed(
     ),
 );
 
-const hasDrag = computed(() => props.items.some((it) => it.dragType));
+const hasDrag = computed(() => props.draggable === true && props.items.some((it) => it.dragType));
 
 const query = ref('');
 
@@ -247,7 +248,7 @@ function onButtonClick(
           />
 
           <span
-            v-if="bulkActive || it.dragType"
+            v-if="bulkActive || (props.draggable === true && it.dragType)"
             class="sf-pl-grip"
             draggable="true"
             title="Drag to reorder"

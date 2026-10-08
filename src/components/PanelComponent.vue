@@ -104,6 +104,7 @@ const listData = computed<PanelListData>(() => {
       searchable: rec.searchable,
       searchPlaceholder: rec.searchPlaceholder,
       footer: rec.footer,
+      draggable: rec.draggable,
     };
   return { items: props.component.items ?? [], empty: props.component.empty };
 });
@@ -368,6 +369,7 @@ function onNodeClick(node: TreeNode) {
       :searchable="listData.searchable"
       :search-placeholder="listData.searchPlaceholder"
       :footer="listData.footer"
+      :draggable="listData.draggable"
       @activate="(it) => emitAction(it.action, { gesture: 'activate', id: it.id })"
       @menu="(it, optionId) => emitAction(it.action, { gesture: 'menu', id: it.id, option: optionId })"
       @button="(it, buttonId) => emitAction(it.action, { gesture: 'button', id: it.id, button: buttonId })"

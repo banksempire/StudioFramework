@@ -206,6 +206,10 @@ const { ensureServer, makeReporter, finish } = require('./lib/ui-test.cjs');
     .click();
   await page.waitForTimeout(200);
   report('empty list shows the footer hint', (await fields.locator('.sf-empty').count()) === 1);
+  report(
+    'grips stay hidden unless the list opts in to dragging',
+    (await fields.locator('.sf-pl-grip').count()) === 0,
+  );
 
   const mobileCtx = await browser.newContext({ viewport: { width: 390, height: 844 }, hasTouch: true });
   const mpage = await mobileCtx.newPage();

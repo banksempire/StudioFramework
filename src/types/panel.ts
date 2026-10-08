@@ -121,6 +121,7 @@ export interface PanelListData {
   searchable?: boolean;
   searchPlaceholder?: string;
   footer?: PanelListButton & { action?: string };
+  draggable?: boolean;
 }
 
 export interface PanelHeaderData {

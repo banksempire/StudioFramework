@@ -87,7 +87,7 @@ registerPanelData('demo-list', () => {
       muted: true,
     });
   }
-  return { items };
+  return { items, draggable: true };
 });
 
 const bulkDemo = reactive({
@@ -123,6 +123,7 @@ registerPanelData('fields-demo', () => ({
     ],
     options: [{ id: r.hidden ? 'show' : 'hide', label: r.hidden ? 'Show' : 'Hide' }],
     lines: [{ text: r.hidden ? 'hidden on the table' : 'visible on the table', meta: r.id }],
+    dragType: 'application/x-fields-demo',
   })),
   footer: { id: 'add', label: 'Add', action: 'fields-demo-add' },
 }));
