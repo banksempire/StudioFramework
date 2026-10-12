@@ -69,6 +69,10 @@ const triggerLabel = computed(() => {
 
 const triggerBlank = computed(() => currentIndex.value < 0);
 
+const triggerSwatch = computed(() =>
+  currentIndex.value >= 0 ? optionRows.value[currentIndex.value].option.swatch : undefined,
+);
+
 function optionId(index: number) {
   return `${props.inputId}-opt-${index}`;
 }
@@ -229,7 +233,13 @@ onUnmounted(() => {
     @keydown.down.prevent="openPopup()"
     @keydown.enter.prevent="openPopup()"
     @keydown.space.prevent="openPopup()"
-  >{{ triggerLabel }}</button>
+  >
+    <span
+      v-if="triggerSwatch"
+      class="sf-select-swatch"
+      :style="{ background: triggerSwatch }"
+    ></span>{{ triggerLabel }}</button
+  >
   <Teleport :to="sheetTarget">
     <div v-if="open && mobile" class="sf-select-sheet">
       <div class="sf-select-sheet-bar">
@@ -262,6 +272,11 @@ onUnmounted(() => {
             :title="row.option.title"
             @click="choose(row.option)"
           >
+            <span
+              v-if="row.option.swatch"
+              class="sf-select-swatch"
+              :style="{ background: row.option.swatch }"
+            ></span>
             <span class="sf-select-row-label">{{ row.option.label }}</span>
           </div>
         </template>
@@ -286,6 +301,11 @@ onUnmounted(() => {
           @mouseenter="!row.option.disabled && (active = row.index)"
           @click="choose(row.option)"
         >
+          <span
+            v-if="row.option.swatch"
+            class="sf-select-swatch"
+            :style="{ background: row.option.swatch }"
+          ></span>
           <span class="sf-select-row-label">{{ row.option.label }}</span>
         </div>
       </template>

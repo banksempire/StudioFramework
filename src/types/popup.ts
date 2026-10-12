@@ -3,6 +3,7 @@ export interface PopupOption {
   label: string;
   title?: string;
   disabled?: boolean;
+  swatch?: string;
 }
 
 export interface PopupOptionGroup {
