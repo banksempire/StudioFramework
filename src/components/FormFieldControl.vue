@@ -1,5 +1,7 @@
 <script setup lang="ts">
+import { computed, onBeforeUnmount, ref, watch } from 'vue';
 import type { PopupField, PopupOption, PopupValues } from '../types/popup';
+import ColorWheel from './ColorWheel.vue';
 import MultiSelectGroup from './MultiSelectGroup.vue';
 import PillSelector from './PillSelector.vue';
 import SelectInput from './SelectInput.vue';
@@ -41,6 +43,36 @@ function stepperValue(): number {
   const n = typeof v === 'number' ? v : Number(v);
   return Number.isFinite(n) ? n : (props.field.min ?? 1);
 }
+
+const colorRoot = ref<HTMLElement | null>(null);
+const colorOpen = ref(false);
+
+const colorValue = computed(() => {
+  const v = props.values[props.field.key];
+  return typeof v === 'string' && v ? v : '';
+});
+
+function toggleColor() {
+  colorOpen.value = !colorOpen.value;
+}
+
+function clearColor() {
+  colorOpen.value = false;
+  emit('patch', props.field.key, '');
+}
+
+function onDocPointer(e: PointerEvent) {
+  if (colorRoot.value && !colorRoot.value.contains(e.target as Node)) colorOpen.value = false;
+}
+
+watch(colorOpen, (open) => {
+  if (open) document.addEventListener('pointerdown', onDocPointer, true);
+  else document.removeEventListener('pointerdown', onDocPointer, true);
+});
+
+onBeforeUnmount(() => {
+  document.removeEventListener('pointerdown', onDocPointer, true);
+});
 </script>
 
 <template>
@@ -105,4 +137,24 @@ function stepperValue(): number {
     :title="field.labelNote"
     @update:model-value="(v) => emit('patch', field.key, v)"
   />
+  <div v-else-if="field.type === 'color'" ref="colorRoot" class="sf-color-field" :data-color-field="field.key">
+    <button
+      :id="inputId"
+      type="button"
+      class="sf-color-trigger"
+      :disabled="field.disabled || busy"
+      @click="toggleColor"
+    >
+      <span
+        class="sf-color-swatch"
+        :class="{ 'sf-color-swatch--empty': !colorValue }"
+        :style="colorValue ? { background: colorValue } : undefined"
+      />
+      <span class="sf-color-trigger-text">{{ colorValue ? colorValue.toUpperCase() : 'Default' }}</span>
+    </button>
+    <div v-if="colorOpen" class="sf-color-pop">
+      <ColorWheel :color="colorValue" @update="(v) => emit('patch', props.field.key, v)" />
+      <button type="button" class="sf-color-clear" @click="clearColor">Default</button>
+    </div>
+  </div>
 </template>

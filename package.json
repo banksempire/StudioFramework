@@ -25,6 +25,7 @@
     "check:selectors": "node scripts/check-selectors.cjs",
     "check:dialog": "node scripts/check-dialog.cjs",
     "check:select": "node scripts/check-select.cjs",
+    "check:colorwheel": "node scripts/check-color-wheel.cjs",
     "typecheck": "vue-tsc --noEmit",
     "lint": "biome check .",
     "format": "biome format --write .",

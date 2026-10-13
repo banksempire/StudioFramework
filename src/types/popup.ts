@@ -26,6 +26,7 @@ export type PopupFieldType =
   | 'multi'
   | 'switch'
   | 'stepper'
+  | 'color'
   | 'button'
   | 'info'
   | 'slot';

@@ -284,7 +284,7 @@ const { ensureServer, openApp, makeReporter, finish } = require('./lib/ui-test.c
     const saved = await page.evaluate(() => document.querySelector('.sf-dialog-demo-status')?.textContent);
     report(
       'saved payload carries the select values',
-      saved?.includes('saved select-hero · workspace · size:s tier:b') === true,
+      saved?.includes('saved select-hero · workspace · size:s accent:#544fed tier:b') === true,
       saved,
     );
 

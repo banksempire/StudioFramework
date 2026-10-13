@@ -30,6 +30,11 @@ const formFields: PopupField[] = [
     ],
   },
   {
+    key: 'accent',
+    type: 'color',
+    label: 'Accent color',
+  },
+  {
     key: 'tier',
     type: 'select',
     label: 'Tier',
@@ -49,7 +54,7 @@ const formFields: PopupField[] = [
   },
 ];
 
-const formValues = ref<Record<string, string>>({ size: 'm', tier: 'b' });
+const formValues = ref<Record<string, string>>({ size: 'm', tier: 'b', accent: '#544fed' });
 
 function patchForm(key: string, value: string | number | boolean | Array<string | number>) {
   formValues.value[key] = String(value);
