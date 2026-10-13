@@ -3174,15 +3174,17 @@ body.sf-dragging-row * {
 .sf-color-trigger {
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 8px;
   width: 100%;
-  padding: 3px 6px 3px 3px;
+  height: 36px;
+  box-sizing: border-box;
+  padding: 4px 8px 4px 4px;
   font: inherit;
   font-size: 12px;
   text-align: left;
-  background: var(--sf-bg-input, #1b1b22);
+  background: rgba(0, 0, 0, 0.15);
   border: 1px solid var(--sf-border, #333);
-  border-radius: 4px;
+  border-radius: 8px;
   cursor: pointer;
 }
 
@@ -3192,9 +3194,9 @@ body.sf-dragging-row * {
   min-width: 0;
   align-items: center;
   justify-content: center;
-  height: 18px;
+  height: 100%;
   overflow: hidden;
-  border-radius: 2px;
+  border-radius: 4px;
 }
 
 .sf-color-trigger--empty .sf-color-bar {
@@ -3236,11 +3238,11 @@ body.sf-dragging-row * {
 .sf-color-row {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 10px;
   width: 100%;
-  padding: 4px 8px;
+  padding: 6px 10px;
   font: inherit;
-  font-size: 12px;
+  font-size: 14px;
   text-align: left;
   color: var(--sf-text, #dde);
   background: transparent;
@@ -3254,11 +3256,11 @@ body.sf-dragging-row * {
 
 .sf-color-row-swatch {
   display: inline-block;
-  width: 26px;
-  height: 16px;
+  width: 32px;
+  height: 20px;
   flex: none;
   border: 1px solid rgba(255, 255, 255, 0.25);
-  border-radius: 2px;
+  border-radius: 3px;
 }
 
 .sf-color-row-label {
