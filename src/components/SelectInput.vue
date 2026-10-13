@@ -256,6 +256,7 @@ onUnmounted(() => {
         :id="popId"
         ref="popEl"
         class="sf-select-sheet-body"
+        :class="{ 'sf-select-pop--fill': field.triggerFill }"
         role="listbox"
         tabindex="-1"
         :aria-activedescendant="active >= 0 ? optionId(active) : undefined"
@@ -288,7 +289,7 @@ onUnmounted(() => {
         </template>
       </div>
     </div>
-    <div v-else-if="open" :id="popId" ref="popEl" class="sf-select-pop" :style="popStyle" role="listbox" tabindex="-1" :aria-activedescendant="active >= 0 ? optionId(active) : undefined" @keydown="onPopKey">
+    <div v-else-if="open" :id="popId" ref="popEl" class="sf-select-pop" :class="{ 'sf-select-pop--fill': field.triggerFill }" :style="popStyle" role="listbox" tabindex="-1" :aria-activedescendant="active >= 0 ? optionId(active) : undefined" @keydown="onPopKey">
       <template v-for="(row, i) in rows" :key="row.kind === 'group' ? `group-${row.label}-${i}` : optionId(row.index)">
         <div v-if="row.kind === 'group'" class="sf-select-group">{{ row.label }}</div>
         <div

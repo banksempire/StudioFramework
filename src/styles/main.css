@@ -3182,3 +3182,9 @@ body.sf-dragging-row * {
   border-radius: 4px;
   background: var(--sf-select-fill, transparent);
 }
+
+.sf-select-pop--fill .sf-select-swatch {
+  width: 34px;
+  height: 22px;
+  border-radius: 4px;
+}

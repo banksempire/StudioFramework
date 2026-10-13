@@ -57,6 +57,14 @@ const { ensureServer, openApp, makeReporter, finish } = require('./lib/ui-test.c
         (await pop.locator('.sf-select-row', { hasText: 'Black (#000000)' }).count()) === 1 &&
         (await pop.locator('.sf-select-row', { hasText: 'Custom…' }).count()) === 1,
     );
+    const swatchBox = await pop
+      .locator('.sf-select-row', { hasText: 'Red (#EF5350)' })
+      .locator('.sf-select-swatch')
+      .boundingBox();
+    report(
+      'list swatches render as large color blocks',
+      !!swatchBox && swatchBox.width >= 30 && swatchBox.height >= 18,
+    );
 
     await pop.locator('.sf-select-row', { hasText: 'Red (#EF5350)' }).click();
     await delay(200);
