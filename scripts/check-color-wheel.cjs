@@ -57,6 +57,114 @@ const { ensureServer, openApp, makeReporter, finish } = require('./lib/ui-test.c
     );
 
     const hexInput = wheel.locator('.sf-color-wheel-input--hex');
+    const rgbToHsvTest = (r, g, b) => {
+      const rn = r / 255,
+        gn = g / 255,
+        bn = b / 255;
+      const max = Math.max(rn, gn, bn),
+        min = Math.min(rn, gn, bn);
+      const d = max - min;
+      let h = 0;
+      if (d > 0) {
+        if (max === rn) h = (((gn - bn) / d) % 6) * 60;
+        else if (max === gn) h = ((bn - rn) / d + 2) * 60;
+        else h = ((rn - gn) / d + 4) * 60;
+        if (h < 0) h += 360;
+      }
+      return { h, s: max === 0 ? 0 : d / max, v: max };
+    };
+    const hsvToHexTest = ({ h, s, v }) => {
+      const c = v * s;
+      const hp = (((h % 360) + 360) % 360) / 60;
+      const x = c * (1 - Math.abs((hp % 2) - 1));
+      const seg = Math.floor(hp);
+      const part =
+        seg === 0
+          ? [c, x, 0]
+          : seg === 1
+            ? [x, c, 0]
+            : seg === 2
+              ? [0, c, x]
+              : seg === 3
+                ? [0, x, c]
+                : seg === 4
+                  ? [x, 0, c]
+                  : [c, 0, x];
+      const m = v - c;
+      return `#${[part[0] + m, part[1] + m, part[2] + m]
+        .map((cv) =>
+          Math.round(cv * 255)
+            .toString(16)
+            .padStart(2, '0'),
+        )
+        .join('')}`;
+    };
+    const base = rgbToHsvTest(84, 79, 237);
+
+    const schemeBtn = wheel.locator('.sf-color-schemes-btn');
+    report(
+      'scheme selector shows Complementary by default',
+      (await schemeBtn.textContent())?.trim().startsWith('Complementary') === true,
+    );
+    report('complementary shows two chips', (await wheel.locator('.sf-color-scheme-chip').count()) === 2);
+    const compHex = await wheel
+      .locator('.sf-color-scheme-chip')
+      .nth(1)
+      .evaluate((el) => el.title);
+    report(
+      'the complementary chip sits opposite on the wheel',
+      compHex.toUpperCase() === hsvToHexTest({ ...base, h: base.h + 180 }).toUpperCase(),
+    );
+
+    await wheel.locator('.sf-color-scheme-chip').nth(1).click();
+    await delay(150);
+    report(
+      'clicking the complementary chip applies it',
+      (await hexInput.inputValue()).toUpperCase() ===
+        hsvToHexTest({ ...base, h: base.h + 180 }).toUpperCase(),
+    );
+
+    await schemeBtn.click();
+    await delay(150);
+    report(
+      'the scheme list offers six harmonies',
+      (await wheel.locator('.sf-color-schemes-item').count()) === 6,
+    );
+    await wheel.locator('.sf-color-schemes-item', { hasText: 'Triadic' }).click();
+    await delay(150);
+    report('triadic shows three chips', (await wheel.locator('.sf-color-scheme-chip').count()) === 3);
+    await wheel.locator('.sf-color-scheme-chip').nth(1).click();
+    await delay(150);
+    report(
+      'clicking a triadic chip applies hue +120 from the current color',
+      (await hexInput.inputValue()).toUpperCase() ===
+        hsvToHexTest({ ...base, h: base.h + 300 }).toUpperCase(),
+    );
+
+    await schemeBtn.click();
+    await delay(100);
+    await wheel.locator('.sf-color-schemes-item', { hasText: 'Monochromatic' }).click();
+    await delay(150);
+    report('monochromatic shows three chips', (await wheel.locator('.sf-color-scheme-chip').count()) === 3);
+    const monoHexNow = (await hexInput.inputValue()).toUpperCase();
+    const monoHue = rgbToHsvTest(
+      parseInt(monoHexNow.slice(1, 3), 16),
+      parseInt(monoHexNow.slice(3, 5), 16),
+      parseInt(monoHexNow.slice(5, 7), 16),
+    ).h;
+    await wheel.locator('.sf-color-scheme-chip').nth(2).click();
+    await delay(150);
+    const monoAfter = (await hexInput.inputValue()).toUpperCase();
+    const afterMono = rgbToHsvTest(
+      parseInt(monoAfter.slice(1, 3), 16),
+      parseInt(monoAfter.slice(3, 5), 16),
+      parseInt(monoAfter.slice(5, 7), 16),
+    );
+    report(
+      'monochromatic keeps the hue',
+      Math.abs(afterMono.h - monoHue) < 30 || Math.abs(afterMono.h - monoHue) > 330,
+    );
+
     await hexInput.fill('#ff0000');
     await hexInput.press('Enter');
     await delay(150);

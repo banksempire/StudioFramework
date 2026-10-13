@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, ref, watch } from 'vue';
+import { computed, onBeforeUnmount, ref, watch } from 'vue';
 import { hsvToRgb, parseHex, rgbToHsv, toColorHex } from '../utils/color';
 
 const props = withDefaults(
@@ -120,6 +120,100 @@ function onAlphaPct(e: Event) {
   input.value = String(n);
   apply(h.value, s.value, v.value, n / 100);
 }
+
+interface SchemeVariant {
+  h: number;
+  s: number;
+  v: number;
+}
+
+const SCHEMES: Array<{
+  id: string;
+  label: string;
+  variants: (base: { h: number; s: number; v: number }) => SchemeVariant[];
+}> = [
+  {
+    id: 'complementary',
+    label: 'Complementary',
+    variants: (b) => [b, { ...b, h: b.h + 180 }],
+  },
+  {
+    id: 'split',
+    label: 'Split',
+    variants: (b) => [b, { ...b, h: b.h + 150 }, { ...b, h: b.h + 210 }],
+  },
+  {
+    id: 'monochromatic',
+    label: 'Monochromatic',
+    variants: (b) => [
+      b,
+      { h: b.h, s: b.s * 0.45, v: Math.min(1, b.v * 1.15) },
+      { h: b.h, s: Math.min(1, b.s * 1.1), v: b.v * 0.55 },
+    ],
+  },
+  {
+    id: 'analogous',
+    label: 'Analogous',
+    variants: (b) => [{ ...b, h: b.h + 330 }, b, { ...b, h: b.h + 30 }],
+  },
+  {
+    id: 'triadic',
+    label: 'Triadic',
+    variants: (b) => [b, { ...b, h: b.h + 120 }, { ...b, h: b.h + 240 }],
+  },
+  {
+    id: 'square',
+    label: 'Square',
+    variants: (b) => [b, { ...b, h: b.h + 90 }, { ...b, h: b.h + 180 }, { ...b, h: b.h + 270 }],
+  },
+];
+
+const schemeId = ref('complementary');
+const schemeOpen = ref(false);
+const schemeRoot = ref<HTMLElement | null>(null);
+
+const scheme = computed(() => SCHEMES.find((x) => x.id === schemeId.value) ?? SCHEMES[0]);
+const schemeLabel = computed(() => scheme.value.label);
+
+const schemeColors = computed(() =>
+  scheme.value.variants({ h: h.value, s: s.value, v: v.value }).map((x) => ({
+    ...x,
+    hex: toColorHex(
+      hsvToRgb({
+        h: ((x.h % 360) + 360) % 360,
+        s: Math.min(1, Math.max(0, x.s)),
+        v: Math.min(1, Math.max(0, x.v)),
+      }),
+      1,
+    ),
+  })),
+);
+
+function toggleScheme() {
+  schemeOpen.value = !schemeOpen.value;
+}
+
+function pickScheme(id: string) {
+  schemeId.value = id;
+  schemeOpen.value = false;
+}
+
+function pickVariant(x: { h: number; s: number; v: number }) {
+  apply(x.h, x.s, x.v, a.value);
+}
+
+function onSchemePointer(e: PointerEvent) {
+  if (schemeRoot.value && !schemeRoot.value.contains(e.target as Node)) schemeOpen.value = false;
+}
+
+watch(schemeOpen, (open) => {
+  if (open) document.addEventListener('pointerdown', onSchemePointer, true);
+  else document.removeEventListener('pointerdown', onSchemePointer, true);
+});
+
+onBeforeUnmount(() => {
+  document.removeEventListener('pointerdown', onSchemePointer, true);
+});
 </script>
 
 <template>
@@ -179,6 +273,36 @@ function onAlphaPct(e: Event) {
         <span>A %</span>
         <input class="sf-color-wheel-input" type="number" min="0" max="100" :value="alphaPct" @input="onAlphaPct($event)" />
       </label>
+    </div>
+    <div ref="schemeRoot" class="sf-color-schemes">
+      <button type="button" class="sf-color-schemes-btn" @click="toggleScheme">
+        <span>{{ schemeLabel }}</span>
+        <span class="sf-color-schemes-caret">▾</span>
+      </button>
+      <div v-if="schemeOpen" class="sf-color-schemes-pop">
+        <button
+          v-for="x in SCHEMES"
+          :key="x.id"
+          type="button"
+          class="sf-color-schemes-item"
+          :class="{ 'sf-color-schemes-item--on': x.id === schemeId }"
+          @click="pickScheme(x.id)"
+        >
+          {{ x.label }}
+        </button>
+      </div>
+    </div>
+    <div class="sf-color-scheme-chips">
+      <button
+        v-for="(x, i) in schemeColors"
+        :key="i"
+        type="button"
+        class="sf-color-scheme-chip"
+        :class="{ 'sf-color-scheme-chip--base': i === 0 }"
+        :style="{ background: x.hex }"
+        :title="x.hex"
+        @click="pickVariant(x)"
+      />
     </div>
   </div>
 </template>
@@ -300,5 +424,91 @@ function onAlphaPct(e: Event) {
 .sf-color-wheel-input::-webkit-inner-spin-button {
   appearance: none;
   margin: 0;
+}
+
+.sf-color-schemes {
+  position: relative;
+}
+
+.sf-color-schemes-btn {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  padding: 4px 8px;
+  font: inherit;
+  font-size: 11px;
+  color: var(--sf-text, #dde);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  background: var(--sf-bg-input, #1b1b22);
+  border: 1px solid var(--sf-border, #333);
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.sf-color-schemes-btn:hover {
+  border-color: var(--sf-accent, #4499ff);
+}
+
+.sf-color-schemes-caret {
+  color: var(--sf-text-muted, #889);
+}
+
+.sf-color-schemes-pop {
+  position: absolute;
+  bottom: calc(100% + 4px);
+  left: 0;
+  right: 0;
+  z-index: 5;
+  background: var(--sf-bg, #16161c);
+  border: 1px solid var(--sf-border, #333);
+  border-radius: 4px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
+  overflow: hidden;
+}
+
+.sf-color-schemes-item {
+  display: block;
+  width: 100%;
+  padding: 5px 10px;
+  font: inherit;
+  font-size: 12px;
+  text-align: left;
+  color: var(--sf-text, #dde);
+  background: transparent;
+  border: 0;
+  cursor: pointer;
+}
+
+.sf-color-schemes-item:hover {
+  background: var(--sf-hover-overlay, rgba(255, 255, 255, 0.06));
+}
+
+.sf-color-schemes-item--on {
+  color: var(--sf-accent, #4499ff);
+}
+
+.sf-color-scheme-chips {
+  display: flex;
+  gap: 6px;
+}
+
+.sf-color-scheme-chip {
+  flex: 1;
+  height: 22px;
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  border-radius: 4px;
+  cursor: pointer;
+  padding: 0;
+}
+
+.sf-color-scheme-chip:hover {
+  border-color: #ffffff;
+}
+
+.sf-color-scheme-chip--base {
+  outline: 1px solid rgba(255, 255, 255, 0.7);
+  outline-offset: 1px;
 }
 </style>
