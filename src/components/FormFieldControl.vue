@@ -1,9 +1,10 @@
 <script setup lang="ts">
-import { computed, onBeforeUnmount, ref, watch } from 'vue';
-import type { PopupField, PopupOption, PopupValues } from '../types/popup';
+import { computed, ref } from 'vue';
+import type { PopupDocument, PopupField, PopupOption, PopupValues } from '../types/popup';
 import ColorWheel from './ColorWheel.vue';
 import MultiSelectGroup from './MultiSelectGroup.vue';
 import PillSelector from './PillSelector.vue';
+import PopupDialog from './PopupDialog.vue';
 import SelectInput from './SelectInput.vue';
 import StepperInput from './StepperInput.vue';
 import SwitchToggle from './SwitchToggle.vue';
@@ -44,9 +45,7 @@ function stepperValue(): number {
   return Number.isFinite(n) ? n : (props.field.min ?? 1);
 }
 
-const colorRoot = ref<HTMLElement | null>(null);
-const colorOpen = ref(false);
-const listView = ref(true);
+const COLOR_CUSTOM = '__custom__';
 
 const COLOR_PRESETS = [
   { hex: '#000000', label: 'Black' },
@@ -72,39 +71,54 @@ const colorLabel = computed(() => {
   return `Custom (${v.toUpperCase()})`;
 });
 
-function toggleColor() {
-  colorOpen.value = !colorOpen.value;
-}
+const colorField = computed<PopupField>(() => ({
+  ...props.field,
+  type: 'select',
+  options: [
+    ...COLOR_PRESETS.map((p) => ({
+      value: p.hex,
+      label: `${p.label} (${p.hex.toUpperCase()})`,
+      swatch: p.hex,
+    })),
+    { value: COLOR_CUSTOM, label: 'Custom…' },
+  ],
+  triggerLabel: colorLabel.value,
+  triggerSwatch: colorValue.value || undefined,
+}));
 
-function pickPreset(hex: string) {
-  colorOpen.value = false;
-  emit('patch', props.field.key, hex);
-}
+const wheelOpen = ref(false);
+const wheelValues = ref<PopupValues>({ color: '' });
 
-function openCustom() {
-  listView.value = false;
-}
+const wheelDoc: PopupDocument = {
+  title: 'Pick a color',
+  h2: [{ fields: [{ key: 'color', type: 'colorWheel', span: 2 }] }],
+  actions: [
+    { id: 'clear', label: 'Default', align: 'left' },
+    { id: 'cancel', label: 'Cancel', close: true },
+    { id: 'apply', label: 'Apply', tone: 'accent' },
+  ],
+};
 
-function clearColor() {
-  colorOpen.value = false;
-  emit('patch', props.field.key, '');
-}
-
-function onDocPointer(e: PointerEvent) {
-  if (colorRoot.value && !colorRoot.value.contains(e.target as Node)) colorOpen.value = false;
-}
-
-watch(colorOpen, (open) => {
-  if (open) document.addEventListener('pointerdown', onDocPointer, true);
-  else {
-    document.removeEventListener('pointerdown', onDocPointer, true);
-    listView.value = true;
+function onColorPatch(_key: string, value: string | number | boolean) {
+  if (value === COLOR_CUSTOM) {
+    wheelValues.value = { color: colorValue.value };
+    wheelOpen.value = true;
+    return;
   }
-});
+  emit('patch', props.field.key, value);
+}
 
-onBeforeUnmount(() => {
-  document.removeEventListener('pointerdown', onDocPointer, true);
-});
+function onWheelValues(v: PopupValues) {
+  wheelValues.value = v;
+}
+
+function onWheelAction(id: string) {
+  if (id === 'clear') wheelValues.value = { color: '' };
+  else if (id === 'apply') {
+    wheelOpen.value = false;
+    emit('patch', props.field.key, String(wheelValues.value.color ?? ''));
+  }
+}
 </script>
 
 <template>
@@ -169,38 +183,24 @@ onBeforeUnmount(() => {
     :title="field.labelNote"
     @update:model-value="(v) => emit('patch', field.key, v)"
   />
-  <div v-else-if="field.type === 'color'" ref="colorRoot" class="sf-color-field" :data-color-field="field.key">
-    <button
-      :id="inputId"
-      type="button"
-      class="sf-color-trigger"
-      :class="{ 'sf-color-trigger--empty': !colorValue }"
-      :disabled="field.disabled || busy"
-      @click="toggleColor"
-    >
-      <span class="sf-color-bar" :style="colorValue ? { background: colorValue } : undefined">
-        <span class="sf-color-trigger-text">{{ colorLabel }}</span>
-      </span>
-      <span class="sf-color-caret" />
-    </button>
-    <div v-if="colorOpen" class="sf-color-pop">
-      <template v-if="listView">
-        <button
-          v-for="p in COLOR_PRESETS"
-          :key="p.hex"
-          type="button"
-          class="sf-color-row"
-          @click="pickPreset(p.hex)"
-        >
-          <span class="sf-color-row-swatch" :style="{ background: p.hex }" />
-          <span class="sf-color-row-label">{{ p.label }} ({{ p.hex.toUpperCase() }})</span>
-        </button>
-        <button type="button" class="sf-color-row sf-color-row--custom" @click="openCustom">Custom…</button>
-      </template>
-      <template v-else>
-        <ColorWheel :color="colorValue" @update="(v) => emit('patch', props.field.key, v)" />
-        <button type="button" class="sf-color-clear" @click="clearColor">Default</button>
-      </template>
-    </div>
+  <SelectInput
+    v-else-if="field.type === 'color'"
+    :field="colorField"
+    :values="values"
+    :input-id="inputId"
+    :busy="busy"
+    @patch="onColorPatch"
+  />
+  <div v-else-if="field.type === 'colorWheel'" class="sf-color-wheel-field" :data-color-field="field.key">
+    <ColorWheel :color="(values[field.key] as string) ?? ''" @update="(v) => emit('patch', field.key, v)" />
   </div>
+  <PopupDialog
+    v-if="wheelOpen"
+    v-model:open="wheelOpen"
+    :doc="wheelDoc"
+    :values="wheelValues"
+    submit-label="Apply"
+    @update:values="onWheelValues"
+    @action="onWheelAction"
+  />
 </template>

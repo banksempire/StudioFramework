@@ -27,6 +27,7 @@ export type PopupFieldType =
   | 'switch'
   | 'stepper'
   | 'color'
+  | 'colorWheel'
   | 'button'
   | 'info'
   | 'slot';
@@ -51,6 +52,8 @@ export interface PopupField {
   spellcheck?: boolean;
   options?: PopupChoices;
   blankLabel?: string;
+  triggerLabel?: string;
+  triggerSwatch?: string;
   min?: number;
   max?: number;
   step?: number;

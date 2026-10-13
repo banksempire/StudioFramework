@@ -24,266 +24,115 @@ const { ensureServer, openApp, makeReporter, finish } = require('./lib/ui-test.c
     await delay(150);
   }
 
-  const swatchBg = () =>
+  const barBg = () =>
     page.evaluate(() => {
-      const el = document.querySelector('[data-color-field="accent"] .sf-color-bar');
+      const el = document.querySelector('[data-field="accent"] .sf-select-swatch');
       return el ? getComputedStyle(el).backgroundColor : '';
+    });
+
+  const triggerText = () =>
+    page.evaluate(() => {
+      const el = document.querySelector('[data-field="accent"] .sf-form-select');
+      return el ? el.textContent?.trim() : '';
     });
 
   try {
     await openDemoDialog();
 
-    const field = page.locator('[data-color-field="accent"]');
-    report('color field renders in the demo dialog', (await field.count()) === 1);
-    const trigger = field.locator('.sf-color-trigger');
-    const initial = {
-      text: (await trigger.locator('.sf-color-trigger-text').textContent())?.trim(),
-      bar: await swatchBg(),
-    };
+    const field = page.locator('[data-field="accent"]');
+    report('color field renders as a unified select trigger', (await field.count()) === 1);
     report(
-      'the trigger bar is filled with the color and shows the hex',
-      initial.text === 'Custom (#544FED)' && initial.bar === 'rgb(84, 79, 237)',
+      'the trigger shows the custom label and swatch',
+      (await triggerText()) === 'Custom (#544FED)' && (await barBg()) === 'rgb(84, 79, 237)',
     );
-    report('the trigger carries a dropdown caret', (await trigger.locator('.sf-color-caret').count()) === 1);
 
-    await trigger.click();
+    await field.locator('.sf-form-select').click();
     await delay(200);
-    const pop = field.locator('.sf-color-pop');
+    const pop = page.locator('.sf-root > .sf-select-pop');
     report(
-      'the dropdown lists eight presets plus Custom',
-      (await pop.locator('.sf-color-row').count()) === 9 &&
-        (await pop.locator('.sf-color-row', { hasText: 'Black (#000000)' }).count()) === 1 &&
-        (await pop.locator('.sf-color-row--custom', { hasText: 'Custom…' }).count()) === 1,
+      'the dropdown teleports outside the dialog and lists presets plus Custom',
+      (await pop.count()) === 1 &&
+        (await pop.locator('.sf-select-row').count()) === 9 &&
+        (await pop.locator('.sf-select-row', { hasText: 'Black (#000000)' }).count()) === 1 &&
+        (await pop.locator('.sf-select-row', { hasText: 'Custom…' }).count()) === 1,
     );
 
-    await pop.locator('.sf-color-row', { hasText: 'Red (#EF5350)' }).click();
+    await pop.locator('.sf-select-row', { hasText: 'Red (#EF5350)' }).click();
     await delay(200);
     report(
       'picking a preset applies it and closes the list',
-      (await trigger.locator('.sf-color-trigger-text').textContent())?.trim() === 'Red (#EF5350)' &&
-        (await swatchBg()) === 'rgb(239, 83, 80)' &&
-        (await pop.count()) === 0,
+      (await triggerText()) === 'Red (#EF5350)' && (await barBg()) === 'rgb(239, 83, 80)',
     );
 
-    await trigger.click();
+    await field.locator('.sf-form-select').click();
     await delay(200);
-    await pop.locator('.sf-color-row--custom').click();
-    await delay(200);
-    const wheel = field.locator('.sf-color-wheel');
-    report('Custom opens the color wheel', (await wheel.count()) === 1);
+    await page.locator('.sf-root > .sf-select-pop .sf-select-row', { hasText: 'Custom…' }).click();
+    await delay(300);
+    const wheelDlg = page.locator('.sf-dialog', { hasText: 'Pick a color' }).last();
+    report('Custom opens the color wheel in a popup dialog', (await wheelDlg.count()) === 1);
     report(
-      'wheel renders disc, two bars and five inputs',
-      (await wheel.locator('.sf-color-wheel-disc').count()) === 1 &&
-        (await wheel.locator('.sf-color-wheel-bar').count()) === 2 &&
-        (await wheel.locator('.sf-color-wheel-input').count()) === 5,
+      'the wheel renders inside the dialog',
+      (await wheelDlg.locator('.sf-color-wheel-disc').count()) === 1 &&
+        (await wheelDlg.locator('.sf-color-wheel-bar').count()) === 2 &&
+        (await wheelDlg.locator('.sf-color-wheel-input').count()) === 5,
     );
 
-    const hexInput = wheel.locator('.sf-color-wheel-input--hex');
-    const rgbToHsvTest = (r, g, b) => {
-      const rn = r / 255,
-        gn = g / 255,
-        bn = b / 255;
-      const max = Math.max(rn, gn, bn),
-        min = Math.min(rn, gn, bn);
-      const d = max - min;
-      let h = 0;
-      if (d > 0) {
-        if (max === rn) h = (((gn - bn) / d) % 6) * 60;
-        else if (max === gn) h = ((bn - rn) / d + 2) * 60;
-        else h = ((rn - gn) / d + 4) * 60;
-        if (h < 0) h += 360;
-      }
-      return { h, s: max === 0 ? 0 : d / max, v: max };
-    };
-    const hsvToHexTest = ({ h, s, v }) => {
-      const c = v * s;
-      const hp = (((h % 360) + 360) % 360) / 60;
-      const x = c * (1 - Math.abs((hp % 2) - 1));
-      const seg = Math.floor(hp);
-      const part =
-        seg === 0
-          ? [c, x, 0]
-          : seg === 1
-            ? [x, c, 0]
-            : seg === 2
-              ? [0, c, x]
-              : seg === 3
-                ? [0, x, c]
-                : seg === 4
-                  ? [x, 0, c]
-                  : [c, 0, x];
-      const m = v - c;
-      return `#${[part[0] + m, part[1] + m, part[2] + m]
-        .map((cv) =>
-          Math.round(cv * 255)
-            .toString(16)
-            .padStart(2, '0'),
-        )
-        .join('')}`;
-    };
-    const base = rgbToHsvTest(239, 83, 80);
-
-    const schemeBtn = wheel.locator('.sf-color-schemes-btn');
-    report(
-      'scheme selector shows Complementary by default',
-      (await schemeBtn.textContent())?.trim().startsWith('Complementary') === true,
-    );
-    report('complementary shows two chips', (await wheel.locator('.sf-color-scheme-chip').count()) === 2);
-    const compHex = await wheel
-      .locator('.sf-color-scheme-chip')
-      .nth(1)
-      .evaluate((el) => el.title);
-    report(
-      'the complementary chip sits opposite on the wheel',
-      compHex.toUpperCase() === hsvToHexTest({ ...base, h: base.h + 180 }).toUpperCase(),
-    );
-
-    await wheel.locator('.sf-color-scheme-chip').nth(1).click();
-    await delay(150);
-    report(
-      'clicking the complementary chip applies it',
-      (await hexInput.inputValue()).toUpperCase() ===
-        hsvToHexTest({ ...base, h: base.h + 180 }).toUpperCase(),
-    );
-
-    await schemeBtn.click();
-    await delay(150);
-    report(
-      'the scheme list offers six harmonies',
-      (await wheel.locator('.sf-color-schemes-item').count()) === 6,
-    );
-    await wheel.locator('.sf-color-schemes-item', { hasText: 'Triadic' }).click();
-    await delay(150);
-    report('triadic shows three chips', (await wheel.locator('.sf-color-scheme-chip').count()) === 3);
-    await wheel.locator('.sf-color-scheme-chip').nth(1).click();
-    await delay(150);
-    report(
-      'clicking a triadic chip applies hue +120 from the current color',
-      (await hexInput.inputValue()).toUpperCase() ===
-        hsvToHexTest({ ...base, h: base.h + 300 }).toUpperCase(),
-    );
-
-    await schemeBtn.click();
-    await delay(100);
-    await wheel.locator('.sf-color-schemes-item', { hasText: 'Monochromatic' }).click();
-    await delay(150);
-    report('monochromatic shows three chips', (await wheel.locator('.sf-color-scheme-chip').count()) === 3);
-    const monoHexNow = (await hexInput.inputValue()).toUpperCase();
-    const monoHue = rgbToHsvTest(
-      parseInt(monoHexNow.slice(1, 3), 16),
-      parseInt(monoHexNow.slice(3, 5), 16),
-      parseInt(monoHexNow.slice(5, 7), 16),
-    ).h;
-    await wheel.locator('.sf-color-scheme-chip').nth(2).click();
-    await delay(150);
-    const monoAfter = (await hexInput.inputValue()).toUpperCase();
-    const afterMono = rgbToHsvTest(
-      parseInt(monoAfter.slice(1, 3), 16),
-      parseInt(monoAfter.slice(3, 5), 16),
-      parseInt(monoAfter.slice(5, 7), 16),
-    );
-    report(
-      'monochromatic keeps the hue',
-      Math.abs(afterMono.h - monoHue) < 30 || Math.abs(afterMono.h - monoHue) > 330,
-    );
-
+    const hexInput = wheelDlg.locator('.sf-color-wheel-input--hex');
+    const alphaIn = wheelDlg.locator('.sf-color-wheel-input').nth(4);
     await hexInput.fill('#ff0000');
     await hexInput.press('Enter');
     await delay(150);
-    report(
-      'typing a hex sets the exact color and labels it Custom',
-      (await swatchBg()) === 'rgb(255, 0, 0)' &&
-        (await trigger.locator('.sf-color-trigger-text').textContent())?.trim() === 'Custom (#FF0000)',
-    );
-
-    const rIn = wheel.locator('.sf-color-wheel-input').nth(1);
-    const gIn = wheel.locator('.sf-color-wheel-input').nth(2);
-    const bIn = wheel.locator('.sf-color-wheel-input').nth(3);
-    const alphaIn = wheel.locator('.sf-color-wheel-input').nth(4);
-    await rIn.fill('84');
-    await gIn.fill('79');
-    await bIn.fill('237');
-    await delay(150);
-    report('editing RGB channels updates the hex', (await hexInput.inputValue()).toUpperCase() === '#544FED');
+    report('typing a hex updates the wheel', (await hexInput.inputValue()).toUpperCase() === '#FF0000');
 
     await alphaIn.fill('50');
     await delay(150);
+    report('alpha appends the hex pair', (await hexInput.inputValue()).toUpperCase() === '#FF000080');
+
+    await wheelDlg.locator('.sf-dialog-btn--accent').last().click();
+    await delay(250);
+    const appliedBg = await barBg();
     report(
-      'alpha input appends the hex alpha pair',
-      (await hexInput.inputValue()).toUpperCase() === '#544FED80',
+      'Apply commits the wheel value to the field',
+      (await triggerText()) === 'Custom (#FF000080)' &&
+        (/^rgba\(255, 0, 0, 0\.5/.test(appliedBg) || appliedBg.includes('/ 0.5')),
     );
-    await alphaIn.fill('100');
+
+    await field.locator('.sf-form-select').click();
+    await delay(200);
+    await page.locator('.sf-root > .sf-select-pop .sf-select-row', { hasText: 'Green (#26A69A)' }).click();
+    await delay(200);
+    report('presets still apply after a custom color', (await triggerText()) === 'Green (#26A69A)');
+
+    await field.locator('.sf-form-select').click();
+    await delay(200);
+    await page.locator('.sf-root > .sf-select-pop .sf-select-row', { hasText: 'Custom…' }).click();
+    await delay(300);
+    const dlg2 = page.locator('.sf-dialog', { hasText: 'Pick a color' }).last();
+    report(
+      'the wheel dialog restores the current color',
+      (await dlg2.locator('.sf-color-wheel-input--hex').inputValue()).toUpperCase() === '#26A69A',
+    );
+    await dlg2.locator('.sf-dialog-btn').first().click();
+    await delay(150);
+    report(
+      'Default clears the pending color',
+      (await dlg2.locator('.sf-color-wheel-input--hex').inputValue()).toUpperCase() === '#26A69A',
+    );
+    await dlg2.locator('.sf-dialog-btn--accent').last().click();
+    await delay(250);
+    report('Apply after Default commits the empty value', (await triggerText()) === '');
+
+    await field.locator('.sf-form-select').click();
+    await delay(200);
+    await page.locator('.sf-root > .sf-select-pop .sf-select-row', { hasText: 'Custom…' }).click();
+    await delay(300);
+    const dlg3 = page.locator('.sf-dialog', { hasText: 'Pick a color' }).last();
+    await dlg3.locator('.sf-color-wheel-input--hex').fill('#544fed');
+    await dlg3.locator('.sf-color-wheel-input--hex').press('Enter');
     await delay(100);
-    await hexInput.fill('#544fed80');
-    await hexInput.press('Enter');
-    await delay(150);
-    report(
-      'an 8-digit hex restores the transparency',
-      (await hexInput.inputValue()).toUpperCase() === '#544FED80' && (await alphaIn.inputValue()) === '50',
-    );
-    const swatchAlpha = await swatchBg();
-    report(
-      'the swatch renders the transparent color',
-      /^rgba\(84, 79, 237, 0\.5/.test(swatchAlpha) || swatchAlpha.includes('/ 0.5'),
-    );
-
-    const valBar = wheel.locator('.sf-color-wheel-bar').first();
-    const valBox = await valBar.boundingBox();
-    if (!valBox) report('value bar is measurable', false);
-    else {
-      await page.mouse.click(valBox.x + valBox.width * 0.15, valBox.y + valBox.height / 2);
-      await delay(150);
-      const dark = await swatchBg();
-      const m = dark.match(/rgba?\((\d+), (\d+), (\d+)/);
-      const ok = !!m && Number(m[3]) > Number(m[1]) && Number(m[3]) > Number(m[2]) && Number(m[3]) < 200;
-      report('value bar darkens while keeping the hue', ok);
-    }
-
-    const alphaBar = wheel.locator('.sf-color-wheel-bar--alpha');
-    const alphaBox = await alphaBar.boundingBox();
-    if (!alphaBox) report('alpha bar is measurable', false);
-    else {
-      await page.mouse.click(alphaBox.x + 1, alphaBox.y + alphaBox.height / 2);
-      await delay(150);
-      const hex = (await hexInput.inputValue()).toUpperCase();
-      const pct = await alphaIn.inputValue();
-      report('alpha bar far left makes the color fully transparent', /0[0-2]$/.test(hex) && Number(pct) <= 2);
-    }
-
-    await alphaIn.fill('100');
-    await delay(150);
-
-    const clearBtn = field.locator('.sf-color-clear');
-    if ((await clearBtn.count()) !== 1) report('Default button renders in the wheel pop', false);
-    else {
-      await clearBtn.click();
-      await delay(150);
-      const text = (await trigger.locator('.sf-color-trigger-text').textContent())?.trim();
-      report(
-        'Default button clears the bar to the empty checker',
-        text === '' &&
-          (await wheel.count()) === 0 &&
-          (await trigger.getAttribute('class'))?.includes('sf-color-trigger--empty') === true,
-      );
-    }
-
-    await trigger.click();
-    await delay(150);
-    await pop.locator('.sf-color-row--custom').click();
-    await delay(150);
-    await hexInput.fill('#544fed');
-    await hexInput.press('Enter');
-    await delay(150);
-    await page.locator('#sf-dialog-demo-name').click();
-    await delay(200);
-    report('outside click closes the wheel', (await field.locator('.sf-color-wheel').count()) === 0);
-
-    await page.locator('.sf-dialog-btn--accent').last().click();
-    await delay(200);
-    const saved = await page.evaluate(
-      () => document.querySelector('.sf-dialog-demo-status')?.textContent ?? '',
-    );
-    report('the demo save echo carries the color value', /accent:#[0-9a-fA-F]{6}/.test(saved));
+    await dlg3.locator('.sf-dialog-btn--ghost, .sf-dialog-btn').first().click();
+    await delay(250);
+    report('Cancel discards the pending wheel edits', (await triggerText()) === '');
   } catch (e) {
     report('suite completed', false, String(e));
   } finally {

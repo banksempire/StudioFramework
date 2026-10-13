@@ -152,6 +152,14 @@ Twelve types (see `src/types/panel.ts` and `PanelComponent.vue`):
 { "type": "keyValueList", "items": [ { "key": "dev", "value": "vite" } ] }
 { "type": "list", "items": [ { "id": "1", "label": "main.ts", "icon": "📄", "badge": "3" } ] }
 { "type": "form", "fields": [], "action": "submit-form" }
+```
+
+Form `fields` accept the popup field types, including `color` (preset
+dropdown with a `Custom…` entry that opens the color wheel dialog) and
+`colorWheel` (the wheel inline in the form):
+
+```json
+{ "type": "form", "fields": [ { "key": "tint", "type": "colorWheel" } ], "action": "tint" }
 { "type": "header", "title": "History", "variant": "bar" }
 { "type": "banner", "text": "Feed disabled", "tone": "error" }
 { "type": "table", "bind": "job-runs", "columns": [ { "key": "status", "label": "Status" } ] }

@@ -62,16 +62,18 @@ const currentIndex = computed(() => {
 });
 
 const triggerLabel = computed(() => {
+  if (props.field.triggerLabel !== undefined) return props.field.triggerLabel;
   const at = currentIndex.value;
   if (at >= 0) return optionRows.value[at].option.label;
   return props.field.blankLabel ?? '';
 });
 
-const triggerBlank = computed(() => currentIndex.value < 0);
+const triggerBlank = computed(() => currentIndex.value < 0 && props.field.triggerLabel === undefined);
 
-const triggerSwatch = computed(() =>
-  currentIndex.value >= 0 ? optionRows.value[currentIndex.value].option.swatch : undefined,
-);
+const triggerSwatch = computed(() => {
+  if (props.field.triggerSwatch !== undefined) return props.field.triggerSwatch;
+  return currentIndex.value >= 0 ? optionRows.value[currentIndex.value].option.swatch : undefined;
+});
 
 function optionId(index: number) {
   return `${props.inputId}-opt-${index}`;
