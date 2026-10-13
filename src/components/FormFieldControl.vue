@@ -46,14 +46,43 @@ function stepperValue(): number {
 
 const colorRoot = ref<HTMLElement | null>(null);
 const colorOpen = ref(false);
+const listView = ref(true);
+
+const COLOR_PRESETS = [
+  { hex: '#000000', label: 'Black' },
+  { hex: '#8a919c', label: 'Grey' },
+  { hex: '#e8e8e8', label: 'White' },
+  { hex: '#ef5350', label: 'Red' },
+  { hex: '#e7c548', label: 'Amber' },
+  { hex: '#26a69a', label: 'Green' },
+  { hex: '#5b9dd8', label: 'Blue' },
+  { hex: '#c678dd', label: 'Violet' },
+];
 
 const colorValue = computed(() => {
   const v = props.values[props.field.key];
   return typeof v === 'string' && v ? v : '';
 });
 
+const colorLabel = computed(() => {
+  const v = colorValue.value;
+  if (!v) return '';
+  const preset = COLOR_PRESETS.find((p) => p.hex.toLowerCase() === v.slice(0, 7).toLowerCase());
+  if (preset) return `${preset.label} (${preset.hex.toUpperCase()})`;
+  return `Custom (${v.toUpperCase()})`;
+});
+
 function toggleColor() {
   colorOpen.value = !colorOpen.value;
+}
+
+function pickPreset(hex: string) {
+  colorOpen.value = false;
+  emit('patch', props.field.key, hex);
+}
+
+function openCustom() {
+  listView.value = false;
 }
 
 function clearColor() {
@@ -67,7 +96,10 @@ function onDocPointer(e: PointerEvent) {
 
 watch(colorOpen, (open) => {
   if (open) document.addEventListener('pointerdown', onDocPointer, true);
-  else document.removeEventListener('pointerdown', onDocPointer, true);
+  else {
+    document.removeEventListener('pointerdown', onDocPointer, true);
+    listView.value = true;
+  }
 });
 
 onBeforeUnmount(() => {
@@ -142,19 +174,33 @@ onBeforeUnmount(() => {
       :id="inputId"
       type="button"
       class="sf-color-trigger"
+      :class="{ 'sf-color-trigger--empty': !colorValue }"
       :disabled="field.disabled || busy"
       @click="toggleColor"
     >
-      <span
-        class="sf-color-swatch"
-        :class="{ 'sf-color-swatch--empty': !colorValue }"
-        :style="colorValue ? { background: colorValue } : undefined"
-      />
-      <span class="sf-color-trigger-text">{{ colorValue ? colorValue.toUpperCase() : 'Default' }}</span>
+      <span class="sf-color-bar" :style="colorValue ? { background: colorValue } : undefined">
+        <span class="sf-color-trigger-text">{{ colorLabel }}</span>
+      </span>
+      <span class="sf-color-caret">▾</span>
     </button>
     <div v-if="colorOpen" class="sf-color-pop">
-      <ColorWheel :color="colorValue" @update="(v) => emit('patch', props.field.key, v)" />
-      <button type="button" class="sf-color-clear" @click="clearColor">Default</button>
+      <template v-if="listView">
+        <button
+          v-for="p in COLOR_PRESETS"
+          :key="p.hex"
+          type="button"
+          class="sf-color-row"
+          @click="pickPreset(p.hex)"
+        >
+          <span class="sf-color-row-swatch" :style="{ background: p.hex }" />
+          <span class="sf-color-row-label">{{ p.label }} ({{ p.hex.toUpperCase() }})</span>
+        </button>
+        <button type="button" class="sf-color-row sf-color-row--custom" @click="openCustom">Custom…</button>
+      </template>
+      <template v-else>
+        <ColorWheel :color="colorValue" @update="(v) => emit('patch', props.field.key, v)" />
+        <button type="button" class="sf-color-clear" @click="clearColor">Default</button>
+      </template>
     </div>
   </div>
 </template>

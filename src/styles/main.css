@@ -3176,15 +3176,30 @@ body.sf-dragging-row * {
   align-items: center;
   gap: 6px;
   width: 100%;
-  padding: 4px 8px;
+  padding: 3px 6px 3px 3px;
   font: inherit;
   font-size: 12px;
-  color: var(--sf-text, #dde);
   text-align: left;
   background: var(--sf-bg-input, #1b1b22);
   border: 1px solid var(--sf-border, #333);
   border-radius: 4px;
   cursor: pointer;
+}
+
+.sf-color-bar {
+  display: flex;
+  flex: 1;
+  min-width: 0;
+  align-items: center;
+  justify-content: center;
+  height: 18px;
+  overflow: hidden;
+  border-radius: 2px;
+}
+
+.sf-color-trigger--empty .sf-color-bar {
+  background-image: repeating-conic-gradient(#3a3a3a 0% 25%, #262626 0% 50%);
+  background-size: 8px 8px;
 }
 
 .sf-color-trigger:disabled {
@@ -3196,25 +3211,65 @@ body.sf-dragging-row * {
   border-color: var(--sf-accent, #4499ff);
 }
 
-.sf-color-swatch {
-  display: inline-block;
-  width: 12px;
-  height: 12px;
-  flex: none;
-  border-radius: 3px;
-  border: 1px solid rgba(255, 255, 255, 0.25);
-}
-
-.sf-color-swatch--empty {
-  background-image: repeating-conic-gradient(#3a3a3a 0% 25%, #262626 0% 50%);
-  background-size: 8px 8px;
-}
-
 .sf-color-trigger-text {
   overflow: hidden;
+  max-width: 100%;
   text-overflow: ellipsis;
   white-space: nowrap;
   font-family: ui-monospace, "SF Mono", SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
+  font-size: 11px;
+  color: #ffffff;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.8);
+}
+
+.sf-color-caret {
+  flex: none;
+  color: var(--sf-text-muted, #889);
+}
+
+.sf-color-pop {
+  width: 100%;
+  max-height: 264px;
+  overflow-y: auto;
+}
+
+.sf-color-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding: 4px 8px;
+  font: inherit;
+  font-size: 12px;
+  text-align: left;
+  color: var(--sf-text, #dde);
+  background: transparent;
+  border: 0;
+  cursor: pointer;
+}
+
+.sf-color-row:hover {
+  background: var(--sf-hover-overlay, rgba(255, 255, 255, 0.06));
+}
+
+.sf-color-row-swatch {
+  display: inline-block;
+  width: 26px;
+  height: 16px;
+  flex: none;
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  border-radius: 2px;
+}
+
+.sf-color-row-label {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.sf-color-row--custom {
+  color: var(--sf-text-muted, #889);
+  border-top: 1px solid var(--sf-border, #333);
 }
 
 .sf-color-pop {

@@ -26,7 +26,7 @@ const { ensureServer, openApp, makeReporter, finish } = require('./lib/ui-test.c
 
   const swatchBg = () =>
     page.evaluate(() => {
-      const el = document.querySelector('[data-color-field="accent"] .sf-color-swatch');
+      const el = document.querySelector('[data-color-field="accent"] .sf-color-bar');
       return el ? getComputedStyle(el).backgroundColor : '';
     });
 
@@ -38,17 +38,39 @@ const { ensureServer, openApp, makeReporter, finish } = require('./lib/ui-test.c
     const trigger = field.locator('.sf-color-trigger');
     const initial = {
       text: (await trigger.locator('.sf-color-trigger-text').textContent())?.trim(),
-      swatch: await swatchBg(),
+      bar: await swatchBg(),
     };
     report(
-      'color trigger shows the initial hex and swatch',
-      initial.text === '#544FED' && initial.swatch === 'rgb(84, 79, 237)',
+      'the trigger bar is filled with the color and shows the hex',
+      initial.text === 'Custom (#544FED)' && initial.bar === 'rgb(84, 79, 237)',
+    );
+    report('the trigger carries a dropdown caret', (await trigger.locator('.sf-color-caret').count()) === 1);
+
+    await trigger.click();
+    await delay(200);
+    const pop = field.locator('.sf-color-pop');
+    report(
+      'the dropdown lists eight presets plus Custom',
+      (await pop.locator('.sf-color-row').count()) === 9 &&
+        (await pop.locator('.sf-color-row', { hasText: 'Black (#000000)' }).count()) === 1 &&
+        (await pop.locator('.sf-color-row--custom', { hasText: 'Custom…' }).count()) === 1,
+    );
+
+    await pop.locator('.sf-color-row', { hasText: 'Red (#EF5350)' }).click();
+    await delay(200);
+    report(
+      'picking a preset applies it and closes the list',
+      (await trigger.locator('.sf-color-trigger-text').textContent())?.trim() === 'Red (#EF5350)' &&
+        (await swatchBg()) === 'rgb(239, 83, 80)' &&
+        (await pop.count()) === 0,
     );
 
     await trigger.click();
     await delay(200);
+    await pop.locator('.sf-color-row--custom').click();
+    await delay(200);
     const wheel = field.locator('.sf-color-wheel');
-    report('clicking the trigger opens the color wheel', (await wheel.count()) === 1);
+    report('Custom opens the color wheel', (await wheel.count()) === 1);
     report(
       'wheel renders disc, two bars and five inputs',
       (await wheel.locator('.sf-color-wheel-disc').count()) === 1 &&
@@ -99,7 +121,7 @@ const { ensureServer, openApp, makeReporter, finish } = require('./lib/ui-test.c
         )
         .join('')}`;
     };
-    const base = rgbToHsvTest(84, 79, 237);
+    const base = rgbToHsvTest(239, 83, 80);
 
     const schemeBtn = wheel.locator('.sf-color-schemes-btn');
     report(
@@ -168,7 +190,11 @@ const { ensureServer, openApp, makeReporter, finish } = require('./lib/ui-test.c
     await hexInput.fill('#ff0000');
     await hexInput.press('Enter');
     await delay(150);
-    report('typing a hex sets the exact color', (await swatchBg()) === 'rgb(255, 0, 0)');
+    report(
+      'typing a hex sets the exact color and labels it Custom',
+      (await swatchBg()) === 'rgb(255, 0, 0)' &&
+        (await trigger.locator('.sf-color-trigger-text').textContent())?.trim() === 'Custom (#FF0000)',
+    );
 
     const rIn = wheel.locator('.sf-color-wheel-input').nth(1);
     const gIn = wheel.locator('.sf-color-wheel-input').nth(2);
@@ -233,10 +259,17 @@ const { ensureServer, openApp, makeReporter, finish } = require('./lib/ui-test.c
       await clearBtn.click();
       await delay(150);
       const text = (await trigger.locator('.sf-color-trigger-text').textContent())?.trim();
-      report('Default button clears to the empty value', text === 'Default' && (await wheel.count()) === 0);
+      report(
+        'Default button clears the bar to the empty checker',
+        text === '' &&
+          (await wheel.count()) === 0 &&
+          (await trigger.getAttribute('class'))?.includes('sf-color-trigger--empty') === true,
+      );
     }
 
     await trigger.click();
+    await delay(150);
+    await pop.locator('.sf-color-row--custom').click();
     await delay(150);
     await hexInput.fill('#544fed');
     await hexInput.press('Enter');
