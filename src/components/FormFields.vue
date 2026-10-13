@@ -65,7 +65,7 @@ function patch(key: string, value: string | number | boolean | Array<string | nu
         <label
           v-if="field.label"
           class="sf-form-label"
-          :for="field.type === 'select' ? undefined : fieldId(field)"
+          :for="field.type === 'select' || field.type === 'color' ? undefined : fieldId(field)"
         >
           {{ field.label }}
           <span v-if="field.labelNote" class="sf-form-label-note">{{ field.labelNote }}</span>
