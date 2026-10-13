@@ -3226,7 +3226,11 @@ body.sf-dragging-row * {
 
 .sf-color-caret {
   flex: none;
-  color: var(--sf-text-muted, #889);
+  width: 10px;
+  height: 6px;
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'><path d='M1 1l4 4 4-4' stroke='%23858585' stroke-width='1.5' fill='none' stroke-linecap='round'/></svg>");
+  background-repeat: no-repeat;
+  background-size: 10px 6px;
 }
 
 .sf-color-pop {

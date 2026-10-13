@@ -181,7 +181,7 @@ onBeforeUnmount(() => {
       <span class="sf-color-bar" :style="colorValue ? { background: colorValue } : undefined">
         <span class="sf-color-trigger-text">{{ colorLabel }}</span>
       </span>
-      <span class="sf-color-caret">▾</span>
+      <span class="sf-color-caret" />
     </button>
     <div v-if="colorOpen" class="sf-color-pop">
       <template v-if="listView">
