@@ -224,7 +224,11 @@ onUnmounted(() => {
     ref="triggerEl"
     type="button"
     class="sf-form-input sf-form-select"
-    :class="[{ 'sf-form-select--blank': triggerBlank }, field.inputClass]"
+    :class="[
+      { 'sf-form-select--blank': triggerBlank, 'sf-form-select--fill': field.triggerFill && !!triggerSwatch },
+      field.inputClass,
+    ]"
+    :style="field.triggerFill && triggerSwatch ? { '--sf-select-fill': triggerSwatch } : undefined"
     role="combobox"
     :aria-expanded="open"
     aria-haspopup="listbox"
@@ -237,7 +241,7 @@ onUnmounted(() => {
     @keydown.space.prevent="openPopup()"
   >
     <span
-      v-if="triggerSwatch"
+      v-if="triggerSwatch && !field.triggerFill"
       class="sf-select-swatch"
       :style="{ background: triggerSwatch }"
     ></span>{{ triggerLabel }}</button

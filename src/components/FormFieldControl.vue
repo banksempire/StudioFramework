@@ -84,6 +84,7 @@ const colorField = computed<PopupField>(() => ({
   ],
   triggerLabel: colorLabel.value,
   triggerSwatch: colorValue.value || undefined,
+  triggerFill: true,
 }));
 
 const wheelOpen = ref(false);

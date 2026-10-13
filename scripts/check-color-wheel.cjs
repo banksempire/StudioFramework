@@ -26,8 +26,9 @@ const { ensureServer, openApp, makeReporter, finish } = require('./lib/ui-test.c
 
   const barBg = () =>
     page.evaluate(() => {
-      const el = document.querySelector('[data-field="accent"] .sf-select-swatch');
-      return el ? getComputedStyle(el).backgroundColor : '';
+      const el = document.querySelector('[data-field="accent"] .sf-form-select');
+      if (!el) return '';
+      return getComputedStyle(el, '::before').backgroundColor;
     });
 
   const triggerText = () =>
@@ -42,7 +43,7 @@ const { ensureServer, openApp, makeReporter, finish } = require('./lib/ui-test.c
     const field = page.locator('[data-field="accent"]');
     report('color field renders as a unified select trigger', (await field.count()) === 1);
     report(
-      'the trigger shows the custom label and swatch',
+      'the trigger shows the custom label with the color filling the bar',
       (await triggerText()) === 'Custom (#544FED)' && (await barBg()) === 'rgb(84, 79, 237)',
     );
 
