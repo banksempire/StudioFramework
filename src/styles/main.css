@@ -2395,6 +2395,8 @@ body.sf-dragging-row * {
 }
 
 .sf-pl-grip {
+  touch-action: none;
+
   flex-shrink: 0;
   display: inline-flex;
   align-items: center;

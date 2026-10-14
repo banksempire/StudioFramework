@@ -172,6 +172,65 @@ function onRowDrop(item: PanelListItem) {
   if (from && from !== item.id) emit('bulk-reorder', from, item.id);
 }
 
+let touchDrag: { id: string; pointerId: number; el: HTMLElement } | null = null;
+
+function touchRowAt(x: number, y: number): string | null {
+  const el = document.elementFromPoint(x, y)?.closest<HTMLElement>('.sf-pl-item[data-id]');
+  return el?.dataset.id ?? null;
+}
+
+function onTouchDragMove(e: PointerEvent) {
+  if (!touchDrag) return;
+  const id = touchRowAt(e.clientX, e.clientY);
+  overId.value = id;
+  const scroller = touchDrag.el.closest<HTMLElement>('.sf-pl, .sf-pc-list');
+  if (scroller) {
+    const r = scroller.getBoundingClientRect();
+    if (e.clientY < r.top + 48) scroller.scrollTop -= 12;
+    else if (e.clientY > r.bottom - 48) scroller.scrollTop += 12;
+  }
+}
+
+function onTouchDragEnd(e: PointerEvent) {
+  if (!touchDrag) return;
+  const { id, pointerId, el } = touchDrag;
+  touchDrag = null;
+  window.removeEventListener('pointermove', onTouchDragMove);
+  window.removeEventListener('pointerup', onTouchDragEnd);
+  window.removeEventListener('pointercancel', onTouchDragEnd);
+  try {
+    el.releasePointerCapture(pointerId);
+  } catch {
+    touchDrag = null;
+  }
+  const to = touchRowAt(e.clientX, e.clientY) ?? overId.value;
+  dragId.value = null;
+  overId.value = null;
+  if (to && to !== id) emit('bulk-reorder', id, to);
+}
+
+function onGripPointerDown(item: PanelListItem, e: PointerEvent) {
+  if (e.pointerType !== 'touch' || props.draggable !== true || !item.dragType) return;
+  const el = e.currentTarget as HTMLElement;
+  try {
+    el.setPointerCapture(e.pointerId);
+  } catch {
+    touchDrag = { id: item.id, pointerId: -1, el: document.body };
+    window.addEventListener('pointermove', onTouchDragMove);
+    window.addEventListener('pointerup', onTouchDragEnd);
+    window.addEventListener('pointercancel', onTouchDragEnd);
+    dragId.value = item.id;
+    overId.value = item.id;
+    return;
+  }
+  touchDrag = { id: item.id, pointerId: e.pointerId, el };
+  dragId.value = item.id;
+  overId.value = item.id;
+  window.addEventListener('pointermove', onTouchDragMove);
+  window.addEventListener('pointerup', onTouchDragEnd);
+  window.addEventListener('pointercancel', onTouchDragEnd);
+}
+
 function onButtonClick(
   it: PanelListItem,
   b: PanelListButton,
@@ -258,6 +317,7 @@ function onButtonClick(
             title="Drag to reorder"
             @dragstart.stop="onGripStart(it, $event)"
             @dragend="onGripEnd"
+            @pointerdown="onGripPointerDown(it, $event)"
           >
             <SvgIcon name="grip" />
           </span>
