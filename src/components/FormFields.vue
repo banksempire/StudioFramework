@@ -20,27 +20,13 @@ function fieldWeight(field: PopupField): number {
 }
 
 const fieldRows = computed<PopupField[][]>(() => {
-  const cap = Math.min(Math.max(props.h2.columns ?? 1, 1), 8);
   const rows: PopupField[][] = [];
-  let cur: PopupField[] = [];
-  let sum = 0;
-  const flush = () => {
-    if (cur.length > 0) rows.push(cur);
-    cur = [];
-    sum = 0;
-  };
   for (const field of props.h2.fields) {
-    const w = fieldWeight(field);
-    if (w >= cap) {
-      flush();
-      rows.push([field]);
-      continue;
-    }
-    if (sum >= cap) flush();
-    cur.push(field);
-    sum += w;
+    const line = field.line;
+    const last = rows[rows.length - 1];
+    if (line !== undefined && last !== undefined && last[0]?.line === line) last.push(field);
+    else rows.push([field]);
   }
-  flush();
   return rows;
 });
 

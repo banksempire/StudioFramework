@@ -22,7 +22,6 @@ const formFields: PopupField[] = [
     key: 'size',
     type: 'select',
     label: 'Size',
-    span: 4,
     options: [
       { value: 's', label: 'Small' },
       { value: 'm', label: 'Medium' },
@@ -34,13 +33,13 @@ const formFields: PopupField[] = [
     key: 'accent',
     type: 'color',
     label: 'Accent color',
-    span: 2,
+    line: 'pair',
   },
   {
     key: 'tier',
     type: 'select',
     label: 'Tier',
-    span: 2,
+    line: 'pair',
     options: [
       {
         group: 'Core',
@@ -59,19 +58,20 @@ const formFields: PopupField[] = [
     key: 'alias',
     type: 'input',
     label: 'Alias',
+    line: 'weights',
     placeholder: 'span 1',
   },
   {
     key: 'tag',
     type: 'input',
     label: 'Tag',
+    line: 'weights',
     placeholder: 'span 3',
     span: 3,
   },
   {
     key: 'note',
     type: 'info',
-    span: 4,
     text: 'Info and button fields can span the grid.',
   },
   {
@@ -79,7 +79,6 @@ const formFields: PopupField[] = [
     type: 'button',
     label: 'Reset demo',
     action: 'reset-demo',
-    span: 4,
   },
 ];
 
@@ -119,8 +118,7 @@ function save() {
         <span class="sf-dialog-demo-label">Scope</span>
         <PillSelector v-model="scope" :options="scopeOptions" />
       </div>
-      <FormFields
-        :h2="{ columns: 4, fields: formFields }"
+      <FormFields :h2="{ fields: formFields }"
         :values="formValues"
         uid="sf-dialog-demo"
         @patch="patchForm"

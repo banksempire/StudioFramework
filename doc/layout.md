@@ -162,12 +162,12 @@ dropdown with a `Custom…` entry that opens the color wheel dialog) and
 { "type": "form", "fields": [ { "key": "tint", "type": "colorWheel" } ], "action": "tint" }
 ```
 
-Field `span` is a width weight (default 1). Consecutive fields share a
-row while their weights stay under the section's `columns` capacity;
-each field then takes `span / row-sum` of the row. Two `span: 1`
-fields split a row in half; `span: 1` next to `span: 3` takes a
-quarter; a field alone on its row always fills it, so `span` equal to
-`columns` keeps the full-width rows of a plain form.
+Fields have no preset grid. A field fills its whole row unless it
+carries a `line` key; consecutive fields sharing the same `line`
+render on one row and split it ad hoc in proportion to their `span`
+weights (default 1): two `span: 1` fields take half each, `span: 1`
+beside `span: 3` takes a quarter. Sizes follow the actual row space,
+so any weight mix works.
 
 ```
 { "type": "header", "title": "History", "variant": "bar" }
