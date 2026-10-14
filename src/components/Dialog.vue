@@ -7,11 +7,13 @@ const props = withDefaults(
     title: string;
     open: boolean;
     wide?: boolean;
+    lockHeight?: boolean;
     closeOnBackdrop?: boolean;
     closeOnEscape?: boolean;
   }>(),
   {
     wide: false,
+    lockHeight: false,
     closeOnBackdrop: true,
     closeOnEscape: true,
   },
@@ -23,6 +25,7 @@ const emit = defineEmits<{
 }>();
 
 const card = ref<HTMLElement | null>(null);
+const lockedHeight = ref('');
 const teleportTarget = ref<string | HTMLElement>('body');
 
 function resolveTeleportTarget() {
@@ -47,10 +50,17 @@ function onDocKey(e: KeyboardEvent) {
 
 watch(
   () => props.open,
-  (v) => {
-    if (!v) return;
+  async (v) => {
+    if (!v) {
+      lockedHeight.value = '';
+      return;
+    }
     resolveTeleportTarget();
-    void nextTick(() => card.value?.focus());
+    await nextTick();
+    if (props.lockHeight && card.value) {
+      lockedHeight.value = `${card.value.offsetHeight}px`;
+    }
+    card.value?.focus();
   },
 );
 
@@ -68,6 +78,7 @@ onUnmounted(() => window.removeEventListener('keydown', onDocKey));
         ref="card"
         class="sf-dialog"
         :class="{ 'sf-dialog--wide': props.wide }"
+        :style="lockedHeight ? { height: lockedHeight } : undefined"
         role="dialog"
         aria-modal="true"
         :aria-label="props.title"

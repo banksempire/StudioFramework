@@ -77,8 +77,21 @@ const { ensureServer, openApp, makeReporter, finish } = require('./lib/ui-test.c
       collapsed?.before > 0 && collapsed.after <= 0,
       JSON.stringify(collapsed),
     );
+    const dlgCollapsed = await panelDlg.evaluate(() => {
+      const d = document.querySelector('.sf-dialog');
+      return d ? Math.round(d.getBoundingClientRect().height) : -1;
+    });
     await panelDlg.locator('.sf-subsection-header').first().click();
     await delay(200);
+    const dlgExpanded = await panelDlg.evaluate(() => {
+      const d = document.querySelector('.sf-dialog');
+      return d ? Math.round(d.getBoundingClientRect().height) : -1;
+    });
+    report(
+      'panel popup: dialog keeps its height when sections collapse',
+      dlgCollapsed > 100 && Math.abs(dlgCollapsed - dlgExpanded) <= 1,
+      JSON.stringify({ collapsed: dlgCollapsed, expanded: dlgExpanded }),
+    );
 
     await panelDlg.locator('[data-field="pname"] input').fill('Pluto');
     await panelDlg.locator('.sf-dialog-demo-slot-input').fill('from slot');

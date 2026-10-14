@@ -152,6 +152,7 @@ defineExpose({ validate });
     :open="open"
     :title="doc.title"
     :wide="wide"
+    lock-height
     :close-on-backdrop="!disableClose && !busy"
     :close-on-escape="!disableClose && !busy"
     @update:open="(v) => emit('update:open', v)"
