@@ -257,9 +257,23 @@ const { ensureServer, openApp, makeReporter, finish } = require('./lib/ui-test.c
     await page.keyboard.press('Escape');
     await delay(80);
 
-    await page.setViewportSize({ width: 1440, height: 320 });
+    await page.setViewportSize({ width: 1440, height: 300 });
     await delay(150);
-    await trigger.click();
+    await page.evaluate(() => {
+      const body = document.querySelector('.sf-dialog .sf-dialog-body');
+      const trg = document.querySelector('#sf-dialog-demo-size');
+      if (!body || !trg) return;
+      const t = trg.getBoundingClientRect().bottom + 6;
+      const b = body.getBoundingClientRect().bottom;
+      body.scrollTop += t - b;
+    });
+    await delay(80);
+    await page.evaluate(() => {
+      const trg = document.querySelector('#sf-dialog-demo-size');
+      trg.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+    });
+    await page.locator('.sf-select-pop').waitFor({ state: 'visible', timeout: 5000 });
+    await delay(150);
     await page.locator('.sf-select-pop').waitFor({ state: 'visible', timeout: 5000 });
     await delay(150);
     const flipped = await page.evaluate(() => {

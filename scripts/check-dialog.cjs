@@ -92,6 +92,29 @@ const { ensureServer, openApp, makeReporter, finish } = require('./lib/ui-test.c
       dlgCollapsed > 100 && Math.abs(dlgCollapsed - dlgExpanded) <= 1,
       JSON.stringify({ collapsed: dlgCollapsed, expanded: dlgExpanded }),
     );
+    const vp = page.viewportSize();
+    await page.setViewportSize({ width: vp.width, height: 500 });
+    await delay(250);
+    const capped = await panelDlg.evaluate(() => {
+      const d = document.querySelector('.sf-dialog');
+      return { h: Math.round(d.getBoundingClientRect().height), vh: window.innerHeight };
+    });
+    report(
+      'panel popup: dialog height caps at four fifths of the viewport',
+      capped.h > 0 && capped.h <= Math.round(capped.vh * 0.8) + 1,
+      JSON.stringify(capped),
+    );
+    await page.setViewportSize(vp);
+    await delay(250);
+    const restored = await panelDlg.evaluate(() => {
+      const d = document.querySelector('.sf-dialog');
+      return d ? Math.round(d.getBoundingClientRect().height) : -1;
+    });
+    report(
+      'panel popup: dialog returns to its locked height after the viewport grows back',
+      Math.abs(restored - dlgExpanded) <= 1,
+      JSON.stringify({ restored, locked: dlgExpanded }),
+    );
 
     await panelDlg.locator('[data-field="pname"] input').fill('Pluto');
     await panelDlg.locator('.sf-dialog-demo-slot-input').fill('from slot');

@@ -115,7 +115,7 @@ onUnmounted(() => window.removeEventListener('keydown', onDocKey));
 
 .sf-dialog {
   width: min(440px, 100%);
-  max-height: calc(100vh - 24px);
+  max-height: 80%;
   display: flex;
   flex-direction: column;
   background: var(--sf-bg-lighter);
@@ -200,10 +200,6 @@ onUnmounted(() => window.removeEventListener('keydown', onDocKey));
   padding-bottom: calc(
     60px + var(--sf-status-slot, 38px) * var(--sf-status-reveal, 1) + var(--sf-safe-bottom, 0px) + 10px
   );
-}
-
-.sf-root--mobile .sf-dialog {
-  max-height: 100%;
 }
 
 .sf-root--mobile .sf-dialog-head {
