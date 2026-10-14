@@ -10,6 +10,7 @@
     "check": "node scripts/check-ui.cjs",
     "check:dtt": "node scripts/check-dtt.cjs",
     "check:utils": "node scripts/check-utils.cjs",
+    "check:popupdoc": "node --experimental-strip-types scripts/check-popup-doc.ts",
     "check:autohide": "node scripts/check-autohide.cjs",
     "check:mobile": "node scripts/check-mobile.cjs",
     "check:singlemenu": "node scripts/check-single-menu.cjs",
