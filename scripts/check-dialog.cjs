@@ -87,6 +87,21 @@ const { ensureServer, openApp, makeReporter, finish } = require('./lib/ui-test.c
       JSON.stringify(tintState),
     );
 
+    const btnHeight = await page.evaluate(() => {
+      const btn = [...document.querySelectorAll('.sf-form-row > .sf-dialog-btn')].at(-1);
+      const input = document.querySelector('.sf-dialog .sf-form-input');
+      if (!btn || !input) return null;
+      return {
+        btn: Math.round(btn.getBoundingClientRect().height),
+        input: Math.round(input.getBoundingClientRect().height),
+      };
+    });
+    report(
+      'a button in a form row matches the control height variable',
+      btnHeight?.btn === btnHeight?.input && btnHeight.btn > 0,
+      JSON.stringify(btnHeight),
+    );
+
     const placement = await page.evaluate(() => ({
       inRoot: !!document.querySelector('.sf-root .sf-dialog'),
       role: document.querySelector('.sf-dialog')?.getAttribute('role'),
