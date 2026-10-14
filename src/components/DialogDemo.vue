@@ -22,7 +22,7 @@ const formFields: PopupField[] = [
     key: 'size',
     type: 'select',
     label: 'Size',
-    span: 2,
+    span: 4,
     options: [
       { value: 's', label: 'Small' },
       { value: 'm', label: 'Medium' },
@@ -34,11 +34,13 @@ const formFields: PopupField[] = [
     key: 'accent',
     type: 'color',
     label: 'Accent color',
+    span: 2,
   },
   {
     key: 'tier',
     type: 'select',
     label: 'Tier',
+    span: 2,
     options: [
       {
         group: 'Core',
@@ -69,7 +71,7 @@ const formFields: PopupField[] = [
   {
     key: 'note',
     type: 'info',
-    span: 2,
+    span: 4,
     text: 'Info and button fields can span the grid.',
   },
   {
@@ -77,7 +79,7 @@ const formFields: PopupField[] = [
     type: 'button',
     label: 'Reset demo',
     action: 'reset-demo',
-    span: 2,
+    span: 4,
   },
 ];
 
@@ -118,7 +120,7 @@ function save() {
         <PillSelector v-model="scope" :options="scopeOptions" />
       </div>
       <FormFields
-        :h2="{ columns: 2, fields: formFields }"
+        :h2="{ columns: 4, fields: formFields }"
         :values="formValues"
         uid="sf-dialog-demo"
         @patch="patchForm"
