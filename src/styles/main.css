@@ -703,18 +703,18 @@ html.sf-standalone #framework {
   position: sticky;
   top: 0;
   z-index: 1;
-  background: var(--sf-panel-bg);
+  background: transparent;
   box-shadow:
-    inset 0 1px 0 var(--sf-border),
-    inset 0 -1px 0 var(--sf-border);
+    inset 0 2px 0 var(--sf-text-bright),
+    inset 0 -2px 0 var(--sf-text-bright);
 }
 
 @media (hover: hover) {
   .sf-subsection-header:hover {
     box-shadow:
       inset 0 0 0 999px var(--sf-hover-overlay),
-      inset 0 1px 0 var(--sf-border),
-      inset 0 -1px 0 var(--sf-border);
+      inset 0 2px 0 var(--sf-text-bright),
+      inset 0 -2px 0 var(--sf-text-bright);
   }
 }
 
