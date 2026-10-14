@@ -28,6 +28,43 @@ const { ensureServer, openApp, makeReporter, finish } = require('./lib/ui-test.c
     const dialog = page.locator('.sf-dialog');
     await dialog.waitFor({ state: 'visible', timeout: 5000 });
 
+    const grid = await page.evaluate(() => {
+      const g = document.querySelector('.sf-dialog .sf-form-grid');
+      if (!g) return null;
+      const gr = g.getBoundingClientRect();
+      const box = (sel) => {
+        const el = g.querySelector(sel);
+        if (!el) return null;
+        const r = el.getBoundingClientRect();
+        return { x: Math.round(r.x), y: Math.round(r.y), w: Math.round(r.width) };
+      };
+      return {
+        cols: g.getAttribute('data-cols'),
+        gridW: Math.round(gr.width),
+        info: box('.sf-form-info'),
+        btn: box('.sf-dialog-btn.sf-form-grid .sf-dialog-btn') ?? box('button.sf-dialog-btn'),
+        accent: box('[data-field="accent"]'),
+        tier: box('[data-field="tier"]'),
+      };
+    });
+    const gridOk =
+      grid &&
+      grid.cols === '2' &&
+      grid.info &&
+      grid.btn &&
+      grid.accent &&
+      grid.tier &&
+      grid.info.w > grid.gridW * 0.9 &&
+      grid.btn.w > grid.gridW * 0.9 &&
+      Math.abs(grid.accent.y - grid.tier.y) <= 2 &&
+      grid.accent.w < grid.gridW * 0.6 &&
+      grid.tier.w < grid.gridW * 0.6;
+    report(
+      'form grid spans: info and buttons fill the row, fields pair on one row',
+      Boolean(gridOk),
+      JSON.stringify(grid),
+    );
+
     const placement = await page.evaluate(() => ({
       inRoot: !!document.querySelector('.sf-root .sf-dialog'),
       role: document.querySelector('.sf-dialog')?.getAttribute('role'),

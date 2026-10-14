@@ -22,6 +22,7 @@ const formFields: PopupField[] = [
     key: 'size',
     type: 'select',
     label: 'Size',
+    span: 2,
     options: [
       { value: 's', label: 'Small' },
       { value: 'm', label: 'Medium' },
@@ -52,9 +53,29 @@ const formFields: PopupField[] = [
       },
     ],
   },
+  {
+    key: 'note',
+    type: 'info',
+    span: 2,
+    text: 'Info and button fields can span the grid.',
+  },
+  {
+    key: 'reset',
+    type: 'button',
+    label: 'Reset demo',
+    action: 'reset-demo',
+    span: 2,
+  },
 ];
 
 const formValues = ref<Record<string, string>>({ size: 'm', tier: 'b', accent: '#544fed' });
+
+function onFormAction(id: string) {
+  if (id === 'reset-demo') {
+    formValues.value = { size: 'm', tier: 'b', accent: '#544fed' };
+    lastResult.value = 'reset demo values';
+  }
+}
 
 function patchForm(key: string, value: string | number | boolean | Array<string | number>) {
   formValues.value[key] = String(value);
@@ -83,7 +104,13 @@ function save() {
         <span class="sf-dialog-demo-label">Scope</span>
         <PillSelector v-model="scope" :options="scopeOptions" />
       </div>
-      <FormFields :h2="{ fields: formFields }" :values="formValues" uid="sf-dialog-demo" @patch="patchForm" />
+      <FormFields
+        :h2="{ columns: 2, fields: formFields }"
+        :values="formValues"
+        uid="sf-dialog-demo"
+        @patch="patchForm"
+        @action="onFormAction"
+      />
       <template #actions="{ close }">
         <button class="sf-dialog-btn" type="button" @click="close()">Cancel</button>
         <button class="sf-dialog-btn sf-dialog-btn--accent" type="button" @click="save">Save</button>

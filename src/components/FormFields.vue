@@ -43,12 +43,14 @@ function patch(key: string, value: string | number | boolean | Array<string | nu
           'sf-form-info--warn': field.hintTone === 'warn',
           'sf-form-info--error': field.hintTone === 'error',
         }]"
+        :style="fieldSpan(field)"
       >{{ field.text }}</div>
       <button
         v-else-if="field.type === 'button'"
         type="button"
         class="sf-dialog-btn"
         :class="field.variant && field.variant !== 'default' ? `sf-dialog-btn--${field.variant}` : undefined"
+        :style="fieldSpan(field)"
         :disabled="field.disabled || busy"
         :title="field.labelNote"
         @click="emit('action', field.action ?? field.key, field.key)"
