@@ -55,6 +55,13 @@ const formFields: PopupField[] = [
     ],
   },
   {
+    key: 'tint',
+    type: 'color',
+    label: 'Tint',
+    emptyLabel: 'Default (#544FED)',
+    emptySwatch: '#544fed',
+  },
+  {
     key: 'alias',
     type: 'input',
     label: 'Alias',

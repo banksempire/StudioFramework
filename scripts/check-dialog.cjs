@@ -47,6 +47,7 @@ const { ensureServer, openApp, makeReporter, finish } = require('./lib/ui-test.c
         tier: box('[data-field="tier"]'),
         alias: box('[data-field="alias"]'),
         tag: box('[data-field="tag"]'),
+        tint: box('[data-field="tint"]'),
       };
     });
     const gridOk =
@@ -70,6 +71,20 @@ const { ensureServer, openApp, makeReporter, finish } = require('./lib/ui-test.c
       'form span weights: full rows, halves and a 1+3 quarter pair',
       Boolean(gridOk),
       JSON.stringify(grid),
+    );
+
+    const tintState = await page.evaluate(() => {
+      const el = document.querySelector('[data-field="tint"] .sf-form-select');
+      if (!el) return null;
+      return {
+        label: el.textContent?.trim(),
+        fill: getComputedStyle(el).getPropertyValue('--sf-select-fill').trim().toLowerCase(),
+      };
+    });
+    report(
+      'an unset color field shows its effective default instead of a blank trigger',
+      tintState?.label === 'Default (#544FED)' && tintState.fill === '#544fed',
+      JSON.stringify(tintState),
     );
 
     const placement = await page.evaluate(() => ({

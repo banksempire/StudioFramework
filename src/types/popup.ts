@@ -56,6 +56,8 @@ export interface PopupField {
   triggerLabel?: string;
   triggerSwatch?: string;
   triggerFill?: boolean;
+  emptyLabel?: string;
+  emptySwatch?: string;
   min?: number;
   max?: number;
   step?: number;

@@ -82,8 +82,8 @@ const colorField = computed<PopupField>(() => ({
     })),
     { value: COLOR_CUSTOM, label: 'Custom…' },
   ],
-  triggerLabel: colorLabel.value,
-  triggerSwatch: colorValue.value || undefined,
+  triggerLabel: colorValue.value ? colorLabel.value : (props.field.emptyLabel ?? ''),
+  triggerSwatch: colorValue.value || props.field.emptySwatch || undefined,
   triggerFill: true,
 }));
 
