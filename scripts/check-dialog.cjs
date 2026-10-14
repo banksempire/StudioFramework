@@ -39,28 +39,35 @@ const { ensureServer, openApp, makeReporter, finish } = require('./lib/ui-test.c
         return { x: Math.round(r.x), y: Math.round(r.y), w: Math.round(r.width) };
       };
       return {
-        cols: g.getAttribute('data-cols'),
+        rows: g.querySelectorAll('.sf-form-row').length,
         gridW: Math.round(gr.width),
         info: box('.sf-form-info'),
-        btn: box('.sf-dialog-btn.sf-form-grid .sf-dialog-btn') ?? box('button.sf-dialog-btn'),
+        btn: box('button.sf-dialog-btn'),
         accent: box('[data-field="accent"]'),
         tier: box('[data-field="tier"]'),
+        alias: box('[data-field="alias"]'),
+        tag: box('[data-field="tag"]'),
       };
     });
     const gridOk =
       grid &&
-      grid.cols === '2' &&
+      grid.rows >= 4 &&
       grid.info &&
       grid.btn &&
       grid.accent &&
       grid.tier &&
+      grid.alias &&
+      grid.tag &&
       grid.info.w > grid.gridW * 0.9 &&
       grid.btn.w > grid.gridW * 0.9 &&
       Math.abs(grid.accent.y - grid.tier.y) <= 2 &&
+      Math.abs(grid.accent.w - grid.tier.w) < 6 &&
       grid.accent.w < grid.gridW * 0.6 &&
-      grid.tier.w < grid.gridW * 0.6;
+      Math.abs(grid.alias.y - grid.tag.y) <= 2 &&
+      Math.abs(grid.alias.w - grid.gridW / 4) < grid.gridW * 0.1 &&
+      Math.abs(grid.tag.w - (grid.gridW * 3) / 4) < grid.gridW * 0.1;
     report(
-      'form grid spans: info and buttons fill the row, fields pair on one row',
+      'form span weights: full rows, halves and a 1+3 quarter pair',
       Boolean(gridOk),
       JSON.stringify(grid),
     );

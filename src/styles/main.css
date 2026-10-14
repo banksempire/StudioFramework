@@ -2793,20 +2793,15 @@ body.sf-dragging-row * {
 }
 
 .sf-form-grid {
-  display: grid;
+  display: flex;
+  flex-direction: column;
   gap: 10px;
 }
 
-.sf-form-grid[data-cols="2"] {
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-}
-
-.sf-form-grid[data-cols="3"] {
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-}
-
-.sf-form-grid[data-cols="4"] {
-  grid-template-columns: repeat(4, minmax(0, 1fr));
+.sf-form-row {
+  display: flex;
+  gap: 10px;
+  min-width: 0;
 }
 
 .sf-form-field {
@@ -3154,16 +3149,6 @@ body.sf-dragging-row * {
 
 .sf-form-footnote--error {
   color: var(--sf-status-err);
-}
-
-.sf-root--mobile .sf-form-grid[data-cols="3"],
-.sf-root--mobile .sf-form-grid[data-cols="4"] {
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-}
-
-.sf-root--mobile .sf-form-grid[data-cols="3"] > .sf-form-field,
-.sf-root--mobile .sf-form-grid[data-cols="4"] > .sf-form-field {
-  grid-column: auto;
 }
 
 .sf-form-select--fill {

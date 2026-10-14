@@ -54,6 +54,19 @@ const formFields: PopupField[] = [
     ],
   },
   {
+    key: 'alias',
+    type: 'input',
+    label: 'Alias',
+    placeholder: 'span 1',
+  },
+  {
+    key: 'tag',
+    type: 'input',
+    label: 'Tag',
+    placeholder: 'span 3',
+    span: 3,
+  },
+  {
     key: 'note',
     type: 'info',
     span: 2,
