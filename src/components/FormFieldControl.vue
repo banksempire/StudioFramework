@@ -92,7 +92,13 @@ const wheelValues = ref<PopupValues>({ color: '' });
 
 const wheelDoc: PopupDocument = {
   title: 'Pick a color',
-  h2: [{ fields: [{ key: 'color', type: 'colorWheel', span: 2 }] }],
+  h1: [
+    {
+      id: 'color',
+      title: 'Pick a color',
+      h2: [{ title: 'Pick a color', fields: [{ key: 'color', type: 'colorWheel', span: 2 }] }],
+    },
+  ],
   actions: [
     { id: 'clear', label: 'Default', align: 'left' },
     { id: 'cancel', label: 'Cancel', close: true },

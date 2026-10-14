@@ -1,10 +1,10 @@
 <script setup lang="ts">
 import { computed } from 'vue';
-import type { PopupField, PopupH2, PopupValues } from '../types/popup';
+import type { PopupField, PopupFieldGroup, PopupValues } from '../types/popup';
 import FormFieldControl from './FormFieldControl.vue';
 
 const props = defineProps<{
-  h2: PopupH2;
+  h2: PopupFieldGroup;
   values: PopupValues;
   uid: string;
   busy?: boolean;

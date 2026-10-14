@@ -67,11 +67,14 @@ export interface PopupField {
   inputClass?: string;
 }
 
-export interface PopupH2 {
-  title?: string;
-  note?: string;
+export interface PopupFieldGroup {
   fields: PopupField[];
+  note?: string;
   extraSlot?: string;
+}
+
+export interface PopupH2 extends PopupFieldGroup {
+  title: string;
 }
 
 export interface PopupH1 {
@@ -95,8 +98,7 @@ export interface PopupAction {
 
 export interface PopupDocument {
   title: string;
-  h1?: PopupH1[];
-  h2?: PopupH2[];
+  h1: PopupH1[];
   actions?: PopupAction[];
 }
 
