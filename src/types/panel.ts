@@ -225,6 +225,7 @@ export type PanelComponentBase =
       bind?: string;
       empty?: string;
       action?: string;
+      extraSlot?: string;
     }
   | {
       type: 'header';

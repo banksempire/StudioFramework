@@ -1,12 +1,67 @@
 <script setup lang="ts">
 import { ref } from 'vue';
-import type { PopupField } from '../types/popup';
+import type { PopupDocument, PopupField, PopupValues } from '../types/popup';
 import Dialog from './Dialog.vue';
 import FormFields from './FormFields.vue';
 import PillSelector from './PillSelector.vue';
+import PopupDialog from './PopupDialog.vue';
 
 const open = ref(false);
 const wideOpen = ref(false);
+const panelOpen = ref(false);
+const panelValues = ref<PopupValues>({ pname: '', pslot: '', ptier2: 'a' });
+
+const panelDoc: PopupDocument = {
+  title: 'Panel popup',
+  h1: [
+    {
+      id: 'general',
+      title: 'General',
+      h2: [
+        {
+          title: 'Identity',
+          fields: [
+            { key: 'pname', type: 'input', label: 'Name' },
+            { key: 'pslot', type: 'slot', label: 'Slot' },
+          ],
+        },
+      ],
+    },
+    {
+      id: 'advanced',
+      title: 'Advanced',
+      h2: [
+        {
+          title: 'Options',
+          fields: [
+            {
+              key: 'ptier2',
+              type: 'select',
+              label: 'Tier',
+              options: [
+                { value: 'a', label: 'Alpha' },
+                { value: 'b', label: 'Beta' },
+              ],
+            },
+            { key: 'pping', type: 'button', label: 'Ping', action: 'ping-demo' },
+          ],
+        },
+      ],
+    },
+  ],
+  actions: [
+    { id: 'cancel', label: 'Cancel', close: true },
+    { id: 'psave', label: 'Save', tone: 'accent', close: true },
+  ],
+};
+
+function onPanelAction(id: string) {
+  if (id === 'psave') {
+    lastResult.value = `panel saved ${panelValues.value.pname ?? ''}/${panelValues.value.pslot ?? ''}/${panelValues.value.ptier2 ?? ''}`;
+  } else if (id === 'ping-demo') {
+    lastResult.value = 'pinged';
+  }
+}
 const name = ref('panel-1');
 const scope = ref('workspace');
 const lastResult = ref('');
@@ -114,6 +169,7 @@ function save() {
     <div class="sf-dialog-demo-row">
       <button class="sf-dialog-demo-open" type="button" @click="open = true">Open element popup</button>
       <button class="sf-dialog-demo-open-wide" type="button" @click="wideOpen = true">Open wide popup</button>
+      <button class="sf-dialog-demo-open-panel" type="button" @click="panelOpen = true">Open panel popup</button>
     </div>
     <div class="sf-dialog-demo-status">{{ lastResult || 'popup not opened yet' }}</div>
     <Dialog v-model:open="open" title="Edit element">
@@ -136,6 +192,21 @@ function save() {
         <button class="sf-dialog-btn sf-dialog-btn--accent" type="button" @click="save">Save</button>
       </template>
     </Dialog>
+    <PopupDialog
+      v-model:open="panelOpen"
+      :doc="panelDoc"
+      :values="panelValues"
+      @update:values="(v) => (panelValues = v)"
+      @action="onPanelAction"
+    >
+      <template #field-pslot>
+        <input
+          v-model="panelValues.pslot"
+          class="sf-form-input sf-dialog-demo-slot-input"
+          placeholder="slotted control"
+        />
+      </template>
+    </PopupDialog>
     <Dialog v-model:open="wideOpen" wide title="Edit element (wide)">
       <div class="sf-dialog-demo-field">
         <label class="sf-dialog-demo-label" for="sf-dialog-demo-wide-name">Name</label>

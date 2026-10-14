@@ -1,8 +1,10 @@
 <script setup lang="ts">
 import { computed, ref, useSlots } from 'vue';
-import type { PopupDocument, PopupH2, PopupValues } from '../types/popup';
+import { popupH1Groups, toPanelH1 } from '../lib/popupPanel';
+import type { PanelAction } from '../types/panel';
+import type { PopupDocument, PopupValues } from '../types/popup';
 import Dialog from './Dialog.vue';
-import FormFields from './FormFields.vue';
+import SubsectionBody from './SubsectionBody.vue';
 
 const props = withDefaults(
   defineProps<{
@@ -40,15 +42,16 @@ const emit = defineEmits<{
 }>();
 
 const slots = useSlots();
-const uid = `sf-form-${Math.random().toString(36).slice(2, 8)}`;
 const activeH1 = ref('');
 const contentEl = ref<HTMLElement | null>(null);
 
-const h1s = computed(() =>
-  props.doc.h1 && props.doc.h1.length > 0
-    ? props.doc.h1
-    : [{ id: 'main', title: props.doc.title, h2: props.doc.h2 ?? [] }],
+const h1s = computed(() => popupH1Groups(props.doc));
+
+const panelGroups = computed(() =>
+  h1s.value.map((group) => ({ group, panel: toPanelH1(group, props.values) })),
 );
+
+const noHidden = computed(() => new Set<string>());
 
 const hasNav = computed(() => (props.doc.h1?.length ?? 0) > 1);
 
@@ -70,7 +73,7 @@ function isEmpty(value: unknown): boolean {
 
 function validate(): string | null {
   for (const h1 of h1s.value) {
-    for (const h2 of h1.h2) {
+    for (const h2 of h1.h2s) {
       for (const field of h2.fields) {
         if (
           field.type === 'info' ||
@@ -99,6 +102,16 @@ function jump(h1Id: string) {
   contentEl.value
     ?.querySelector(`[data-popup-h1="${h1Id}"]`)
     ?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+function onPanelComponentAction(a: PanelAction) {
+  if (a.source !== 'form') return;
+  const payload = (a.payload ?? {}) as { key?: string; value?: unknown };
+  if (typeof payload.key === 'string' && payload.value !== undefined) {
+    patch(payload.key, payload.value as string | number | boolean | Array<string | number>);
+    return;
+  }
+  if (a.action) emit('action', a.action);
 }
 
 function onContentScroll() {
@@ -160,32 +173,23 @@ defineExpose({ validate });
       <div ref="contentEl" class="sf-form-content" @scroll.passive="onContentScroll">
         <slot name="preamble" />
         <section
-          v-for="(h1, gi) in h1s"
-          :key="h1.id"
+          v-for="entry in panelGroups"
+          :key="entry.group.id"
           class="sf-form-group"
-          :data-popup-h1="h1.id"
+          :data-popup-h1="entry.group.id"
         >
-          <h2 v-if="hasNav && h1.title" class="sf-form-group-title">{{ h1.title }}</h2>
-          <section
-            v-for="(h2, si) in h1.h2"
-            :key="h2.title ?? si"
-            class="sf-form-section"
-            :class="{ 'sf-form-section--first': si === 0 && !(hasNav && gi === 0) }"
+          <h2 v-if="hasNav && entry.group.title" class="sf-form-group-title">
+            {{ entry.group.title }}
+          </h2>
+          <SubsectionBody
+            :h2s="entry.panel.h2"
+            :hidden-ids="noHidden"
+            @component-action="onPanelComponentAction"
           >
-            <h3 v-if="h2.title" class="sf-form-section-title">{{ h2.title }}</h3>
-            <FormFields
-              :h2="h2"
-              :values="values"
-              :uid="uid"
-              :busy="busy"
-              @patch="patch"
-              @action="(id, key) => emit('action', id, key)"
-            >
-              <template v-for="(_, name) in $slots" :key="name" #[name]="slotProps">
-                <slot :name="name" v-bind="slotProps ?? {}" />
-              </template>
-            </FormFields>
-          </section>
+            <template v-for="(_, name) in $slots" :key="name" #[name]="slotProps">
+              <slot :name="name" v-bind="slotProps ?? {}" />
+            </template>
+          </SubsectionBody>
         </section>
         <p v-if="error" class="sf-form-error">{{ error }}</p>
         <p

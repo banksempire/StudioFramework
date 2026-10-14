@@ -23,6 +23,78 @@ const { ensureServer, openApp, makeReporter, finish } = require('./lib/ui-test.c
     await openDemoPanel(page);
     report('demo panel hosts the popup trigger', (await page.locator('.sf-dialog-demo-open').count()) === 1);
 
+    await page.locator('.sf-dialog-demo-open-panel').click();
+    await delay(300);
+    const panelDlg = page.locator('.sf-dialog');
+    await panelDlg.waitFor({ state: 'visible', timeout: 5000 });
+
+    const panelState = await page.evaluate(() => {
+      const dlg = document.querySelector('.sf-dialog');
+      const nav = dlg?.querySelectorAll('.sf-form-nav-item');
+      const bars = dlg?.querySelectorAll('.sf-subsection-header');
+      const labels = dlg
+        ? [...dlg.querySelectorAll('.sf-subsection-label')].map((el) => el.textContent?.trim())
+        : [];
+      const slot = dlg?.querySelector('.sf-dialog-demo-slot-input');
+      return {
+        navItems: nav?.length ?? 0,
+        navTitles: nav ? [...nav].map((n) => n.textContent?.trim()) : [],
+        bars: bars?.length ?? 0,
+        labels,
+        hasSlot: !!slot,
+      };
+    });
+    report(
+      'panel popup: H1 TOC on the left, panel-style section bars, slotted control',
+      panelState.navItems === 2 &&
+        JSON.stringify(panelState.navTitles) === JSON.stringify(['General', 'Advanced']) &&
+        panelState.bars === 2 &&
+        JSON.stringify(panelState.labels) === JSON.stringify(['Identity', 'Options']) &&
+        panelState.hasSlot,
+      JSON.stringify(panelState),
+    );
+
+    const subId = 'general::Identity';
+    const collapsed = await page.evaluate((sid) => {
+      const dlg = document.querySelector('.sf-dialog');
+      const bar = dlg?.querySelector('.sf-subsection-header');
+      const body = dlg?.querySelector(`[data-sub-body="${sid}"]`);
+      if (!bar || !body) return null;
+      const before = Math.round(body.getBoundingClientRect().height);
+      bar.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+      return new Promise((resolve) =>
+        setTimeout(() => {
+          const after = document.querySelector(`.sf-dialog [data-sub-body="${sid}"]`);
+          resolve({
+            before,
+            after: after ? Math.round(after.getBoundingClientRect().height) : -1,
+          });
+        }, 250),
+      );
+    }, subId);
+    report(
+      'panel popup: section bars collapse like panels',
+      collapsed?.before > 0 && collapsed.after <= 0,
+      JSON.stringify(collapsed),
+    );
+    await panelDlg.locator('.sf-subsection-header').first().click();
+    await delay(200);
+
+    await panelDlg.locator('[data-field="pname"] input').fill('Pluto');
+    await panelDlg.locator('.sf-dialog-demo-slot-input').fill('from slot');
+    await delay(150);
+    await panelDlg.locator('.sf-dialog-btn--accent').last().click();
+    await delay(200);
+    const savedStatus = await page.evaluate(
+      () => document.querySelector('.sf-dialog-demo-status')?.textContent,
+    );
+    report(
+      'panel popup: field and slotted values reach save',
+      savedStatus?.includes('panel saved Pluto/from slot/a') === true,
+      JSON.stringify(savedStatus),
+    );
+    await delay(200);
+
     await page.locator('.sf-dialog-demo-open').click();
     await delay(150);
     const dialog = page.locator('.sf-dialog');

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, nextTick, onMounted, onUnmounted, reactive, ref, watch } from 'vue';
+import { computed, nextTick, onMounted, onUnmounted, reactive, ref, useSlots, watch } from 'vue';
 import type { PanelAction, PanelH2 } from '../types/panel';
 import { readUiValue, uiEpoch, writeUiValue } from '../uiState';
 import SubSection from './SubSection.vue';
@@ -23,6 +23,9 @@ const emit = defineEmits<{
 }>();
 
 const TITLE_BAR_H = 30;
+
+const slots = useSlots();
+const passthroughSlots = computed(() => Object.keys(slots).filter((n) => n !== 'trailing'));
 
 const bodyEl = ref<HTMLElement | null>(null);
 const bodyHeight = ref(0);
@@ -416,6 +419,9 @@ onUnmounted(() => {
         @content-changed="refresh(true)"
         @component-action="(a) => emit('component-action', a)"
       >
+        <template v-for="name in passthroughSlots" :key="name" #[name]="sp">
+          <slot :name="name" v-bind="sp ?? {}" />
+        </template>
         <template #trailing>
           <template v-if="!collapseHides.collapsedLeaders.has(block.h2.id)">
             <template v-for="entry in block.trailing" :key="entry.sub.id">
@@ -427,7 +433,11 @@ onUnmounted(() => {
                 @utility="(utilityId, itemId) => emit('utility', entry.sub.id, utilityId, itemId)"
                 @content-changed="refresh(true)"
                 @component-action="(a) => emit('component-action', a)"
-              />
+              >
+                <template v-for="name in passthroughSlots" :key="name" #[name]="sp">
+                  <slot :name="name" v-bind="sp ?? {}" />
+                </template>
+              </SubSection>
               <div
                 v-if="entry.index < visibleSubSections.length - 1 && handleFlags[entry.index]"
                 class="sf-subsection-drag-wrapper"

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, ref } from 'vue';
+import { computed, ref, useSlots } from 'vue';
 import { getPanelData, getUtilityMenu } from '../registry';
 import type { PanelAction, PanelBulkAction, PanelH2 } from '../types/panel';
 import Menu from './Menu.vue';
@@ -20,6 +20,9 @@ const emit = defineEmits<{
 }>();
 
 const openMenuId = ref<string | null>(null);
+
+const slots = useSlots();
+const passthroughSlots = computed(() => Object.keys(slots).filter((n) => n !== 'trailing'));
 
 interface BulkRec {
   active?: boolean;
@@ -224,7 +227,11 @@ function menuItemsOf(utilId: string) {
         :component="comp"
         @content-changed="emit('content-changed')"
         @action="(a) => emit('component-action', a)"
-      />
+      >
+        <template v-for="name in passthroughSlots" :key="name" #[name]="sp">
+          <slot :name="name" v-bind="sp ?? {}" />
+        </template>
+      </PanelComponent>
     </div>
     <slot name="trailing" />
   </div>
