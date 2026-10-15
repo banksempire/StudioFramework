@@ -62,6 +62,7 @@ watch(
     }
     card.value?.focus();
   },
+  { immediate: true },
 );
 
 onMounted(() => {

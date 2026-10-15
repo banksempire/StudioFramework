@@ -79,19 +79,28 @@ const { ensureServer, openApp, makeReporter, finish } = require('./lib/ui-test.c
     );
     const dlgCollapsed = await panelDlg.evaluate(() => {
       const d = document.querySelector('.sf-dialog');
-      return d ? Math.round(d.getBoundingClientRect().height) : -1;
+      for (const bar of d.querySelectorAll('.sf-subsection-header')) {
+        if (bar.closest('.sf-subsection').querySelector('[data-sub-body]'))
+          bar.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+      }
+      return Math.round(d.getBoundingClientRect().height);
     });
-    await panelDlg.locator('.sf-subsection-header').first().click();
-    await delay(200);
+    await delay(250);
     const dlgExpanded = await panelDlg.evaluate(() => {
       const d = document.querySelector('.sf-dialog');
-      return d ? Math.round(d.getBoundingClientRect().height) : -1;
+      for (const bar of d.querySelectorAll('.sf-subsection-header')) {
+        if (!bar.closest('.sf-subsection').querySelector('[data-sub-body]'))
+          bar.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+      }
+      return Math.round(d.getBoundingClientRect().height);
     });
+    await delay(250);
     report(
-      'panel popup: dialog keeps its height when sections collapse',
+      'panel popup: dialog keeps its height when all sections collapse',
       dlgCollapsed > 100 && Math.abs(dlgCollapsed - dlgExpanded) <= 1,
       JSON.stringify({ collapsed: dlgCollapsed, expanded: dlgExpanded }),
     );
+
     const vp = page.viewportSize();
     await page.setViewportSize({ width: vp.width, height: 500 });
     await delay(250);
