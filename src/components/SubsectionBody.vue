@@ -10,10 +10,12 @@ const props = withDefaults(
     hiddenIds: Set<string>;
     stateKey?: string;
     mobile?: boolean;
+    scroll?: boolean;
   }>(),
   {
     stateKey: '',
     mobile: false,
+    scroll: true,
   },
 );
 
@@ -408,7 +410,11 @@ onUnmounted(() => {
 </script>
 
 <template>
-  <div ref="bodyEl" class="sf-subsection-body-container" :style="{ overflowY: ready ? 'auto' : 'hidden' }">
+  <div
+    ref="bodyEl"
+    class="sf-subsection-body-container"
+    :style="{ overflowY: !scroll ? 'visible' : ready ? 'auto' : 'hidden' }"
+  >
     <template v-for="block in blocks" :key="block.key">
       <SubSection
         :section="block.h2"

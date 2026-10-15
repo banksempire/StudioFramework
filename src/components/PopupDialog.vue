@@ -185,6 +185,7 @@ defineExpose({ validate });
           <SubsectionBody
             :h2s="entry.panel.h2"
             :hidden-ids="noHidden"
+            :scroll="false"
             @component-action="onPanelComponentAction"
           >
             <template v-for="(_, name) in $slots" :key="name" #[name]="slotProps">

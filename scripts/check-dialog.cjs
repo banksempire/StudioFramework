@@ -113,6 +113,42 @@ const { ensureServer, openApp, makeReporter, finish } = require('./lib/ui-test.c
       capped.h > 0 && capped.h <= Math.round(capped.vh * 0.8) + 1,
       JSON.stringify(capped),
     );
+    const barStick = await page.evaluate(
+      () =>
+        new Promise((resolve) => {
+          const dlg = document.querySelector('.sf-dialog');
+          const bar = dlg?.querySelector('.sf-subsection-header');
+          const dialogBody = dlg?.querySelector('.sf-dialog-body');
+          if (!bar || !dialogBody) return resolve(null);
+          const bodyTop = Math.round(dialogBody.getBoundingClientRect().top);
+          const before = Math.round(bar.getBoundingClientRect().top);
+          const beforeScroll = dialogBody.scrollTop;
+          dialogBody.scrollTop = beforeScroll + 120;
+          setTimeout(() => {
+            const after = Math.round(bar.getBoundingClientRect().top);
+            resolve({
+              before,
+              after,
+              bodyTop,
+              scrolled: dialogBody.scrollTop - beforeScroll,
+            });
+          }, 200);
+        }),
+    );
+    report(
+      'popup: section bar pins while the dialog scrolls',
+      barStick !== null &&
+        barStick.scrolled >= 100 &&
+        barStick.after > barStick.bodyTop &&
+        barStick.after <= barStick.bodyTop + 30 &&
+        barStick.before - barStick.after < barStick.scrolled,
+      JSON.stringify(barStick),
+    );
+    await page.evaluate(() => {
+      const dialogBody = document.querySelector('.sf-dialog .sf-dialog-body');
+      if (dialogBody) dialogBody.scrollTop = 0;
+    });
+    await delay(150);
     await page.setViewportSize(vp);
     await delay(250);
     const restored = await panelDlg.evaluate(() => {
