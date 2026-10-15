@@ -100,6 +100,36 @@ const { ensureServer, openApp, makeReporter, finish } = require('./lib/ui-test.c
       dlgCollapsed > 100 && Math.abs(dlgCollapsed - dlgExpanded) <= 1,
       JSON.stringify({ collapsed: dlgCollapsed, expanded: dlgExpanded }),
     );
+    await panelDlg.evaluate(() => {
+      const d = document.querySelector('.sf-dialog');
+      for (const bar of d.querySelectorAll('.sf-subsection-header')) {
+        if (bar.closest('.sf-subsection').querySelector('[data-sub-body]'))
+          bar.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+      }
+    });
+    await delay(250);
+    const footPinned = await page.evaluate(() => {
+      const dlg = document.querySelector('.sf-dialog');
+      const foot = dlg?.querySelector('.sf-dialog-foot');
+      if (!dlg || !foot) return null;
+      return {
+        footBottom: Math.round(foot.getBoundingClientRect().bottom),
+        dlgBottom: Math.round(dlg.getBoundingClientRect().bottom),
+      };
+    });
+    report(
+      'popup: action footer stays at the dialog bottom when sections collapse',
+      footPinned !== null && Math.abs(footPinned.footBottom - footPinned.dlgBottom) <= 1,
+      JSON.stringify(footPinned),
+    );
+    await panelDlg.evaluate(() => {
+      const d = document.querySelector('.sf-dialog');
+      for (const bar of d.querySelectorAll('.sf-subsection-header')) {
+        if (!bar.closest('.sf-subsection').querySelector('[data-sub-body]'))
+          bar.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+      }
+    });
+    await delay(250);
 
     const vp = page.viewportSize();
     await page.setViewportSize({ width: vp.width, height: 500 });

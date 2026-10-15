@@ -176,6 +176,8 @@ onUnmounted(() => window.removeEventListener('keydown', onDocKey));
 
 .sf-dialog-body {
   display: flex;
+  flex: 1;
+  min-height: 0;
   flex-direction: column;
   gap: 9px;
   padding: 12px 14px;
