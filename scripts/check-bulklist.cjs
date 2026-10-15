@@ -4,7 +4,7 @@ const { ensureServer, makeReporter, finish } = require('./lib/ui-test.cjs');
 (async () => {
   const serverProc = await ensureServer();
   const browser = await chromium.launch();
-  const context = await browser.newContext({ viewport: { width: 1300, height: 1500 } });
+  const context = await browser.newContext({ viewport: { width: 1300, height: 900 } });
   await context.addInitScript(() => {
     if (!sessionStorage.getItem('bulk-list-cleared')) {
       sessionStorage.setItem('bulk-list-cleared', '1');

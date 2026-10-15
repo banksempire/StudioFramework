@@ -35,7 +35,6 @@ interface SubState {
   isExpanded: boolean;
   height: number;
   measuredHeight: number;
-  allotted: number;
   savedHeight?: number;
 }
 
@@ -102,24 +101,20 @@ function isResizeable(sub: PanelH2): boolean {
 }
 
 const H3_HEADER_H = 30;
-const FIXED_MIN_BODY = 48;
 
 function getBodyHeight(sub: PanelH2): number {
   const st = states[sub.id];
   if (isFlat(sub)) return st?.measuredHeight ?? 0;
   if (!st?.isExpanded) return 0;
-  if (!sub.isHeightVariable) return Math.min(st.measuredHeight, st.allotted || st.measuredHeight);
+  if (!sub.isHeightVariable) return st.measuredHeight;
   return Math.max(st.height, sub.minHeight ?? 0);
 }
 
 function bodyHeightFor(sub: PanelH2): number | null {
   if (isFlat(sub)) return null;
+  if (!sub.isHeightVariable || props.mobile) return null;
   const st = states[sub.id];
   if (!st?.isExpanded) return 0;
-  if (!sub.isHeightVariable) {
-    return props.mobile ? null : Math.min(st.measuredHeight, st.allotted || st.measuredHeight);
-  }
-  if (props.mobile) return null;
   return Math.max(st.height, sub.minHeight ?? 0);
 }
 
@@ -143,35 +138,10 @@ function squeezeToMin(ids: string[], needed: number, heights?: Record<string, nu
   return freed;
 }
 
-function shrinkFixedSections(visible: PanelH2[], deficit: number) {
-  const fixed = visible.filter(
-    (s) =>
-      !isFlat(s) &&
-      !s.isHeightVariable &&
-      states[s.id]?.isExpanded &&
-      !collapseHides.value.hiddenTrailers.has(s.id) &&
-      states[s.id].measuredHeight > 0,
-  );
-  const total = fixed.reduce((sum, s) => sum + states[s.id].measuredHeight, 0);
-  if (total <= 0) return;
-  const target = Math.max(total - deficit - 2, 0);
-  for (const s of fixed) {
-    states[s.id].allotted = Math.max(
-      FIXED_MIN_BODY,
-      Math.round((states[s.id].measuredHeight * target) / total),
-    );
-  }
-}
-
 function distributeHeight() {
   if (bodyHeight.value === 0) return;
   const visible = visibleSubSections.value;
   if (visible.length === 0) return;
-
-  for (const sub of visible) {
-    const st = states[sub.id];
-    if (st && !isFlat(sub) && !sub.isHeightVariable) st.allotted = st.measuredHeight;
-  }
 
   let used = 0;
   for (const sub of visible) {
@@ -186,12 +156,10 @@ function distributeHeight() {
     const first = resizeable[0];
     states[first.id].height = getBodyHeight(first) + unallocated;
   } else if (unallocated < 0) {
-    const freed = squeezeToMin(
+    squeezeToMin(
       resizeable.map((s) => s.id),
       -unallocated,
     );
-    const deficit = -unallocated - freed;
-    if (deficit > 0) shrinkFixedSections(visible, deficit);
   }
   persistSubState();
 }
@@ -225,13 +193,13 @@ function measureAndObserve() {
     const el = body.querySelector(`[data-sub-body="${sub.id}"]`) as HTMLElement | null;
     if (!el) continue;
     const st = states[sub.id];
-    st.measuredHeight = el.scrollHeight;
+    st.measuredHeight = el.getBoundingClientRect().height;
     if (fixedObservers.has(sub.id)) continue;
 
     const obs = new ResizeObserver(() => {
       const s = states[sub.id];
       if (s?.isExpanded && el.isConnected) {
-        s.measuredHeight = el.scrollHeight;
+        s.measuredHeight = el.getBoundingClientRect().height;
         distributeHeight();
       }
     });
@@ -263,7 +231,6 @@ watch(
           isExpanded: persisted?.expanded ?? true,
           height: Math.max(persisted?.height ?? minHeight, minHeight),
           measuredHeight: 0,
-          allotted: 0,
         };
       }
     }

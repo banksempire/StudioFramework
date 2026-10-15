@@ -158,7 +158,7 @@ defineExpose({ validate });
     @update:open="(v) => emit('update:open', v)"
     @close="onCancel(); onClose()"
   >
-    <div class="sf-form" :class="{ 'sf-form--nav': hasNav, 'sf-form--fit': !hasNav }">
+    <div class="sf-form" :class="{ 'sf-form--nav': hasNav }">
       <nav v-if="hasNav" class="sf-form-nav">
         <button
           v-for="g in doc.h1"
@@ -235,25 +235,6 @@ defineExpose({ validate });
   display: flex;
   flex-direction: column;
   min-width: 0;
-}
-
-.sf-form--fit {
-  flex: 1;
-  min-height: 0;
-}
-
-.sf-form--fit .sf-form-content {
-  min-height: 0;
-  overflow: hidden;
-  display: flex;
-  flex-direction: column;
-}
-
-.sf-form--fit .sf-form-group {
-  flex: 1;
-  min-height: 0;
-  display: flex;
-  flex-direction: column;
 }
 
 .sf-form--nav {
