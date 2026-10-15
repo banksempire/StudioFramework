@@ -115,6 +115,20 @@ const { ensureServer, openApp, makeReporter, finish } = require('./lib/ui-test.c
       Math.abs(restored - dlgExpanded) <= 1,
       JSON.stringify({ restored, locked: dlgExpanded }),
     );
+    const barBg = await page.evaluate(() => {
+      const dlg = document.querySelector('.sf-dialog');
+      const bar = dlg?.querySelector('.sf-subsection-header');
+      if (!dlg || !bar) return null;
+      return {
+        bar: getComputedStyle(bar).backgroundColor,
+        surface: getComputedStyle(dlg).backgroundColor,
+      };
+    });
+    report(
+      'popup: section bar matches the dialog surface',
+      barBg !== null && barBg.bar === barBg.surface,
+      JSON.stringify(barBg),
+    );
 
     await panelDlg.locator('[data-field="pname"] input').fill('Pluto');
     await panelDlg.locator('.sf-dialog-demo-slot-input').fill('from slot');
@@ -295,6 +309,21 @@ const { ensureServer, openApp, makeReporter, finish } = require('./lib/ui-test.c
     report('the title bar close button closes the popup', (await page.locator('.sf-dialog').count()) === 0);
 
     report('desktop: no page errors', errors.length === 0, errors.slice(0, 3).join(' | '));
+
+    const panelBarBg = await page.evaluate(() => {
+      const panel = document.querySelector('.sf-panel');
+      const bar = panel?.querySelector('.sf-subsection-header');
+      if (!panel || !bar) return null;
+      return {
+        bar: getComputedStyle(bar).backgroundColor,
+        surface: getComputedStyle(panel).backgroundColor,
+      };
+    });
+    report(
+      'panel: section bar matches the panel surface',
+      panelBarBg !== null && panelBarBg.bar === panelBarBg.surface,
+      JSON.stringify(panelBarBg),
+    );
 
     const mobileCtx = await browser.newContext({ viewport: { width: 390, height: 700 } });
     const mpage = await mobileCtx.newPage();
