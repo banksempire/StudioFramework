@@ -2935,6 +2935,10 @@ body.sf-dragging-row * {
   background-size: 10px 6px;
 }
 
+.sf-select-trigger--color {
+  font-size: 16px;
+}
+
 .sf-form-select--blank {
   color: var(--sf-text-muted);
 }
@@ -3022,8 +3026,9 @@ body.sf-dragging-row * {
 .sf-select-sheet {
   position: absolute;
   top: 0;
-  left: 0;
-  right: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: min(100%, 420px);
   bottom: calc(60px + var(--sf-status-slot) * var(--sf-status-reveal, 1) + var(--sf-safe-bottom, 0px));
   z-index: 1150;
   display: flex;
@@ -3138,7 +3143,8 @@ body.sf-dragging-row * {
 
 .sf-root--mobile .sf-form input,
 .sf-root--mobile .sf-form select,
-.sf-root--mobile .sf-form textarea {
+.sf-root--mobile .sf-form textarea,
+.sf-root--mobile .sf-form .sf-form-select {
   font-size: 16px;
 }
 

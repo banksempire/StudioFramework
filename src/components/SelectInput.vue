@@ -1,5 +1,6 @@
 <script setup lang="ts">
-import { computed, inject, nextTick, onMounted, onUnmounted, type Ref, ref } from 'vue';
+import { computed, inject, nextTick, onMounted, onUnmounted, ref } from 'vue';
+import { useFallbackMobile } from '../composables/useFallbackMobile';
 import { kIsMobile } from '../composables/useWorkspace';
 import type { PopupField, PopupOption, PopupValues } from '../types/popup';
 import SvgIcon from './SvgIcon.vue';
@@ -21,7 +22,7 @@ interface ChoiceGroup {
 }
 
 const injectedMobile = inject(kIsMobile, null);
-const mobile = computed(() => injectedMobile?.value ?? false);
+const mobile = injectedMobile ?? useFallbackMobile();
 
 const sheetTarget = ref<HTMLElement | 'body'>('body');
 onMounted(() => {
@@ -98,7 +99,8 @@ function positionPopup() {
   const pop = popEl.value;
   if (!trigger || !pop) return;
   const rect = trigger.getBoundingClientRect();
-  const w = Math.max(rect.width, 120);
+  const w =
+    props.field.type === 'color' ? Math.min(Math.max(rect.width, 180), 260) : Math.max(rect.width, 120);
   const h = pop.offsetHeight || 40;
   let left = rect.left;
   if (left + w > window.innerWidth - 4) left = Math.max(4, window.innerWidth - w - 4);
@@ -225,7 +227,11 @@ onUnmounted(() => {
     type="button"
     class="sf-form-input sf-form-select"
     :class="[
-      { 'sf-form-select--blank': triggerBlank, 'sf-form-select--fill': field.triggerFill && !!triggerSwatch },
+      {
+        'sf-form-select--blank': triggerBlank,
+        'sf-form-select--fill': field.triggerFill && !!triggerSwatch,
+        'sf-select-trigger--color': field.type === 'color',
+      },
       field.inputClass,
     ]"
     :style="field.triggerFill && triggerSwatch ? { '--sf-select-fill': triggerSwatch } : undefined"

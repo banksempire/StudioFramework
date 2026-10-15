@@ -266,6 +266,25 @@ const { ensureServer, openApp, makeReporter, finish } = require('./lib/ui-test.c
       JSON.stringify(grid),
     );
 
+    await page.locator('.sf-dialog [data-field="accent"] .sf-form-select').click();
+    await delay(300);
+    const colorPick = await page.evaluate(() => {
+      const trigger = document.querySelector('.sf-dialog [data-field="accent"] .sf-form-select');
+      const pop = document.querySelector('.sf-select-pop');
+      return {
+        triggerFont: trigger ? getComputedStyle(trigger).fontSize : null,
+        popW: pop ? Math.round(pop.getBoundingClientRect().width) : null,
+        triggerW: trigger ? Math.round(trigger.getBoundingClientRect().width) : null,
+      };
+    });
+    report(
+      'color picker: trigger text is 16px and the pop avoids dead space',
+      colorPick.triggerFont === '16px' && colorPick.popW !== null && colorPick.popW <= 260,
+      JSON.stringify(colorPick),
+    );
+    await page.keyboard.press('Escape');
+    await delay(200);
+
     const tintState = await page.evaluate(() => {
       const el = document.querySelector('[data-field="tint"] .sf-form-select');
       if (!el) return null;
