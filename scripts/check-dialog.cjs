@@ -167,11 +167,7 @@ const { ensureServer, openApp, makeReporter, finish } = require('./lib/ui-test.c
     );
     report(
       'popup: section bar pins while the dialog scrolls',
-      barStick !== null &&
-        barStick.scrolled >= 100 &&
-        barStick.after > barStick.bodyTop &&
-        barStick.after <= barStick.bodyTop + 30 &&
-        barStick.before - barStick.after < barStick.scrolled,
+      barStick !== null && barStick.scrolled >= 100 && Math.abs(barStick.after - barStick.bodyTop) <= 1,
       JSON.stringify(barStick),
     );
     await page.evaluate(() => {

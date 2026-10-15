@@ -710,6 +710,7 @@ html.sf-standalone #framework {
 }
 
 .sf-dialog .sf-subsection-header {
+  top: calc(-1 * var(--sf-dialog-pad-top, 0px));
   background: var(--sf-bg-lighter);
 }
 

@@ -115,6 +115,7 @@ onUnmounted(() => window.removeEventListener('keydown', onDocKey));
 }
 
 .sf-dialog {
+  --sf-dialog-pad-top: 12px;
   width: min(440px, 100%);
   max-height: 80%;
   display: flex;
@@ -180,7 +181,7 @@ onUnmounted(() => window.removeEventListener('keydown', onDocKey));
   min-height: 0;
   flex-direction: column;
   gap: 9px;
-  padding: 12px 14px;
+  padding: var(--sf-dialog-pad-top) 14px 12px;
   overflow-y: auto;
   overflow-x: hidden;
 }
