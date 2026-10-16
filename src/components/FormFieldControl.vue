@@ -75,6 +75,11 @@ const colorField = computed<PopupField>(() => ({
   ...props.field,
   type: 'select',
   options: [
+    {
+      value: '',
+      label: props.field.emptyLabel ?? 'Default',
+      swatch: props.field.emptySwatch || undefined,
+    },
     ...COLOR_PRESETS.map((p) => ({
       value: p.hex,
       label: `${p.label} (${p.hex.toUpperCase()})`,

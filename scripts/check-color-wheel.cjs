@@ -51,9 +51,10 @@ const { ensureServer, openApp, makeReporter, finish } = require('./lib/ui-test.c
     await delay(200);
     const pop = page.locator('.sf-root > .sf-select-pop');
     report(
-      'the dropdown teleports outside the dialog and lists presets plus Custom',
+      'the dropdown teleports outside the dialog and lists Default, presets and Custom',
       (await pop.count()) === 1 &&
-        (await pop.locator('.sf-select-row').count()) === 9 &&
+        (await pop.locator('.sf-select-row').count()) === 10 &&
+        (await pop.locator('.sf-select-row', { hasText: 'Default' }).count()) === 1 &&
         (await pop.locator('.sf-select-row', { hasText: 'Black (#000000)' }).count()) === 1 &&
         (await pop.locator('.sf-select-row', { hasText: 'Custom…' }).count()) === 1,
     );
