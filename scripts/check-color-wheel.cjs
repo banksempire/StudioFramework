@@ -135,6 +135,24 @@ const { ensureServer, openApp, makeReporter, finish } = require('./lib/ui-test.c
         footW: Math.round(dlg.querySelector('.sf-dialog-foot').getBoundingClientRect().width),
       };
     });
+    const wideBefore = wheelShape.w;
+    await dlg2.locator('.sf-subsection-header').click();
+    await delay(300);
+    const collapsedW = await page.evaluate(() => {
+      const dlg = [...document.querySelectorAll('.sf-dialog')].pop();
+      return Math.round(dlg.getBoundingClientRect().width);
+    });
+    await dlg2.locator('.sf-subsection-header').click();
+    await delay(300);
+    const expandedW = await page.evaluate(() => {
+      const dlg = [...document.querySelectorAll('.sf-dialog')].pop();
+      return Math.round(dlg.getBoundingClientRect().width);
+    });
+    report(
+      'the wheel dialog keeps its width through section collapse',
+      Math.abs(collapsedW - wideBefore) <= 1 && Math.abs(expandedW - wideBefore) <= 1,
+      JSON.stringify({ wideBefore, collapsedW, expandedW }),
+    );
     report(
       'the wheel dialog drops the dead Default action and hugs its content',
       wheelShape.btns.join(',') === 'Cancel,Apply' &&

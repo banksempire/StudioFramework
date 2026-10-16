@@ -28,6 +28,7 @@ const emit = defineEmits<{
 
 const card = ref<HTMLElement | null>(null);
 const lockedHeight = ref('');
+const lockedWidth = ref('');
 const teleportTarget = ref<string | HTMLElement>('body');
 
 function resolveTeleportTarget() {
@@ -55,12 +56,14 @@ watch(
   async (v) => {
     if (!v) {
       lockedHeight.value = '';
+      lockedWidth.value = '';
       return;
     }
     resolveTeleportTarget();
     await nextTick();
     if (props.lockHeight && card.value) {
       lockedHeight.value = `${card.value.offsetHeight}px`;
+      lockedWidth.value = `${card.value.offsetWidth}px`;
     }
     card.value?.focus();
   },
@@ -81,7 +84,7 @@ onUnmounted(() => window.removeEventListener('keydown', onDocKey));
         ref="card"
         class="sf-dialog"
         :class="{ 'sf-dialog--wide': props.wide, 'sf-dialog--narrow': props.narrow }"
-        :style="lockedHeight ? { height: lockedHeight } : undefined"
+        :style="lockedHeight ? { height: lockedHeight, width: lockedWidth } : undefined"
         role="dialog"
         aria-modal="true"
         :aria-label="props.title"
