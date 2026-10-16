@@ -153,7 +153,46 @@ const { ensureServer, openApp, makeReporter, finish } = require('./lib/ui-test.c
     const dlg3 = page.locator('.sf-dialog', { hasText: 'Pick a color' }).last();
     await dlg3.locator('.sf-color-wheel-input--hex').fill('#544fed');
     await dlg3.locator('.sf-color-wheel-input--hex').press('Enter');
-    await delay(100);
+    await delay(150);
+    const marks = await page.evaluate(() => {
+      const disc = document.querySelector('.sf-color-wheel-disc');
+      const dots = [...disc.querySelectorAll('.sf-color-wheel-dot')].map((d) =>
+        Math.round(d.getBoundingClientRect().width),
+      );
+      const chips = [...document.querySelectorAll('.sf-color-scheme-chip')].map((c) => {
+        const cs = getComputedStyle(c);
+        return { hex: c.textContent.trim(), bg: cs.backgroundColor, shown: cs.fontSize };
+      });
+      return { dots, chips };
+    });
+    report(
+      'the wheel marks the other scheme colors with smaller dots',
+      marks.dots.length === 2 && marks.dots[0] === 8 && marks.dots[1] === 14,
+      JSON.stringify(marks.dots),
+    );
+    report(
+      'scheme chips always show their hex',
+      marks.chips.length === 2 &&
+        marks.chips.every((c) => /^#[0-9A-Fa-f]{6}$/.test(c.hex)) &&
+        marks.chips[0].hex.toLowerCase() === '#544fed' &&
+        marks.chips.every((c) => parseFloat(c.shown) > 0),
+      JSON.stringify(marks.chips),
+    );
+    await page.context().grantPermissions(['clipboard-read', 'clipboard-write']);
+    const before = marks.chips[0].hex.toLowerCase();
+    await page.locator('.sf-color-scheme-chip').first().click();
+    await delay(250);
+    const after = await page.evaluate(() => {
+      const wheel = [...document.querySelectorAll('.sf-color-wheel')].pop();
+      const hexInput = wheel.querySelector('.sf-color-wheel-input--hex');
+      return { wheelHex: hexInput.value, clip: null };
+    });
+    const clip = await page.evaluate(() => navigator.clipboard.readText());
+    report(
+      'a chip click copies its hex and changes nothing',
+      clip.toLowerCase() === before && after.wheelHex.toLowerCase() === before,
+      JSON.stringify({ clip, wheel: after.wheelHex, before }),
+    );
     await dlg3.locator('.sf-dialog-btn--ghost, .sf-dialog-btn').first().click();
     await delay(250);
     report('Cancel discards the pending wheel edits', (await triggerText()) === 'Green (#26A69A)');

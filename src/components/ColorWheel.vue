@@ -198,8 +198,23 @@ function pickScheme(id: string) {
   schemeOpen.value = false;
 }
 
-function pickVariant(x: { h: number; s: number; v: number }) {
-  apply(x.h, x.s, x.v, a.value);
+const schemeDots = computed(() =>
+  schemeColors.value.slice(1).map((x) => ({
+    left: `${50 + x.s * 50 * Math.sin((x.h * Math.PI) / 180)}%`,
+    top: `${50 - x.s * 50 * Math.cos((x.h * Math.PI) / 180)}%`,
+    background: x.hex,
+  })),
+);
+
+function chipText(hex: string): string {
+  const rgb = parseHex(hex);
+  if (!rgb) return '#ffffff';
+  const lum = (0.299 * rgb.r + 0.587 * rgb.g + 0.114 * rgb.b) / 255;
+  return lum > 0.6 ? '#1a1a1a' : '#ffffff';
+}
+
+function copyVariant(hex: string) {
+  void navigator.clipboard?.writeText(hex);
 }
 
 function onSchemePointer(e: PointerEvent) {
@@ -226,6 +241,12 @@ onBeforeUnmount(() => {
       @pointerup="endDrag"
       @pointercancel="endDrag"
     >
+      <div
+        v-for="(d, i) in schemeDots"
+        :key="i"
+        class="sf-color-wheel-dot sf-color-wheel-dot--mark"
+        :style="d"
+      />
       <div class="sf-color-wheel-dot" :style="dotStyle" />
     </div>
     <div class="sf-color-wheel-bars">
@@ -299,10 +320,11 @@ onBeforeUnmount(() => {
         type="button"
         class="sf-color-scheme-chip"
         :class="{ 'sf-color-scheme-chip--base': i === 0 }"
-        :style="{ background: x.hex }"
-        :title="x.hex"
-        @click="pickVariant(x)"
-      />
+        :style="{ background: x.hex, color: chipText(x.hex) }"
+        @click="copyVariant(x.hex)"
+      >
+        {{ x.hex }}
+      </button>
     </div>
   </div>
 </template>
@@ -376,6 +398,12 @@ onBeforeUnmount(() => {
   transform: translate(-50%, -50%);
   box-shadow: 0 0 4px rgba(0, 0, 0, 0.6);
   pointer-events: none;
+}
+
+.sf-color-wheel-dot--mark {
+  width: 8px;
+  height: 8px;
+  border-width: 1px;
 }
 
 .sf-color-wheel-inputs {
@@ -496,11 +524,18 @@ onBeforeUnmount(() => {
 
 .sf-color-scheme-chip {
   flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   height: 22px;
   border: 1px solid rgba(255, 255, 255, 0.25);
   border-radius: 4px;
-  cursor: pointer;
+  cursor: copy;
   padding: 0;
+  font-family: var(--sf-font);
+  font-size: 10px;
+  font-weight: 600;
+  line-height: 1;
 }
 
 .sf-color-scheme-chip:hover {
