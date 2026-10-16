@@ -121,15 +121,23 @@ const { ensureServer, openApp, makeReporter, finish } = require('./lib/ui-test.c
       'the wheel dialog restores the current color',
       (await dlg2.locator('.sf-color-wheel-input--hex').inputValue()).toUpperCase() === '#26A69A',
     );
-    await dlg2.locator('.sf-dialog-btn').first().click();
-    await delay(150);
+    const wheelShape = await page.evaluate(() => {
+      const dlg = [...document.querySelectorAll('.sf-dialog')].pop();
+      const btns = [...dlg.querySelectorAll('.sf-dialog-btn')].map((b) => b.textContent?.trim());
+      return {
+        btns,
+        w: Math.round(dlg.getBoundingClientRect().width),
+        wheelW: Math.round(dlg.querySelector('.sf-color-wheel').getBoundingClientRect().width),
+      };
+    });
     report(
-      'Default clears the pending color',
-      (await dlg2.locator('.sf-color-wheel-input--hex').inputValue()).toUpperCase() === '#26A69A',
+      'the wheel dialog drops the dead Default action and hugs its content',
+      wheelShape.btns.join(',') === 'Cancel,Apply' && wheelShape.w <= 300,
+      JSON.stringify(wheelShape),
     );
     await dlg2.locator('.sf-dialog-btn--accent').last().click();
     await delay(250);
-    report('Apply after Default commits the empty value', (await triggerText()) === '');
+    report('Apply commits the restored color', (await triggerText()) === 'Green (#26A69A)');
 
     await field.locator('.sf-form-select').click();
     await delay(200);
@@ -141,7 +149,7 @@ const { ensureServer, openApp, makeReporter, finish } = require('./lib/ui-test.c
     await delay(100);
     await dlg3.locator('.sf-dialog-btn--ghost, .sf-dialog-btn').first().click();
     await delay(250);
-    report('Cancel discards the pending wheel edits', (await triggerText()) === '');
+    report('Cancel discards the pending wheel edits', (await triggerText()) === 'Green (#26A69A)');
   } catch (e) {
     report('suite completed', false, String(e));
   } finally {

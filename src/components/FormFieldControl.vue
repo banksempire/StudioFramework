@@ -100,7 +100,6 @@ const wheelDoc: PopupDocument = {
     },
   ],
   actions: [
-    { id: 'clear', label: 'Default', align: 'left' },
     { id: 'cancel', label: 'Cancel', close: true },
     { id: 'apply', label: 'Apply', tone: 'accent' },
   ],
@@ -120,8 +119,7 @@ function onWheelValues(v: PopupValues) {
 }
 
 function onWheelAction(id: string) {
-  if (id === 'clear') wheelValues.value = { color: '' };
-  else if (id === 'apply') {
+  if (id === 'apply') {
     wheelOpen.value = false;
     emit('patch', props.field.key, String(wheelValues.value.color ?? ''));
   }
@@ -206,6 +204,7 @@ function onWheelAction(id: string) {
     v-model:open="wheelOpen"
     :doc="wheelDoc"
     :values="wheelValues"
+    narrow
     submit-label="Apply"
     @update:values="onWheelValues"
     @action="onWheelAction"

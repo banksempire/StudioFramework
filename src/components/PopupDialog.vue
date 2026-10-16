@@ -12,6 +12,7 @@ const props = withDefaults(
     values?: PopupValues;
     open: boolean;
     wide?: boolean;
+    narrow?: boolean;
     busy?: boolean;
     error?: string;
     footNote?: string;
@@ -23,6 +24,7 @@ const props = withDefaults(
   {
     values: () => ({}),
     wide: false,
+    narrow: false,
     busy: false,
     error: '',
     footNote: '',
@@ -152,6 +154,7 @@ defineExpose({ validate });
     :open="open"
     :title="doc.title"
     :wide="wide"
+    :narrow="narrow"
     lock-height
     :close-on-backdrop="!disableClose && !busy"
     :close-on-escape="!disableClose && !busy"

@@ -8,12 +8,14 @@ const props = withDefaults(
     open: boolean;
     wide?: boolean;
     lockHeight?: boolean;
+    narrow?: boolean;
     closeOnBackdrop?: boolean;
     closeOnEscape?: boolean;
   }>(),
   {
     wide: false,
     lockHeight: false,
+    narrow: false,
     closeOnBackdrop: true,
     closeOnEscape: true,
   },
@@ -78,7 +80,7 @@ onUnmounted(() => window.removeEventListener('keydown', onDocKey));
       <div
         ref="card"
         class="sf-dialog"
-        :class="{ 'sf-dialog--wide': props.wide }"
+        :class="{ 'sf-dialog--wide': props.wide, 'sf-dialog--narrow': props.narrow }"
         :style="lockedHeight ? { height: lockedHeight } : undefined"
         role="dialog"
         aria-modal="true"
@@ -129,6 +131,10 @@ onUnmounted(() => window.removeEventListener('keydown', onDocKey));
 
 .sf-dialog--wide {
   width: min(680px, 100%);
+}
+
+.sf-dialog--narrow {
+  width: min(300px, 100%);
 }
 
 .sf-dialog-head {
