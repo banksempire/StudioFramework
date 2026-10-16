@@ -125,15 +125,21 @@ const { ensureServer, openApp, makeReporter, finish } = require('./lib/ui-test.c
     const wheelShape = await page.evaluate(() => {
       const dlg = [...document.querySelectorAll('.sf-dialog')].pop();
       const btns = [...dlg.querySelectorAll('.sf-dialog-btn')].map((b) => b.textContent?.trim());
+      const wheel = dlg.querySelector('.sf-color-wheel').getBoundingClientRect();
+      const box = dlg.getBoundingClientRect();
       return {
         btns,
-        w: Math.round(dlg.getBoundingClientRect().width),
-        wheelW: Math.round(dlg.querySelector('.sf-color-wheel').getBoundingClientRect().width),
+        w: Math.round(box.width),
+        wheelW: Math.round(wheel.width),
+        gap: Math.round(box.right - wheel.right),
+        footW: Math.round(dlg.querySelector('.sf-dialog-foot').getBoundingClientRect().width),
       };
     });
     report(
       'the wheel dialog drops the dead Default action and hugs its content',
-      wheelShape.btns.join(',') === 'Cancel,Apply' && wheelShape.w <= 300,
+      wheelShape.btns.join(',') === 'Cancel,Apply' &&
+        Math.abs(wheelShape.w - wheelShape.wheelW - 2 * wheelShape.gap) <= 3 &&
+        wheelShape.gap <= 25,
       JSON.stringify(wheelShape),
     );
     await dlg2.locator('.sf-dialog-btn--accent').last().click();

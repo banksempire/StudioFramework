@@ -134,7 +134,8 @@ onUnmounted(() => window.removeEventListener('keydown', onDocKey));
 }
 
 .sf-dialog--narrow {
-  width: min(300px, 100%);
+  width: min-content;
+  max-width: 100%;
 }
 
 .sf-dialog-head {
