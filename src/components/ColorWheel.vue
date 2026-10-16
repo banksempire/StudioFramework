@@ -185,8 +185,25 @@ const schemeColors = computed(() =>
         v: Math.min(1, Math.max(0, x.v)),
       }),
       1,
-    ),
+    ).toUpperCase(),
   })),
+);
+
+const sameSpot = (x: { h: number; s: number; v: number }) => {
+  const dh = Math.abs(((((x.h - h.value) % 360) + 540) % 360) - 180);
+  return dh < 0.01 && Math.abs(x.s - s.value) < 0.001 && Math.abs(x.v - v.value) < 0.001;
+};
+
+const baseIndex = computed(() => schemeColors.value.findIndex(sameSpot));
+
+const schemeDots = computed(() =>
+  schemeColors.value
+    .filter((_, i) => i !== baseIndex.value)
+    .map((x) => ({
+      left: `${50 + x.s * 50 * Math.sin((x.h * Math.PI) / 180)}%`,
+      top: `${50 - x.s * 50 * Math.cos((x.h * Math.PI) / 180)}%`,
+      background: x.hex,
+    })),
 );
 
 function toggleScheme() {
@@ -197,14 +214,6 @@ function pickScheme(id: string) {
   schemeId.value = id;
   schemeOpen.value = false;
 }
-
-const schemeDots = computed(() =>
-  schemeColors.value.slice(1).map((x) => ({
-    left: `${50 + x.s * 50 * Math.sin((x.h * Math.PI) / 180)}%`,
-    top: `${50 - x.s * 50 * Math.cos((x.h * Math.PI) / 180)}%`,
-    background: x.hex,
-  })),
-);
 
 function chipText(hex: string): string {
   const rgb = parseHex(hex);
@@ -319,7 +328,7 @@ onBeforeUnmount(() => {
         :key="i"
         type="button"
         class="sf-color-scheme-chip"
-        :class="{ 'sf-color-scheme-chip--base': i === 0 }"
+        :class="{ 'sf-color-scheme-chip--base': i === baseIndex }"
         :style="{ background: x.hex, color: chipText(x.hex) }"
         @click="copyVariant(x.hex)"
       >
@@ -530,7 +539,7 @@ onBeforeUnmount(() => {
   height: 22px;
   border: 1px solid rgba(255, 255, 255, 0.25);
   border-radius: 4px;
-  cursor: copy;
+  cursor: pointer;
   padding: 0;
   font-family: var(--sf-font);
   font-size: 10px;
