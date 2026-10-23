@@ -216,7 +216,7 @@ function menuItemsOf(utilId: string) {
     </div>
 
     <div
-      v-if="section.heading === 3 || isExpanded"
+      v-if="(section.heading === 3 || isExpanded) && section.components.length > 0"
       class="sf-subsection-body"
       :data-sub-body="section.id"
       :style="bodyHeight !== null ? { height: bodyHeight + 'px', overflowY: 'auto' } : {}"
