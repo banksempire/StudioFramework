@@ -556,12 +556,6 @@ function toH2(v: unknown, path: string): PanelH2 {
   if (heading === 3 && height === 'variable') {
     fail(`${path}.heading`, 'h3 sections are flat: "height": "variable" is not allowed');
   }
-  const components = needArray(r.components, `${path}.components`).map((c, i) =>
-    toComponent(c, `${path}.components[${i}]`),
-  );
-  if (components.length === 0) {
-    fail(`${path}.components`, 'a section needs at least one component — empty sections render a dead gap');
-  }
   return {
     id: needId(r.id, `${path}.id`),
     title: needString(r.title, `${path}.title`),
@@ -577,7 +571,9 @@ function toH2(v: unknown, path: string): PanelH2 {
       r.utilities === undefined
         ? undefined
         : needArray(r.utilities, `${path}.utilities`).map((u, i) => toUtility(u, `${path}.utilities[${i}]`)),
-    components,
+    components: needArray(r.components, `${path}.components`).map((c, i) =>
+      toComponent(c, `${path}.components[${i}]`),
+    ),
   };
 }
 
