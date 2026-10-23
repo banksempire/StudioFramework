@@ -1,7 +1,9 @@
 <script setup lang="ts">
 import { computed } from 'vue';
+import { isDebugMode } from '../debug/debugLog';
 import { getPanelData, getStatusComponent } from '../registry';
 import type { StatusItemDef } from '../types/layout';
+import DebugConsole from './DebugConsole.vue';
 import Icon from './Icon.vue';
 
 const props = defineProps<{
@@ -45,6 +47,7 @@ const items = computed(() => ({ left: props.left, right: props.right }));
           {{ boundLabel(item) }}
         </template>
       </span>
+      <DebugConsole v-if="isDebugMode()" />
     </div>
   </div>
 </template>

@@ -22,6 +22,7 @@
     "check:ws": "node scripts/check-workspace-app.cjs",
     "check:persist": "node scripts/check-persist.cjs",
     "check:corners": "node scripts/check-corners.cjs",
+    "check:debug": "node scripts/check-debug.cjs",
     "check:seam": "node scripts/check-seam.cjs",
     "check:selectors": "node scripts/check-selectors.cjs",
     "check:dialog": "node scripts/check-dialog.cjs",

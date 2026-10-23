@@ -30,6 +30,7 @@ import {
 } from './composables/useResize';
 import { readUiNumber, readUiString, writeUiValue, applyUiValues, readAllUiValues, uiEpoch } from './uiState';
 import { findTile } from './workspace/tree';
+import { installDebugLogCapture } from './debug/debugLog';
 import { kIsMobile, kMobilePanelDismiss, kTitleBarMenus, kWorkspace, useWorkspace } from './composables/useWorkspace';
 
 const props = withDefaults(defineProps<{
@@ -38,6 +39,8 @@ const props = withDefaults(defineProps<{
   layout: () => loadLayout(),
 });
 const L = props.layout;
+
+installDebugLogCapture();
 
 const emit = defineEmits<{
   action: [payload: FrameworkAction];
