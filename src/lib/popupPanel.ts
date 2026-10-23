@@ -32,6 +32,7 @@ export function toPanelH1(group: PopupH1Group, values: PopupValues): PanelH1 {
     return {
       id: popupH2PanelId(group.id, h2, i),
       title: h2.title ?? '',
+      heading: h2.heading ?? 2,
       isHeightVariable: false,
       components: [form],
     };
