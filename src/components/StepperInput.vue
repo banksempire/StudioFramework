@@ -97,10 +97,11 @@ function adjust(dir: number) {
 .sf-stepper-input-box {
   box-sizing: border-box;
   width: 52px;
+  height: var(--sf-control-h);
   padding: 4px 6px;
   background: var(--sf-bg);
   border: 1px solid var(--sf-border);
-  border-radius: var(--sf-radius-sm) 0 0 var(--sf-radius-sm);
+  border-radius: 8px 0 0 8px;
   color: var(--sf-text);
   font-family: var(--sf-mono);
   font-size: 16px;
@@ -141,12 +142,12 @@ function adjust(dir: number) {
 }
 
 .sf-stepper-input-btn:first-child {
-  border-radius: 0 var(--sf-radius-sm) 0 0;
+  border-radius: 0 8px 0 0;
   border-bottom: none;
 }
 
 .sf-stepper-input-btn:last-child {
-  border-radius: 0 0 var(--sf-radius-sm) 0;
+  border-radius: 0 0 8px 0;
 }
 
 @media (hover: hover) {
