@@ -2064,7 +2064,7 @@ body.sf-dragging-row * {
   width: 100%;
   background: var(--sf-bg);
   border: 1px solid var(--sf-border);
-  border-radius: var(--sf-radius-sm);
+  border-radius: 8px;
   color: var(--sf-text);
   font-family: var(--sf-font);
   font-size: 13px;
@@ -2755,7 +2755,7 @@ body.sf-dragging-row * {
   height: 36px;
   background: var(--sf-bg);
   border: 1px solid var(--sf-border);
-  border-radius: var(--sf-radius-sm);
+  border-radius: 8px;
   color: var(--sf-text);
   font-family: var(--sf-font);
   font-size: 16px;
@@ -2841,9 +2841,11 @@ body.sf-dragging-row * {
   justify-content: center;
   gap: 4px;
   min-width: 88px;
+  height: var(--sf-control-h);
+  box-sizing: border-box;
   padding: 5px 14px;
   border: 1px solid var(--sf-border);
-  border-radius: var(--sf-radius-sm);
+  border-radius: 8px;
   background: var(--sf-bg);
   color: var(--sf-text);
   font-family: var(--sf-font);
