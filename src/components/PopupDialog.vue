@@ -76,18 +76,21 @@ function isEmpty(value: unknown): boolean {
 function validate(): string | null {
   for (const h1 of h1s.value) {
     for (const h2 of h1.h2s) {
-      for (const field of h2.fields) {
-        if (
-          field.type === 'info' ||
-          field.type === 'slot' ||
-          field.type === 'switch' ||
-          field.type === 'button'
-        )
-          continue;
-        const value = props.values[field.key];
-        if (field.required && isEmpty(value)) return `${field.label ?? field.key} is required`;
-        if (field.type === 'number' && !isEmpty(value) && !Number.isFinite(Number(value))) {
-          return `${field.label ?? field.key} must be a number`;
+      const groups = [h2.fields, ...(h2.h3 ?? []).map((h3) => h3.fields)];
+      for (const fields of groups) {
+        for (const field of fields) {
+          if (
+            field.type === 'info' ||
+            field.type === 'slot' ||
+            field.type === 'switch' ||
+            field.type === 'button'
+          )
+            continue;
+          const value = props.values[field.key];
+          if (field.required && isEmpty(value)) return `${field.label ?? field.key} is required`;
+          if (field.type === 'number' && !isEmpty(value) && !Number.isFinite(Number(value))) {
+            return `${field.label ?? field.key} must be a number`;
+          }
         }
       }
     }

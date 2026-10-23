@@ -16,6 +16,7 @@ import type {
   PanelComponentBase,
   PanelH1,
   PanelH2,
+  PanelH3,
   PanelHeaderAction,
   PanelListButton,
   PanelListItem,
@@ -543,6 +544,35 @@ function toUtility(v: unknown, path: string): PanelUtility {
   };
 }
 
+function toH3(v: unknown, path: string): PanelH3 {
+  const r = needRecord(v, path);
+  const heading = r.heading === undefined ? 3 : r.heading;
+  if (heading !== 3) {
+    fail(`${path}.heading`, `a section nested in an h2 must declare heading 3, got "${heading}"`);
+  }
+  if (r.height !== undefined) {
+    fail(`${path}.height`, 'h3 sections are flat: "height" is not allowed');
+  }
+  const components = needArray(r.components, `${path}.components`).map((c, i) => {
+    if (isRecord(c) && c.type === undefined) {
+      fail(
+        `${path}.components[${i}]`,
+        'h3 sections cannot nest sections — layouts have exactly three levels',
+      );
+    }
+    return toComponent(c, `${path}.components[${i}]`);
+  });
+  if (components.length === 0) {
+    fail(`${path}.components`, 'a section needs at least one component — empty sections are illegal');
+  }
+  return {
+    id: needId(r.id, `${path}.id`),
+    title: needString(r.title, `${path}.title`),
+    heading: 3,
+    components,
+  };
+}
+
 function toH2(v: unknown, path: string): PanelH2 {
   const r = needRecord(v, path);
   const height = optString(r.height, `${path}.height`) ?? 'fixed';
@@ -550,16 +580,25 @@ function toH2(v: unknown, path: string): PanelH2 {
     fail(`${path}.height`, `expected "fixed" or "variable", got "${height}"`);
   }
   const heading = r.heading === undefined ? 2 : r.heading;
-  if (heading !== 2 && heading !== 3) {
-    fail(`${path}.heading`, `expected 2 or 3, got "${heading}"`);
+  if (heading !== 2) {
+    fail(
+      `${path}.heading`,
+      `h1 groups own h2 sections only — heading ${heading} here is a level jump; nest h3 sections inside an h2's components`,
+    );
   }
-  if (heading === 3 && height === 'variable') {
-    fail(`${path}.heading`, 'h3 sections are flat: "height": "variable" is not allowed');
+  const components = needArray(r.components, `${path}.components`).map((c, i) => {
+    if (isRecord(c) && c.type === undefined) {
+      return toH3(c, `${path}.components[${i}]`);
+    }
+    return toComponent(c, `${path}.components[${i}]`);
+  });
+  if (components.length === 0) {
+    fail(`${path}.components`, 'a section needs at least one component — empty sections are illegal');
   }
   return {
     id: needId(r.id, `${path}.id`),
     title: needString(r.title, `${path}.title`),
-    heading,
+    heading: 2,
     isHeightVariable: height === 'variable',
     minHeight:
       r.minHeight === undefined
@@ -571,9 +610,7 @@ function toH2(v: unknown, path: string): PanelH2 {
       r.utilities === undefined
         ? undefined
         : needArray(r.utilities, `${path}.utilities`).map((u, i) => toUtility(u, `${path}.utilities[${i}]`)),
-    components: needArray(r.components, `${path}.components`).map((c, i) =>
-      toComponent(c, `${path}.components[${i}]`),
-    ),
+    components,
   };
 }
 
@@ -582,9 +619,6 @@ function toH1(v: unknown, path: string): PanelH1 {
   const h2 = needArray(r.h2, `${path}.h2`).map((s, i) => toH2(s, `${path}.h2[${i}]`));
   if (h2.length === 0) {
     fail(`${path}.h2`, 'an h1 group needs at least one h2 section');
-  }
-  if (h2.every((sec) => sec.heading === 3)) {
-    fail(`${path}.h2`, 'an h1 group needs at least one h2 section (h3 alone is not enough)');
   }
   return {
     id: needId(r.id, `${path}.id`),

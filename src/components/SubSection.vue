@@ -1,13 +1,20 @@
 <script setup lang="ts">
 import { computed, ref, useSlots } from 'vue';
 import { getPanelData, getUtilityMenu } from '../registry';
-import type { PanelAction, PanelBulkAction, PanelH2 } from '../types/panel';
+import {
+  isPanelH3,
+  type PanelAction,
+  type PanelBulkAction,
+  type PanelComponent as PanelComponentModel,
+  type PanelH2,
+  type PanelH3,
+} from '../types/panel';
 import Menu from './Menu.vue';
 import PanelComponent from './PanelComponent.vue';
 import SvgIcon from './SvgIcon.vue';
 
 const props = defineProps<{
-  section: PanelH2;
+  section: PanelH2 | PanelH3;
   isExpanded: boolean;
   bodyHeight: number | null;
 }>();
@@ -21,8 +28,26 @@ const emit = defineEmits<{
 
 const openMenuId = ref<string | null>(null);
 
+defineSlots<Record<string, (props: Record<string, unknown>) => unknown>>();
+
 const slots = useSlots();
 const passthroughSlots = computed(() => Object.keys(slots).filter((n) => n !== 'trailing'));
+
+const isH3 = computed(() => isPanelH3(props.section));
+
+const sectionEntries = computed<(PanelComponentModel | PanelH3)[]>(() => [...props.section.components]);
+
+const utilities = computed(() => (isPanelH3(props.section) ? undefined : props.section.utilities));
+
+const leafComponents = computed<PanelComponentModel[]>(() =>
+  (sectionEntries.value as (PanelComponentModel | PanelH3)[]).filter(
+    (c): c is PanelComponentModel => !isPanelH3(c),
+  ),
+);
+
+const nestedH3s = computed<PanelH3[]>(() =>
+  (sectionEntries.value as (PanelComponentModel | PanelH3)[]).filter((c): c is PanelH3 => isPanelH3(c)),
+);
 
 interface BulkRec {
   active?: boolean;
@@ -32,7 +57,7 @@ interface BulkRec {
 }
 
 const bulkList = computed<{ bind: string; bulk: BulkRec } | null>(() => {
-  const list = props.section.components.find((c) => c.type === 'list') as { bind?: string } | undefined;
+  const list = leafComponents.value.find((c) => c.type === 'list') as { bind?: string } | undefined;
   if (!list?.bind) return null;
   const getter = getPanelData(list.bind);
   const rec = getter ? (getter() as { bulk?: BulkRec } | undefined) : undefined;
@@ -85,7 +110,7 @@ function emitBulkAction(id: string) {
 }
 
 const displayTitle = computed(() => {
-  const list = props.section.components.find((c) => c.type === 'list') as { bind?: string } | undefined;
+  const list = leafComponents.value.find((c) => c.type === 'list') as { bind?: string } | undefined;
   if (!list?.bind) return props.section.title;
   const getter = getPanelData(list.bind);
   const rec = getter ? (getter() as { title?: string } | undefined) : undefined;
@@ -100,15 +125,15 @@ function menuItemsOf(utilId: string) {
 <template>
   <div
     class="sf-subsection"
-    :class="{ 'sf-subsection--collapsed': !isExpanded, 'sf-subsection--h3': section.heading === 3 }"
+    :class="{ 'sf-subsection--collapsed': !isExpanded, 'sf-subsection--h3': isH3 }"
   >
     <div
-      v-if="section.heading === 3"
+      v-if="isH3"
       class="sf-subsection-header sf-subsection-header--h3"
     >
       <span class="sf-subsection-label sf-subsection-label--h3">{{ displayTitle }}</span>
-      <div v-if="section.utilities?.length" class="sf-subsection-utils">
-        <template v-for="util in section.utilities" :key="util.id">
+      <div v-if="utilities?.length" class="sf-subsection-utils">
+        <template v-for="util in utilities" :key="util.id">
           <Menu
             v-if="menuItemsOf(util.id)"
             :items="menuItemsOf(util.id) ?? []"
@@ -143,7 +168,7 @@ function menuItemsOf(utilId: string) {
       <span class="sf-subsection-arrow" :class="{ 'sf-subsection-arrow--expanded': isExpanded }"><SvgIcon name="❯" /></span>
       <span class="sf-subsection-label">{{ displayTitle }}</span>
       <div
-        v-if="section.utilities?.length || bulkEntry || bulkDone"
+        v-if="utilities?.length || bulkEntry || bulkDone"
         class="sf-subsection-utils"
         @click.stop
       >
@@ -183,7 +208,7 @@ function menuItemsOf(utilId: string) {
           <img v-else-if="a.icon" :src="a.icon.url" alt="" />
           <span v-if="a.label" class="sf-subsection-util-label">{{ a.label }}</span>
         </button>
-        <template v-for="util in section.utilities" :key="util.id">
+        <template v-for="util in utilities" :key="util.id">
           <Menu
             v-if="menuItemsOf(util.id)"
             :items="menuItemsOf(util.id) ?? []"
@@ -216,13 +241,13 @@ function menuItemsOf(utilId: string) {
     </div>
 
     <div
-      v-if="(section.heading === 3 || isExpanded) && section.components.length > 0"
+      v-if="isH3 || isExpanded"
       class="sf-subsection-body"
       :data-sub-body="section.id"
       :style="bodyHeight !== null ? { height: bodyHeight + 'px', overflowY: 'auto' } : {}"
     >
       <PanelComponent
-        v-for="(comp, i) in section.components"
+        v-for="(comp, i) in leafComponents"
         :key="i"
         :component="comp"
         @content-changed="emit('content-changed')"
@@ -232,7 +257,20 @@ function menuItemsOf(utilId: string) {
           <slot :name="name" v-bind="sp ?? {}" />
         </template>
       </PanelComponent>
+      <SubSection
+        v-for="h3 in nestedH3s"
+        :key="h3.id"
+        :section="h3"
+        :is-expanded="true"
+        :body-height="null"
+        @utility="(utilityId, itemId) => emit('utility', utilityId, itemId)"
+        @content-changed="emit('content-changed')"
+        @component-action="(a) => emit('component-action', a)"
+      >
+        <template v-for="name in passthroughSlots" :key="name" #[name]="sp">
+          <slot :name="name" v-bind="sp ?? {}" />
+        </template>
+      </SubSection>
     </div>
-    <slot name="trailing" />
   </div>
 </template>

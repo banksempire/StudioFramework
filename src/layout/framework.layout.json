@@ -1088,44 +1088,50 @@
             "title": "Components",
             "h2": [
               {
-                "id": "lib-general",
-                "title": "General",
-                "heading": 3,
+                "id": "lib-overview",
+                "title": "Overview",
                 "components": [
                   {
-                    "type": "keyValueList",
-                    "items": [
+                    "id": "lib-general",
+                    "title": "General",
+                    "heading": 3,
+                    "components": [
                       {
-                        "key": "kit",
-                        "value": "Studio Framework"
-                      },
-                      {
-                        "key": "note",
-                        "value": "h3 sections are flat bold labels"
+                        "type": "keyValueList",
+                        "items": [
+                          {
+                            "key": "kit",
+                            "value": "Studio Framework"
+                          },
+                          {
+                            "key": "note",
+                            "value": "h3 sections nest inside their h2"
+                          }
+                        ]
                       }
                     ]
-                  }
-                ]
-              },
-              {
-                "id": "lib-controls",
-                "title": "Controls",
-                "heading": 3,
-                "components": [
-                  {
-                    "type": "input",
-                    "bind": "demo-input",
-                    "key": "text",
-                    "action": "demo-input",
-                    "placeholder": "type and press the button…",
-                    "mono": true
                   },
                   {
-                    "type": "button",
-                    "label": "Add demo row",
-                    "variant": "accent",
-                    "title": "Runs the same action a dialog button would",
-                    "action": "demo-add"
+                    "id": "lib-controls",
+                    "title": "Controls",
+                    "heading": 3,
+                    "components": [
+                      {
+                        "type": "input",
+                        "bind": "demo-input",
+                        "key": "text",
+                        "action": "demo-input",
+                        "placeholder": "type and press the button…",
+                        "mono": true
+                      },
+                      {
+                        "type": "button",
+                        "label": "Add demo row",
+                        "variant": "accent",
+                        "title": "Runs the same action a dialog button would",
+                        "action": "demo-add"
+                      }
+                    ]
                   }
                 ]
               },
@@ -1135,27 +1141,18 @@
                 "height": "fixed",
                 "components": [
                   {
-                    "type": "keyValueList",
-                    "items": [
+                    "id": "lib-nested-details",
+                    "title": "Details",
+                    "heading": 3,
+                    "components": [
                       {
-                        "key": "h3 sections",
-                        "value": "trail their h2"
-                      }
-                    ]
-                  }
-                ]
-              },
-              {
-                "id": "lib-nested-details",
-                "title": "Details",
-                "heading": 3,
-                "components": [
-                  {
-                    "type": "keyValueList",
-                    "items": [
-                      {
-                        "key": "collapse",
-                        "value": "hides the h3s below"
+                        "type": "keyValueList",
+                        "items": [
+                          {
+                            "key": "collapse",
+                            "value": "collapse hides the nested h3s"
+                          }
+                        ]
                       }
                     ]
                   }

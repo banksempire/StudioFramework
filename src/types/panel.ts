@@ -267,14 +267,25 @@ export interface PanelAction {
 
 export type PanelHeading = 2 | 3;
 
+export interface PanelH3 {
+  id: string;
+  title: string;
+  heading: 3;
+  components: PanelComponent[];
+}
+
 export interface PanelH2 {
   id: string;
   title: string;
-  heading?: PanelHeading;
+  heading: 2;
   isHeightVariable: boolean;
   minHeight?: number;
   utilities?: PanelUtility[];
-  components: PanelComponent[];
+  components: (PanelComponent | PanelH3)[];
+}
+
+export function isPanelH3(entry: unknown): entry is PanelH3 {
+  return typeof entry === 'object' && entry !== null && (entry as PanelH3).heading === 3;
 }
 
 export interface PanelH1 {

@@ -73,9 +73,14 @@ export interface PopupFieldGroup {
   extraSlot?: string;
 }
 
+export interface PopupH3 {
+  title: string;
+  fields: PopupField[];
+}
+
 export interface PopupH2 extends PopupFieldGroup {
   title: string;
-  heading?: 2 | 3;
+  h3?: PopupH3[];
 }
 
 export interface PopupH1 {

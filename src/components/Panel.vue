@@ -86,7 +86,6 @@ function restoreSectionState(groupsKey: string, h1s: PanelH1[]) {
   activeIndex.value = idx;
   for (const grp of h1s) {
     for (const sec of grp.h2) {
-      if (sec.heading === 3) continue;
       const key = `${groupsKey}::${grp.id}`;
       hiddenSubSections.value.set(key, new Set(readUiStringArray(hiddenStateKey(key)) ?? []));
     }
@@ -204,7 +203,7 @@ const hiddenSubSections = ref<Map<string, Set<string>>>(new Map());
 const activeGroup = computed(() => (props.h1s.length > 0 ? props.h1s[activeIndex.value] : null));
 const activeGroupId = computed(() => activeGroup.value?.id ?? '');
 const activeH2s = computed(() => activeGroup.value?.h2 ?? []);
-const hasSubSections = computed(() => activeH2s.value.some((sec) => sec.heading !== 3));
+const hasSubSections = computed(() => activeH2s.value.length > 0);
 
 const subStateKey = computed(() =>
   props.stateKey ? `${props.stateKey}::${activeGroupId.value}` : activeGroupId.value,
@@ -231,14 +230,12 @@ function toggleSubVisible(subId: string) {
 }
 
 const visibilityItems = computed<MenuNodeDef[]>(() =>
-  activeH2s.value
-    .filter((sec) => sec.heading !== 3)
-    .map((sec) => ({
-      id: sec.id,
-      label: sec.title,
-      iconKind: 'check' as const,
-      selected: !activeHiddenIds.value.has(sec.id),
-    })),
+  activeH2s.value.map((sec) => ({
+    id: sec.id,
+    label: sec.title,
+    iconKind: 'check' as const,
+    selected: !activeHiddenIds.value.has(sec.id),
+  })),
 );
 
 const overflowItems = computed<MenuNodeDef[]>(() =>

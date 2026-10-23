@@ -63,7 +63,6 @@ function readPersistedSub(subId: string): PersistedSubState | null {
 function persistSubState() {
   if (props.mobile || !props.stateKey) return;
   for (const sub of props.h2s) {
-    if (sub.heading === 3) continue;
     const st = states[sub.id];
     if (!st) continue;
     writeUiValue(`panel.sub.${subStateId(sub.id)}`, {
@@ -75,45 +74,20 @@ function persistSubState() {
 
 const visibleSubSections = computed(() => props.h2s.filter((s) => !props.hiddenIds.has(s.id)));
 
-const collapseHides = computed(() => {
-  const hiddenTrailers = new Set<string>();
-  const collapsedLeaders = new Set<string>();
-  let leader: PanelH2 | null = null;
-  for (const sub of visibleSubSections.value) {
-    if (sub.heading !== 3 || !leader) {
-      leader = sub;
-      continue;
-    }
-    if (leader.heading !== 3 && !(states[leader.id]?.isExpanded ?? true)) {
-      hiddenTrailers.add(sub.id);
-      collapsedLeaders.add(leader.id);
-    }
-  }
-  return { hiddenTrailers, collapsedLeaders };
-});
-
-function isFlat(sub: PanelH2): boolean {
-  return sub.heading === 3;
-}
-
 function isResizeable(sub: PanelH2): boolean {
-  if (props.mobile || isFlat(sub)) return false;
+  if (props.mobile) return false;
   const st = states[sub.id];
   return !!st && st.isExpanded && !props.hiddenIds.has(sub.id) && sub.isHeightVariable;
 }
 
-const H3_HEADER_H = 30;
-
 function getBodyHeight(sub: PanelH2): number {
   const st = states[sub.id];
-  if (isFlat(sub)) return st?.measuredHeight ?? 0;
   if (!st?.isExpanded) return 0;
   if (!sub.isHeightVariable) return st.measuredHeight;
   return Math.max(st.height, sub.minHeight ?? 0);
 }
 
 function bodyHeightFor(sub: PanelH2): number | null {
-  if (isFlat(sub)) return null;
   if (!sub.isHeightVariable || props.mobile) return null;
   const st = states[sub.id];
   if (!st?.isExpanded) return 0;
@@ -147,8 +121,7 @@ function distributeHeight() {
 
   let used = 0;
   for (const sub of visible) {
-    if (collapseHides.value.hiddenTrailers.has(sub.id)) continue;
-    used += isFlat(sub) ? H3_HEADER_H : TITLE_BAR_H;
+    used += TITLE_BAR_H;
     used += getBodyHeight(sub);
   }
   const unallocated = bodyHeight.value - used;
@@ -174,12 +147,7 @@ function measureAndObserve() {
 
   const wanted = new Set(
     props.h2s
-      .filter(
-        (s) =>
-          (isFlat(s) || (!s.isHeightVariable && states[s.id]?.isExpanded)) &&
-          !props.hiddenIds.has(s.id) &&
-          !collapseHides.value.hiddenTrailers.has(s.id),
-      )
+      .filter((s) => !s.isHeightVariable && states[s.id]?.isExpanded && !props.hiddenIds.has(s.id))
       .map((s) => s.id),
   );
 
@@ -284,7 +252,7 @@ function toggleExpand(subId: string) {
   const st = states[subId];
   if (!st) return;
   const sub = props.h2s.find((s) => s.id === subId);
-  if (!sub || isFlat(sub)) return;
+  if (!sub) return;
 
   if (st.isExpanded) {
     st.savedHeight = st.height;
@@ -315,28 +283,6 @@ const handleFlags = computed(() => {
     flags.push(hasAbove && hasBelow);
   }
   return flags;
-});
-
-interface SectionBlock {
-  key: string;
-  h2: PanelH2;
-  h2Index: number;
-  trailing: { sub: PanelH2; index: number }[];
-}
-
-const blocks = computed<SectionBlock[]>(() => {
-  const out: SectionBlock[] = [];
-  let current: SectionBlock | null = null;
-  visibleSubSections.value.forEach((sub, index) => {
-    if (sub.heading !== 3 || !current) {
-      const block: SectionBlock = { key: sub.id, h2: sub, h2Index: index, trailing: [] };
-      current = block;
-      out.push(block);
-    } else {
-      current.trailing.push({ sub, index });
-    }
-  });
-  return out;
 });
 
 interface DragState {
@@ -415,58 +361,27 @@ onUnmounted(() => {
     class="sf-subsection-body-container"
     :style="{ overflowY: !scroll ? 'visible' : ready ? 'auto' : 'hidden' }"
   >
-    <template v-for="block in blocks" :key="block.key">
+    <template v-for="(sub, index) in visibleSubSections" :key="sub.id">
       <SubSection
-        :section="block.h2"
-        :is-expanded="states[block.h2.id]?.isExpanded ?? true"
-        :body-height="bodyHeightFor(block.h2)"
-        @toggle-expand="toggleExpand(block.h2.id)"
-        @utility="(utilityId, itemId) => emit('utility', block.h2.id, utilityId, itemId)"
+        :section="sub"
+        :is-expanded="states[sub.id]?.isExpanded ?? true"
+        :body-height="bodyHeightFor(sub)"
+        @toggle-expand="toggleExpand(sub.id)"
+        @utility="(utilityId, itemId) => emit('utility', sub.id, utilityId, itemId)"
         @content-changed="refresh(true)"
         @component-action="(a) => emit('component-action', a)"
       >
         <template v-for="name in passthroughSlots" :key="name" #[name]="sp">
           <slot :name="name" v-bind="sp ?? {}" />
         </template>
-        <template #trailing>
-          <template v-if="!collapseHides.collapsedLeaders.has(block.h2.id)">
-            <template v-for="entry in block.trailing" :key="entry.sub.id">
-              <SubSection
-                :section="entry.sub"
-                :is-expanded="states[entry.sub.id]?.isExpanded ?? true"
-                :body-height="bodyHeightFor(entry.sub)"
-                @toggle-expand="toggleExpand(entry.sub.id)"
-                @utility="(utilityId, itemId) => emit('utility', entry.sub.id, utilityId, itemId)"
-                @content-changed="refresh(true)"
-                @component-action="(a) => emit('component-action', a)"
-              >
-                <template v-for="name in passthroughSlots" :key="name" #[name]="sp">
-                  <slot :name="name" v-bind="sp ?? {}" />
-                </template>
-              </SubSection>
-              <div
-                v-if="entry.index < visibleSubSections.length - 1 && handleFlags[entry.index]"
-                class="sf-subsection-drag-wrapper"
-              >
-                <div
-                  class="sf-subsection-drag-handle"
-                  @pointerdown="startDrag(entry.index, $event)"
-                  @pointermove="onDragMove"
-                  @pointerup="onDragEnd"
-                  @pointercancel="onDragEnd"
-                />
-              </div>
-            </template>
-          </template>
-        </template>
       </SubSection>
       <div
-        v-if="block.h2Index < visibleSubSections.length - 1 && handleFlags[block.h2Index]"
+        v-if="index < visibleSubSections.length - 1 && handleFlags[index]"
         class="sf-subsection-drag-wrapper"
       >
         <div
           class="sf-subsection-drag-handle"
-          @pointerdown="startDrag(block.h2Index, $event)"
+          @pointerdown="startDrag(index, $event)"
           @pointermove="onDragMove"
           @pointerup="onDragEnd"
           @pointercancel="onDragEnd"

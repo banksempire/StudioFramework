@@ -25,6 +25,15 @@ Task-specific manual. The workspace contract (ground rules, workflow, ports) liv
 
 `src/layout/framework.layout.json` is loaded at startup; `doc/framework.layout.json` is a static review copy, **NOT** loaded.
 
+### Section hierarchy rules (enforced by the loader, fail-quick at startup)
+
+- Exactly three header levels: H1 groups own H2 sections; H3 sections nest **inside their owning H2's** `components` array (mixed with leaf components, rendered in array order). There is no flat H3-after-H2 form.
+- `h1` groups carry `h2` sections only — a `heading: 3` entry at the h1 level is a level jump and fails the load.
+- `components: []` is illegal for H2 and H3 alike; every section carries at least one entry (leaf or nested H3).
+- An H3 declares `heading: 3`, may not set `height`, and cannot contain further sections. H2 `heading` is always 2.
+- Every panel has at least one H1; every H1 has at least one H2.
+- Popups follow the same shape one level shallower: `PopupH2.fields` plus an optional `h3: PopupH3[]` nesting list — there is no heading flag.
+
 ## Terminology (used across both repos)
 
 "panel" not "sidebar"; "RightPanel" not "PropertyPanel"; Workspace = central box; Tile = split-tree node; Tab = items in a tile; the whole UI shell = the **"framework"** (not "app"); each icon on the Docker bar = an **"app"** (not "tag" / "docker icon").

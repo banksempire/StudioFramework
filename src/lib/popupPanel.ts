@@ -1,4 +1,4 @@
-import type { PanelComponent, PanelH1, PanelH2 } from '../types/panel';
+import type { PanelComponent, PanelH1, PanelH2, PanelH3 } from '../types/panel';
 import type { PopupDocument, PopupH2, PopupValues } from '../types/popup';
 
 export interface PopupH1Group {
@@ -23,18 +23,34 @@ export function toPanelH1(group: PopupH1Group, values: PopupValues): PanelH1 {
     if (!h2.title) {
       throw new Error(`popup h2 section ${i} of '${group.id}' must define a title`);
     }
-    const form: PanelComponent = {
-      type: 'form',
-      fields: h2.fields,
-      values,
-      extraSlot: h2.extraSlot,
-    };
+    const components: (PanelComponent | PanelH3)[] = [
+      {
+        type: 'form',
+        fields: h2.fields,
+        values,
+        extraSlot: h2.extraSlot,
+      },
+    ];
+    for (const h3 of h2.h3 ?? []) {
+      components.push({
+        id: `${popupH2PanelId(group.id, h2, i)}::${h3.title}`,
+        title: h3.title,
+        heading: 3,
+        components: [
+          {
+            type: 'form',
+            fields: h3.fields,
+            values,
+          },
+        ],
+      });
+    }
     return {
       id: popupH2PanelId(group.id, h2, i),
       title: h2.title ?? '',
-      heading: h2.heading ?? 2,
+      heading: 2,
       isHeightVariable: false,
-      components: [form],
+      components,
     };
   });
   return { id: group.id, title: group.title, h2 };
