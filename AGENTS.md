@@ -38,6 +38,10 @@ Task-specific manual. The workspace contract (ground rules, workflow, ports) liv
 
 "panel" not "sidebar"; "RightPanel" not "PropertyPanel"; Workspace = central box; Tile = split-tree node; Tab = items in a tile; the whole UI shell = the **"framework"** (not "app"); each icon on the Docker bar = an **"app"** (not "tag" / "docker icon").
 
+## Debug mode
+
+Opening any framework app with `?debug` in the URL enables debug mode: the framework captures every frontend log (console debug/log/info/warn/error, uncaught errors, unhandled rejections — mirrored to the real console) into a ring buffer (2000 entries) and shows a `🐞 Debug` button at the right end of the status bar. The button opens a hover window with a minimum-level filter and a Copy button that puts all filtered entries on the clipboard. Inert without the URL param; covered by `check:debug`.
+
 ## Icons
 
 Icon additions go to `SvgIcon.vue` and stay generic even when motivated by a product (e.g. `sort` + `⏰` were added for scheduler UIs). Geometry conventions are enforced by suites: this repo's `check:utils` asserts a demo util icon fills the 24×24 viewBox (≥18 wide, ≥16 tall, centered); docker-icon geometry is asserted by pi-agent-studio's `check:dockericons`.
