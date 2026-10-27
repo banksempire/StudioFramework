@@ -61,6 +61,7 @@ export interface PopupField {
   min?: number;
   max?: number;
   step?: number;
+  shorthand?: boolean;
   id?: string;
   text?: string;
   class?: string;

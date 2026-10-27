@@ -190,6 +190,7 @@ function onWheelAction(id: string) {
     :min="field.min ?? 1"
     :max="field.max ?? 100"
     :step="field.step ?? 1"
+    :shorthand="field.shorthand ?? false"
     :title="field.labelNote"
     @update:model-value="(v) => emit('patch', field.key, v)"
   />

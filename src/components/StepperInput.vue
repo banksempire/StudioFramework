@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed } from 'vue';
+import { ref } from 'vue';
 import SvgIcon from './SvgIcon.vue';
 
 const props = withDefaults(
@@ -11,36 +11,74 @@ const props = withDefaults(
     step?: number;
     disabled?: boolean;
     title?: string;
+    shorthand?: boolean;
   }>(),
-  { min: 1, max: 100, step: 1, disabled: false, title: undefined, id: undefined },
+  { min: 1, max: 100, step: 1, disabled: false, title: undefined, id: undefined, shorthand: false },
 );
 
 const emit = defineEmits<(e: 'update:modelValue', value: number) => void>();
 
-const boxValue = computed(() => (Number.isFinite(props.modelValue) ? String(props.modelValue) : ''));
+const draft = ref<string | null>(null);
 
 function clamp(n: number): number {
   return Math.min(props.max, Math.max(props.min, n));
 }
 
-function onBoxInput(e: Event) {
-  const raw = (e.target as HTMLInputElement).value;
-  const n = Number(raw);
-  if (raw !== '' && Number.isFinite(n)) emit('update:modelValue', n);
+function trimNumber(n: number): string {
+  return String(Number(n.toFixed(6)));
 }
 
-function onBoxChange(e: Event) {
-  const input = e.target as HTMLInputElement;
-  const raw = input.value;
-  const n = Number(raw);
-  const next = clamp(raw === '' || !Number.isFinite(n) ? props.modelValue : Math.round(n));
-  input.value = String(next);
-  emit('update:modelValue', next);
+function formatValue(v: number): string {
+  if (!Number.isFinite(v)) return '';
+  if (props.shorthand) {
+    if (v >= 1e6 && v % 1e6 === 0) return `${trimNumber(v / 1e6)}m`;
+    if (v >= 1e3 && v % 1e3 === 0) return `${trimNumber(v / 1e3)}k`;
+  }
+  return String(v);
+}
+
+function parseDraft(raw: string): number | null {
+  const m = raw
+    .trim()
+    .toLowerCase()
+    .match(/^([0-9]*\.?[0-9]+)\s*([km])?$/);
+  if (!m) return null;
+  const base = Number(m[1]);
+  if (!Number.isFinite(base)) return null;
+  return base * (m[2] === 'k' ? 1e3 : m[2] === 'm' ? 1e6 : 1);
+}
+
+function commitDraft(): number {
+  const raw = draft.value;
+  draft.value = null;
+  if (raw === null) return props.modelValue;
+  const parsed = parseDraft(raw);
+  const next = parsed === null ? props.modelValue : clamp(Math.round(parsed));
+  if (next !== props.modelValue) emit('update:modelValue', next);
+  return next;
+}
+
+function onBoxInput(event: Event) {
+  draft.value = (event.target as HTMLInputElement).value;
+}
+
+function onBoxBlur() {
+  commitDraft();
+}
+
+function onBoxKeydown(event: KeyboardEvent) {
+  if (event.key === 'Enter') (event.target as HTMLInputElement).blur();
+}
+
+function stepFor(v: number): number {
+  if (!props.shorthand || v < 10) return props.step;
+  return Math.max(props.step, 10 ** (Math.floor(Math.log10(v)) - 1));
 }
 
 function adjust(dir: number) {
-  const base = Number.isFinite(props.modelValue) ? props.modelValue : props.min;
-  emit('update:modelValue', clamp(base + dir * props.step));
+  const committed = clamp(Math.round(commitDraft()));
+  const next = clamp(committed + dir * stepFor(committed));
+  if (next !== committed) emit('update:modelValue', next);
 }
 </script>
 
@@ -49,15 +87,16 @@ function adjust(dir: number) {
     <input
       :id="id"
       class="sf-stepper-input-box"
-      type="number"
-      :value="boxValue"
+      :type="shorthand ? 'text' : 'number'"
+      :value="draft ?? formatValue(modelValue)"
       :min="min"
       :max="max"
       :step="step"
       :disabled="disabled"
       :title="title"
       @input="onBoxInput"
-      @change="onBoxChange"
+      @blur="onBoxBlur"
+      @keydown="onBoxKeydown"
     />
     <div class="sf-stepper-input-btns">
       <button
