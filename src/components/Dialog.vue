@@ -208,6 +208,11 @@ onUnmounted(() => window.removeEventListener('keydown', onDocKey));
   border-top: 1px solid var(--sf-border);
 }
 
+.sf-dialog-foot :deep(.sf-dialog-btn) {
+  flex: 1 1 0;
+  max-width: 120px;
+}
+
 .sf-root--mobile .sf-dialog-backdrop {
   padding: 10px;
   padding-top: calc(var(--sf-safe-top, 0px) + 60px + 10px);

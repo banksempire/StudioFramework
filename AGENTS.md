@@ -34,6 +34,10 @@ Task-specific manual. The workspace contract (ground rules, workflow, ports) liv
 - Every panel has at least one H1; every H1 has at least one H2.
 - Popups follow the same shape one level shallower: `PopupH2.fields` plus an optional `h3: PopupH3[]` nesting list — there is no heading flag.
 
+### Component sizing
+
+Components in JSON-defined layouts — panel and dialog forms alike — never impose min-widths. A component's width is the container's width times its span weight (`fieldFlex`); controls must shrink into their slot (`min-width: 0` on the control chain) and grow exactly to it. Content-sized caps (`max-width`) are allowed; positive `min-width` on a layout component is not. The one deliberate exception: `.sf-root--mobile .sf-dialog-foot` keeps a 96px touch floor on mobile, where dialogs are full-width sheets without weighted slots. Enforced by `check:formwidth` (span weights, overlap, and slot fit asserted at two widths for panel forms, the element popup, and the panel popup).
+
 ## Terminology (used across both repos)
 
 "panel" not "sidebar"; "RightPanel" not "PropertyPanel"; Workspace = central box; Tile = split-tree node; Tab = items in a tile; the whole UI shell = the **"framework"** (not "app"); each icon on the Docker bar = an **"app"** (not "tag" / "docker icon").

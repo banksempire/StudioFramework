@@ -2696,40 +2696,8 @@ body.sf-dragging-row * {
   gap: 2px;
 }
 
-.sf-pf {
-  display: flex;
-  flex-direction: column;
-  row-gap: 10px;
-  padding: 4px 0;
-}
-
-.sf-pf-row {
-  display: grid;
-  grid-template-columns: auto minmax(0, 1fr);
-  align-items: center;
-  column-gap: 12px;
-  margin: 0 8px;
-  font-size: 16px;
-}
-
-.sf-pf-key {
-  color: var(--sf-text-muted);
-  flex-shrink: 0;
-}
-
-.sf-pf-ctl {
-  display: block;
-  text-align: right;
+.sf-form-field > * {
   min-width: 0;
-}
-
-.sf-pf-ctl .sf-pill {
-  width: 100%;
-}
-
-.sf-pf-ctl .sf-stepper-input {
-  width: fit-content;
-  margin-left: auto;
 }
 
 .sf-form-field .sf-stepper-input {
@@ -2739,24 +2707,6 @@ body.sf-dragging-row * {
 .sf-form-field .sf-stepper-input .sf-stepper-input-box {
   flex: 1;
   width: auto;
-  min-width: 0;
-}
-
-.sf-pf-hint {
-  color: var(--sf-text);
-  font-size: 16px;
-  justify-self: end;
-}
-
-.sf-pf-note {
-  grid-column: 1 / -1;
-  color: var(--sf-text);
-  font-size: 16px;
-  padding-top: 4px;
-}
-
-.sf-pf-note--err {
-  color: var(--sf-status-err);
 }
 
 .sf-ph {
@@ -3011,7 +2961,6 @@ body.sf-dragging-row * {
   align-items: center;
   justify-content: center;
   gap: 4px;
-  min-width: 88px;
   height: var(--sf-control-h);
   box-sizing: border-box;
   padding: 5px 14px;

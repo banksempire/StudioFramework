@@ -9,7 +9,7 @@ import PopupDialog from './PopupDialog.vue';
 const open = ref(false);
 const wideOpen = ref(false);
 const panelOpen = ref(false);
-const panelValues = ref<PopupValues>({ pname: '', pslot: '', ptier2: 'a' });
+const panelValues = ref<PopupValues>({ pname: '', pslot: '', ptier2: 'a', pmode: 'fast', pstep: 10 });
 
 const panelDoc: PopupDocument = {
   title: 'Panel popup',
@@ -42,6 +42,24 @@ const panelDoc: PopupDocument = {
                 { value: 'a', label: 'Alpha' },
                 { value: 'b', label: 'Beta' },
               ],
+            },
+            {
+              key: 'pmode',
+              type: 'pills',
+              label: 'Mode',
+              options: [
+                { value: 'fast', label: 'Fast' },
+                { value: 'slow', label: 'Slow' },
+              ],
+            },
+            {
+              key: 'pstep',
+              type: 'stepper',
+              label: 'Cap',
+              min: 1,
+              max: 1000000,
+              step: 10,
+              shorthand: true,
             },
             { key: 'pping', type: 'button', label: 'Ping', action: 'ping-demo' },
           ],
@@ -130,6 +148,24 @@ const formFields: PopupField[] = [
     line: 'weights',
     placeholder: 'span 3',
     span: 3,
+  },
+  {
+    key: 'mode',
+    type: 'pills',
+    label: 'Mode',
+    options: [
+      { value: 'fast', label: 'Fast' },
+      { value: 'slow', label: 'Slow' },
+    ],
+  },
+  {
+    key: 'caps2',
+    type: 'stepper',
+    label: 'Cap',
+    min: 1,
+    max: 1000000,
+    step: 10,
+    shorthand: true,
   },
   {
     key: 'note',
