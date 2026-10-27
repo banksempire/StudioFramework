@@ -36,7 +36,7 @@ Task-specific manual. The workspace contract (ground rules, workflow, ports) liv
 
 ### Component sizing
 
-Components in JSON-defined layouts — panel and dialog forms alike — never impose min-widths. A component's width is the container's width times its span weight (`fieldFlex`); controls must shrink into their slot (`min-width: 0` on the control chain) and grow exactly to it. Content-sized caps (`max-width`) are allowed; positive `min-width` on a layout component is not. The one deliberate exception: `.sf-root--mobile .sf-dialog-foot` keeps a 96px touch floor on mobile, where dialogs are full-width sheets without weighted slots. Enforced by `check:formwidth` (span weights, overlap, and slot fit asserted at two widths for panel forms, the element popup, and the panel popup).
+Components in JSON-defined layouts — panel and dialog forms alike, desktop and mobile — never impose min-widths. A component's width is the container's width times its span weight (`fieldFlex`); controls must shrink into their slot (`min-width: 0` on the control chain) and grow exactly to it. Content-sized caps (`max-width`) are allowed; positive `min-width` on a layout component is not. Mobile mode changes nothing about component sizing: only the container width differs (limited by the screen). Enforced by `check:formwidth` (span weights, overlap, slot fit, and the no-min-width floor asserted at desktop, narrow, and mobile widths for panel forms, the element popup, and the panel popup).
 
 ## Terminology (used across both repos)
 
