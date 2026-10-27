@@ -2928,23 +2928,49 @@ body.sf-dragging-row * {
 }
 
 .sf-form-row {
-  display: flex;
-  gap: 10px;
+  display: grid;
+  grid-template-rows: auto auto auto;
+  column-gap: 10px;
   min-width: 0;
 }
 
 .sf-form-row > .sf-dialog-btn {
-  align-self: flex-end;
+  grid-row: 1 / -1;
+  align-self: end;
   width: 100%;
   min-width: 0;
   height: var(--sf-control-h);
 }
 
 .sf-form-field {
-  display: flex;
-  flex-direction: column;
-  gap: 5px;
+  display: grid;
+  grid-template-rows: subgrid;
+  grid-row: 1 / -1;
   min-width: 0;
+}
+
+.sf-form-row > .sf-form-info {
+  grid-row: 1 / -1;
+}
+
+.sf-form-field > .sf-form-label {
+  grid-row: 1;
+  margin-bottom: 5px;
+}
+
+.sf-form-field > :not(.sf-form-label):not(.sf-form-hint) {
+  grid-row: 2;
+  align-self: end;
+}
+
+.sf-form-field--wheel,
+.sf-form-field--wheel > .sf-color-wheel-field {
+  min-width: auto;
+}
+
+.sf-form-field > .sf-form-hint {
+  grid-row: 3;
+  margin-top: 5px;
 }
 
 .sf-form-label {

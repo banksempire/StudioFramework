@@ -6,11 +6,13 @@ const { ensureServer, openApp, makeReporter, finish } = require('./lib/ui-test.c
   const { report, isFailed } = makeReporter();
 
   const delay = (ms) => new Promise((r) => setTimeout(r, ms));
+  let totalWrapped = 0;
 
   async function scanFormGrids(scopeSel) {
     return page.evaluate((scope) => {
       const problems = [];
       let rows = 0;
+      let wrapped = 0;
       const grids = [...document.querySelectorAll(`${scope} .sf-form-grid`)];
       if (grids.length === 0) return null;
       for (const grid of grids) {
@@ -25,7 +27,7 @@ const { ensureServer, openApp, makeReporter, finish } = require('./lib/ui-test.c
           );
           const rowR = row.getBoundingClientRect();
           const grows = slots.map((el) => {
-            const m = /flex:\s*([0-9.]+)/.exec(el.getAttribute('style') ?? '');
+            const m = /--sf-span:\s*([0-9.]+)/.exec(el.getAttribute('style') ?? '');
             return m ? Number(m[1]) : 1;
           });
           const total = grows.reduce((a, b) => a + b, 0);
@@ -54,9 +56,35 @@ const { ensureServer, openApp, makeReporter, finish } = require('./lib/ui-test.c
               }
             }
           }
+          const labels = slots
+            .map((el) => el.querySelector(':scope > .sf-form-label'))
+            .filter((el) => el instanceof HTMLElement);
+          for (const label of labels) {
+            if (label.getBoundingClientRect().height > 34) wrapped += 1;
+          }
+          if (labels.length > 1) {
+            const tops = labels.map((el) => el.getBoundingClientRect().top);
+            const drift = Math.max(...tops) - Math.min(...tops);
+            if (drift > 1) problems.push(`row ${rows}: label tops misaligned by ${drift.toFixed(1)}px`);
+          }
+          const ctls = slots
+            .map((el) =>
+              [...el.children].find(
+                (c) =>
+                  !c.classList.contains('sf-form-label') &&
+                  !c.classList.contains('sf-form-hint') &&
+                  !c.classList.contains('sf-form-info'),
+              ),
+            )
+            .filter((el) => el instanceof HTMLElement);
+          if (ctls.length > 1) {
+            const bottoms = ctls.map((el) => el.getBoundingClientRect().bottom);
+            const drift = Math.max(...bottoms) - Math.min(...bottoms);
+            if (drift > 1) problems.push(`row ${rows}: control bottoms misaligned by ${drift.toFixed(1)}px`);
+          }
         }
       }
-      return { rows, problems };
+      return { rows, wrapped, problems };
     }, scopeSel);
   }
 
@@ -96,6 +124,7 @@ const { ensureServer, openApp, makeReporter, finish } = require('./lib/ui-test.c
     await delay(200);
 
     const scan = await scanFormGrids('.sf-panel--left');
+    totalWrapped += scan?.wrapped ?? 0;
     report('panel form renders the weighted demo rows', (scan?.rows ?? 0) >= 3, JSON.stringify(scan));
     report(
       'panel rows honor span weights without overlap at default width',
@@ -109,6 +138,7 @@ const { ensureServer, openApp, makeReporter, finish } = require('./lib/ui-test.c
     await formSection.scrollIntoViewIfNeeded();
     await delay(200);
     const narrow = await scanFormGrids('.sf-panel--left');
+    totalWrapped += narrow?.wrapped ?? 0;
     report(
       'panel rows honor span weights without overlap at narrow width',
       (narrow?.rows ?? 0) >= 1 && (narrow?.problems.length ?? 1) === 0,
@@ -130,6 +160,7 @@ const { ensureServer, openApp, makeReporter, finish } = require('./lib/ui-test.c
       '',
     );
     const elementScan = await scanFormGrids('.sf-dialog');
+    totalWrapped += elementScan?.wrapped ?? 0;
     report(
       'element popup form rows never overlap or overflow',
       (elementScan?.rows ?? 0) >= 3 && (elementScan?.problems.length ?? 1) === 0,
@@ -149,6 +180,7 @@ const { ensureServer, openApp, makeReporter, finish } = require('./lib/ui-test.c
       '',
     );
     const pfScan = await scanFormGrids('.sf-dialog');
+    totalWrapped += pfScan?.wrapped ?? 0;
     report(
       'panel popup form rows never overlap or overflow',
       (pfScan?.rows ?? 0) >= 3 && (pfScan?.problems.length ?? 1) === 0,
@@ -164,6 +196,7 @@ const { ensureServer, openApp, makeReporter, finish } = require('./lib/ui-test.c
     );
     report('mobile panel opens with the demo form', await ensureDemoFormVisible(), '');
     const mobileScan = await scanFormGrids('.sf-panel--mobile');
+    totalWrapped += mobileScan?.wrapped ?? 0;
     report(
       'mobile panel rows honor span weights without overlap',
       (mobileScan?.rows ?? 0) >= 3 && (mobileScan?.problems.length ?? 1) === 0,
@@ -188,6 +221,7 @@ const { ensureServer, openApp, makeReporter, finish } = require('./lib/ui-test.c
       JSON.stringify(mobileFoot),
     );
     const mobileDialogScan = await scanFormGrids('.sf-dialog');
+    totalWrapped += mobileDialogScan?.wrapped ?? 0;
     report(
       'mobile dialog form rows never overlap or overflow',
       (mobileDialogScan?.rows ?? 0) >= 3 && (mobileDialogScan?.problems.length ?? 1) === 0,
@@ -196,6 +230,7 @@ const { ensureServer, openApp, makeReporter, finish } = require('./lib/ui-test.c
     await page.locator('.sf-dialog .sf-dialog-btn').last().click();
     await page.locator('.sf-dialog').waitFor({ state: 'detached', timeout: 5000 });
 
+    report('alignment guard exercised a wrapped label', totalWrapped >= 1, `wrapped=${totalWrapped}`);
     report('no console/page errors', errors.length === 0, JSON.stringify(errors));
   } catch (e) {
     report('suite crashed', false, String(e));

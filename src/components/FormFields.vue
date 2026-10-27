@@ -30,8 +30,12 @@ const fieldRows = computed<PopupField[][]>(() => {
   return rows;
 });
 
-function fieldFlex(field: PopupField): string {
-  return `flex: ${fieldWeight(field)} 1 0`;
+function fieldSpan(field: PopupField, index: number): string {
+  return `--sf-span: ${fieldWeight(field)}; grid-column: ${index + 1}`;
+}
+
+function rowColumns(row: PopupField[]): string {
+  return row.map((field) => `minmax(auto, ${fieldWeight(field)}fr)`).join(' ');
 }
 
 function fieldId(field: PopupField): string {
@@ -46,8 +50,8 @@ function patch(key: string, value: string | number | boolean | Array<string | nu
 <template>
   <p v-if="h2.note" class="sf-form-section-note">{{ h2.note }}</p>
   <div class="sf-form-grid">
-    <div v-for="(row, ri) in fieldRows" :key="ri" class="sf-form-row">
-      <template v-for="field in row" :key="field.key">
+    <div v-for="(row, ri) in fieldRows" :key="ri" class="sf-form-row" :style="{ gridTemplateColumns: rowColumns(row) }">
+      <template v-for="(field, fi) in row" :key="field.key">
         <div
           v-if="field.type === 'info'"
           :data-field="field.key"
@@ -56,14 +60,14 @@ function patch(key: string, value: string | number | boolean | Array<string | nu
             'sf-form-info--warn': field.hintTone === 'warn',
             'sf-form-info--error': field.hintTone === 'error',
           }]"
-          :style="fieldFlex(field)"
+          :style="fieldSpan(field, fi)"
         >{{ field.text }}</div>
         <button
           v-else-if="field.type === 'button'"
           type="button"
           class="sf-dialog-btn"
           :class="field.variant && field.variant !== 'default' ? `sf-dialog-btn--${field.variant}` : undefined"
-          :style="fieldFlex(field)"
+          :style="fieldSpan(field, fi)"
           :disabled="field.disabled || busy"
           :title="field.labelNote"
           @click="emit('action', field.action ?? field.key, field.key)"
@@ -75,7 +79,7 @@ function patch(key: string, value: string | number | boolean | Array<string | nu
           class="sf-form-field"
           :class="field.class"
           :data-field="field.key"
-          :style="fieldFlex(field)"
+          :style="fieldSpan(field, fi)"
         >
           <label
             v-if="field.label"

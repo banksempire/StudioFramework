@@ -226,7 +226,7 @@ registerPanelData('demo-form', () => ({
     {
       key: 'tight',
       type: 'select',
-      label: 'Tight',
+      label: 'Tightness range',
       line: 'weights',
       span: 1,
       options: [

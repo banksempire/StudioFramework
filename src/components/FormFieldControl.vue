@@ -114,7 +114,12 @@ const wheelDoc: PopupDocument = {
     {
       id: 'color',
       title: 'Pick a color',
-      h2: [{ title: 'Pick a color', fields: [{ key: 'color', type: 'colorWheel', span: 2 }] }],
+      h2: [
+        {
+          title: 'Pick a color',
+          fields: [{ key: 'color', type: 'colorWheel', span: 2, class: 'sf-form-field--wheel' }],
+        },
+      ],
     },
   ],
   actions: [
