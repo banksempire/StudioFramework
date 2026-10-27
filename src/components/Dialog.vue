@@ -248,7 +248,6 @@ onUnmounted(() => window.removeEventListener('keydown', onDocKey));
 
 .sf-root--mobile .sf-dialog-foot :deep(.sf-dialog-btn) {
   min-height: 44px;
-  min-width: 96px;
   font-size: 15px;
 }
 </style>

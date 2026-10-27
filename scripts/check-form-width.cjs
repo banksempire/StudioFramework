@@ -60,17 +60,32 @@ const { ensureServer, openApp, makeReporter, finish } = require('./lib/ui-test.c
     }, scopeSel);
   }
 
-  async function clickDocker(title) {
+  async function ensureDemoFormVisible() {
     for (let i = 0; i < 3; i++) {
-      await page.click(`.sf-docker-app[title="${title}"]`);
+      const there = await page.evaluate(() => {
+        const el = document.querySelector(
+          '.sf-panel--left .sf-form-field[data-field="lo"], .sf-panel--mobile .sf-form-field[data-field="lo"]',
+        );
+        return el instanceof HTMLElement && el.getBoundingClientRect().width > 0;
+      });
+      if (there) return true;
+      await page.click('.sf-docker-app[title="Library"]');
       await delay(300);
-      const shown = await page.evaluate(() =>
-        [...document.querySelectorAll('.sf-panel--left, .sf-panel--right')].some(
-          (p) => !p.classList.contains('sf-panel--hidden'),
-        ),
-      );
-      if (shown) return;
     }
+    return false;
+  }
+
+  async function ensureDialogTriggerVisible() {
+    for (let i = 0; i < 3; i++) {
+      const there = await page.evaluate(() => {
+        const el = document.querySelector('.sf-dialog-demo-open');
+        return el instanceof HTMLElement && el.getBoundingClientRect().width > 0;
+      });
+      if (there) return true;
+      await page.click('.sf-docker-app[title="Explorer"]');
+      await delay(300);
+    }
+    return false;
   }
 
   try {
@@ -90,7 +105,7 @@ const { ensureServer, openApp, makeReporter, finish } = require('./lib/ui-test.c
 
     await page.setViewportSize({ width: 820, height: 800 });
     await delay(300);
-    await clickDocker('Library');
+    report('desktop panel opens with the demo form', await ensureDemoFormVisible(), '');
     await formSection.scrollIntoViewIfNeeded();
     await delay(200);
     const narrow = await scanFormGrids('.sf-panel--left');
@@ -103,7 +118,7 @@ const { ensureServer, openApp, makeReporter, finish } = require('./lib/ui-test.c
     await page.setViewportSize({ width: 1280, height: 800 });
     await delay(300);
 
-    await clickDocker('Explorer');
+    await ensureDialogTriggerVisible();
     await page.locator('.sf-dialog-demo-open').scrollIntoViewIfNeeded();
     await page.locator('.sf-dialog-demo-open').click();
     await delay(400);
@@ -139,6 +154,47 @@ const { ensureServer, openApp, makeReporter, finish } = require('./lib/ui-test.c
       (pfScan?.rows ?? 0) >= 3 && (pfScan?.problems.length ?? 1) === 0,
       JSON.stringify(pfScan),
     );
+
+    await page.setViewportSize({ width: 420, height: 900 });
+    await delay(400);
+    report(
+      'mobile mode activates below the breakpoint',
+      await page.evaluate(() => document.querySelector('.sf-root--mobile') !== null),
+      '',
+    );
+    report('mobile panel opens with the demo form', await ensureDemoFormVisible(), '');
+    const mobileScan = await scanFormGrids('.sf-panel--mobile');
+    report(
+      'mobile panel rows honor span weights without overlap',
+      (mobileScan?.rows ?? 0) >= 3 && (mobileScan?.problems.length ?? 1) === 0,
+      JSON.stringify(mobileScan),
+    );
+
+    report('mobile explorer opens with the dialog demo', await ensureDialogTriggerVisible(), '');
+    await page.locator('.sf-dialog-demo-open').click();
+    await delay(400);
+    await page.locator('.sf-dialog').waitFor({ state: 'visible', timeout: 5000 });
+    const mobileFoot = await page.evaluate(() => {
+      const btns = [...document.querySelectorAll('.sf-dialog-foot .sf-dialog-btn')];
+      return {
+        count: btns.length,
+        minWidths: [...new Set(btns.map((b) => getComputedStyle(b).minWidth))],
+        widths: btns.map((b) => Math.round(b.getBoundingClientRect().width)),
+      };
+    });
+    report(
+      'mobile dialog footer buttons carry no min-width floor',
+      mobileFoot.count >= 2 && mobileFoot.minWidths.every((m) => m === 'auto'),
+      JSON.stringify(mobileFoot),
+    );
+    const mobileDialogScan = await scanFormGrids('.sf-dialog');
+    report(
+      'mobile dialog form rows never overlap or overflow',
+      (mobileDialogScan?.rows ?? 0) >= 3 && (mobileDialogScan?.problems.length ?? 1) === 0,
+      JSON.stringify(mobileDialogScan),
+    );
+    await page.locator('.sf-dialog .sf-dialog-btn').last().click();
+    await page.locator('.sf-dialog').waitFor({ state: 'detached', timeout: 5000 });
 
     report('no console/page errors', errors.length === 0, JSON.stringify(errors));
   } catch (e) {
