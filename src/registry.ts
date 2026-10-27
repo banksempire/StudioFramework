@@ -3,6 +3,7 @@ import type { MenuNodeDef } from './types/layout';
 
 const tabContent = new Map<string, Component>();
 const panelComponents = new Map<string, Component>();
+const builtinPanelComponents = new Set<string>();
 const statusComponents = new Map<string, Component>();
 const utilityMenus = new Map<string, () => MenuNodeDef[]>();
 const panelData = new Map<string, () => unknown>();
@@ -15,11 +16,28 @@ export function getTabContent(key: string): Component | undefined {
   return tabContent.get(key);
 }
 
-export function registerPanelComponent(key: string, component: Component): void {
+export function registerBuiltinPanelComponent(key: string, component: Component): void {
   panelComponents.set(key, component);
+  builtinPanelComponents.add(key);
+}
+
+export function registerPanelComponent(): never {
+  throw new Error(
+    '[StudioFramework] registerPanelComponent() is reserved for framework built-ins — ' +
+      'downstream apps cannot render custom components in JSON layouts. ' +
+      'Compose the existing layout components and field types instead. ' +
+      `Registered built-ins: ${[...builtinPanelComponents].join(', ') || 'none'}. ` +
+      'If something is genuinely missing, implement it in StudioFramework first.',
+  );
 }
 
 export function getPanelComponent(key: string): Component | undefined {
+  if (!panelComponents.has(key)) {
+    throw new Error(
+      `[StudioFramework] unknown panel component "${key}" — ` +
+        `registered built-ins: ${[...builtinPanelComponents].join(', ') || 'none'}`,
+    );
+  }
   return panelComponents.get(key);
 }
 

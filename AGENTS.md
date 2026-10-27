@@ -34,6 +34,14 @@ Task-specific manual. The workspace contract (ground rules, workflow, ports) liv
 - Every panel has at least one H1; every H1 has at least one H2.
 - Popups follow the same shape one level shallower: `PopupH2.fields` plus an optional `h3: PopupH3[]` nesting list — there is no heading flag.
 
+### Component registration guard
+
+`type: "component"` keys resolve only against framework-registered built-ins
+(`registerBuiltinPanelComponent`, called by StudioFramework itself). The public
+`registerPanelComponent` throws on use, and rendering an unregistered key raises —
+downstream apps cannot render their own components in JSON layouts. Enforced by
+`check:registryguard`.
+
 ### Component sizing
 
 Components in JSON-defined layouts — panel and dialog forms alike, desktop and mobile — never impose min-widths. A component's width is the container's width times its span weight (`fieldFlex`); controls must shrink into their slot (`min-width: 0` on the control chain) and grow exactly to it. Content-sized caps (`max-width`) are allowed; positive `min-width` on a layout component is not. Mobile mode changes nothing about component sizing: only the container width differs (limited by the screen). Enforced by `check:formwidth` (span weights, overlap, slot fit, and the no-min-width floor asserted at desktop, narrow, and mobile widths for panel forms, the element popup, and the panel popup).
