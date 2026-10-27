@@ -57,6 +57,8 @@ const noHidden = computed(() => new Set<string>());
 
 const hasNav = computed(() => (props.doc.h1?.length ?? 0) > 1);
 
+const totalH2s = computed(() => h1s.value.reduce((n, g) => n + g.h2s.length, 0));
+
 const actions = computed(
   () =>
     props.doc.actions ?? [
@@ -192,6 +194,7 @@ defineExpose({ validate });
             :h2s="entry.panel.h2"
             :hidden-ids="noHidden"
             :scroll="false"
+            :collapsible="totalH2s > 1"
             @component-action="onPanelComponentAction"
           >
             <template v-for="(_, name) in $slots" :key="name" #[name]="slotProps">

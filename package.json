@@ -33,7 +33,8 @@
     "format": "biome format --write .",
     "check:keepalive": "node scripts/check-keepalive.cjs",
     "check:bulklist": "node scripts/check-bulklist.cjs",
-    "check:nested": "node scripts/check-nested.cjs"
+    "check:nested": "node scripts/check-nested.cjs",
+    "check:solo": "node scripts/check-solo-h2.cjs"
   },
   "devDependencies": {
     "@biomejs/biome": "^2.5.8",
