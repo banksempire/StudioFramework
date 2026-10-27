@@ -2,6 +2,11 @@ const { ensureServer, openApp, makeReporter, finish } = require('./lib/ui-test.c
 
 const near = (a, b, tol = 2) => a !== null && b !== null && Math.abs(a - b) <= tol;
 
+const BODY_BREATH = 12;
+
+const breathes = (bottom, top, expected = BODY_BREATH, tol = 2) =>
+  bottom !== null && top !== null && Math.abs(top - bottom - expected) <= tol;
+
 (async () => {
   const serverProc = await ensureServer();
   const { browser, page, errors } = await openApp({ viewport: { width: 1440, height: 1100 } });
@@ -37,8 +42,8 @@ const near = (a, b, tol = 2) => a !== null && b !== null && Math.abs(a - b) <= t
     report('h3 trailer renders under the expanded h2', (await bodyCount('lib-nested-details')) === 1);
     report('h3 trailer label rendered', (await h3LabelCount('Details')) === 1);
     report(
-      'expanded: h3 body sits flush above the next section',
-      near(await bodyBottom('lib-nested-details'), await sectionTop('lib-list')),
+      'expanded: 12px breathing room above the next section',
+      breathes(await bodyBottom('lib-nested-details'), await sectionTop('lib-list')),
     );
 
     await page.click('.sf-subsection-header:has-text("Nested")');
@@ -67,8 +72,8 @@ const near = (a, b, tol = 2) => a !== null && b !== null && Math.abs(a - b) <= t
     report('re-expanding restores the h2 body', (await bodyCount('lib-nested')) === 1);
     report('re-expanding restores the h3 trailer', (await bodyCount('lib-nested-details')) === 1);
     report(
-      're-expanded: h3 body sits flush above the next section',
-      near(await bodyBottom('lib-nested-details'), await sectionTop('lib-list')),
+      're-expanded: 12px breathing room above the next section',
+      breathes(await bodyBottom('lib-nested-details'), await sectionTop('lib-list')),
     );
 
     report('no console/page errors', errors.length === 0, errors.join(' | '));
