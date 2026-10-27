@@ -136,6 +136,7 @@ function adjust(dir: number) {
 .sf-stepper-input-box {
   box-sizing: border-box;
   width: 52px;
+  min-width: 0;
   height: var(--sf-control-h);
   padding: 4px 6px;
   background: var(--sf-bg);

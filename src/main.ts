@@ -44,6 +44,10 @@ const demo = reactive({
   scope: 'workspace',
   when: '',
   typed: '',
+  lo: 0,
+  hi: 100,
+  wide: '',
+  tight: 'a',
   treeChecked: new Set<string>(['src']),
   note: 'demo banner — click rows and controls',
 });
@@ -198,6 +202,38 @@ registerPanelData('demo-form', () => ({
       ],
     },
     { key: 'when', type: 'datetime-local', label: 'Starts at' },
+    {
+      key: 'lo',
+      type: 'stepper',
+      label: 'Min',
+      min: 0,
+      max: 1000000,
+      step: 10,
+      shorthand: true,
+      line: 'pair',
+    },
+    {
+      key: 'hi',
+      type: 'stepper',
+      label: 'Max',
+      min: 1,
+      max: 1000000,
+      step: 10,
+      shorthand: true,
+      line: 'pair',
+    },
+    { key: 'wide', type: 'input', label: 'Wide', line: 'weights', span: 2, placeholder: 'span 2' },
+    {
+      key: 'tight',
+      type: 'select',
+      label: 'Tight',
+      line: 'weights',
+      span: 1,
+      options: [
+        { value: 'a', label: 'Alpha' },
+        { value: 'b', label: 'Beta' },
+      ],
+    },
     { key: 'add', type: 'button', label: 'Add demo row', variant: 'accent', action: 'demo-add' },
     { key: 'note', type: 'info', text: demo.note },
   ] satisfies PopupField[],
@@ -208,6 +244,10 @@ registerPanelData('demo-form', () => ({
     rowLabel: demo.rowLabel,
     scope: demo.scope,
     when: demo.when,
+    lo: demo.lo,
+    hi: demo.hi,
+    wide: demo.wide,
+    tight: demo.tight,
   } satisfies PopupValues,
 }));
 
@@ -409,6 +449,10 @@ function onAction(e: FrameworkAction) {
       if (payload?.key === 'rowLabel' && typeof payload.value === 'string') demo.rowLabel = payload.value;
       if (payload?.key === 'scope' && typeof payload.value === 'string') demo.scope = payload.value;
       if (payload?.key === 'when' && typeof payload.value === 'string') demo.when = payload.value;
+      if (payload?.key === 'lo' && typeof payload.value === 'number') demo.lo = payload.value;
+      if (payload?.key === 'hi' && typeof payload.value === 'number') demo.hi = payload.value;
+      if (payload?.key === 'wide' && typeof payload.value === 'string') demo.wide = payload.value;
+      if (payload?.key === 'tight' && typeof payload.value === 'string') demo.tight = payload.value;
       break;
     case 'demo-input':
       if (typeof payload?.value === 'string') {

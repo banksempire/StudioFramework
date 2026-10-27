@@ -119,7 +119,7 @@ watch(
   position: relative;
   isolation: isolate;
   flex: 1 1 0;
-  min-width: fit-content;
+  min-width: 0;
   align-self: stretch;
   padding: 0;
   line-height: 1;
