@@ -8,7 +8,7 @@ import WorkspacePanel from './components/WorkspacePanel.vue';
 import type { WorkspaceApi } from './composables/useWorkspace';
 import Framework, { type FrameworkAction } from './Framework.vue';
 import {
-  registerPanelComponent,
+  registerBuiltinPanelComponent,
   registerPanelData,
   registerTabContent,
   registerUtilityMenu,
@@ -20,13 +20,13 @@ registerTabContent('welcome', WelcomeContent);
 
 registerTabContent('table-demo', TableDemo);
 
-registerPanelComponent('workspace-panel', WorkspacePanel);
+registerBuiltinPanelComponent('workspace-panel', WorkspacePanel);
 
-registerPanelComponent('single-menu-demo', SingleMenuDemo);
+registerBuiltinPanelComponent('single-menu-demo', SingleMenuDemo);
 
-registerPanelComponent('selector-demo', SelectorDemo);
+registerBuiltinPanelComponent('selector-demo', SelectorDemo);
 
-registerPanelComponent('dialog-demo', DialogDemo);
+registerBuiltinPanelComponent('dialog-demo', DialogDemo);
 
 const demoFilter = reactive({ sources: true, assets: true });
 registerUtilityMenu('demo-filter', () => [
