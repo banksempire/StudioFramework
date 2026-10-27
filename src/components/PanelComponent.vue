@@ -1,7 +1,11 @@
 <script setup lang="ts">
-import { computed, provide, reactive, useSlots, watch } from 'vue';
+import { computed, provide, reactive, watch } from 'vue';
 import { kPanelAction } from '../composables/usePanelAction';
-import { getPanelComponent, getPanelData } from '../registry';
+import { getPanelComponent, getPanelData, registerPanelComponent } from '../registry';
+import WorkspacePanel from './WorkspacePanel.vue';
+
+registerPanelComponent('workspace-panel', WorkspacePanel);
+
 import type {
   ButtonData,
   PanelAction,
@@ -43,9 +47,6 @@ provide(kPanelAction, (action: Omit<PanelAction, 'source'>) => {
 function emitAction(action?: string, payload?: unknown) {
   emit('action', { source: props.component.type, action, payload });
 }
-
-const slots = useSlots();
-const passthroughSlots = computed(() => Object.keys(slots));
 
 function emitBulk(gesture: string, extra: Record<string, unknown>) {
   emitAction('bulk', { gesture, bind: bindKeyOf(props.component), ...extra });
@@ -397,15 +398,12 @@ function onNodeClick(node: TreeNode) {
       <div v-if="formFields.length === 0 && component.empty" class="sf-empty">{{ component.empty }}</div>
       <FormFields
         v-else
-        :h2="{ fields: formFields, extraSlot: component.extraSlot }"
+        :h2="{ fields: formFields }"
         :values="formValues"
         :uid="formUid"
         @patch="(key, value) => emitAction(formAction, { key, value })"
         @action="(id) => emitAction(id ?? formAction, {})"
       >
-        <template v-for="name in passthroughSlots" :key="name" #[name]="sp">
-          <slot :name="name" v-bind="sp ?? {}" />
-        </template>
       </FormFields>
     </template>
 

@@ -50,6 +50,7 @@ function patch(key: string, value: string | number | boolean | Array<string | nu
       <template v-for="field in row" :key="field.key">
         <div
           v-if="field.type === 'info'"
+          :data-field="field.key"
           class="sf-form-info"
           :class="[field.class, {
             'sf-form-info--warn': field.hintTone === 'warn',
@@ -84,20 +85,13 @@ function patch(key: string, value: string | number | boolean | Array<string | nu
             {{ field.label }}
             <span v-if="field.labelNote" class="sf-form-label-note">{{ field.labelNote }}</span>
           </label>
-          <slot
-            :name="`field-${field.key}`"
+          <FormFieldControl
             :field="field"
             :values="values"
-            :patch="patch"
-          >
-            <FormFieldControl
-              :field="field"
-              :values="values"
-              :input-id="fieldId(field)"
-              :busy="busy"
-              @patch="patch"
-            />
-          </slot>
+            :input-id="fieldId(field)"
+            :busy="busy"
+            @patch="patch"
+          />
           <span
             v-if="field.hint"
             class="sf-form-hint"
@@ -110,5 +104,4 @@ function patch(key: string, value: string | number | boolean | Array<string | nu
       </template>
     </div>
   </div>
-  <slot v-if="h2.extraSlot" :name="h2.extraSlot" />
 </template>

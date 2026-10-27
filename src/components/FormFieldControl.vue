@@ -1,13 +1,16 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue';
 import type { PopupDocument, PopupField, PopupOption, PopupValues } from '../types/popup';
+import CardSelector from './CardSelector.vue';
 import ColorWheel from './ColorWheel.vue';
 import MultiSelectGroup from './MultiSelectGroup.vue';
 import PillSelector from './PillSelector.vue';
 import PopupDialog from './PopupDialog.vue';
+import SearchSelect from './SearchSelect.vue';
 import SelectInput from './SelectInput.vue';
 import StepperInput from './StepperInput.vue';
 import SwitchToggle from './SwitchToggle.vue';
+import TimeInput from './TimeInput.vue';
 
 const props = defineProps<{
   field: PopupField;
@@ -37,6 +40,16 @@ function onMulti(value: Array<string | number>) {
 function switchOn(): boolean {
   const v = props.values[props.field.key];
   return v === true || v === 'true';
+}
+
+function fieldOptions(): PopupOption[] {
+  const opts = props.field.options;
+  if (!Array.isArray(opts)) return [];
+  return opts.filter((o): o is PopupOption => !('options' in o)).map((o) => ({ ...o }));
+}
+
+function fieldCards(): PopupOption[] {
+  return fieldOptions();
 }
 
 function stepperValue(): number {
@@ -191,6 +204,31 @@ function onWheelAction(id: string) {
     :max="field.max ?? 100"
     :step="field.step ?? 1"
     :shorthand="field.shorthand ?? false"
+    :title="field.labelNote"
+    @update:model-value="(v) => emit('patch', field.key, v)"
+  />
+  <TimeInput
+    v-else-if="field.type === 'time'"
+    :id="inputId"
+    :model-value="String(values[field.key] ?? '')"
+    :disabled="field.disabled || busy"
+    :title="field.labelNote"
+    @update:model-value="(v) => emit('patch', field.key, v)"
+  />
+  <CardSelector
+    v-else-if="field.type === 'cards'"
+    :model-value="(values[field.key] as string | number) ?? ''"
+    :options="fieldCards()"
+    :disabled="field.disabled || busy"
+    @update:model-value="(v) => emit('patch', field.key, v)"
+  />
+  <SearchSelect
+    v-else-if="field.type === 'search'"
+    :id="inputId"
+    :model-value="String(values[field.key] ?? '')"
+    :options="fieldOptions()"
+    :placeholder="field.placeholder"
+    :disabled="field.disabled || busy"
     :title="field.labelNote"
     @update:model-value="(v) => emit('patch', field.key, v)"
   />
