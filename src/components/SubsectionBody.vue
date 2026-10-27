@@ -11,11 +11,13 @@ const props = withDefaults(
     stateKey?: string;
     mobile?: boolean;
     scroll?: boolean;
+    collapsible?: boolean;
   }>(),
   {
     stateKey: '',
     mobile: false,
     scroll: true,
+    collapsible: undefined,
   },
 );
 
@@ -73,6 +75,26 @@ function persistSubState() {
 }
 
 const visibleSubSections = computed(() => props.h2s.filter((s) => !props.hiddenIds.has(s.id)));
+
+const sectionsCollapsible = computed(() =>
+  props.collapsible !== undefined ? props.collapsible : visibleSubSections.value.length > 1,
+);
+
+watch(
+  sectionsCollapsible,
+  (on) => {
+    if (on) return;
+    for (const sub of visibleSubSections.value) {
+      const st = states[sub.id];
+      if (st && !st.isExpanded) {
+        st.isExpanded = true;
+        st.savedHeight = undefined;
+      }
+    }
+    refresh(true);
+  },
+  { immediate: true },
+);
 
 function isResizeable(sub: PanelH2): boolean {
   if (props.mobile) return false;
@@ -198,7 +220,7 @@ watch(
         const persisted = readPersistedSub(sub.id);
         const minHeight = sub.minHeight ?? 0;
         states[sub.id] = {
-          isExpanded: persisted?.expanded ?? true,
+          isExpanded: (persisted?.expanded ?? true) || !sectionsCollapsible.value,
           height: Math.max(persisted?.height ?? minHeight, minHeight),
           measuredHeight: 0,
         };
@@ -249,6 +271,7 @@ onMounted(() => {
 });
 
 function toggleExpand(subId: string) {
+  if (!sectionsCollapsible.value) return;
   const st = states[subId];
   if (!st) return;
   const sub = props.h2s.find((s) => s.id === subId);
@@ -364,6 +387,7 @@ onUnmounted(() => {
     <template v-for="(sub, index) in visibleSubSections" :key="sub.id">
       <SubSection
         :section="sub"
+        :collapsible="sectionsCollapsible"
         :is-expanded="states[sub.id]?.isExpanded ?? true"
         :body-height="bodyHeightFor(sub)"
         @toggle-expand="toggleExpand(sub.id)"

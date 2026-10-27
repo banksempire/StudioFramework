@@ -13,11 +13,15 @@ import Menu from './Menu.vue';
 import PanelComponent from './PanelComponent.vue';
 import SvgIcon from './SvgIcon.vue';
 
-const props = defineProps<{
-  section: PanelH2 | PanelH3;
-  isExpanded: boolean;
-  bodyHeight: number | null;
-}>();
+const props = withDefaults(
+  defineProps<{
+    section: PanelH2 | PanelH3;
+    isExpanded: boolean;
+    bodyHeight: number | null;
+    collapsible?: boolean;
+  }>(),
+  { collapsible: true },
+);
 
 const emit = defineEmits<{
   'toggle-expand': [];
@@ -164,8 +168,17 @@ function menuItemsOf(utilId: string) {
         </template>
       </div>
     </div>
-    <div v-else class="sf-subsection-header" @click="emit('toggle-expand')">
-      <span class="sf-subsection-arrow" :class="{ 'sf-subsection-arrow--expanded': isExpanded }"><SvgIcon name="❯" /></span>
+    <div
+      v-else
+      class="sf-subsection-header"
+      :class="{ 'sf-subsection-header--static': !collapsible }"
+      @click="collapsible && emit('toggle-expand')"
+    >
+      <span
+        v-if="collapsible"
+        class="sf-subsection-arrow"
+        :class="{ 'sf-subsection-arrow--expanded': isExpanded }"
+      ><SvgIcon name="❯" /></span>
       <span class="sf-subsection-label">{{ displayTitle }}</span>
       <div
         v-if="utilities?.length || bulkEntry || bulkDone"
