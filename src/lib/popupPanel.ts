@@ -28,7 +28,6 @@ export function toPanelH1(group: PopupH1Group, values: PopupValues): PanelH1 {
         type: 'form',
         fields: h2.fields,
         values,
-        extraSlot: h2.extraSlot,
       },
     ];
     for (const h3 of h2.h3 ?? []) {

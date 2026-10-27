@@ -22,7 +22,7 @@ const panelDoc: PopupDocument = {
           title: 'Identity',
           fields: [
             { key: 'pname', type: 'input', label: 'Name' },
-            { key: 'pslot', type: 'slot', label: 'Slot' },
+            { key: 'pslot', type: 'input', label: 'Slot', placeholder: 'slot demo' },
           ],
         },
       ],
@@ -235,13 +235,6 @@ function save() {
       @update:values="(v) => (panelValues = v)"
       @action="onPanelAction"
     >
-      <template #field-pslot>
-        <input
-          v-model="panelValues.pslot"
-          class="sf-form-input sf-dialog-demo-slot-input"
-          placeholder="slotted control"
-        />
-      </template>
     </PopupDialog>
     <Dialog v-model:open="wideOpen" wide title="Edit element (wide)">
       <div class="sf-dialog-demo-field">

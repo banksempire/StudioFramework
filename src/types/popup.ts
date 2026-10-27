@@ -4,6 +4,7 @@ export interface PopupOption {
   title?: string;
   disabled?: boolean;
   swatch?: string;
+  desc?: string;
 }
 
 export interface PopupOptionGroup {
@@ -30,7 +31,9 @@ export type PopupFieldType =
   | 'colorWheel'
   | 'button'
   | 'info'
-  | 'slot';
+  | 'time'
+  | 'cards'
+  | 'search';
 
 export type PopupButtonVariant = 'default' | 'accent' | 'danger' | 'ghost';
 
@@ -71,7 +74,6 @@ export interface PopupField {
 export interface PopupFieldGroup {
   fields: PopupField[];
   note?: string;
-  extraSlot?: string;
 }
 
 export interface PopupH3 {

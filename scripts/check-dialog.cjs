@@ -35,7 +35,7 @@ const { ensureServer, openApp, makeReporter, finish } = require('./lib/ui-test.c
       const labels = dlg
         ? [...dlg.querySelectorAll('.sf-subsection-label')].map((el) => el.textContent?.trim())
         : [];
-      const slot = dlg?.querySelector('.sf-dialog-demo-slot-input');
+      const slot = dlg?.querySelector('.sf-form-field[data-field="pslot"] input');
       return {
         navItems: nav?.length ?? 0,
         navTitles: nav ? [...nav].map((n) => n.textContent?.trim()) : [],
@@ -45,7 +45,7 @@ const { ensureServer, openApp, makeReporter, finish } = require('./lib/ui-test.c
       };
     });
     report(
-      'panel popup: H1 TOC on the left, panel-style section bars, slotted control',
+      'panel popup: H1 TOC on the left, panel-style section bars, form controls',
       panelState.navItems === 2 &&
         JSON.stringify(panelState.navTitles) === JSON.stringify(['General', 'Advanced']) &&
         panelState.bars === 2 &&
@@ -202,7 +202,7 @@ const { ensureServer, openApp, makeReporter, finish } = require('./lib/ui-test.c
     );
 
     await panelDlg.locator('[data-field="pname"] input').fill('Pluto');
-    await panelDlg.locator('.sf-dialog-demo-slot-input').fill('from slot');
+    await panelDlg.locator('.sf-form-field[data-field="pslot"] input').fill('from slot');
     await delay(150);
     await panelDlg.locator('.sf-dialog-btn--accent').last().click();
     await delay(200);

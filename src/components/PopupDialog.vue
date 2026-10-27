@@ -43,7 +43,6 @@ const emit = defineEmits<{
   (e: 'close'): void;
 }>();
 
-const slots = useSlots();
 const activeH1 = ref('');
 const contentEl = ref<HTMLElement | null>(null);
 
@@ -81,13 +80,7 @@ function validate(): string | null {
       const groups = [h2.fields, ...(h2.h3 ?? []).map((h3) => h3.fields)];
       for (const fields of groups) {
         for (const field of fields) {
-          if (
-            field.type === 'info' ||
-            field.type === 'slot' ||
-            field.type === 'switch' ||
-            field.type === 'button'
-          )
-            continue;
+          if (field.type === 'info' || field.type === 'switch' || field.type === 'button') continue;
           const value = props.values[field.key];
           if (field.required && isEmpty(value)) return `${field.label ?? field.key} is required`;
           if (field.type === 'number' && !isEmpty(value) && !Number.isFinite(Number(value))) {
@@ -197,9 +190,6 @@ defineExpose({ validate });
             :collapsible="totalH2s > 1"
             @component-action="onPanelComponentAction"
           >
-            <template v-for="(_, name) in $slots" :key="name" #[name]="slotProps">
-              <slot :name="name" v-bind="slotProps ?? {}" />
-            </template>
           </SubsectionBody>
         </section>
         <p v-if="error" class="sf-form-error">{{ error }}</p>
