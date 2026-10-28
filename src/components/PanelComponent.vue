@@ -49,6 +49,7 @@ function emitAction(action?: string, payload?: unknown) {
 }
 
 function emitBulk(gesture: string, extra: Record<string, unknown>) {
+  console.error('PC bulk', gesture, JSON.stringify(extra));
   emitAction('bulk', { gesture, bind: bindKeyOf(props.component), ...extra });
 }
 

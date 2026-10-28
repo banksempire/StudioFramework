@@ -716,6 +716,11 @@ html.sf-standalone #framework {
   background: var(--sf-bg-lighter);
 }
 
+.sf-dialog .sf-pl,
+.sf-dialog .sf-pl-item {
+  background: var(--sf-bg-lighter);
+}
+
 @media (hover: hover) {
   .sf-subsection-header:hover {
     box-shadow:

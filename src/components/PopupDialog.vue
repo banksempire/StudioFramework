@@ -114,6 +114,7 @@ function onPanelComponentAction(a: PanelAction) {
     if (a.action) emit('action', a.action);
     return;
   }
+  console.error('PD action', a.source, a.action, JSON.stringify(a.payload));
   emit('action', a.action ?? 'bulk', a.payload);
 }
 
