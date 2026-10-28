@@ -9,7 +9,14 @@ import PopupDialog from './PopupDialog.vue';
 const open = ref(false);
 const wideOpen = ref(false);
 const panelOpen = ref(false);
-const panelValues = ref<PopupValues>({ pname: '', pslot: '', ptier2: 'a', pmode: 'fast', pstep: 10 });
+const panelValues = ref<PopupValues>({
+  pname: '',
+  pslot: '',
+  ptier2: 'a',
+  pmode: 'fast',
+  pstep: 10,
+  psearch: '',
+});
 
 const panelDoc: PopupDocument = {
   title: 'Panel popup',
@@ -62,6 +69,29 @@ const panelDoc: PopupDocument = {
               shorthand: true,
             },
             { key: 'pping', type: 'button', label: 'Ping', action: 'ping-demo' },
+            {
+              key: 'psearch',
+              type: 'search',
+              label: 'Search',
+              span: 2,
+              placeholder: 'search demo list',
+              options: [
+                'Alpha',
+                'Bravo',
+                'Charlie',
+                'Delta',
+                'Echo',
+                'Foxtrot',
+                'Golf',
+                'Hotel',
+                'India',
+                'Juliett',
+                'Kilo',
+                'Lima',
+                'Mike',
+                'November',
+              ].map((n) => ({ value: n.toLowerCase(), label: `${n} option` })),
+            },
           ],
         },
       ],

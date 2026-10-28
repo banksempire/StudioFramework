@@ -21,6 +21,7 @@
     "check:popupdoc": "node --experimental-strip-types scripts/check-popup-doc.ts",
     "check:registryguard": "node scripts/check-registry-guard.ts",
     "check:seam": "node scripts/check-seam.cjs",
+    "check:searchpop": "node scripts/check-searchpop.cjs",
     "check:select": "node scripts/check-select.cjs",
     "check:selectors": "node scripts/check-selectors.cjs",
     "check:singlemenu": "node scripts/check-single-menu.cjs",
