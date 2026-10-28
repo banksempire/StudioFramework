@@ -160,6 +160,15 @@ const { ensureServer, makeReporter, finish } = require('./lib/ui-test.cjs');
 
   const fields = page.locator('.sf-subsection', { has: page.locator('[data-sub-body="fields"]') }).first();
   await fields.scrollIntoViewIfNeeded();
+  const initialGeom = await page.evaluate(() => {
+    const body = document.querySelector('[data-sub-body="fields"]');
+    const rows = [...body.querySelectorAll('.sf-pl-item')];
+    const add = rows.find((x) => x.classList.contains('sf-pl-item--add'));
+    const plain = [...rows].reverse().find((x) => !x.classList.contains('sf-pl-item--add'));
+    if (!add || !plain || rows[rows.length - 1] !== add) return null;
+    return Math.abs(add.getBoundingClientRect().height - plain.getBoundingClientRect().height) < 0.5;
+  });
+  report('add row matches the row above on first render', initialGeom === true, JSON.stringify(initialGeom));
   const fieldRow = (label) => fields.locator('.sf-pl-item', { hasText: label }).first();
   const rowByLabel = (label) => fields.locator('.sf-sm-row', { hasText: label }).first();
   report(

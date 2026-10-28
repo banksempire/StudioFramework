@@ -310,22 +310,40 @@ const addSheetTarget = ref<HTMLElement | 'body'>('body');
 
 const addRow = ref<HTMLElement | null>(null);
 const addMinHeight = ref<number | null>(null);
+let addResize: ResizeObserver | null = null;
 
 function measureAddHeight() {
+  addResize?.disconnect();
+  addResize = null;
   const row = addRow.value;
   if (!row) {
     addMinHeight.value = null;
     return;
   }
   const last = row.parentElement?.querySelector<HTMLElement>('.sf-pl-item:not(.sf-pl-item--add)');
-  addMinHeight.value = last ? last.getBoundingClientRect().height : null;
+  if (!last) {
+    addMinHeight.value = null;
+    return;
+  }
+  addMinHeight.value = last.getBoundingClientRect().height;
+  if (typeof ResizeObserver === 'function') {
+    addResize = new ResizeObserver(() => {
+      addMinHeight.value = last.getBoundingClientRect().height;
+    });
+    addResize.observe(last);
+  }
 }
 
 watch(
   () => [props.items, props.add] as const,
   () => measureAddHeight(),
-  { flush: 'post', immediate: true },
+  { flush: 'post' },
 );
+onMounted(measureAddHeight);
+onUnmounted(() => {
+  addResize?.disconnect();
+  addResize = null;
+});
 
 if (typeof window !== 'undefined') {
   onMounted(() => {
