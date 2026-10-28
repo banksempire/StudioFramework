@@ -21,7 +21,7 @@ function fieldWeight(field: PopupField): number {
 
 const fieldRows = computed<PopupField[][]>(() => {
   const rows: PopupField[][] = [];
-  for (const field of props.h2.fields) {
+  for (const field of props.h2.fields ?? []) {
     const line = field.line;
     const last = rows[rows.length - 1];
     if (line !== undefined && last !== undefined && last[0]?.line === line) last.push(field);

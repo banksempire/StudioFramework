@@ -72,7 +72,7 @@ export interface PopupField {
 }
 
 export interface PopupFieldGroup {
-  fields: PopupField[];
+  fields?: PopupField[];
   note?: string;
 }
 
@@ -83,6 +83,8 @@ export interface PopupH3 {
 
 export interface PopupH2 extends PopupFieldGroup {
   title: string;
+  fields?: PopupField[];
+  list?: { bind: string };
   h3?: PopupH3[];
 }
 

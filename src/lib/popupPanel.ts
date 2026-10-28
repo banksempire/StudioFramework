@@ -23,13 +23,26 @@ export function toPanelH1(group: PopupH1Group, values: PopupValues): PanelH1 {
     if (!h2.title) {
       throw new Error(`popup h2 section ${i} of '${group.id}' must define a title`);
     }
-    const components: (PanelComponent | PanelH3)[] = [
-      {
+    if (!h2.fields && !h2.list) {
+      throw new Error(`popup h2 section ${i} of '${group.id}' must define fields or a list`);
+    }
+    if (h2.list && !h2.list.bind) {
+      throw new Error(`popup h2 list of '${group.id}' must define a bind`);
+    }
+    const components: (PanelComponent | PanelH3)[] = [];
+    if (h2.list) {
+      components.push({
+        type: 'list',
+        bind: h2.list.bind,
+      });
+    }
+    if (h2.fields) {
+      components.push({
         type: 'form',
         fields: h2.fields,
         values,
-      },
-    ];
+      });
+    }
     for (const h3 of h2.h3 ?? []) {
       components.push({
         id: `${popupH2PanelId(group.id, h2, i)}::${h3.title}`,

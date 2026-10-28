@@ -43,6 +43,7 @@ const rich = computed(
     props.variant === 'card' ||
     props.items.some(
       (it) =>
+        it.lines !== undefined ||
         it.meta !== undefined ||
         it.detail !== undefined ||
         it.note !== undefined ||

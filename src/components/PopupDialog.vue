@@ -38,7 +38,7 @@ const props = withDefaults(
 const emit = defineEmits<{
   (e: 'update:open', value: boolean): void;
   (e: 'update:values', value: PopupValues): void;
-  (e: 'action', id: string, key?: string): void;
+  (e: 'action', id: string, payload?: unknown): void;
   (e: 'cancel'): void;
   (e: 'close'): void;
 }>();
@@ -77,7 +77,7 @@ function isEmpty(value: unknown): boolean {
 function validate(): string | null {
   for (const h1 of h1s.value) {
     for (const h2 of h1.h2s) {
-      const groups = [h2.fields, ...(h2.h3 ?? []).map((h3) => h3.fields)];
+      const groups = [h2.fields ?? [], ...(h2.h3 ?? []).map((h3) => h3.fields)];
       for (const fields of groups) {
         for (const field of fields) {
           if (field.type === 'info' || field.type === 'switch' || field.type === 'button') continue;
@@ -105,13 +105,16 @@ function jump(h1Id: string) {
 }
 
 function onPanelComponentAction(a: PanelAction) {
-  if (a.source !== 'form') return;
-  const payload = (a.payload ?? {}) as { key?: string; value?: unknown };
-  if (typeof payload.key === 'string' && payload.value !== undefined) {
-    patch(payload.key, payload.value as string | number | boolean | Array<string | number>);
+  if (a.source === 'form') {
+    const payload = (a.payload ?? {}) as { key?: string; value?: unknown };
+    if (typeof payload.key === 'string' && payload.value !== undefined) {
+      patch(payload.key, payload.value as string | number | boolean | Array<string | number>);
+      return;
+    }
+    if (a.action) emit('action', a.action);
     return;
   }
-  if (a.action) emit('action', a.action);
+  emit('action', a.action ?? 'bulk', a.payload);
 }
 
 function onContentScroll() {

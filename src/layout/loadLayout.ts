@@ -616,6 +616,15 @@ function toH2(v: unknown, path: string): PanelH2 {
 
 function toH1(v: unknown, path: string): PanelH1 {
   const r = needRecord(v, path);
+  if (r.heading !== undefined && r.heading !== 1) {
+    fail(
+      `${path}.heading`,
+      'h1 groups own h2 sections only — nothing but h2 sections may be added to an h1 group',
+    );
+  }
+  if (r.components !== undefined) {
+    fail(`${path}.components`, 'h1 groups own h2 sections only — components must live inside an h2 section');
+  }
   const h2 = needArray(r.h2, `${path}.h2`).map((s, i) => toH2(s, `${path}.h2[${i}]`));
   if (h2.length === 0) {
     fail(`${path}.h2`, 'an h1 group needs at least one h2 section');
