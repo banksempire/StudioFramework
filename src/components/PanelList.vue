@@ -156,7 +156,6 @@ const dragId = ref<string | null>(null);
 const overId = ref<string | null>(null);
 
 function onGripStart(item: PanelListItem, e: DragEvent) {
-  console.error('PL grip dragstart', item.id);
   dragId.value = item.id;
   e.dataTransfer?.setData('text/plain', item.id);
   if (e.dataTransfer) e.dataTransfer.effectAllowed = 'move';
@@ -168,7 +167,6 @@ function onGripEnd() {
 }
 
 function onRowDrop(item: PanelListItem) {
-  console.error('PL row drop', item.id, 'from', dragId.value);
   const from = dragId.value;
   dragId.value = null;
   overId.value = null;
