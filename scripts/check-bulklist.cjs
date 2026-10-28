@@ -251,21 +251,26 @@ const { ensureServer, makeReporter, finish } = require('./lib/ui-test.cjs');
     const body = document.querySelector('[data-sub-body="fields"]');
     const rows = [...body.querySelectorAll('.sf-pl-item')];
     const add = rows.find((x) => x.classList.contains('sf-pl-item--add'));
-    const plain = rows.find((x) => !x.classList.contains('sf-pl-item--add'));
+    const plain = [...rows].reverse().find((x) => !x.classList.contains('sf-pl-item--add'));
     if (!add || !plain || rows[rows.length - 1] !== add) return null;
-    const csA = getComputedStyle(add);
-    const csP = getComputedStyle(plain);
+    const ar = add.getBoundingClientRect();
+    const pr = plain.getBoundingClientRect();
+    const sr = add.querySelector('.sf-pl-add-sign').getBoundingClientRect();
     return {
-      width: Math.abs(add.getBoundingClientRect().width - plain.getBoundingClientRect().width) < 0.5,
-      pad: csA.paddingTop === csP.paddingTop && csA.paddingBottom === csP.paddingBottom,
-      muted:
-        getComputedStyle(add.querySelector('.sf-pl-add-label')).color !==
-        getComputedStyle(plain.querySelector('.sf-pl-label')).color,
+      width: Math.abs(ar.width - pr.width) < 0.5,
+      height: Math.abs(ar.height - pr.height) < 0.5,
+      text: add.textContent.trim() === '',
+      centerX: Math.abs(sr.left + sr.width / 2 - (ar.left + ar.width / 2)) < 1,
+      centerY: Math.abs(sr.top + sr.height / 2 - (ar.top + ar.height / 2)) < 1,
     };
   });
   report(
-    'add item is the last row, sized and styled like a plain row',
-    addGeom?.width === true && addGeom.pad === true && addGeom.muted === true,
+    'add item is the last row: plus only, centered, sized like the row above',
+    addGeom?.width === true &&
+      addGeom.height === true &&
+      addGeom.text === true &&
+      addGeom.centerX === true &&
+      addGeom.centerY === true,
     JSON.stringify(addGeom),
   );
   await addRow.click();

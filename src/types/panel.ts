@@ -115,7 +115,6 @@ export interface PanelListBulk {
 }
 
 export interface PanelListAdd {
-  label?: string;
   options: PanelListOption[];
 }
 

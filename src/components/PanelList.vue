@@ -308,6 +308,25 @@ function onAddDocKey(e: KeyboardEvent) {
 
 const addSheetTarget = ref<HTMLElement | 'body'>('body');
 
+const addRow = ref<HTMLElement | null>(null);
+const addMinHeight = ref<number | null>(null);
+
+function measureAddHeight() {
+  const row = addRow.value;
+  if (!row) {
+    addMinHeight.value = null;
+    return;
+  }
+  const last = row.parentElement?.querySelector<HTMLElement>('.sf-pl-item:not(.sf-pl-item--add)');
+  addMinHeight.value = last ? last.getBoundingClientRect().height : null;
+}
+
+watch(
+  () => [props.items, props.add] as const,
+  () => measureAddHeight(),
+  { flush: 'post', immediate: true },
+);
+
 if (typeof window !== 'undefined') {
   onMounted(() => {
     addSheetTarget.value = (document.querySelector('.sf-root') as HTMLElement | null) ?? 'body';
@@ -461,12 +480,13 @@ if (typeof window !== 'undefined') {
     </SingleMenu>
     <div
       v-if="props.add"
+      ref="addRow"
       class="sf-pl-item sf-pl-item--add"
-      :title="props.add.label ?? 'Add'"
+      :style="addMinHeight !== null ? { minHeight: `${addMinHeight}px` } : undefined"
+      title="Add"
       @click="onAddClick"
     >
       <span class="sf-pl-add-sign"><SvgIcon name="➕" /></span>
-      <span class="sf-pl-add-label">{{ props.add.label ?? 'Add…' }}</span>
     </div>
   </div>
   <Teleport :to="addSheetTarget">

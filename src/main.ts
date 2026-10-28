@@ -132,7 +132,6 @@ registerPanelData('fields-demo', () => ({
     dragType: 'application/x-fields-demo',
   })),
   add: {
-    label: 'Add field',
     action: 'fields-demo-add',
     options: [
       { id: 'text', label: 'Text field' },
