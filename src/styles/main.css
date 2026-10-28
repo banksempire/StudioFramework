@@ -44,7 +44,8 @@
   --sf-control-h: 36px;
   --sf-gap: 8px;
   --sf-sash-size: 2px;
-  --sf-sash-hit: 5px;
+  --sf-sash-hit: 3px;
+  --sf-handle-line: 5px;
   --sf-tab-max-width: 200px;
   --sf-tab-min-width: 80px;
   --sf-tab-chrome: 72px;
@@ -616,8 +617,8 @@ html.sf-standalone #framework {
 }
 
 .sf-panel-resize-handle--left {
-  left: calc((var(--sf-sash-hit) + var(--sf-sash-size)) * -0.5);
-  width: var(--sf-sash-hit);
+  left: calc((var(--sf-handle-line) + var(--sf-sash-size)) * -0.5);
+  width: var(--sf-handle-line);
 }
 
 .sf-panel-dtc-overlay {
