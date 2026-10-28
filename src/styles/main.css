@@ -585,8 +585,8 @@ html.sf-standalone #framework {
 .sf-panel-resize-handle::after {
   content: "";
   position: absolute;
-  left: calc((var(--sf-gap) - var(--sf-handle-line)) / 2);
-  right: calc((var(--sf-gap) - var(--sf-handle-line)) / 2);
+  left: 1px;
+  right: 1px;
   top: 0;
   bottom: 0;
   background: transparent;
