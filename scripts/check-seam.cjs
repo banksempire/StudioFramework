@@ -78,7 +78,7 @@ const { ensureServer, makeReporter, finish } = require('./lib/ui-test.cjs');
     );
     report(
       'left seam: hover line width unchanged',
-      Math.abs(seam.left.lineWidth - 6) <= 0.5,
+      Math.abs(seam.left.lineWidth - 4) <= 0.5,
       `${seam.left.lineWidth.toFixed(2)}px`,
     );
     report(
@@ -88,7 +88,7 @@ const { ensureServer, makeReporter, finish } = require('./lib/ui-test.cjs');
     );
     report(
       'right seam: hover line width unchanged',
-      Math.abs(seam.right.lineWidth - 5) <= 0.5,
+      Math.abs(seam.right.lineWidth - 4) <= 0.5,
       `${seam.right.lineWidth.toFixed(2)}px`,
     );
   }

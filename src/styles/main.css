@@ -44,8 +44,8 @@
   --sf-control-h: 36px;
   --sf-gap: 8px;
   --sf-sash-size: 2px;
-  --sf-sash-hit: 3px;
-  --sf-handle-line: 5px;
+  --sf-sash-hit: 4px;
+  --sf-handle-line: 4px;
   --sf-tab-max-width: 200px;
   --sf-tab-min-width: 80px;
   --sf-tab-chrome: 72px;
@@ -585,8 +585,8 @@ html.sf-standalone #framework {
 .sf-panel-resize-handle::after {
   content: "";
   position: absolute;
-  left: 1px;
-  right: 1px;
+  left: calc((var(--sf-gap) - var(--sf-handle-line)) / 2);
+  right: calc((var(--sf-gap) - var(--sf-handle-line)) / 2);
   top: 0;
   bottom: 0;
   background: transparent;
