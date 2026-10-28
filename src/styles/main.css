@@ -43,7 +43,7 @@
   --sf-radius-inner: max(calc(var(--sf-radius) - 2px), 0px);
   --sf-control-h: 36px;
   --sf-gap: 8px;
-  --sf-sash-size: 1px;
+  --sf-sash-size: 2px;
   --sf-sash-hit: 5px;
   --sf-tab-max-width: 200px;
   --sf-tab-min-width: 80px;
@@ -454,7 +454,7 @@ html.sf-standalone #framework {
 
 .sf-panel--right {
   border-radius: 0 var(--sf-radius) var(--sf-radius) 0;
-  border-left: 1px solid var(--sf-border);
+  border-left: 2px solid var(--sf-border);
 }
 
 .sf-panel--right .sf-panel-header {
@@ -616,7 +616,7 @@ html.sf-standalone #framework {
 }
 
 .sf-panel-resize-handle--left {
-  left: calc((var(--sf-sash-hit) + 1px) * -0.5);
+  left: calc((var(--sf-sash-hit) + var(--sf-sash-size)) * -0.5);
   width: var(--sf-sash-hit);
 }
 
