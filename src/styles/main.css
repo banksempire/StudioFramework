@@ -2300,6 +2300,30 @@ body.sf-dragging-row * {
   opacity: 0.55;
 }
 
+.sf-pl-add-sign {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: none;
+  width: 14px;
+  font-size: 16px;
+  color: var(--sf-text-muted);
+}
+
+.sf-pl-add-label {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--sf-text-muted);
+}
+
+.sf-pl--card .sf-pl-item--add {
+  align-items: center;
+  justify-content: center;
+}
+
 .sf-pl-top {
   display: flex;
   align-items: center;

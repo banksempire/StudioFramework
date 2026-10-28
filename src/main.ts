@@ -131,7 +131,15 @@ registerPanelData('fields-demo', () => ({
     ],
     dragType: 'application/x-fields-demo',
   })),
-  footer: { id: 'add', label: 'Add', action: 'fields-demo-add' },
+  add: {
+    label: 'Add field',
+    action: 'fields-demo-add',
+    options: [
+      { id: 'text', label: 'Text field' },
+      { id: 'number', label: 'Number field' },
+      { id: 'switch', label: 'Switch' },
+    ],
+  },
 }));
 
 registerPanelData('bulk-demo', () => {
@@ -391,6 +399,8 @@ function onAction(e: FrameworkAction) {
     return;
   }
   if (e.source === 'panel' && e.action === 'fields-demo-add') {
+    const p = e.payload as { gesture?: string; option?: string } | undefined;
+    if (p?.gesture !== 'add') return;
     fieldsDemo.added += 1;
     const id = `extra-${fieldsDemo.added}`;
     fieldsDemo.rows = [...fieldsDemo.rows, { id, label: `Field ${fieldsDemo.added}`, hidden: false }];

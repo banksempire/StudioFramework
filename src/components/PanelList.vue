@@ -1,7 +1,14 @@
 <script setup lang="ts">
-import { computed, inject, ref, watch } from 'vue';
+import { computed, inject, nextTick, onMounted, onUnmounted, ref, watch } from 'vue';
 import { kIsMobile, kMobilePanelDismiss } from '../composables/useWorkspace';
-import type { PanelListBulk, PanelListButton, PanelListItem, PanelListLine } from '../types/panel';
+import type {
+  PanelListAdd,
+  PanelListBulk,
+  PanelListButton,
+  PanelListItem,
+  PanelListLine,
+  PanelListOption,
+} from '../types/panel';
 import Icon from './Icon.vue';
 import SingleMenu from './SingleMenu.vue';
 import SvgIcon from './SvgIcon.vue';
@@ -16,6 +23,7 @@ const props = defineProps<{
   searchable?: boolean;
   searchPlaceholder?: string;
   footer?: PanelListButton;
+  add?: PanelListAdd;
   draggable?: boolean;
 }>();
 
@@ -29,6 +37,7 @@ const emit = defineEmits<{
   ];
   'switch-toggle': [item: PanelListItem];
   footer: [buttonId: string];
+  add: [optionId: string | undefined];
   dragstart: [item: PanelListItem, event: DragEvent];
   dragend: [event: DragEvent];
   'bulk-action': [actionId: string];
@@ -41,6 +50,7 @@ const dismissMobilePanel = inject<(() => void) | null>(kMobilePanelDismiss, null
 const rich = computed(
   () =>
     props.variant === 'card' ||
+    props.add !== undefined ||
     props.items.some(
       (it) =>
         it.lines !== undefined ||
@@ -240,11 +250,80 @@ function onButtonClick(
 ) {
   emit('button', it, b.id, { x: e.clientX, y: e.clientY, openMenu });
 }
+
+const showEmpty = computed(() => props.items.length === 0 && !!props.empty && !props.bulk);
+
+const addOpen = ref(false);
+const addX = ref(0);
+const addY = ref(0);
+const addMenuEl = ref<HTMLElement | null>(null);
+const addMenuStyle = ref<{ left: string; top: string }>({ left: '0px', top: '0px' });
+let addToggleGuard = false;
+
+function onAddClick(e: MouseEvent) {
+  if (addToggleGuard) {
+    addToggleGuard = false;
+    return;
+  }
+  const opts = props.add?.options ?? [];
+  if (opts.length === 0) {
+    emit('add', undefined);
+    return;
+  }
+  addX.value = e.clientX;
+  addY.value = e.clientY;
+  addOpen.value = true;
+}
+
+function pickAdd(opt: PanelListOption) {
+  if (opt.disabled) return;
+  addOpen.value = false;
+  emit('add', opt.id);
+}
+
+watch(addOpen, async (v) => {
+  if (!v) return;
+  await nextTick();
+  const el = addMenuEl.value;
+  if (!el) return;
+  const w = el.offsetWidth || 200;
+  const h = el.offsetHeight || 80;
+  addMenuStyle.value = {
+    left: `${Math.max(4, Math.min(addX.value, window.innerWidth - w - 4))}px`,
+    top: `${Math.max(4, Math.min(addY.value, window.innerHeight - h - 4))}px`,
+  };
+});
+
+function onAddDocDown(e: MouseEvent) {
+  addToggleGuard = false;
+  if (!addOpen.value) return;
+  if (addMenuEl.value?.contains(e.target as Node)) return;
+  if ((e.target as Element | null)?.closest?.('.sf-pl-item--add')) addToggleGuard = true;
+  addOpen.value = false;
+}
+
+function onAddDocKey(e: KeyboardEvent) {
+  if (e.key === 'Escape') addOpen.value = false;
+}
+
+const addSheetTarget = ref<HTMLElement | 'body'>('body');
+
+if (typeof window !== 'undefined') {
+  onMounted(() => {
+    addSheetTarget.value = (document.querySelector('.sf-root') as HTMLElement | null) ?? 'body';
+    window.addEventListener('mousedown', onAddDocDown);
+    window.addEventListener('keydown', onAddDocKey);
+  });
+  onUnmounted(() => {
+    window.removeEventListener('mousedown', onAddDocDown);
+    window.removeEventListener('keydown', onAddDocKey);
+  });
+}
 </script>
 
 <template>
-  <div v-if="props.items.length === 0 && props.empty && !props.bulk" class="sf-empty">{{ props.empty }}</div>
-  <div v-else-if="!rich" class="sf-pc-list">
+  <div v-if="showEmpty" class="sf-empty">{{ props.empty }}</div>
+  <div v-if="!rich && (!showEmpty || props.add)" class="sf-pc-list">
     <div v-if="props.searchable" class="sf-pl-search">
       <input
         v-model="query"
@@ -267,7 +346,7 @@ function onButtonClick(
       <span v-if="item.badge" class="sf-pc-list-badge">{{ item.badge }}</span>
     </div>
   </div>
-  <div v-else class="sf-pl" :class="'sf-pl--' + (props.variant ?? 'plain')">
+  <div v-else-if="!showEmpty || props.add" class="sf-pl" :class="'sf-pl--' + (props.variant ?? 'plain')">
     <div v-if="props.searchable" class="sf-pl-search">
       <input
         v-model="query"
@@ -380,7 +459,35 @@ function onButtonClick(
         </div>
       </template>
     </SingleMenu>
+    <div
+      v-if="props.add"
+      class="sf-pl-item sf-pl-item--add"
+      :title="props.add.label ?? 'Add'"
+      @click="onAddClick"
+    >
+      <span class="sf-pl-add-sign"><SvgIcon name="➕" /></span>
+      <span class="sf-pl-add-label">{{ props.add.label ?? 'Add…' }}</span>
+    </div>
   </div>
+  <Teleport :to="addSheetTarget">
+    <div v-if="addOpen" ref="addMenuEl" class="sf-sm-menu" :style="addMenuStyle" role="menu">
+      <button
+        v-for="opt in props.add?.options ?? []"
+        :key="opt.id"
+        class="sf-sm-menu-row"
+        :class="{
+          'sf-sm-menu-row--danger': opt.danger,
+          'sf-sm-menu-row--disabled': opt.disabled,
+        }"
+        role="menuitem"
+        :disabled="opt.disabled"
+        @click="pickAdd(opt)"
+      >
+        <Icon :icon="opt.icon" />
+        <span>{{ opt.label ?? opt.id }}</span>
+      </button>
+    </div>
+  </Teleport>
   <div v-if="props.footer" class="sf-pl-footer">
     <button
       class="sf-pl-footer-btn"

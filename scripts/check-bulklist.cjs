@@ -246,14 +246,56 @@ const { ensureServer, makeReporter, finish } = require('./lib/ui-test.cjs');
   await fieldRow('Tick').locator('.sf-pl-btn[title="Delete"]').click();
   await page.waitForTimeout(200);
   report('delete button removes the row', (await rowByLabel('Tick').count()) === 0);
-  await fields.locator('.sf-pl-footer-btn', { hasText: 'Add' }).click();
+  const addRow = fields.locator('.sf-pl-item--add');
+  const addGeom = await page.evaluate(() => {
+    const body = document.querySelector('[data-sub-body="fields"]');
+    const rows = [...body.querySelectorAll('.sf-pl-item')];
+    const add = rows.find((x) => x.classList.contains('sf-pl-item--add'));
+    const plain = rows.find((x) => !x.classList.contains('sf-pl-item--add'));
+    if (!add || !plain || rows[rows.length - 1] !== add) return null;
+    const csA = getComputedStyle(add);
+    const csP = getComputedStyle(plain);
+    return {
+      width: Math.abs(add.getBoundingClientRect().width - plain.getBoundingClientRect().width) < 0.5,
+      pad: csA.paddingTop === csP.paddingTop && csA.paddingBottom === csP.paddingBottom,
+      muted:
+        getComputedStyle(add.querySelector('.sf-pl-add-label')).color !==
+        getComputedStyle(plain.querySelector('.sf-pl-label')).color,
+    };
+  });
+  report(
+    'add item is the last row, sized and styled like a plain row',
+    addGeom?.width === true && addGeom.pad === true && addGeom.muted === true,
+    JSON.stringify(addGeom),
+  );
+  await addRow.click();
   await page.waitForTimeout(200);
-  report('footer add appends a new row', (await fields.locator('.sf-pl-item').count()) === 2);
+  report(
+    'add item opens the pick dropdown',
+    (await page.locator('.sf-sm-menu .sf-sm-menu-row').count()) === 3,
+  );
+  await addRow.click();
+  await page.waitForTimeout(150);
+  report(
+    'clicking the add item again closes the dropdown',
+    (await page.locator('.sf-sm-menu').count()) === 0,
+  );
+  await addRow.click();
+  await page.waitForTimeout(200);
+  await page.locator('.sf-sm-menu .sf-sm-menu-row', { hasText: 'Text field' }).first().click();
+  await page.waitForTimeout(200);
+  report(
+    'picking an option appends a new row',
+    (await fields.locator('.sf-pl-item:not(.sf-pl-item--add)').count()) === 2,
+  );
   await fieldRow('Book').locator('.sf-pl-btn[title="Delete"]').click();
   await page.waitForTimeout(150);
   await fields.locator('.sf-pl-item', { hasText: 'Field 1' }).locator('.sf-pl-btn[title="Delete"]').click();
   await page.waitForTimeout(200);
-  report('empty list shows the footer hint', (await fields.locator('.sf-empty').count()) === 1);
+  report(
+    'empty list keeps the hint and the add item',
+    (await fields.locator('.sf-empty').count()) === 1 && (await addRow.count()) === 1,
+  );
   report(
     'grips stay hidden unless the list opts in to dragging',
     (await fields.locator('.sf-pl-grip').count()) === 0,

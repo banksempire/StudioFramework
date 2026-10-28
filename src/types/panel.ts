@@ -114,6 +114,11 @@ export interface PanelListBulk {
   actions?: PanelBulkAction[];
 }
 
+export interface PanelListAdd {
+  label?: string;
+  options: PanelListOption[];
+}
+
 export interface PanelListData {
   items: PanelListItem[];
   empty?: string;
@@ -122,6 +127,7 @@ export interface PanelListData {
   searchable?: boolean;
   searchPlaceholder?: string;
   footer?: PanelListButton & { action?: string };
+  add?: PanelListAdd & { action?: string };
   draggable?: boolean;
 }
 
