@@ -22,6 +22,16 @@ const cursor = ref(0);
 
 const boxEl = ref<HTMLElement | null>(null);
 const popEl = ref<HTMLElement | null>(null);
+
+function syncCursorToSelection() {
+  const at = matches.value.findIndex((o) => o.value === props.modelValue);
+  cursor.value = at >= 0 ? at : 0;
+}
+
+async function scrollCursorIntoView() {
+  await nextTick();
+  popEl.value?.children[cursor.value]?.scrollIntoView({ block: 'nearest' });
+}
 const popStyle = ref<{ left: string; top: string; width: string; maxHeight: string }>({
   left: '0px',
   top: '0px',
@@ -103,11 +113,19 @@ function onInput(event: Event) {
 function onFocus() {
   query.value = null;
   open.value = true;
+  syncCursorToSelection();
+  void scrollCursorIntoView();
 }
 
 function onBoxClick(event: MouseEvent) {
   open.value = true;
   (event.target as HTMLInputElement).select();
+  syncCursorToSelection();
+  void scrollCursorIntoView();
+}
+
+function onRowEnter(i: number) {
+  cursor.value = i;
 }
 
 function pick(option: PopupOption) {
@@ -142,8 +160,10 @@ function onKeydown(event: KeyboardEvent) {
   } else if (event.key === 'ArrowDown') {
     open.value = true;
     cursor.value = Math.min(cursor.value + 1, matches.value.length - 1);
+    void scrollCursorIntoView();
   } else if (event.key === 'ArrowUp') {
     cursor.value = Math.max(cursor.value - 1, 0);
+    void scrollCursorIntoView();
   }
 }
 </script>
@@ -174,7 +194,8 @@ function onKeydown(event: KeyboardEvent) {
         :key="String(opt.value)"
         type="button"
         class="sf-search-select-row"
-        :class="{ 'sf-search-select-row--on': i === cursor || opt.value === modelValue }"
+        :class="{ 'sf-search-select-row--on': i === cursor }"
+        @mouseenter="onRowEnter(i)"
         @mousedown.prevent="pick(opt)"
       >
         {{ opt.label }}

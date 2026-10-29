@@ -179,6 +179,84 @@ const { ensureServer, openApp, makeReporter, finish } = require('./lib/ui-test.c
       JSON.stringify(followed),
     );
 
+    const reopen = await page.evaluate(() => {
+      const on = [...document.querySelectorAll('.sf-search-select-row--on')];
+      return { count: on.length, label: on[0]?.textContent?.trim() };
+    });
+    report(
+      'reopening highlights exactly the committed row',
+      reopen.count === 1 && reopen.label === 'Charlie option',
+      JSON.stringify(reopen),
+    );
+
+    await page.locator('.sf-search-select-row').filter({ hasText: 'Foxtrot option' }).hover();
+    await delay(100);
+    const hovered = await page.evaluate(() => {
+      const on = [...document.querySelectorAll('.sf-search-select-row--on')];
+      return { count: on.length, label: on[0]?.textContent?.trim() };
+    });
+    report(
+      'mouse hover moves the single highlight',
+      hovered.count === 1 && hovered.label === 'Foxtrot option',
+      JSON.stringify(hovered),
+    );
+
+    await page.keyboard.press('ArrowDown');
+    await delay(100);
+    await page.keyboard.press('ArrowUp');
+    await delay(100);
+    const keyed = await page.evaluate(() => {
+      const on = document.querySelector('.sf-search-select-row--on');
+      return {
+        count: document.querySelectorAll('.sf-search-select-row--on').length,
+        label: on?.textContent?.trim(),
+      };
+    });
+    report(
+      'arrow keys move the same highlight back',
+      keyed.count === 1 && keyed.label === 'Foxtrot option',
+      JSON.stringify(keyed),
+    );
+
+    for (let i = 0; i < 8; i++) {
+      await page.keyboard.press('ArrowDown');
+      await delay(60);
+    }
+    await delay(150);
+    const scrolled = await page.evaluate(() => {
+      const pop = document.querySelector('.sf-search-select-pop');
+      const on = document.querySelector('.sf-search-select-row--on');
+      if (!(pop instanceof HTMLElement) || !(on instanceof HTMLElement)) return { missing: true };
+      const popRect = pop.getBoundingClientRect();
+      const onRect = on.getBoundingClientRect();
+      return {
+        missing: false,
+        scrollTop: pop.scrollTop,
+        label: on.textContent?.trim(),
+        visible: onRect.top >= popRect.top && onRect.bottom <= popRect.bottom,
+      };
+    });
+    report(
+      'keyboard navigation scrolls the highlight into view',
+      !scrolled.missing && scrolled.scrollTop > 0 && scrolled.visible && scrolled.label === 'Lima option',
+      JSON.stringify(scrolled),
+    );
+
+    await page.keyboard.press('Enter');
+    await delay(150);
+    const enterPick = await page.evaluate(
+      (sel) => ({
+        pop: document.querySelector('.sf-search-select-pop') !== null,
+        value: document.querySelector(sel)?.value,
+      }),
+      SEARCH_BOX,
+    );
+    report(
+      'enter commits the highlighted row',
+      !enterPick.pop && enterPick.value === 'Lima option',
+      JSON.stringify(enterPick),
+    );
+
     report('no page errors during the suite', errors.length === 0, errors.join(' | '));
   } catch (e) {
     report('suite completed without throwing', false, String(e));
