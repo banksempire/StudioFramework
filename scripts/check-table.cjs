@@ -401,6 +401,102 @@ const { ensureServer, openApp, makeReporter, finish } = require('./lib/ui-test.c
     );
     await page.mouse.click(400, 10);
 
+    const facetItems = () =>
+      page.evaluate(() => {
+        const pop = document.querySelector('.sf-table-demo-block:first-child .sf-tbl-pop');
+        if (!pop) return null;
+        return [...pop.querySelectorAll('.sf-tbl-chk-val')]
+          .map((c) => c.textContent)
+          .filter((t) => t !== '(Select all)');
+      });
+    const facetHead = (label) =>
+      page.locator('.sf-table-demo-block:first-child .sf-tbl-th', { hasText: label });
+    const facetCheck = (label) => rowsIn('.sf-tbl-chk').filter({ hasText: label }).first().locator('input');
+    const toggleFacetCheck = async (label) => {
+      await facetCheck(label).focus();
+      await page.keyboard.press(' ');
+      await delay(150);
+    };
+
+    await rowsIn('.sf-tbl-search-input').fill('report');
+    await delay(250);
+    const kindFacetHead = facetHead('Kind');
+    await kindFacetHead.locator('.sf-tbl-hbtn').click();
+    await delay(100);
+    const gqKindFacet = await facetItems();
+    const daysFacetHead = facetHead('Days');
+    await daysFacetHead.locator('.sf-tbl-hbtn').click();
+    await delay(100);
+    const gqDaysFacet = await facetItems();
+    report(
+      'global search narrows column facets to the surviving rows',
+      (await rowsIn('.sf-tbl-row').count()) === 1 &&
+        JSON.stringify(gqKindFacet) === JSON.stringify(['doc']) &&
+        JSON.stringify(gqDaysFacet) === JSON.stringify(['Mon–Fri']),
+      `kind=${JSON.stringify(gqKindFacet)} days=${JSON.stringify(gqDaysFacet)}`,
+    );
+    await page.mouse.click(400, 10);
+    await delay(100);
+    await rowsIn('.sf-tbl-search-input').fill('');
+    await delay(250);
+
+    await kindFacetHead.locator('.sf-tbl-hbtn').click();
+    await delay(100);
+    await rowsIn('.sf-tbl-pop-input').fill('im');
+    await delay(150);
+    await daysFacetHead.locator('.sf-tbl-hbtn').click();
+    await delay(100);
+    const crossDaysFacet = await facetItems();
+    await toggleFacetCheck('weekend');
+    const narrowedByOwn = await rowsIn('.sf-tbl-row').count();
+    await daysFacetHead.locator('.sf-tbl-hbtn').click();
+    await delay(100);
+    await daysFacetHead.locator('.sf-tbl-hbtn').click();
+    await delay(100);
+    const ownDaysFacet = await facetItems();
+    report(
+      'column facets respect other column filters but keep their own values visible',
+      JSON.stringify(crossDaysFacet) === JSON.stringify(['daily', 'weekend']) &&
+        narrowedByOwn === 1 &&
+        JSON.stringify(ownDaysFacet) === JSON.stringify(['daily', 'weekend']),
+      `days=${JSON.stringify(crossDaysFacet)} rows=${narrowedByOwn} own=${JSON.stringify(ownDaysFacet)}`,
+    );
+
+    await toggleFacetCheck('weekend');
+    const nameFacetHead = facetHead('Name');
+    await nameFacetHead.locator('.sf-tbl-hbtn').click();
+    await delay(100);
+    await rowsIn('.sf-tbl-pop-sortbtn').first().click();
+    await delay(150);
+    const facetAsc = await rowsText();
+    await rowsIn('.sf-tbl-pop-sortbtn').nth(1).click();
+    await delay(150);
+    const facetDesc = await rowsText();
+    report(
+      'sorting acts on the filter-left rows, not the full set',
+      facetAsc.length === 2 &&
+        facetAsc[0].includes('archive.zip') &&
+        facetDesc.length === 2 &&
+        facetDesc[0].includes('avatar.png'),
+      JSON.stringify({ facetAsc, facetDesc }),
+    );
+    await rowsIn('.sf-tbl-pop-sortbtn').nth(1).click();
+    await delay(150);
+    await page.mouse.click(400, 10);
+    await delay(100);
+    await kindFacetHead.locator('.sf-tbl-hbtn').click();
+    await delay(100);
+    await rowsIn('.sf-tbl-pop-clear').click();
+    await page.mouse.click(400, 10);
+    await delay(100);
+    report(
+      'facet test cleanup restores the unfiltered table',
+      (await rowsIn('.sf-tbl-row').count()) === 5 &&
+        (await page.evaluate(
+          () => document.querySelectorAll('.sf-table-demo-block:first-child .sf-tbl-th--active').length,
+        )) === 0,
+    );
+
     const daysHead = page.locator('.sf-table-demo-block:first-child .sf-tbl-th', { hasText: 'Days' });
     const headBox = await daysHead.boundingBox();
     const handleX = headBox.x + headBox.width - 1;

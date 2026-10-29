@@ -309,9 +309,32 @@ function valueText(v: unknown): string {
   return v === null || v === undefined ? '' : String(v);
 }
 
+function passesGlobalQuery(row: Record<string, unknown>): boolean {
+  const gq = globalQuery.value.trim().toLowerCase();
+  if (!gq) return true;
+  const inColumns = visibleColumns.value.some((c) => valueText(row[c.key]).toLowerCase().includes(gq));
+  const extra = (props.searchText?.(row) ?? '').toLowerCase();
+  return inColumns || extra.includes(gq);
+}
+
+function passesColumnFilter(row: Record<string, unknown>, c: TableColumn): boolean {
+  const q = (queries[c.key] ?? '').trim().toLowerCase();
+  if (q && !valueText(row[c.key]).toLowerCase().includes(q)) return false;
+  return !(excluded[c.key] ?? []).includes(valueText(row[c.key]));
+}
+
 function uniqueValues(c: TableColumn): string[] {
   const seen: string[] = [];
   for (const row of props.rows) {
+    if (!passesGlobalQuery(row)) continue;
+    let keep = true;
+    for (const col of visibleColumns.value) {
+      if (col.filter && col.key !== c.key && !passesColumnFilter(row, col)) {
+        keep = false;
+        break;
+      }
+    }
+    if (!keep) continue;
     const s = valueText(row[c.key]);
     if (s !== '' && !seen.includes(s)) seen.push(s);
   }
@@ -348,20 +371,11 @@ function toggleAll(c: TableColumn) {
 }
 
 const visibleRows = computed(() => {
-  const gq = globalQuery.value.trim().toLowerCase();
   const out: Array<{ row: Record<string, unknown>; index: number }> = [];
   props.rows.forEach((row, index) => {
-    if (gq) {
-      const inColumns = visibleColumns.value.some((c) => valueText(row[c.key]).toLowerCase().includes(gq));
-      const extra = (props.searchText?.(row) ?? '').toLowerCase();
-      if (!inColumns && !extra.includes(gq)) return;
-    }
+    if (!passesGlobalQuery(row)) return;
     for (const c of visibleColumns.value) {
-      if (c.filter) {
-        const q = (queries[c.key] ?? '').trim().toLowerCase();
-        if (q && !valueText(row[c.key]).toLowerCase().includes(q)) return;
-        if ((excluded[c.key] ?? []).includes(valueText(row[c.key]))) return;
-      }
+      if (c.filter && !passesColumnFilter(row, c)) return;
     }
     out.push({ row, index });
   });
