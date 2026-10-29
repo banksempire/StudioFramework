@@ -34,11 +34,11 @@ function panel(overrides: Record<string, unknown> = {}): Record<string, unknown>
         icon: '📄',
         panel: {
           title: 'P',
-          groups: [
+          h1: [
             {
               id: 'g1',
               title: 'Group',
-              sections: [{ id: 's1', title: 'Section', components: [{ type: 'text', text: 'x' }] }],
+              h2: [{ id: 's1', title: 'Section', components: [{ type: 'text', text: 'x' }] }],
             },
           ],
         },
@@ -71,46 +71,48 @@ report(
 
 expectsFailure(
   'panel without groups fails fast (h1 missing)',
-  withDockerPanel({ groups: [] }),
+  withDockerPanel({ h1: [] }),
   /at least one h1 group/,
 );
 
 expectsFailure(
   'panel with a group without sections fails fast (h2 missing)',
-  withDockerPanel({ groups: [{ id: 'g1', title: 'Group', sections: [] }] }),
+  withDockerPanel({ h1: [{ id: 'g1', title: 'Group', h2: [] }] }),
   /at least one h2 section/,
 );
 
 expectsFailure(
   'group with only an h3 section fails fast (h2 missing)',
   withDockerPanel({
-    groups: [
+    h1: [
       {
         id: 'g1',
         title: 'Group',
-        sections: [{ id: 's1', title: 'Flat', heading: 3, components: [{ type: 'text', text: 'x' }] }],
+        h2: [{ id: 's1', title: 'Flat', heading: 3, components: [{ type: 'text', text: 'x' }] }],
       },
     ],
   }),
-  /at least one h2 section/,
+  /level jump/,
 );
 
-expectsFailure('missing groups key fails fast', withDockerPanel({ groups: undefined }), /groups/);
+expectsFailure('missing h1 key fails fast', withDockerPanel({ h1: undefined }), /h1/);
 
 expectsFailure(
   'h3 with variable height fails fast',
   withDockerPanel({
-    groups: [
+    h1: [
       {
         id: 'g1',
         title: 'Group',
-        sections: [
+        h2: [
           {
             id: 's0',
             title: 'Real',
-            components: [{ type: 'text', text: 'x' }],
+            components: [
+              { type: 'text', text: 'x' },
+              { id: 's1', title: 'Flat', heading: 3, height: 'variable', components: [] },
+            ],
           },
-          { id: 's1', title: 'Flat', heading: 3, height: 'variable', components: [] },
         ],
       },
     ],
@@ -131,17 +133,18 @@ report(
               icon: '📄',
               panel: {
                 title: 'P',
-                groups: [
+                h1: [
                   {
                     id: 'g1',
                     title: 'Group',
-                    sections: [
-                      { id: 's1', title: 'Section', components: [{ type: 'text', text: 'x' }] },
+                    h2: [
                       {
-                        id: 's2',
-                        title: 'Flat',
-                        heading: 3,
-                        components: [{ type: 'text', text: 'y' }],
+                        id: 's1',
+                        title: 'Section',
+                        components: [
+                          { type: 'text', text: 'x' },
+                          { id: 's2', title: 'Flat', heading: 3, components: [{ type: 'text', text: 'y' }] },
+                        ],
                       },
                     ],
                   },
@@ -157,6 +160,68 @@ report(
       return (e as Error).message;
     }
   })() === true,
+);
+
+report(
+  'h2 section with a string bind loads and carries it through',
+  (() => {
+    try {
+      const layout = panel({
+        docker: [
+          {
+            id: 'app-bind',
+            displayName: 'App',
+            icon: '📄',
+            panel: {
+              title: 'P',
+              h1: [
+                {
+                  id: 'g1',
+                  title: 'Group',
+                  h2: [
+                    {
+                      id: 's1',
+                      title: 'Conditional',
+                      bind: 'some-state',
+                      components: [{ type: 'text', text: 'x' }],
+                    },
+                  ],
+                },
+              ],
+            },
+          },
+        ],
+      });
+      const h2 = loadLayout(layout, 'loader-check').docker[0].panel.h1[0].h2[0];
+      return h2.bind === 'some-state';
+    } catch (e) {
+      return (e as Error).message;
+    }
+  })() === true,
+);
+
+expectsFailure(
+  'h2 bind must be a string',
+  panel({
+    docker: [
+      {
+        id: 'app-bind-bad',
+        displayName: 'App',
+        icon: '📄',
+        panel: {
+          title: 'P',
+          h1: [
+            {
+              id: 'g1',
+              title: 'Group',
+              h2: [{ id: 's1', title: 'Bad', bind: 7, components: [{ type: 'text', text: 'x' }] }],
+            },
+          ],
+        },
+      },
+    ],
+  }),
+  /expected a string/,
 );
 
 console.log(`\nLOADER CHECKS: ${passed} passed, ${failed} failed\n`);

@@ -606,6 +606,7 @@ function toH2(v: unknown, path: string): PanelH2 {
         : typeof r.minHeight === 'number'
           ? r.minHeight
           : fail(`${path}.minHeight`, 'expected a number'),
+    bind: optString(r.bind, `${path}.bind`),
     utilities:
       r.utilities === undefined
         ? undefined

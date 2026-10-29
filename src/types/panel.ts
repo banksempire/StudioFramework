@@ -284,6 +284,7 @@ export interface PanelH2 {
   heading: 2;
   isHeightVariable: boolean;
   minHeight?: number;
+  bind?: string;
   utilities?: PanelUtility[];
   components: (PanelComponent | PanelH3)[];
 }

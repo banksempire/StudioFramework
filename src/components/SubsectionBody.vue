@@ -8,6 +8,7 @@ const props = withDefaults(
   defineProps<{
     h2s: PanelH2[];
     hiddenIds: Set<string>;
+    dataHiddenIds?: Set<string>;
     stateKey?: string;
     mobile?: boolean;
     scroll?: boolean;
@@ -18,6 +19,7 @@ const props = withDefaults(
     mobile: false,
     scroll: true,
     collapsible: undefined,
+    dataHiddenIds: undefined,
   },
 );
 
@@ -74,7 +76,11 @@ function persistSubState() {
   }
 }
 
-const visibleSubSections = computed(() => props.h2s.filter((s) => !props.hiddenIds.has(s.id)));
+const dataHiddenIds = computed(() => props.dataHiddenIds ?? new Set<string>());
+
+const visibleSubSections = computed(() =>
+  props.h2s.filter((s) => !props.hiddenIds.has(s.id) && !dataHiddenIds.value.has(s.id)),
+);
 
 const sectionsCollapsible = computed(() =>
   props.collapsible !== undefined ? props.collapsible : visibleSubSections.value.length > 1,
@@ -99,7 +105,13 @@ watch(
 function isResizeable(sub: PanelH2): boolean {
   if (props.mobile) return false;
   const st = states[sub.id];
-  return !!st && st.isExpanded && !props.hiddenIds.has(sub.id) && sub.isHeightVariable;
+  return (
+    !!st &&
+    st.isExpanded &&
+    !props.hiddenIds.has(sub.id) &&
+    !dataHiddenIds.value.has(sub.id) &&
+    sub.isHeightVariable
+  );
 }
 
 function getBodyHeight(sub: PanelH2): number {
@@ -169,7 +181,13 @@ function measureAndObserve() {
 
   const wanted = new Set(
     props.h2s
-      .filter((s) => !s.isHeightVariable && states[s.id]?.isExpanded && !props.hiddenIds.has(s.id))
+      .filter(
+        (s) =>
+          !s.isHeightVariable &&
+          states[s.id]?.isExpanded &&
+          !props.hiddenIds.has(s.id) &&
+          !dataHiddenIds.value.has(s.id),
+      )
       .map((s) => s.id),
   );
 
@@ -252,6 +270,11 @@ watch(uiEpoch, () => {
 
 watch(
   () => props.hiddenIds,
+  () => refresh(true),
+);
+
+watch(
+  () => props.dataHiddenIds,
   () => refresh(true),
 );
 

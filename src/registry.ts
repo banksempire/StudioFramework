@@ -64,3 +64,11 @@ export function registerPanelData(key: string, getter: () => unknown): void {
 export function getPanelData(key: string): (() => unknown) | undefined {
   return panelData.get(key);
 }
+
+export function panelDataHidden(bind: string | undefined): boolean {
+  if (!bind) return false;
+  const getter = getPanelData(bind);
+  if (!getter) return false;
+  const value = getter() as { hidden?: unknown } | undefined;
+  return value?.hidden === true;
+}

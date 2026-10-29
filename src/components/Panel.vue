@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed, nextTick, onUnmounted, ref, watch } from 'vue';
 import { DEFAULT_PANEL_WIDTH, PANEL_MAX_WIDTH, PANEL_MIN_WIDTH, useResize } from '../composables/useResize';
+import { panelDataHidden } from '../registry';
 import type { MenuNodeDef } from '../types/layout';
 import type { PanelAction, PanelH1 } from '../types/panel';
 import { readUiNumber, readUiStringArray, uiEpoch, writeUiValue } from '../uiState';
@@ -217,6 +218,12 @@ const activeHiddenIds = computed(() => {
   return new Set(hiddenSubSections.value.get(`${lastKey}::${grp.id}`) ?? []);
 });
 
+const activeDataHiddenIds = computed(() => {
+  const grp = activeGroup.value;
+  if (!grp) return new Set<string>();
+  return new Set(grp.h2.filter((sec) => panelDataHidden(sec.bind)).map((sec) => sec.id));
+});
+
 function toggleSubVisible(subId: string) {
   const grp = activeGroup.value;
   if (!grp) return;
@@ -230,12 +237,14 @@ function toggleSubVisible(subId: string) {
 }
 
 const visibilityItems = computed<MenuNodeDef[]>(() =>
-  activeH2s.value.map((sec) => ({
-    id: sec.id,
-    label: sec.title,
-    iconKind: 'check' as const,
-    selected: !activeHiddenIds.value.has(sec.id),
-  })),
+  activeH2s.value
+    .filter((sec) => !activeDataHiddenIds.value.has(sec.id))
+    .map((sec) => ({
+      id: sec.id,
+      label: sec.title,
+      iconKind: 'check' as const,
+      selected: !activeHiddenIds.value.has(sec.id),
+    })),
 );
 
 const overflowItems = computed<MenuNodeDef[]>(() =>
@@ -338,6 +347,7 @@ onUnmounted(() => observer?.disconnect());
       :key="activeGroupId"
       :h2s="activeH2s"
       :hidden-ids="activeHiddenIds"
+      :data-hidden-ids="activeDataHiddenIds"
       :state-key="subStateKey"
       :mobile="position === 'mobile'"
       @utility="(subId, utilityId, itemId) => emit('utility', subId, utilityId, itemId)"
