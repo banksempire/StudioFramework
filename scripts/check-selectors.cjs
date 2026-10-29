@@ -139,7 +139,7 @@ const { ensureServer, openApp, makeReporter, finish } = require('./lib/ui-test.c
     await page.evaluate(() => {
       const s = document.createElement('style');
       s.id = 'force-ms-wrap';
-      s.textContent = '.sf-selector-demo .sf-ms-track{flex-wrap:wrap!important;max-width:150px!important}';
+      s.textContent = '.sf-selector-demo .sf-ms{max-width:150px!important}';
       document.head.appendChild(s);
     });
     await page.locator('.sf-selector-demo .sf-ms-item', { hasText: 'Sun' }).click();

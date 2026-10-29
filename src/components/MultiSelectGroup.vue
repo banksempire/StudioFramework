@@ -187,5 +187,8 @@ watch(
     height: auto;
     min-height: 36px;
   }
+  .sf-ms-item {
+    min-width: fit-content;
+  }
 }
 </style>
