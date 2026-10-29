@@ -5,11 +5,43 @@ import SvgIcon from './SvgIcon.vue';
 import Table from './Table.vue';
 
 const files = reactive([
-  { name: 'report-final.md', kind: 'doc', size: 48, days: 'Mon–Fri', note: 'release notes', py: 'baogao' },
-  { name: 'budget.xlsx', kind: 'sheet', size: 312, days: 'Mon–Fri', note: '2026 plan', py: 'yusuan' },
-  { name: 'avatar.png', kind: 'image', size: 96, days: 'daily', note: '', py: 'toux' },
-  { name: 'index.ts', kind: 'code', size: 12, days: 'Mon–Fri', note: 'entry point', py: 'ruko' },
-  { name: 'archive.zip', kind: 'image', size: 2048, days: 'weekend', note: 'old backup', py: 'dangan' },
+  {
+    name: 'report-final.md',
+    kind: 'doc',
+    size: 48,
+    days: 'Mon–Fri',
+    note: 'release notes',
+    py: 'baogao',
+    owner: 'ops',
+  },
+  {
+    name: 'budget.xlsx',
+    kind: 'sheet',
+    size: 312,
+    days: 'Mon–Fri',
+    note: '2026 plan',
+    py: 'yusuan',
+    owner: 'fin',
+  },
+  { name: 'avatar.png', kind: 'image', size: 96, days: 'daily', note: '', py: 'toux', owner: 'design' },
+  {
+    name: 'index.ts',
+    kind: 'code',
+    size: 12,
+    days: 'Mon–Fri',
+    note: 'entry point',
+    py: 'ruko',
+    owner: 'web',
+  },
+  {
+    name: 'archive.zip',
+    kind: 'image',
+    size: 2048,
+    days: 'weekend',
+    note: 'old backup',
+    py: 'dangan',
+    owner: 'ops',
+  },
 ]);
 
 const fileColumns = ref<TableColumn[]>([
@@ -18,6 +50,7 @@ const fileColumns = ref<TableColumn[]>([
   { key: 'size', label: 'Size KB', fixedWidth: 76, sortable: true, align: 'right', mobile: 'sub' },
   { key: 'days', label: 'Days', sortable: true, filter: 'select' },
   { key: 'note', label: 'Note' },
+  { key: 'owner', label: 'Owner', hidden: true },
 ]);
 
 const state = reactive({ edits: 0, removed: '', widths: '', clicked: '', selKey: '', pageSize: 5 });

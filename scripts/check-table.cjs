@@ -651,6 +651,16 @@ const { ensureServer, openApp, makeReporter, finish } = require('./lib/ui-test.c
 
     await nameHead.click({ button: 'right' });
     await delay(150);
+    const ownerDefault = await page.evaluate(() => {
+      const ths = [...document.querySelectorAll('.sf-table-demo-block:first-child .sf-tbl-th')].map(
+        (t) => t.textContent,
+      );
+      return ths.length === 7 && !ths.some((t) => t.includes('Owner'));
+    });
+    report('columns hidden by default stay out of the grid until shown', ownerDefault);
+
+    await nameHead.click({ button: 'right' });
+    await delay(150);
     const menuOpen = (await rowsIn('.sf-tbl-colmenu').count()) === 1;
     await rowsIn('.sf-tbl-chk').filter({ hasText: 'Kind' }).locator('input').click();
     await delay(150);
@@ -866,7 +876,12 @@ const { ensureServer, openApp, makeReporter, finish } = require('./lib/ui-test.c
       .locator('.sf-table-demo-block:first-child .sf-tbl-colmenu-act', { hasText: 'Show all columns' })
       .click();
     await delay(150);
-    report('show-all restores every column', (await rowsIn('.sf-tbl-th').count()) === 7);
+    report(
+      'show-all restores every column, including ones hidden by default',
+      (await rowsIn('.sf-tbl-th').count()) === 8 &&
+        (await page.locator('.sf-table-demo-block:first-child .sf-tbl-th', { hasText: 'Owner' }).count()) ===
+          1,
+    );
 
     await page.mouse.click(400, 10);
     await delay(100);

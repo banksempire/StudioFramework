@@ -276,7 +276,7 @@ function toggleColumn(c: TableColumn) {
 }
 
 function showAllColumns() {
-  for (const key of Object.keys(hiddenCols)) hiddenCols[key] = false;
+  for (const c of props.columns) hiddenCols[c.key] = false;
 }
 
 function resetWidths() {
