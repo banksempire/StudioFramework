@@ -1,8 +1,17 @@
 <script setup lang="ts">
-import { computed, reactive, ref } from 'vue';
+import { computed, onMounted, reactive, ref } from 'vue';
 import type { TableColumn } from '../types/table';
 import SvgIcon from './SvgIcon.vue';
 import Table from './Table.vue';
+
+const instanceEl = ref<HTMLElement | null>(null);
+
+onMounted(() => {
+  const w = window as unknown as { __sfTabInstances?: number; __sfTabInstSeq?: number };
+  w.__sfTabInstances = (w.__sfTabInstances ?? 0) + 1;
+  w.__sfTabInstSeq = (w.__sfTabInstSeq ?? 0) + 1;
+  instanceEl.value?.setAttribute('data-sf-instance', `inst-${w.__sfTabInstSeq}`);
+});
 
 const files = reactive([
   {
@@ -90,7 +99,7 @@ const fileRows = computed(() => files as Array<Record<string, unknown>>);
 </script>
 
 <template>
-  <div class="sf-table-demo">
+  <div ref="instanceEl" class="sf-table-demo">
     <div class="sf-table-demo-block">
       <div class="sf-table-demo-caption">files — sort · filter · resize · actions</div>
       <Table

@@ -21,6 +21,7 @@ import Docker from './components/Docker.vue';
 import Panel from './components/Panel.vue';
 import PanelMissing from './components/PanelMissing.vue';
 import Workspace from './components/Workspace.vue';
+import TabContentHosts from './components/TabContentHosts.vue';
 import StatusBar from './components/StatusBar.vue';
 import SvgIcon from './components/SvgIcon.vue';
 import {
@@ -496,6 +497,7 @@ function onPanelAction(a: PanelAction) {
     </template>
 
     <StatusBar :left="L.status.left" :right="L.status.right" />
+    <TabContentHosts />
     <slot name="overlay" />
   </div>
 </template>

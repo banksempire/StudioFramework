@@ -175,7 +175,7 @@ const { ensureServer, openApp, makeReporter, finish } = require('./lib/ui-test.c
         };
       });
     const scrollBefore = await (async () => {
-      await pickSize(10).catch(() => {});
+      await pickSize(10);
       return jobGeom();
     })();
     await page.mouse.move(scrollBefore.x, scrollBefore.y);
@@ -1056,7 +1056,7 @@ const { ensureServer, openApp, makeReporter, finish } = require('./lib/ui-test.c
     });
     report(
       'desktop: page-size dropdown returns with the selected size',
-      desktopPager.display !== 'none' && desktopPager.display !== 'absent' && desktopPager.rows === 5,
+      desktopPager.display !== 'none' && desktopPager.display !== 'absent' && desktopPager.rows === 10,
       JSON.stringify(desktopPager),
     );
 

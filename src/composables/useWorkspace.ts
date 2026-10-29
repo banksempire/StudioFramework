@@ -91,6 +91,11 @@ export interface UiStateProvider {
   apply: (values: Record<string, unknown>) => void;
 }
 
+export interface TabSlot {
+  el: HTMLElement;
+  tileId: string;
+}
+
 export interface WorkspaceApi {
   roots: RootGroup[];
   rootDir: SplitDir | null;
@@ -102,6 +107,8 @@ export interface WorkspaceApi {
   minTileHeight: number;
   ops: WorkspaceOps;
   dnd: DndState;
+  readonly tabSlots: ReadonlyMap<string, TabSlot>;
+  registerTabSlot(tabId: string, el: HTMLElement | null, tileId: string): void;
   startDrag(tabId: string, tileId: string, index: number): void;
   endDrag(): void;
   registerTileEl(id: string, el: HTMLElement | null): void;
@@ -249,6 +256,17 @@ export function useWorkspace(def: WorkspaceDef): WorkspaceApi {
 
   const tabDefs = reactive<Record<string, WorkspaceTabDef>>({});
   for (const t of def.tabs) tabDefs[t.id] = t;
+
+  const tabSlots = reactive(new Map<string, TabSlot>());
+
+  function registerTabSlot(tabId: string, el: HTMLElement | null, tileId: string) {
+    if (el) {
+      tabSlots.set(tabId, { el, tileId });
+      return;
+    }
+    const current = tabSlots.get(tabId);
+    if (current && current.tileId === tileId) tabSlots.delete(tabId);
+  }
 
   function findRootByTile(tileId: string): RootGroup | null {
     return state.roots.find((r) => findTile(r.node, tileId)) ?? null;
@@ -708,6 +726,8 @@ export function useWorkspace(def: WorkspaceDef): WorkspaceApi {
     minTileHeight,
     ops,
     dnd,
+    tabSlots,
+    registerTabSlot,
     startDrag,
     endDrag,
     registerTileEl,

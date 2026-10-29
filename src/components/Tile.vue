@@ -1,6 +1,11 @@
 <script setup lang="ts">
 import { computed, inject, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue';
-import { kRightPanelToggle, kTitleBarMenus, useWorkspaceContext } from '../composables/useWorkspace';
+import {
+  BLANK_CONTENT,
+  kRightPanelToggle,
+  kTitleBarMenus,
+  useWorkspaceContext,
+} from '../composables/useWorkspace';
 import { getTabContent } from '../registry';
 import type { MenuNodeDef } from '../types/layout';
 import type { TileNode } from '../workspace/tree';
@@ -42,6 +47,8 @@ onBeforeUnmount(() => {
   cancelLabelHold();
   if (synthetic.value) return;
   ws.registerTileEl(props.tile.id, null);
+  const hostedId = hostedActiveId.value;
+  if (hostedId) ws.registerTabSlot(hostedId, null, props.tile.id);
 });
 
 const activeTab = computed(() => (props.tile.activeId ? (ws.tabDefs[props.tile.activeId] ?? null) : null));
@@ -132,11 +139,24 @@ watch(
 const contentComp = computed(() => {
   const content = activeTab.value?.content;
   if (!content) return null;
-  if (content === 'sf-blank') return BlankTab;
+  if (content === BLANK_CONTENT) return BlankTab;
   return getTabContent(content) ?? null;
 });
 const emptyComp = computed(() => (ws.emptyContent ? (getTabContent(ws.emptyContent) ?? null) : null));
 const focused = computed(() => ws.focusedTileId === props.tile.id);
+
+const slotEl = ref<HTMLElement | null>(null);
+const hostedActiveId = computed(() => (activeTab.value && contentComp.value ? activeTab.value.id : ''));
+
+watch(
+  [slotEl, hostedActiveId],
+  ([el, id], prev) => {
+    const prevId = prev?.[1] ?? '';
+    if (prevId && prevId !== id) ws.registerTabSlot(prevId, null, props.tile.id);
+    if (id && el) ws.registerTabSlot(id, el, props.tile.id);
+  },
+  { flush: 'post' },
+);
 
 function onTabDragStart(e: DragEvent, tabId: string) {
   if (synthetic.value) return;
@@ -267,27 +287,16 @@ function onTileMousedown() {
     </div>
 
     <div class="sf-tile-content">
-      <KeepAlive :max="32">
-        <div v-if="!activeTab" key="sf-tile-empty" class="sf-tile-empty">
-          <component v-if="emptyComp" :is="emptyComp" />
-          <div v-else class="sf-tile-empty-inner">
-            <p>No tab open</p>
-            <p class="sf-tile-empty-hint">Drag a tab here, or press <kbd>+</kbd></p>
-          </div>
+      <div v-if="!activeTab" class="sf-tile-empty">
+        <component v-if="emptyComp" :is="emptyComp" />
+        <div v-else class="sf-tile-empty-inner">
+          <p>No tab open</p>
+          <p class="sf-tile-empty-hint">Drag a tab here, or press <kbd>+</kbd></p>
         </div>
-        <component
-          v-else-if="contentComp"
-          :is="contentComp"
-          :key="activeTab.id"
-          class="sf-tile-custom"
-          v-bind="activeTab.props ?? {}"
-        />
-        <TilePlaceholder
-          v-else
-          key="sf-tile-placeholder"
-          :label="activeTab.label"
-        />
-      </KeepAlive>
+      </div>
+      <TilePlaceholder v-else-if="!contentComp" :label="activeTab.label" />
+      <BlankTab v-else-if="contentComp === BlankTab" />
+      <div v-else ref="slotEl" class="sf-tile-tab-slot" :data-tab-slot="activeTab.id"></div>
     </div>
   </div>
 </template>
@@ -336,12 +345,5 @@ function onTileMousedown() {
 .sf-tab--ghost .sf-tab-label {
   font-style: italic;
   opacity: 0.6;
-}
-
-.sf-tile-custom {
-  height: 100%;
-  min-height: 0;
-  display: flex;
-  flex-direction: column;
 }
 </style>
