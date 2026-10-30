@@ -50,10 +50,39 @@ async function transferKeys(page) {
   );
 }
 
-async function dispatchTabDrag(page, tabId, { dragend = false, screenX = 0, screenY = 0 } = {}) {
+async function dispatchTabDrag(
+  page,
+  tabId,
+  { dragend = false, start = true, screenX = 0, screenY = 0 } = {},
+) {
   await page.$eval(
     `[data-tab-id="${tabId}"]`,
     (el, opts) => {
+      const dt = new DataTransfer();
+      if (opts.start) {
+        el.dispatchEvent(new DragEvent('dragstart', { bubbles: true, dataTransfer: dt }));
+      }
+      if (opts.dragend) {
+        el.dispatchEvent(
+          new DragEvent('dragend', {
+            bubbles: true,
+            dataTransfer: dt,
+            screenX: opts.screenX,
+            screenY: opts.screenY,
+          }),
+        );
+      }
+    },
+    { dragend, start, screenX, screenY },
+  );
+}
+
+async function dispatchTabDragByLabel(page, label, { dragend = false, screenX = 0, screenY = 0 } = {}) {
+  await page.evaluate(
+    ({ label, opts }) => {
+      const tabs = [...document.querySelectorAll('.sf-tab')];
+      const el = tabs.find((t) => t.querySelector('.sf-tab-label')?.textContent.trim() === label);
+      if (!el) throw new Error(`tab not found by label: ${label}`);
       const dt = new DataTransfer();
       el.dispatchEvent(new DragEvent('dragstart', { bubbles: true, dataTransfer: dt }));
       if (opts.dragend) {
@@ -67,7 +96,39 @@ async function dispatchTabDrag(page, tabId, { dragend = false, screenX = 0, scre
         );
       }
     },
-    { dragend, screenX, screenY },
+    { label, opts: { dragend, screenX, screenY } },
+  );
+}
+
+async function waitForLabelCount(page, label, expected) {
+  await page.waitForFunction(
+    ({ label, expected }) =>
+      [...document.querySelectorAll('.sf-tab-label')].filter((el) => el.textContent.trim() === label)
+        .length === expected,
+    { label, expected },
+    { timeout: 8000 },
+  );
+}
+
+async function dispatchDragOver(page) {
+  const box = await (await page.$('.sf-tile')).boundingBox();
+  const cx = box.x + box.width / 2;
+  const cy = box.y + Math.min(120, box.height / 4);
+  await page.evaluate(
+    ({ cx, cy }) => {
+      const el = document.elementFromPoint(cx, cy);
+      const dt = new DataTransfer();
+      el.dispatchEvent(
+        new DragEvent('dragover', {
+          bubbles: true,
+          cancelable: true,
+          dataTransfer: dt,
+          clientX: cx,
+          clientY: cy,
+        }),
+      );
+    },
+    { cx, cy },
   );
 }
 
@@ -105,31 +166,22 @@ async function dropTransferOnWorkspace(page, token) {
 
 (async () => {
   const serverProc = await ensureServer();
-  const browser = await chromium.launch({ args: ['--disable-popup-blocking'] });
+  const browser = await chromium.launch();
   const context = await browser.newContext({ viewport: { width: 1440, height: 1100 } });
   const { report, isFailed } = makeReporter();
+  for (const p of []) void p;
   const primary = await newApp(context);
   const winB = await newApp(context);
   const allErrors = () => [...primary.errors, ...winB.errors];
+  let popups = 0;
+  context.on('page', () => {
+    popups += 1;
+  });
 
   try {
     report('primary boots with status bar', (await primary.page.$('.sf-status-bar')) !== null);
     report('primary boots with menu bar', (await primary.page.$('.sf-menu-bar')) !== null);
     report('transfer store empty at boot', (await transferKeys(primary.page)).length === 0);
-
-    await primary.page.evaluate(() => {
-      window.__nativeOpen = window.open;
-      window.open = () => null;
-    });
-    await dispatchTabDrag(primary.page, 'layout-json', { dragend: true, screenX: -9999, screenY: -9999 });
-    await primary.page.waitForTimeout(800);
-    report(
-      'blocked popup keeps tab and cleans payload',
-      (await hasTab(primary.page, 'layout-json')) && (await transferKeys(primary.page)).length === 0,
-    );
-    await primary.page.evaluate(() => {
-      window.open = window.__nativeOpen;
-    });
 
     const moveLabel = await tabLabel(primary.page, 'table-demo');
     await dispatchTabDrag(primary.page, 'table-demo');
@@ -150,6 +202,39 @@ async function dropTransferOnWorkspace(page, token) {
     report('tab moved A→B via cross-window drop', true);
     report('payload removed after cross-window claim', (await transferKeys(primary.page)).length === 0);
 
+    await dispatchTabDragByLabel(winB.page, moveLabel);
+    const keysBack = await transferKeys(winB.page);
+    await dropTransferOnWorkspace(primary.page, keysBack[0].slice(TRANSFER_PREFIX.length));
+    await waitForLabelCount(winB.page, moveLabel, 1);
+    report('tab moved B→A the same way', true);
+
+    const popupsBefore = popups;
+    await dispatchTabDrag(primary.page, 'layout-json', { dragend: true, screenX: 10, screenY: 10 });
+    await primary.page.waitForTimeout(600);
+    report(
+      'release inside the window never spawns a window',
+      popups === popupsBefore &&
+        (await hasTab(primary.page, 'layout-json')) &&
+        (await transferKeys(primary.page)).length === 0,
+    );
+
+    await dispatchTabDrag(primary.page, 'layout-json');
+    await dispatchDragOver(winB.page);
+    await primary.page.waitForTimeout(200);
+    await dispatchTabDrag(primary.page, 'layout-json', {
+      dragend: true,
+      start: false,
+      screenX: -9999,
+      screenY: -9999,
+    });
+    await primary.page.waitForTimeout(600);
+    report(
+      'release over another app window does not tear out',
+      popups === popupsBefore &&
+        (await hasTab(primary.page, 'layout-json')) &&
+        (await transferKeys(primary.page)).length === 0,
+    );
+
     const tearLabel = await tabLabel(primary.page, 'layout-json');
     const popupPromise = context.waitForEvent('page', { timeout: 15000 });
     await dispatchTabDrag(primary.page, 'layout-json', { dragend: true, screenX: -9999, screenY: -9999 });
@@ -157,8 +242,8 @@ async function dropTransferOnWorkspace(page, token) {
     const popupUrl = new URL(popup.url());
     await popup.waitForLoadState('networkidle', { timeout: 20000 });
     await waitForReady(popup);
-    report('tear-out opens popup with aux url', popupUrl.searchParams.get('aux') === '1');
-    report('tear-out carries transfer token', popupUrl.searchParams.has('transfer'));
+    report('tear-out opens popup at release point', popupUrl.searchParams.get('aux') === '1');
+    report('popup claims the parked transfer token', popupUrl.searchParams.has('transfer'));
     report('aux window has no status bar', (await popup.$('.sf-status-bar')) === null);
     report('aux window keeps the menu bar', (await popup.$('.sf-menu-bar')) !== null);
     report('aux window keeps the docker', (await popup.$('.sf-docker-app')) !== null);
@@ -181,6 +266,34 @@ async function dropTransferOnWorkspace(page, token) {
       'empty aux window auto-closes',
       await Promise.race([closedPromise, new Promise((resolve) => setTimeout(() => resolve(false), 5000))]),
     );
+
+    await primary.page.evaluate(() => {
+      window.__nativeOpen = window.open;
+      window.open = () => null;
+    });
+    await dispatchTabDragByLabel(primary.page, moveLabel, { dragend: true, screenX: -9999, screenY: -9999 });
+    await primary.page.waitForTimeout(500);
+    report(
+      'blocked popup shows retry banner and keeps tab',
+      (await primary.page.$('.sf-aux-blocked')) !== null &&
+        (await tabCountByLabel(primary.page, moveLabel)) === 1 &&
+        (await transferKeys(primary.page)).length === 1,
+    );
+    await primary.page.evaluate(() => {
+      window.open = window.__nativeOpen;
+    });
+    const retryPopup = context.waitForEvent('page', { timeout: 15000 });
+    await primary.page.click('.sf-aux-blocked button:has-text("Open in new window")');
+    const rp = await retryPopup;
+    await rp.waitForLoadState('networkidle', { timeout: 20000 });
+    await waitForReady(rp);
+    report('banner retry opens the window', (await tabCountByLabel(rp, moveLabel)) === 1);
+    await waitForLabelCount(primary.page, moveLabel, 0);
+    report(
+      'banner retry claim closes source tab and banner',
+      (await primary.page.$('.sf-aux-blocked')) === null,
+    );
+    report('payloads consumed after retry', (await transferKeys(primary.page)).length === 0);
 
     const emptyAux = await newApp(context, '?aux=1');
     await emptyAux.page.waitForTimeout(1000);

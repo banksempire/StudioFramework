@@ -60,7 +60,13 @@ const auxMode: boolean = props.aux || isAuxWindowRequest();
 const auxWindowKind: AuxWindowMode = auxMode ? 'aux' : 'primary';
 const workspaceDef = auxMode ? { ...L.workspace, tabs: [] } : L.workspace;
 const api = useWorkspace(workspaceDef, { aux: auxMode });
-const auxBridge = createAuxBridge({ api, mode: auxWindowKind });
+const auxBridge = createAuxBridge({
+  api,
+  mode: auxWindowKind,
+  onTransferred: () => {
+    auxAutoClose = true;
+  },
+});
 provide(kAuxBridge, auxBridge);
 api.setTabTransferHandler(auxBridge.onTransferDrop);
 provide(kWorkspace, api);
