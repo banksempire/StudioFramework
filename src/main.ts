@@ -1,5 +1,6 @@
 import { createApp, reactive } from 'vue';
 import DialogDemo from './components/DialogDemo.vue';
+import ResourceDemo from './components/ResourceDemo.vue';
 import SelectorDemo from './components/SelectorDemo.vue';
 import SingleMenuDemo from './components/SingleMenuDemo.vue';
 import TableDemo from './components/TableDemo.vue';
@@ -19,6 +20,8 @@ import type { PopupField, PopupValues } from './types/popup';
 registerTabContent('welcome', WelcomeContent);
 
 registerTabContent('table-demo', TableDemo);
+
+registerTabContent('resource-demo', ResourceDemo);
 
 registerBuiltinPanelComponent('workspace-panel', WorkspacePanel);
 

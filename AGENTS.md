@@ -47,6 +47,16 @@ downstream apps cannot render their own components in JSON layouts. Enforced by
 
 Components in JSON-defined layouts — panel and dialog forms alike, desktop and mobile — never impose min-widths. Form rows are CSS grids: each slot occupies exactly one track sized `minmax(auto, N fr)` (`fieldSpan` emits `--sf-span: N` plus the explicit `grid-column`), so slot width = container width × span weight; controls must shrink into their slot (`min-width: 0` on the control chain) and grow exactly to it. The `auto` track floor keeps shrink-to-fit dialogs hugging their content (e.g. the fixed-size color wheel — its field opts out of the shrink chain via `sf-form-field--wheel`). Cross-slot alignment comes from `grid-template-rows: subgrid` on `.sf-form-field`: labels share track 1 (top-aligned), controls track 2 (bottom-aligned), hints track 3; spacing between tracks is item margins, not row-gaps, so empty tracks stay invisible. Enforced by `check:formwidth` (span weights via `--sf-span`, overlap, slot fit, label-top/control-bottom alignment, and a wrapped-label exercise, asserted at desktop, narrow, and mobile widths for panel forms, the element popup, and the panel popup). Mobile mode changes nothing about component sizing: only the container width differs (limited by the screen).
 
+## Tab resource protocol
+
+Tab content that holds external resources (streams, engines, caches) must implement the resource protocol instead of self-watching tab state. It registers a `TabResourceLifecycle` via `useTabResources({ ... })` from `composables/tabResources.ts` during setup:
+
+- `_on_tab_open_request_resources()` — called by the engine when the tab object registers (one call per open; tile moves never re-fire it).
+- `_on_tab_close_release_resources()` — called by the engine before a closed tab leaves the tree, and as the safety net when a mounted tab instance is unmounted without `closeTab` (e.g. snapshot restore). Exactly one release per tab-object death; implementations must be idempotent.
+- `_on_tab_states_change_reload_resources(change)` — called whenever the tab's `props` object is replaced. It fires pre-flush, before the component's own props update: decide reload-worthiness by diffing `change.prev` / `change.next` (color changes → keep resources; instrument change → release old + request fresh), never by reading current props.
+
+Enforced by `check:tabresources`. Demo implementation: `components/ResourceDemo.vue`.
+
 ## Tab instance rule
 
 One open tab owns exactly one content-component instance for its whole lifetime: the instance is created when the tab is opened and destroyed when the tab is closed. Tile management events — move, split, merge, activate, deactivate, focus, viewport mobile/desktop flips — never create, remove, or reinitialize a tab instance; they only move its DOM. Enforced by `TabContentHosts.vue`: every hostable tab content mounts once inside a framework-owned layer and is Teleported into whichever tile slot currently displays it (`tabSlots` registry on the workspace api); with no slot it parks disabled inside the layer (still mounted, still reactive). Consequences downstream components must respect:

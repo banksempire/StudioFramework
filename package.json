@@ -14,6 +14,7 @@
     "check:dialog": "node scripts/check-dialog.cjs",
     "check:dtt": "node scripts/check-dtt.cjs",
     "check:tabinstances": "node scripts/check-tabinstances.cjs",
+    "check:tabresources": "node scripts/check-tabresources.cjs",
     "check:formwidth": "node scripts/check-form-width.cjs",
     "check:keepalive": "node scripts/check-keepalive.cjs",
     "check:mobile": "node scripts/check-mobile.cjs",

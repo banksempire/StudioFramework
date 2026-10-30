@@ -23,6 +23,7 @@ import {
   treeSplitTile,
   type WorkspaceNode,
 } from '../workspace/tree';
+import type { TabResourceLifecycle, TabStateChange } from './tabResources';
 
 export interface RootGroup {
   id: string;
@@ -123,6 +124,8 @@ export interface WorkspaceApi {
   notifyTabLongPress(tabId: string): void;
   readonly mobileSheetEpoch: number;
   dismissMobileSheets(): void;
+  registerTabResources(tabId: string, lifecycle: TabResourceLifecycle): void;
+  unregisterTabResources(tabId: string, lifecycle: TabResourceLifecycle): void;
   setExternalDropHandler(
     accepts: ((types: string[]) => boolean) | null,
     handler: ((e: DragEvent, target: ExternalDropTarget) => void) | null,
@@ -256,6 +259,44 @@ export function useWorkspace(def: WorkspaceDef): WorkspaceApi {
 
   const tabDefs = reactive<Record<string, WorkspaceTabDef>>({});
   for (const t of def.tabs) tabDefs[t.id] = t;
+
+  const tabResources = new Map<string, TabResourceLifecycle>();
+  const tabResourceProps = new Map<string, Record<string, unknown> | undefined>();
+
+  function releaseTabResources(tabId: string) {
+    const lifecycle = tabResources.get(tabId);
+    if (!lifecycle) return;
+    tabResources.delete(tabId);
+    tabResourceProps.delete(tabId);
+    lifecycle._on_tab_close_release_resources?.();
+  }
+
+  function registerTabResources(tabId: string, lifecycle: TabResourceLifecycle) {
+    tabResources.set(tabId, lifecycle);
+    tabResourceProps.set(tabId, tabDefs[tabId]?.props);
+    lifecycle._on_tab_open_request_resources?.();
+  }
+
+  function unregisterTabResources(tabId: string, lifecycle: TabResourceLifecycle) {
+    if (tabResources.get(tabId) !== lifecycle) return;
+    releaseTabResources(tabId);
+  }
+
+  watch(
+    tabDefs,
+    () => {
+      if (tabResources.size === 0) return;
+      for (const [tabId, lifecycle] of tabResources) {
+        const next = tabDefs[tabId]?.props;
+        const prev = tabResourceProps.get(tabId);
+        if (next === prev) continue;
+        tabResourceProps.set(tabId, next);
+        const change: TabStateChange = { prev, next };
+        lifecycle._on_tab_states_change_reload_resources?.(change);
+      }
+    },
+    { deep: true },
+  );
 
   const tabSlots = reactive(new Map<string, TabSlot>());
 
@@ -420,6 +461,9 @@ export function useWorkspace(def: WorkspaceDef): WorkspaceApi {
     for (const id of Object.keys(tabDefs)) {
       if (tabDefs[id].content === BLANK_CONTENT && !live.has(id)) delete tabDefs[id];
     }
+    for (const tabId of [...tabResources.keys()]) {
+      if (!live.has(tabId)) releaseTabResources(tabId);
+    }
     state.roots = restored;
     state.rootDir = snap.rootDir ?? null;
     ensureFocus();
@@ -450,6 +494,7 @@ export function useWorkspace(def: WorkspaceDef): WorkspaceApi {
     },
 
     closeTab(tabId) {
+      releaseTabResources(tabId);
       removeTabFromRoots(tabId);
       ensureFocus();
     },
@@ -743,6 +788,8 @@ export function useWorkspace(def: WorkspaceDef): WorkspaceApi {
       return state.mobileSheetEpoch;
     },
     dismissMobileSheets,
+    registerTabResources,
+    unregisterTabResources,
     get newTabTitle() {
       return state.newTabTitle;
     },
