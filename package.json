@@ -7,7 +7,6 @@
     "build": "vue-tsc --noEmit && vite build",
     "check": "node scripts/check-ui.cjs",
     "check:autohide": "node scripts/check-autohide.cjs",
-    "check:auxwindow": "node scripts/check-auxwindow.cjs",
     "check:bulklist": "node scripts/check-bulklist.cjs",
     "check:colorwheel": "node scripts/check-color-wheel.cjs",
     "check:corners": "node scripts/check-corners.cjs",

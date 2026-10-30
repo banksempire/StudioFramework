@@ -1,6 +1,5 @@
 <script setup lang="ts">
-import { computed, inject, onMounted, onUnmounted, provide, reactive, ref, watch } from 'vue';
-import { kAuxBridge } from '../aux/auxWindows';
+import { computed, onMounted, onUnmounted, provide, reactive, ref, watch } from 'vue';
 import type { ExternalDropTarget } from '../composables/useWorkspace';
 import {
   type DndRect,
@@ -27,8 +26,6 @@ const props = withDefaults(
   },
 );
 const emit = defineEmits<{ 'toggle-right-panel': [] }>();
-
-const auxBridge = inject(kAuxBridge, null);
 
 const api = props.api ?? useWorkspace(props.def);
 provide(kWorkspace, api);
@@ -278,9 +275,7 @@ function onDrop(e: DragEvent) {
   if (!api.dnd.dragging) return;
 
   const { tabId, sourceTileId, tileId, zone, index, fromIndex } = api.dnd;
-  const internalTabId = tabId;
   api.endDrag();
-  auxBridge?.onInternalDrop(internalTabId);
   if (!tabId || !tileId) return;
 
   if (zone === 'center') {

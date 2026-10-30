@@ -30,22 +30,14 @@ import {
   PANEL_MIN_WIDTH,
 } from './composables/useResize';
 import { readUiNumber, readUiString, writeUiValue, applyUiValues, readAllUiValues, uiEpoch } from './uiState';
-import { collectAllTabs, findTile } from './workspace/tree';
-import {
-  createAuxBridge,
-  isAuxWindowRequest,
-  kAuxBridge,
-  type AuxWindowMode,
-} from './aux/auxWindows';
+import { findTile } from './workspace/tree';
 import { installDebugLogCapture } from './debug/debugLog';
 import { kIsMobile, kMobilePanelDismiss, kTitleBarMenus, kWorkspace, useWorkspace } from './composables/useWorkspace';
 
 const props = withDefaults(defineProps<{
   layout?: LayoutDefinition;
-  aux?: boolean;
 }>(), {
   layout: () => loadLayout(),
-  aux: false,
 });
 const L = props.layout;
 
@@ -56,47 +48,11 @@ const emit = defineEmits<{
   'workspace-ready': [api: WorkspaceApi];
 }>();
 
-const auxMode: boolean = props.aux || isAuxWindowRequest();
-const auxWindowKind: AuxWindowMode = auxMode ? 'aux' : 'primary';
-const workspaceDef = auxMode ? { ...L.workspace, tabs: [] } : L.workspace;
-const api = useWorkspace(workspaceDef, { aux: auxMode });
-const auxBridge = createAuxBridge({ api, mode: auxWindowKind });
-provide(kAuxBridge, auxBridge);
-api.setTabTransferHandler(auxBridge.onTransferDrop);
+
+const api = useWorkspace(L.workspace);
 provide(kWorkspace, api);
 provide(kTitleBarMenus, { menus: L.menu, onAction: onMenuAction });
-let auxAutoClose = false;
-onMounted(() => {
-  emit('workspace-ready', api);
-  if (!auxMode) return;
-  const claimed = auxBridge.claimPendingFromUrl();
-  if (claimed === 'stale') {
-    setTimeout(() => window.close(), 50);
-  } else if (claimed === 'claimed') {
-    auxAutoClose = true;
-  }
-});
-onUnmounted(() => auxBridge.dispose());
-
-const auxActiveLabel = computed(() => {
-  for (const root of api.roots) {
-    const tile = findTile(root.node, api.focusedTileId);
-    if (tile?.activeId) return api.tabDefs[tile.activeId]?.label ?? '';
-  }
-  return '';
-});
-
-watch(auxActiveLabel, (label) => {
-  if (!auxMode) return;
-  document.title = label ? `${label} — ${L.framework.title}` : L.framework.title;
-}, { immediate: true });
-
-watch(
-  () => api.roots.reduce((n, r) => n + collectAllTabs(r.node).length, 0),
-  (n) => {
-    if (auxMode && auxAutoClose && n === 0) window.close();
-  },
-);
+onMounted(() => emit('workspace-ready', api));
 
 const persistedApp = readUiString('panel.activeApp');
 const activeDockerApp = ref(
@@ -110,7 +66,7 @@ const rightPanelVisible = ref(true);
 
 
 const MOBILE_BREAKPOINT = 500;
-const isMobile = ref(!auxMode && window.innerWidth < MOBILE_BREAKPOINT);
+const isMobile = ref(window.innerWidth < MOBILE_BREAKPOINT);
 provide(kIsMobile, isMobile);
 const mobilePanelOpen = ref(false);
 const mobileRightOpen = ref(false);
@@ -243,7 +199,7 @@ function onPanelResize(side: 'left' | 'right', newWidth: number) {
 }
 
 const onResize = () => {
-  if (!auxMode) isMobile.value = window.innerWidth < MOBILE_BREAKPOINT;
+  isMobile.value = window.innerWidth < MOBILE_BREAKPOINT;
   onWindowResize();
 };
 onMounted(() => {
@@ -417,7 +373,6 @@ function onPanelAction(a: PanelAction) {
   <div
     class="sf-root"
     :class="{
-      'sf-root--aux': auxMode,
       'sf-root--mobile': isMobile,
       'sf-status-dragging': isMobile && statusDragging,
     }"
@@ -541,7 +496,7 @@ function onPanelAction(a: PanelAction) {
       </div>
     </template>
 
-    <StatusBar v-if="!auxMode" :left="L.status.left" :right="L.status.right" />
+    <StatusBar :left="L.status.left" :right="L.status.right" />
     <TabContentHosts />
     <slot name="overlay" />
   </div>

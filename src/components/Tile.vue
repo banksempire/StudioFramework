@@ -1,6 +1,5 @@
 <script setup lang="ts">
 import { computed, inject, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue';
-import { kAuxBridge } from '../aux/auxWindows';
 import {
   BLANK_CONTENT,
   kRightPanelToggle,
@@ -20,7 +19,6 @@ import TilePlaceholder from './TilePlaceholder.vue';
 const props = defineProps<{ tile: TileNode }>();
 const ws = useWorkspaceContext();
 const rpToggle = inject(kRightPanelToggle, null);
-const auxBridge = inject(kAuxBridge, null);
 const titleBarMenus = inject(kTitleBarMenus, null);
 const menuOpen = ref(false);
 
@@ -166,13 +164,7 @@ function onTabDragStart(e: DragEvent, tabId: string) {
     e.dataTransfer.effectAllowed = 'move';
     e.dataTransfer.setData('text/plain', tabId);
   }
-  auxBridge?.onTabDragStart(e, tabId);
   ws.startDrag(tabId, props.tile.id, props.tile.tabs.indexOf(tabId));
-}
-
-function onTabDragEnd(e: DragEvent, tabId: string) {
-  auxBridge?.onTabDragEnd(e, tabId);
-  ws.endDrag();
 }
 
 function onTabClick(tabId: string) {
@@ -278,7 +270,7 @@ function onTileMousedown() {
           @click="onTabClick(tabId)"
           @mousedown="onTabMousedown($event, tabId)"
           @dragstart="onTabDragStart($event, tabId)"
-          @dragend="onTabDragEnd($event, tabId)"
+          @dragend="ws.endDrag"
         >
           <span class="sf-tab-icon-slot">
             <Icon v-if="ws.tabDefs[tabId]?.icon" class="sf-tab-icon" :icon="ws.tabDefs[tabId].icon" />

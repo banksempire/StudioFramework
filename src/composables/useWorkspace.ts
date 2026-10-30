@@ -49,8 +49,6 @@ export interface WorkspaceOps {
 
 export const BLANK_CONTENT = 'sf-blank';
 
-export const TAB_TRANSFER_TYPE = 'application/x-sf-tab-transfer';
-
 export interface DndRect {
   x: number;
   y: number;
@@ -132,7 +130,6 @@ export interface WorkspaceApi {
     accepts: ((types: string[]) => boolean) | null,
     handler: ((e: DragEvent, target: ExternalDropTarget) => void) | null,
   ): void;
-  setTabTransferHandler(handler: ((e: DragEvent, target: ExternalDropTarget) => void) | null): void;
   acceptsExternal(types: string[]): boolean;
   deliverExternalDrop(e: DragEvent, target: ExternalDropTarget): void;
   capture(): WorkspaceSnapshot;
@@ -179,8 +176,7 @@ function findTopRightTileId(node: WorkspaceNode): string {
   return findTopRightTileId(node.dir === 'row' ? node.children[1] : node.children[0]);
 }
 
-export function useWorkspace(def: WorkspaceDef, options?: { aux?: boolean }): WorkspaceApi {
-  const auxLifecycle = options?.aux === true;
+export function useWorkspace(def: WorkspaceDef): WorkspaceApi {
   const minTileWidth = def.minTileWidth ?? 160;
   const minTileHeight = def.minTileHeight ?? 100;
 
@@ -221,12 +217,6 @@ export function useWorkspace(def: WorkspaceDef, options?: { aux?: boolean }): Wo
   let extAccepts: ((types: string[]) => boolean) | null = null;
   let extHandler: ((e: DragEvent, target: ExternalDropTarget) => void) | null = null;
 
-  let tabTransferHandler: ((e: DragEvent, target: ExternalDropTarget) => void) | null = null;
-
-  function setTabTransferHandler(handler: ((e: DragEvent, target: ExternalDropTarget) => void) | null) {
-    tabTransferHandler = handler;
-  }
-
   function setExternalDropHandler(
     accepts: ((types: string[]) => boolean) | null,
     handler: ((e: DragEvent, target: ExternalDropTarget) => void) | null,
@@ -236,16 +226,10 @@ export function useWorkspace(def: WorkspaceDef, options?: { aux?: boolean }): Wo
   }
 
   function acceptsExternal(types: string[]): boolean {
-    if (types.includes(TAB_TRANSFER_TYPE)) return true;
     return !!extAccepts && extAccepts(types);
   }
 
   function deliverExternalDrop(e: DragEvent, target: ExternalDropTarget) {
-    const types = Array.from(e.dataTransfer?.types ?? []);
-    if (types.includes(TAB_TRANSFER_TYPE)) {
-      tabTransferHandler?.(e, target);
-      return;
-    }
     extHandler?.(e, target);
   }
 
@@ -761,13 +745,11 @@ export function useWorkspace(def: WorkspaceDef, options?: { aux?: boolean }): Wo
     if (saveTimer) clearTimeout(saveTimer);
     saveTimer = setTimeout(saveAutoSnapshot, 400);
   };
-  if (!auxLifecycle) {
-    watch(() => state.roots, scheduleAutoSave, { deep: true });
-    window.addEventListener('beforeunload', saveAutoSnapshot);
+  watch(() => state.roots, scheduleAutoSave, { deep: true });
+  window.addEventListener('beforeunload', saveAutoSnapshot);
 
-    const auto = loadAutoSnapshot();
-    if (auto) applySnapshot(auto);
-  }
+  const auto = loadAutoSnapshot();
+  if (auto) applySnapshot(auto);
 
   return {
     get roots() {
@@ -796,7 +778,6 @@ export function useWorkspace(def: WorkspaceDef, options?: { aux?: boolean }): Wo
     registerTileEl,
     tileEls,
     setExternalDropHandler,
-    setTabTransferHandler,
     acceptsExternal,
     deliverExternalDrop,
     setTabClickHandler,

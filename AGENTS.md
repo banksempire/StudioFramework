@@ -65,15 +65,6 @@ One open tab owns exactly one content-component instance for its whole lifetime:
 - `onActivated`/`onDeactivated` do not fire (no KeepAlive). For visible/hidden behavior use `useHostedTab()` from `composables/useHostedTab.ts` — it yields `{ tabId, visible }` for components hosted in a tab, `null` otherwise.
 - Enforced by `check:tabinstances`; `check:keepalive` and `check:table-reattach` pin the persistence semantics.
 
-## Auxiliary windows
-
-Tabs can be dragged out of the browser window (tear-out into a new popup browser window) or dropped onto another same-origin app window (move between windows). All windows are views over the same app modules/registry; a window move releases the tab's resources in the source (`_on_tab_close_release_resources`) and re-requests them in the target (`_on_tab_open_request_resources`) through the ordinary tab-resource protocol. Enforced by `check:auxwindow`.
-
-- **Modes**: primary (full shell) and aux (`?aux=1` in the URL, or the `aux` prop). Aux renders the full shell — menu bar, docker, panels — with **only the status bar omitted**, and pins desktop layout (never mobile mode). Aux windows never read or write the shared auto-snapshot (`sf.workspace.layout`); they start with an empty workspace and are filled by transfer.
-- **Tear-out**: `dragend` with `dropEffect: none` released outside the window bounds opens a `popup=yes` browser window positioned at the cursor (screen coordinates); blocked popups are detected (`window.open` → `null`) and the tab stays. A drop inside the own window's non-tile areas cancels, not tears out. Blank/ghost tabs (no `content`) are not transferable.
-- **Transfer protocol** (`src/aux/auxWindows.ts`): at `dragstart` the tab def (id/label/icon/closeable/content/props, JSON-cloned) is parked in `localStorage` under `sf.aux.transfer.<token>` with a 30s TTL; the token rides `dataTransfer` as `application/x-sf-tab-transfer`. The target window (drop on a tile, or an aux boot with `?transfer=<token>`) claims the payload, opens the tab under a fresh id, acks on the `BroadcastChannel('sf.aux.channel.' + pathname)`, and the source closes its copy only after that ack. `TAB_TRANSFER_TYPE` drags are routed through `setTabTransferHandler` on the workspace api, ahead of the app's external-drop handler, so targets get the normal tile glow/indicator feedback.
-- **Lifecycle**: aux document title follows the active tab (`label — framework title`); an aux that claimed a transfer auto-closes `window.close()` when its last tab closes; a boot with a stale/missing token closes itself; a bare `?aux=1` window stays open as a drop target. Cross-window popups require a browser gesture — tear-out works in Chromium; Safari support is not targeted.
-
 ## Terminology (used across both repos)
 
 "panel" not "sidebar"; "RightPanel" not "PropertyPanel"; Workspace = central box; Tile = split-tree node; Tab = items in a tile; the whole UI shell = the **"framework"** (not "app"); each icon on the Docker bar = an **"app"** (not "tag" / "docker icon").
