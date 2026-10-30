@@ -2,6 +2,8 @@ export interface AuxWindowOptions {
   title: string;
   width?: number;
   height?: number;
+  left?: number;
+  top?: number;
 }
 
 export interface AuxWindowHandle {
@@ -12,8 +14,21 @@ export interface AuxWindowHandle {
   readonly chips: HTMLElement;
   readonly tail: HTMLElement;
   readonly content: HTMLElement;
+  isMobile(): boolean;
+  onMobileChange(listener: () => void): () => void;
   close(): void;
   onClosed(listener: () => void): void;
+}
+
+const openHandles = new Set<AuxWindowHandle>();
+
+export function focusedAuxWindow(): Window | null {
+  for (const handle of openHandles) {
+    try {
+      if (handle.window.document.hasFocus()) return handle.window;
+    } catch {}
+  }
+  return null;
 }
 
 let nextWindowId = 1;
@@ -77,8 +92,8 @@ function syncAuxStyles(popupDoc: Document, cloned: Map<Element, Element>) {
 export function openAuxWindow(options: AuxWindowOptions): AuxWindowHandle | null {
   const width = options.width ?? 960;
   const height = options.height ?? 720;
-  const left = Math.max(0, Math.round(window.screenX ?? 0) + 56 + nextWindowId * 28);
-  const top = Math.max(0, Math.round(window.screenY ?? 0) + 96 + nextWindowId * 28);
+  const left = options.left ?? Math.max(0, Math.round(window.screenX ?? 0) + 56 + nextWindowId * 28);
+  const top = options.top ?? Math.max(0, Math.round(window.screenY ?? 0) + 96 + nextWindowId * 28);
   const features = ['popup=yes', `left=${left}`, `top=${top}`, `width=${width}`, `height=${height}`].join(
     ',',
   );
@@ -104,7 +119,7 @@ export function openAuxWindow(options: AuxWindowOptions): AuxWindowHandle | null
   });
 
   const shell = document.createElement('div');
-  shell.className = 'sf-aux-shell sf-overlay-root';
+  shell.className = 'sf-root sf-overlay-root sf-aux-shell';
   const strip = document.createElement('div');
   strip.className = 'sf-aux-strip';
   strip.setAttribute('data-test', 'aux-strip');
@@ -119,17 +134,31 @@ export function openAuxWindow(options: AuxWindowOptions): AuxWindowHandle | null
   shell.append(strip, content);
   doc.body.appendChild(shell);
 
+  const mobileListeners = new Set<() => void>();
+  const mobileMq = popup.matchMedia('(max-width: 499px)');
+  const applyMobile = () => {
+    shell.classList.toggle('sf-root--mobile', mobileMq.matches);
+    for (const listener of mobileListeners) listener();
+  };
+  applyMobile();
+  try {
+    mobileMq.addEventListener('change', applyMobile);
+  } catch {
+    mobileMq.addListener(applyMobile);
+  }
+
   const listeners: Array<() => void> = [];
   let closed = false;
   const notify = () => {
     if (closed) return;
     closed = true;
     observer.disconnect();
+    openHandles.delete(handle);
     for (const listener of listeners) listener();
   };
   popup.addEventListener('pagehide', notify, { once: true });
 
-  return {
+  const handle: AuxWindowHandle = {
     id,
     window: popup,
     document: doc,
@@ -137,6 +166,11 @@ export function openAuxWindow(options: AuxWindowOptions): AuxWindowHandle | null
     chips,
     tail,
     content,
+    isMobile: () => mobileMq.matches,
+    onMobileChange(listener: () => void) {
+      mobileListeners.add(listener);
+      return () => mobileListeners.delete(listener);
+    },
     close() {
       if (closed) return;
       try {
@@ -148,4 +182,6 @@ export function openAuxWindow(options: AuxWindowOptions): AuxWindowHandle | null
       listeners.push(listener);
     },
   };
+  openHandles.add(handle);
+  return handle;
 }

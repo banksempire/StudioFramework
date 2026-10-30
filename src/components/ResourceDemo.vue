@@ -3,6 +3,7 @@ import { computed, onUnmounted, reactive, ref } from 'vue';
 import { type TabStateChange, useTabResources } from '../composables/tabResources';
 import { useHostedTab } from '../composables/useHostedTab';
 import { useWorkspaceContext } from '../composables/useWorkspace';
+import { copyTextToClipboard } from '../lib/clipboard';
 import Dialog from './Dialog.vue';
 
 const hosted = useHostedTab();
@@ -28,6 +29,11 @@ function record(kind: ResourceEvent['kind'], detail: string) {
 
 const code = computed(() => String(ws.tabDefs[tabId]?.props?.code ?? 'res-a'));
 const dialogOpen = ref(false);
+const rootEl = ref<HTMLElement | null>(null);
+
+async function copyCode() {
+  await copyTextToClipboard(`res ${code.value}`, rootEl.value);
+}
 
 function switchCode() {
   const def = ws.tabDefs[tabId];
@@ -52,11 +58,14 @@ onUnmounted(() => record('unmount', code.value));
 </script>
 
 <template>
-  <div class="sf-resource-demo">
+  <div ref="rootEl" class="sf-resource-demo">
     <div class="sf-resource-demo-bar">
       <span class="sf-resource-demo-code" data-test="resource-code">{{ code }}</span>
       <button class="sf-resource-demo-btn" type="button" data-test="switch-code" @click="switchCode">
         Switch code
+      </button>
+      <button class="sf-resource-demo-btn" type="button" data-test="copy-code" @click="copyCode">
+        Copy
       </button>
       <button class="sf-resource-demo-btn" type="button" data-test="show-dialog" @click="dialogOpen = true">
         Dialog

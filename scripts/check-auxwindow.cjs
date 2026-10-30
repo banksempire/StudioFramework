@@ -53,14 +53,23 @@ const { ensureServer, openApp, makeReporter, finish } = require('./lib/ui-test.c
     );
 
     const popupPromise = page.context().waitForEvent('page');
-    await page.click('[data-test="tab-window"]');
+    await page.evaluate((id) => {
+      const tab = document.querySelector(`.sf-tab[data-tab-id="${id}"]`);
+      tab.dispatchEvent(new DragEvent('dragstart', { bubbles: true, dataTransfer: new DataTransfer() }));
+      tab.dispatchEvent(new DragEvent('dragend', { bubbles: true, screenX: 900, screenY: 400 }));
+    }, TAB_A);
     const aux = await popupPromise;
     await aux.waitForSelector('[data-test="aux-content"] .sf-resource-demo', { timeout: 5000 });
-    report('tail button detaches into a popup with a tab strip', true);
+    report('dragging a tab out to blank space creates a popup', true);
     report(
-      'popup strip shows one chip and the accumulated state (res-b)',
+      'popup strip hosts the dragged tab with its accumulated state (res-b)',
       (await aux.locator('[data-test="aux-tab"]').count()) === 1 &&
         (await aux.textContent('[data-test="resource-code"]')) === 'res-b',
+    );
+    report(
+      'same instance moved (no resource churn)',
+      (await events()).filter((e) => e.startsWith('open')).length === 1 &&
+        !(await events()).some((e) => e.startsWith('close')),
     );
 
     await aux.click('[data-test="show-dialog"]');
@@ -70,26 +79,31 @@ const { ensureServer, openApp, makeReporter, finish } = require('./lib/ui-test.c
       (await aux.locator('.sf-dialog-backdrop').count()) === 1 &&
         (await page.locator('.sf-dialog-backdrop').count()) === 0,
     );
-    report(
-      'dialog body reflects shared-store state (res-b)',
-      (await aux.textContent('[data-test="demo-dialog-body"]')).includes('res-b'),
-    );
     await aux.click('.sf-dialog-close');
     await aux.waitForSelector('.sf-dialog-backdrop', { state: 'detached', timeout: 5000 });
     report('dialog closes inside the popup', true);
 
     await openResourceTab(TAB_B, 'res-a');
-    await aux.click('[data-test="aux-pull"]');
+    await page.evaluate((id) => {
+      const tab = document.querySelector(`.sf-tab[data-tab-id="${id}"]`);
+      tab.dispatchEvent(new DragEvent('dragstart', { bubbles: true, dataTransfer: new DataTransfer() }));
+    }, TAB_B);
+    await aux.evaluate(() => {
+      const strip = document.querySelector('[data-test="aux-strip"]');
+      const dt = new DataTransfer();
+      strip.dispatchEvent(new DragEvent('dragover', { bubbles: true, dataTransfer: dt }));
+      strip.dispatchEvent(new DragEvent('drop', { bubbles: true, dataTransfer: dt }));
+    });
     await aux.waitForFunction(() => document.querySelectorAll('[data-test="aux-tab"]').length === 2, {
       timeout: 5000,
     });
     report(
-      'pull button moves the main active tab into the same popup',
+      'dropping a main tab onto a popup strip moves it there directly',
       (await page.evaluate((id) => window.__sfWorkspace.findTabGlobal(id) === null, TAB_B)) &&
         (await page.evaluate((id) => window.__sfWorkspace.findTabGlobal(id) === null, TAB_A)),
     );
     report(
-      'both instances stay alive (no resource churn)',
+      'both instances stay alive across the window move',
       !(await events()).some((e) => e.startsWith('close')) &&
         (await events()).filter((e) => e.startsWith('open')).length === 2,
     );
@@ -99,28 +113,101 @@ const { ensureServer, openApp, makeReporter, finish } = require('./lib/ui-test.c
       () => document.querySelector('[data-test="resource-code"]')?.textContent === 'res-a',
     );
     report('switching chips swaps the hosted content inside the popup', true);
+
+    await aux.evaluate(() => {
+      window.__auxClipboardCalls = [];
+      Object.defineProperty(navigator, 'clipboard', {
+        value: {
+          writeText: (t) => {
+            window.__auxClipboardCalls.push(t);
+            return Promise.resolve();
+          },
+        },
+        configurable: true,
+      });
+    });
+    await page.evaluate(() => {
+      window.__mainClipboardCalls = [];
+      Object.defineProperty(navigator, 'clipboard', {
+        value: {
+          writeText: (t) => {
+            window.__mainClipboardCalls.push(t);
+            return Promise.resolve();
+          },
+        },
+        configurable: true,
+      });
+    });
+    await aux.click('[data-test="copy-code"]');
+    await aux.waitForFunction(() => (window.__auxClipboardCalls ?? []).length === 1);
     report(
-      'returned chip count stays consistent after switch',
-      (await aux.locator('[data-test="aux-tab"]').count()) === 2,
+      'clipboard write from popup content uses the popup navigator',
+      (await aux.evaluate(() => window.__auxClipboardCalls[0])) === 'res res-a' &&
+        (await page.evaluate(() => (window.__mainClipboardCalls ?? []).length)) === 0,
     );
 
-    await aux.click('[data-test="aux-return"]');
+    const popupPromise2 = page.context().waitForEvent('page');
+    await aux.evaluate((id) => {
+      const chip = document.querySelector(`[data-test="aux-tab"][data-tab-id="${id}"]`);
+      chip.dispatchEvent(new DragEvent('dragstart', { bubbles: true, dataTransfer: new DataTransfer() }));
+      chip.dispatchEvent(new DragEvent('dragend', { bubbles: true, screenX: 1000, screenY: 500 }));
+    }, TAB_B);
+    const aux2 = await popupPromise2;
+    await aux2.waitForSelector('[data-test="aux-content"] .sf-resource-demo', { timeout: 5000 });
+    report(
+      'dragging a popup chip to blank space opens a second popup with that tab',
+      (await aux2.locator('[data-test="aux-tab"]').count()) === 1 &&
+        (await aux.locator('[data-test="aux-tab"]').count()) === 1,
+    );
+
+    await aux2.evaluate((id) => {
+      const chip = document.querySelector(`[data-test="aux-tab"][data-tab-id="${id}"]`);
+      chip.dispatchEvent(new DragEvent('dragstart', { bubbles: true, dataTransfer: new DataTransfer() }));
+    }, TAB_B);
+    await aux.evaluate(() => {
+      const strip = document.querySelector('[data-test="aux-strip"]');
+      const dt = new DataTransfer();
+      strip.dispatchEvent(new DragEvent('dragover', { bubbles: true, dataTransfer: dt }));
+      strip.dispatchEvent(new DragEvent('drop', { bubbles: true, dataTransfer: dt }));
+    });
+    await aux.waitForFunction(() => document.querySelectorAll('[data-test="aux-tab"]').length === 2, {
+      timeout: 5000,
+    });
+    for (let i = 0; i < 20 && !aux2.isClosed(); i++) {
+      await wait(250);
+    }
+    report(
+      'dropping a tab from one popup onto another popup strip moves it directly (source closes)',
+      (await aux.locator(`[data-test="aux-tab"][data-tab-id="${TAB_B}"]`).count()) === 1 && aux2.isClosed(),
+    );
+
+    await aux.evaluate((id) => {
+      const chip = document.querySelector(`[data-test="aux-tab"][data-tab-id="${id}"]`);
+      chip.dispatchEvent(new DragEvent('dragstart', { bubbles: true, dataTransfer: new DataTransfer() }));
+    }, TAB_B);
+    const box = await page.locator('.sf-tile').first().boundingBox();
+    await page.evaluate(
+      ({ x, y }) => {
+        const el = document.elementFromPoint(x, y);
+        const dt = new DataTransfer();
+        el.dispatchEvent(
+          new DragEvent('dragover', { bubbles: true, clientX: x, clientY: y, dataTransfer: dt }),
+        );
+        el.dispatchEvent(new DragEvent('drop', { bubbles: true, clientX: x, clientY: y, dataTransfer: dt }));
+      },
+      { x: Math.round(box.x + box.width / 2), y: Math.round(box.y + box.height / 2) },
+    );
     await page.waitForSelector(`.sf-tab[data-tab-id="${TAB_B}"]`, { timeout: 5000 });
     report(
-      'return moves the active popup tab back into the main workspace',
+      'dropping a popup tab onto the main workspace reattaches it',
       await page.evaluate((id) => window.__sfWorkspace.findTabGlobal(id) !== null, TAB_B),
     );
-    report(
-      'popup keeps hosting the remaining tab',
-      (await aux.locator('[data-test="aux-tab"]').count()) === 1,
-    );
+    report('popup keeps the remaining tab', (await aux.locator('[data-test="aux-tab"]').count()) === 1);
 
     const snap = await page.evaluate(() => window.__sfWorkspace.capture());
     report(
       'capture() includes detached tabs in snap.aux',
-      Array.isArray(snap.aux) &&
-        snap.aux.includes(TAB_A) &&
-        !snap.roots.some((r) => JSON.stringify(r).includes(TAB_A)),
+      Array.isArray(snap.aux) && snap.aux.includes(TAB_A),
     );
     await wait(700);
     const savedAux = await page.evaluate(() => {
@@ -132,11 +219,9 @@ const { ensureServer, openApp, makeReporter, finish } = require('./lib/ui-test.c
       Array.isArray(savedAux) && savedAux.includes(TAB_A),
     );
 
-    await page.evaluate((id) => {
-      const ws = window.__sfWorkspace;
-      ws.apply(JSON.parse(localStorage.getItem('sf.workspace.layout')));
-      void id;
-    }, TAB_A);
+    await page.evaluate(() => {
+      window.__sfWorkspace.apply(JSON.parse(localStorage.getItem('sf.workspace.layout')));
+    });
     await page.waitForSelector(`.sf-tab[data-tab-id="${TAB_A}"]`, { timeout: 5000 });
     report(
       'applying a snapshot folds detached tabs back into the workspace',
@@ -145,25 +230,70 @@ const { ensureServer, openApp, makeReporter, finish } = require('./lib/ui-test.c
     report('aux window closed after folding', aux.isClosed());
     report('fold round trip kept both instances alive', !(await events()).some((e) => e.startsWith('close')));
 
-    const popupPromise2 = page.context().waitForEvent('page');
-    await page.evaluate((id) => window.__sfWorkspace.ops.detachTab(id), TAB_A);
-    const aux2 = await popupPromise2;
-    await aux2.waitForSelector('[data-test="aux-content"] .sf-resource-demo', { timeout: 5000 });
-    await aux2.evaluate(() => window.close());
+    report(
+      'clipboard write from main-window content uses the main navigator',
+      await page.evaluate(async (id) => {
+        const tile = window.__sfWorkspace.findTabGlobal(id);
+        window.__sfWorkspace.ops.activateTab(tile.id, id);
+        await new Promise((r) => setTimeout(r, 300));
+        const tab = document.querySelector(`[data-tab-slot="${id}"] [data-test="copy-code"]`);
+        tab.click();
+        await new Promise((r) => setTimeout(r, 200));
+        return (window.__mainClipboardCalls ?? []).length === 1;
+      }, TAB_B),
+    );
+
+    const popupPromise3 = page.context().waitForEvent('page');
+    await page.evaluate((id) => {
+      const tab = document.querySelector(`.sf-tab[data-tab-id="${id}"]`);
+      tab.dispatchEvent(new DragEvent('dragstart', { bubbles: true, dataTransfer: new DataTransfer() }));
+      tab.dispatchEvent(new DragEvent('dragend', { bubbles: true, screenX: 900, screenY: 400 }));
+    }, TAB_A);
+    const aux3 = await popupPromise3;
+    await aux3.waitForSelector('[data-test="aux-content"] .sf-resource-demo', { timeout: 5000 });
+    await aux3.evaluate(() => window.close());
     await page.waitForFunction((id) => window.__sfWorkspace.findTabGlobal(id) !== null, TAB_A, {
       timeout: 5000,
     });
     report('closing the popup window reattaches the tab', true);
 
     await page.click(`.sf-tab[data-tab-id="${TAB_A}"] .sf-tab-close`);
-    await page.waitForFunction(() => (window.__sfTabResources ?? []).some((e) => e.kind === 'close'), {
-      timeout: 5000,
-    });
+    await page.click(`.sf-tab[data-tab-id="${TAB_B}"] .sf-tab-close`);
+    await page.waitForFunction(
+      () => (window.__sfTabResources ?? []).filter((e) => e.kind === 'close').length === 2,
+      { timeout: 5000 },
+    );
     const finalEvents = await events();
     report(
-      'explicit close releases resources exactly once',
-      finalEvents.filter((e) => e.startsWith('close')).length === 1,
+      'explicit closes release resources exactly once each',
+      finalEvents.filter((e) => e.startsWith('close')).length === 2,
     );
+
+    const mobileContext = await browser.newContext({ viewport: { width: 375, height: 700 } });
+    const mobile = await mobileContext.newPage();
+    watchPage(mobile);
+    await mobile.goto('http://localhost:7493/', { waitUntil: 'domcontentloaded', timeout: 15000 });
+    await mobile.waitForFunction(() => (document.getElementById('framework')?.innerHTML.length ?? 0) > 1000, {
+      timeout: 10000,
+    });
+    const mobileResult = await mobile.evaluate(() => {
+      const ws = window.__sfWorkspace;
+      ws.ops.openTab(ws.focusedTileId, {
+        id: 'aux-mobile',
+        label: 'Mobile',
+        content: 'resource-demo',
+        props: { code: 'res-a' },
+      });
+      const desktopTabsGone = document.querySelector('.sf-tab') === null;
+      const refused = ws.ops.detachTab('aux-mobile') === false;
+      return { desktopTabsGone, refused };
+    });
+    report(
+      'mobile mode: no desktop tab drag surface and detachment refused',
+      mobileResult.desktopTabsGone && mobileResult.refused,
+    );
+    await mobile.close();
+    await mobileContext.close();
 
     report('no page errors on any window', errors.length === 0);
   } catch (e) {

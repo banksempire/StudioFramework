@@ -275,6 +275,12 @@ function onDrop(e: DragEvent) {
   if (!api.dnd.dragging) return;
 
   const { tabId, sourceTileId, tileId, zone, index, fromIndex } = api.dnd;
+  if (sourceTileId.startsWith('aux:')) {
+    api.endDrag();
+    if (!tabId || !tileId) return;
+    api.ops.moveAuxTabIntoWorkspace(tabId, tileId, zone, index);
+    return;
+  }
   api.endDrag();
   if (!tabId || !tileId) return;
 

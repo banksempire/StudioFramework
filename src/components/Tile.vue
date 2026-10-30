@@ -2,6 +2,7 @@
 import { computed, inject, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue';
 import {
   BLANK_CONTENT,
+  kIsMobile,
   kRightPanelToggle,
   kTitleBarMenus,
   useWorkspaceContext,
@@ -9,6 +10,7 @@ import {
 import { getTabContent } from '../registry';
 import type { MenuNodeDef } from '../types/layout';
 import type { TileNode } from '../workspace/tree';
+import { isAnyWindowDraggedOver, resetWindowDragTracking } from '../workspace/windowDragTracker';
 import BlankTab from './BlankTab.vue';
 import Icon from './Icon.vue';
 import Menu from './Menu.vue';
@@ -18,6 +20,7 @@ import TilePlaceholder from './TilePlaceholder.vue';
 
 const props = defineProps<{ tile: TileNode }>();
 const ws = useWorkspaceContext();
+const mainMobile = inject(kIsMobile, null);
 const rpToggle = inject(kRightPanelToggle, null);
 const titleBarMenus = inject(kTitleBarMenus, null);
 const menuOpen = ref(false);
@@ -188,10 +191,20 @@ function onTabMousedown(e: MouseEvent, tabId: string) {
   ws.ops.closeTab(tabId);
 }
 
-function canDetach(tabId: string | null): boolean {
-  if (!tabId) return false;
-  const content = ws.tabDefs[tabId]?.content;
-  return !!content && content !== BLANK_CONTENT && getTabContent(content) !== null;
+function onTabDragEnd(e: DragEvent, tabId: string) {
+  const wasDragging = ws.dnd.dragging;
+  const source = ws.dnd.sourceTileId;
+  ws.endDrag();
+  resetWindowDragTracking();
+  if (!wasDragging) return;
+  if (isAnyWindowDraggedOver()) return;
+  if (mainMobile?.value) return;
+  if (source !== props.tile.id) return;
+  if (ws.findTabGlobal(tabId) === null) return;
+  void ws.ops.detachTab(tabId, {
+    left: e.screenX ? Math.max(0, e.screenX - 80) : undefined,
+    top: e.screenY ? Math.max(0, e.screenY - 24) : undefined,
+  });
 }
 
 function onTileMousedown() {
@@ -276,7 +289,7 @@ function onTileMousedown() {
           @click="onTabClick(tabId)"
           @mousedown="onTabMousedown($event, tabId)"
           @dragstart="onTabDragStart($event, tabId)"
-          @dragend="ws.endDrag"
+          @dragend="onTabDragEnd($event, tabId)"
         >
           <span class="sf-tab-icon-slot">
             <Icon v-if="ws.tabDefs[tabId]?.icon" class="sf-tab-icon" :icon="ws.tabDefs[tabId].icon" />
@@ -289,14 +302,6 @@ function onTileMousedown() {
           ><SvgIcon name="✕" /></span>
         </div>
         </div>
-        <button
-          v-if="canDetach(props.tile.activeId)"
-          class="sf-tab-tail"
-          title="Open active tab in new window"
-          data-test="tab-window"
-          @click.stop="ws.ops.detachTab(props.tile.activeId)"
-          @mousedown.stop
-        ><SvgIcon name="⤢" /></button>
       </template>
     </div>
 

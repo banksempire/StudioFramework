@@ -32,7 +32,7 @@ import {
 import { readUiNumber, readUiString, writeUiValue, applyUiValues, readAllUiValues, uiEpoch } from './uiState';
 import { findTile } from './workspace/tree';
 import { installDebugLogCapture } from './debug/debugLog';
-import { kIsMobile, kMobilePanelDismiss, kTitleBarMenus, kWorkspace, useWorkspace } from './composables/useWorkspace';
+import { kIsMobile, kMobilePanelDismiss, kTitleBarMenus, kWorkspace, useWorkspace  } from './composables/useWorkspace';
 
 const props = withDefaults(defineProps<{
   layout?: LayoutDefinition;
@@ -49,7 +49,10 @@ const emit = defineEmits<{
 }>();
 
 
-const api = useWorkspace(L.workspace);
+const MOBILE_BREAKPOINT = 500;
+const isMobile = ref(window.innerWidth < MOBILE_BREAKPOINT);
+provide(kIsMobile, isMobile);
+const api = useWorkspace(L.workspace, { mobile: isMobile });
 provide(kWorkspace, api);
 provide(kTitleBarMenus, { menus: L.menu, onAction: onMenuAction });
 onMounted(() => emit('workspace-ready', api));
@@ -63,11 +66,6 @@ const leftPanelVisible = ref(true);
 const dockerPanelVisible = ref(true);
 const savedPanelState = ref(true);
 const rightPanelVisible = ref(true);
-
-
-const MOBILE_BREAKPOINT = 500;
-const isMobile = ref(window.innerWidth < MOBILE_BREAKPOINT);
-provide(kIsMobile, isMobile);
 const mobilePanelOpen = ref(false);
 const mobileRightOpen = ref(false);
 provide(kMobilePanelDismiss, () => {
