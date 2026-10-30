@@ -19,6 +19,7 @@ function hostable(id: string): Component | null {
 const hosted = computed(() => {
   const ids: string[] = [];
   for (const root of ws.roots) ids.push(...collectAllTabs(root.node));
+  ids.push(...ws.detachedTabs.keys());
   return ids.filter((id) => hostable(id) !== null);
 });
 

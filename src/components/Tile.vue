@@ -188,6 +188,12 @@ function onTabMousedown(e: MouseEvent, tabId: string) {
   ws.ops.closeTab(tabId);
 }
 
+function canDetach(tabId: string | null): boolean {
+  if (!tabId) return false;
+  const content = ws.tabDefs[tabId]?.content;
+  return !!content && content !== BLANK_CONTENT && getTabContent(content) !== null;
+}
+
 function onTileMousedown() {
   if (synthetic.value) return;
   ws.ops.focusTile(props.tile.id);
@@ -283,6 +289,14 @@ function onTileMousedown() {
           ><SvgIcon name="✕" /></span>
         </div>
         </div>
+        <button
+          v-if="canDetach(props.tile.activeId)"
+          class="sf-tab-tail"
+          title="Open active tab in new window"
+          data-test="tab-window"
+          @click.stop="ws.ops.detachTab(props.tile.activeId)"
+          @mousedown.stop
+        ><SvgIcon name="⤢" /></button>
       </template>
     </div>
 

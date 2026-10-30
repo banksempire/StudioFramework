@@ -1,5 +1,6 @@
-import { type InjectionKey, inject, type Ref, reactive, watch } from 'vue';
+import { type InjectionKey, inject, nextTick, type Ref, reactive, shallowReactive, watch } from 'vue';
 import type { MenuNodeDef, WorkspaceDef, WorkspaceTabDef } from '../types/layout';
+import { type AuxWindowHandle, type AuxWindowOptions, openAuxWindow } from '../workspace/auxWindow';
 import {
   captureSnapshot,
   restoreSnapshot,
@@ -12,6 +13,7 @@ import {
   findNode,
   findTile,
   findTileByTab,
+  firstTile,
   nextId,
   type SplitDir,
   type TileNode,
@@ -45,6 +47,8 @@ export interface WorkspaceOps {
   splitTile(tileId: string, dir: SplitDir, side: 'start' | 'end', tabId: string): void;
   moveTab(tabId: string, targetTileId: string, index: number): void;
   focusTile(tileId: string): void;
+  detachTab(tabId: string, opts?: Pick<AuxWindowOptions, 'width' | 'height'>): boolean;
+  reattachTab(tabId: string, tileId?: string, index?: number): boolean;
 }
 
 export const BLANK_CONTENT = 'sf-blank';
@@ -110,6 +114,8 @@ export interface WorkspaceApi {
   dnd: DndState;
   readonly tabSlots: ReadonlyMap<string, TabSlot>;
   registerTabSlot(tabId: string, el: HTMLElement | null, tileId: string): void;
+  readonly detachedTabs: ReadonlyMap<string, AuxWindowHandle>;
+  isTabDetached(tabId: string): boolean;
   startDrag(tabId: string, tileId: string, index: number): void;
   endDrag(): void;
   registerTileEl(id: string, el: HTMLElement | null): void;
@@ -299,6 +305,7 @@ export function useWorkspace(def: WorkspaceDef): WorkspaceApi {
   );
 
   const tabSlots = reactive(new Map<string, TabSlot>());
+  const detached = shallowReactive(new Map<string, AuxWindowHandle>());
 
   function registerTabSlot(tabId: string, el: HTMLElement | null, tileId: string) {
     if (el) {
@@ -307,6 +314,58 @@ export function useWorkspace(def: WorkspaceDef): WorkspaceApi {
     }
     const current = tabSlots.get(tabId);
     if (current && current.tileId === tileId) tabSlots.delete(tabId);
+  }
+
+  function fillAuxHeader(handle: AuxWindowHandle, tabId: string) {
+    const def = tabDefs[tabId];
+    const icon = document.createElement('span');
+    icon.className = 'sf-aux-icon';
+    icon.textContent = typeof def?.icon === 'string' ? def.icon : '';
+    const title = document.createElement('span');
+    title.className = 'sf-aux-title';
+    title.textContent = def?.label ?? tabId;
+    const back = document.createElement('button');
+    back.className = 'sf-aux-btn';
+    back.type = 'button';
+    back.setAttribute('data-test', 'aux-reattach');
+    back.title = 'Return to main window';
+    back.textContent = 'Return';
+    back.addEventListener('click', () => ops.reattachTab(tabId));
+    const closeBtn = document.createElement('button');
+    closeBtn.className = 'sf-aux-btn sf-aux-btn--close';
+    closeBtn.type = 'button';
+    closeBtn.setAttribute('data-test', 'aux-close');
+    closeBtn.title = 'Close tab';
+    closeBtn.textContent = '✕';
+    closeBtn.addEventListener('click', () => ops.closeTab(tabId));
+    handle.header.append(icon, title, back, closeBtn);
+  }
+
+  function reattachDetached(
+    tabId: string,
+    tileId: string | undefined,
+    index: number | undefined,
+    handle: AuxWindowHandle,
+    closeNow: boolean,
+  ): boolean {
+    let target = tileId ? findTileGlobal(tileId) : findTileGlobal(state.focusedTileId);
+    if (!target && state.roots.length > 0) target = firstTile(state.roots[0].node);
+    if (!target) return false;
+    const root = findRootByTile(target.id);
+    if (!root) return false;
+    detached.delete(tabId);
+    tabSlots.delete(tabId);
+    root.node = treeInsertTab(root.node, target.id, tabId, index ?? target.tabs.length);
+    state.focusedTileId = target.id;
+    ensureFocus();
+    if (closeNow) {
+      handle.close();
+    } else {
+      void nextTick().then(() => {
+        if (handle.content.childElementCount === 0) handle.close();
+      });
+    }
+    return true;
   }
 
   function findRootByTile(tileId: string): RootGroup | null {
@@ -462,7 +521,7 @@ export function useWorkspace(def: WorkspaceDef): WorkspaceApi {
       if (tabDefs[id].content === BLANK_CONTENT && !live.has(id)) delete tabDefs[id];
     }
     for (const tabId of [...tabResources.keys()]) {
-      if (!live.has(tabId)) releaseTabResources(tabId);
+      if (!live.has(tabId) && !detached.has(tabId)) releaseTabResources(tabId);
     }
     state.roots = restored;
     state.rootDir = snap.rootDir ?? null;
@@ -494,6 +553,14 @@ export function useWorkspace(def: WorkspaceDef): WorkspaceApi {
     },
 
     closeTab(tabId) {
+      const handle = detached.get(tabId);
+      if (handle) {
+        detached.delete(tabId);
+        tabSlots.delete(tabId);
+        releaseTabResources(tabId);
+        void nextTick().then(() => handle.close());
+        return;
+      }
       releaseTabResources(tabId);
       removeTabFromRoots(tabId);
       ensureFocus();
@@ -677,6 +744,30 @@ export function useWorkspace(def: WorkspaceDef): WorkspaceApi {
     focusTile(tileId) {
       state.focusedTileId = tileId;
     },
+
+    detachTab(tabId, opts) {
+      const def = tabDefs[tabId];
+      if (!def?.content || def.content === BLANK_CONTENT) return false;
+      if (detached.has(tabId)) return false;
+      const handle = openAuxWindow({ title: def.label, width: opts?.width, height: opts?.height });
+      if (!handle) return false;
+      detached.set(tabId, handle);
+      tabSlots.set(tabId, { el: handle.content, tileId: `aux:${handle.id}` });
+      fillAuxHeader(handle, tabId);
+      handle.onClosed(() => {
+        if (detached.get(tabId) !== handle) return;
+        reattachDetached(tabId, undefined, undefined, handle, true);
+      });
+      removeTabFromRoots(tabId);
+      ensureFocus();
+      return true;
+    },
+
+    reattachTab(tabId, tileId, index) {
+      const handle = detached.get(tabId);
+      if (!handle) return false;
+      return reattachDetached(tabId, tileId, index, handle, false);
+    },
   };
 
   const dnd = reactive<DndState>({
@@ -747,6 +838,13 @@ export function useWorkspace(def: WorkspaceDef): WorkspaceApi {
   };
   watch(() => state.roots, scheduleAutoSave, { deep: true });
   window.addEventListener('beforeunload', saveAutoSnapshot);
+  window.addEventListener('pagehide', () => {
+    if (detached.size === 0) return;
+    for (const [tabId, handle] of [...detached]) {
+      reattachDetached(tabId, undefined, undefined, handle, true);
+    }
+    saveAutoSnapshot();
+  });
 
   const auto = loadAutoSnapshot();
   if (auto) applySnapshot(auto);
@@ -773,6 +871,10 @@ export function useWorkspace(def: WorkspaceDef): WorkspaceApi {
     dnd,
     tabSlots,
     registerTabSlot,
+    detachedTabs: detached,
+    isTabDetached(tabId: string) {
+      return detached.has(tabId);
+    },
     startDrag,
     endDrag,
     registerTileEl,

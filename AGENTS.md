@@ -65,6 +65,19 @@ One open tab owns exactly one content-component instance for its whole lifetime:
 - `onActivated`/`onDeactivated` do not fire (no KeepAlive). For visible/hidden behavior use `useHostedTab()` from `composables/useHostedTab.ts` — it yields `{ tabId, visible }` for components hosted in a tab, `null` otherwise.
 - Enforced by `check:tabinstances`; `check:keepalive` and `check:table-reattach` pin the persistence semantics.
 
+## Auxiliary windows
+
+Tabs whose content is a registered tab component can move into a real browser popup window (`window.open('about:blank')`) and back without losing state. Entry points: the strip-tail `⤢` button (acts on the tile's active tab; hidden for blank/unregistered content) and the workspace api — `ops.detachTab(tabId, {width, height})`, `ops.reattachTab(tabId, tileId?, index?)` (both boolean), `isTabDetached(tabId)`, and `detachedTabs` mapping detached ids to their `AuxWindowHandle` (`workspace/auxWindow.ts`).
+
+Mechanics and invariants (enforced by `check:auxwindow`):
+
+- The popup stays in the opener's browsing context group (same agent cluster — never `noopener`, never navigated away from `about:blank`); its DOM and styles are built and kept in sync by the opener (`auxWindow.ts` clones every `<style>`/stylesheet `<link>` from `document.head` and watches it, so vite dev HMR propagates).
+- The tab keeps its identity: the hosted component instance is teleported into the popup's content element (cross-document DOM adoption), so the one-instance-per-tab rule and the tab resource protocol hold — detach and reattach fire no resource open/close. The shared JS heap means both windows see one reactive store; mutations from the popup update the main window live.
+- Closing the popup window (OS close, `pagehide`) reattaches the tab into the focused tile; the main window's `pagehide` reattaches every detached tab before the auto-snapshot, so reloads restore them. The popup header's ✕ closes the tab for real (resources released exactly once).
+- Detached tabs live outside the workspace tree: snapshots exclude them (the reattach-before-snapshot rule covers reloads) and `findTabGlobal` returns null while detached.
+
+Limitations: one tab per popup; overlays rendered by tab content (Dialog, SearchSelect, menus) still resolve `.sf-root` in the main document, so such content shows its overlays in the main window while detached; popup header chrome is framework-owned plain DOM (icon/title/Return/✕).
+
 ## Terminology (used across both repos)
 
 "panel" not "sidebar"; "RightPanel" not "PropertyPanel"; Workspace = central box; Tile = split-tree node; Tab = items in a tile; the whole UI shell = the **"framework"** (not "app"); each icon on the Docker bar = an **"app"** (not "tag" / "docker icon").
