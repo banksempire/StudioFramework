@@ -35,6 +35,7 @@ export interface WorkspaceSnapshot {
   windows?: Record<string, unknown>;
   ui?: Record<string, unknown>;
   defs?: Record<string, WorkspaceTabDef>;
+  aux?: string[];
 }
 
 export function nodeToSnapshot(

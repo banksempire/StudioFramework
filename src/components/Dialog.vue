@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { nextTick, onMounted, onUnmounted, ref, watch } from 'vue';
+import { hostViewOf, overlayRootOf } from '../lib/overlayHost';
 import SvgIcon from './SvgIcon.vue';
 
 const props = withDefaults(
@@ -27,13 +28,28 @@ const emit = defineEmits<{
 }>();
 
 const card = ref<HTMLElement | null>(null);
+const anchorEl = ref<HTMLElement | null>(null);
 const lockedHeight = ref('');
 const lockedWidth = ref('');
 const teleportTarget = ref<string | HTMLElement>('body');
+let keyView: Window | null = null;
 
 function resolveTeleportTarget() {
   if (typeof document === 'undefined') return;
-  teleportTarget.value = (document.querySelector('.sf-root') as HTMLElement | null) ?? 'body';
+  teleportTarget.value = overlayRootOf(anchorEl.value);
+}
+
+function bindKeyView() {
+  const view = hostViewOf(anchorEl.value);
+  if (keyView === view) return;
+  unbindKeyView();
+  keyView = view;
+  keyView.addEventListener('keydown', onDocKey);
+}
+
+function unbindKeyView() {
+  keyView?.removeEventListener('keydown', onDocKey);
+  keyView = null;
 }
 
 function close() {
@@ -57,9 +73,11 @@ watch(
     if (!v) {
       lockedHeight.value = '';
       lockedWidth.value = '';
+      unbindKeyView();
       return;
     }
     resolveTeleportTarget();
+    bindKeyView();
     await nextTick();
     if (props.lockHeight && card.value) {
       lockedHeight.value = `${card.value.offsetHeight}px`;
@@ -72,13 +90,14 @@ watch(
 
 onMounted(() => {
   resolveTeleportTarget();
-  window.addEventListener('keydown', onDocKey);
+  bindKeyView();
 });
-onUnmounted(() => window.removeEventListener('keydown', onDocKey));
+onUnmounted(unbindKeyView);
 </script>
 
 <template>
-  <Teleport :to="teleportTarget">
+  <span ref="anchorEl" class="sf-teleport-anchor">
+    <Teleport :to="teleportTarget">
     <div v-if="props.open" class="sf-dialog-backdrop" @mousedown="onBackdropDown">
       <div
         ref="card"
@@ -104,10 +123,14 @@ onUnmounted(() => window.removeEventListener('keydown', onDocKey));
         </footer>
       </div>
     </div>
-  </Teleport>
+    </Teleport>
+  </span>
 </template>
 
 <style scoped>
+.sf-teleport-anchor {
+  display: contents;
+}
 .sf-dialog-backdrop {
   position: fixed;
   inset: 0;

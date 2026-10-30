@@ -1,8 +1,9 @@
 <script setup lang="ts">
-import { computed, onUnmounted, reactive } from 'vue';
+import { computed, onUnmounted, reactive, ref } from 'vue';
 import { type TabStateChange, useTabResources } from '../composables/tabResources';
 import { useHostedTab } from '../composables/useHostedTab';
 import { useWorkspaceContext } from '../composables/useWorkspace';
+import Dialog from './Dialog.vue';
 
 const hosted = useHostedTab();
 const ws = useWorkspaceContext();
@@ -26,6 +27,7 @@ function record(kind: ResourceEvent['kind'], detail: string) {
 }
 
 const code = computed(() => String(ws.tabDefs[tabId]?.props?.code ?? 'res-a'));
+const dialogOpen = ref(false);
 
 function switchCode() {
   const def = ws.tabDefs[tabId];
@@ -56,10 +58,16 @@ onUnmounted(() => record('unmount', code.value));
       <button class="sf-resource-demo-btn" type="button" data-test="switch-code" @click="switchCode">
         Switch code
       </button>
+      <button class="sf-resource-demo-btn" type="button" data-test="show-dialog" @click="dialogOpen = true">
+        Dialog
+      </button>
     </div>
     <ul class="sf-resource-demo-log" data-test="resource-log">
       <li v-for="(e, i) in events" :key="i" :data-kind="e.kind">{{ e.kind }}: {{ e.detail }}</li>
     </ul>
+    <Dialog v-model:open="dialogOpen" title="Resource demo dialog">
+      <p data-test="demo-dialog-body">demo dialog body — {{ code }}</p>
+    </Dialog>
   </div>
 </template>
 

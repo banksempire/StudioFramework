@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed, nextTick, onMounted, onUnmounted, ref, watch } from 'vue';
+import { hostViewOf, overlayRootOf } from '../lib/overlayHost';
 import type { PopupOption } from '../types/popup';
 
 const props = withDefaults(
@@ -41,7 +42,7 @@ const popStyle = ref<{ left: string; top: string; width: string; maxHeight: stri
 
 const teleportTarget = ref<HTMLElement | string>('body');
 onMounted(() => {
-  teleportTarget.value = (document.querySelector('.sf-root') as HTMLElement | null) ?? 'body';
+  teleportTarget.value = overlayRootOf(boxEl.value);
 });
 
 function labelOf(value: string): string {
@@ -62,6 +63,7 @@ const matches = computed(() => {
 
 async function positionPopup() {
   await nextTick();
+  const view = hostViewOf(boxEl.value);
   const box = boxEl.value;
   const pop = popEl.value;
   if (!box || !pop || !open.value) return;
@@ -69,8 +71,8 @@ async function positionPopup() {
   const width = Math.max(rect.width, 180);
   const h = pop.offsetHeight || 40;
   let left = rect.left;
-  if (left + width > window.innerWidth - 4) left = Math.max(4, window.innerWidth - width - 4);
-  const below = window.innerHeight - rect.bottom - 8;
+  if (left + width > view.innerWidth - 4) left = Math.max(4, view.innerWidth - width - 4);
+  const below = view.innerHeight - rect.bottom - 8;
   const above = rect.top - 8;
   const flip = below < Math.min(h, 160) && above > below;
   const maxH = Math.max(96, Math.min(240, flip ? above : below));
@@ -79,18 +81,26 @@ async function positionPopup() {
   popStyle.value = { left: `${left}px`, top: `${top}px`, width: `${width}px`, maxHeight: `${maxH}px` };
 }
 
+let boundView: Window | null = null;
 function startTracking() {
-  window.addEventListener('resize', positionPopup);
-  window.addEventListener('scroll', positionPopup, true);
+  const view = hostViewOf(boxEl.value);
+  if (boundView === view) return;
+  stopTracking();
+  boundView = view;
+  boundView.addEventListener('resize', positionPopup);
+  boundView.addEventListener('scroll', positionPopup, true);
 }
 
 function stopTracking() {
-  window.removeEventListener('resize', positionPopup);
-  window.removeEventListener('scroll', positionPopup, true);
+  if (!boundView) return;
+  boundView.removeEventListener('resize', positionPopup);
+  boundView.removeEventListener('scroll', positionPopup, true);
+  boundView = null;
 }
 
 watch(open, (v) => {
   if (v) {
+    teleportTarget.value = overlayRootOf(boxEl.value);
     startTracking();
     void positionPopup();
   } else {

@@ -1,7 +1,8 @@
 <script setup lang="ts">
-import { computed, inject, nextTick, onMounted, onUnmounted, ref } from 'vue';
+import { computed, inject, nextTick, onMounted, onUnmounted, ref, watch } from 'vue';
 import { useFallbackMobile } from '../composables/useFallbackMobile';
 import { kIsMobile } from '../composables/useWorkspace';
+import { hostViewOf, overlayRootOf } from '../lib/overlayHost';
 import type { PopupField, PopupOption, PopupValues } from '../types/popup';
 import SvgIcon from './SvgIcon.vue';
 
@@ -26,7 +27,7 @@ const mobile = injectedMobile ?? useFallbackMobile();
 
 const sheetTarget = ref<HTMLElement | 'body'>('body');
 onMounted(() => {
-  sheetTarget.value = (document.querySelector('.sf-root') as HTMLElement | null) ?? 'body';
+  sheetTarget.value = overlayRootOf(triggerEl.value);
 });
 
 const open = ref(false);
@@ -213,9 +214,23 @@ function onDocDown(e: MouseEvent) {
   closePopup(false);
 }
 
-window.addEventListener('mousedown', onDocDown);
+let boundView: Window | null = null;
+function bindDocDown() {
+  const view = hostViewOf(triggerEl.value);
+  if (boundView === view) return;
+  if (boundView) boundView.removeEventListener('mousedown', onDocDown);
+  boundView = view;
+  boundView.addEventListener('mousedown', onDocDown);
+}
+
+watch(open, (v) => {
+  if (!v) return;
+  sheetTarget.value = overlayRootOf(triggerEl.value);
+  bindDocDown();
+});
+
 onUnmounted(() => {
-  window.removeEventListener('mousedown', onDocDown);
+  boundView?.removeEventListener('mousedown', onDocDown);
   clearTimeout(typeTimer);
 });
 </script>

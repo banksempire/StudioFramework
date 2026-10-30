@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed, inject, nextTick, onMounted, onUnmounted, type Ref, ref, toRaw, watch } from 'vue';
 import { kIsMobile } from '../composables/useWorkspace';
+import { hostViewOf, overlayRootOf } from '../lib/overlayHost';
 import type { MenuNodeDef } from '../types/layout';
 import Icon from './Icon.vue';
 import SvgIcon from './SvgIcon.vue';
@@ -114,10 +115,38 @@ const regionEl = ref<HTMLElement | null>(null);
 const popStyle = ref({ left: '0px', top: '0px' });
 
 const sheetTarget = ref<HTMLElement | 'body'>('body');
+let boundView: Window | null = null;
+function bindDocListeners() {
+  const view = hostViewOf(anchorEl.value);
+  if (boundView === view) return;
+  unbindDocListeners();
+  boundView = view;
+  boundView.addEventListener('mousedown', onDocDown);
+  boundView.addEventListener('keydown', onDocKey);
+}
+function unbindDocListeners() {
+  if (!boundView) return;
+  boundView.removeEventListener('mousedown', onDocDown);
+  boundView.removeEventListener('keydown', onDocKey);
+  boundView = null;
+}
+function syncOverlayTarget() {
+  sheetTarget.value = overlayRootOf(anchorEl.value);
+}
 if (!props.embedded && typeof window !== 'undefined') {
   onMounted(() => {
-    sheetTarget.value = (document.querySelector('.sf-root') as HTMLElement | null) ?? 'body';
+    syncOverlayTarget();
+    bindDocListeners();
   });
+  watch(
+    () => props.open,
+    (v) => {
+      if (!v) return;
+      syncOverlayTarget();
+      bindDocListeners();
+    },
+  );
+  onUnmounted(unbindDocListeners);
 }
 
 function close() {
@@ -206,15 +235,6 @@ function onDocDown(e: MouseEvent) {
 
 function onDocKey(e: KeyboardEvent) {
   if (e.key === 'Escape' && props.open) close();
-}
-
-if (!props.embedded && typeof window !== 'undefined') {
-  window.addEventListener('mousedown', onDocDown);
-  window.addEventListener('keydown', onDocKey);
-  onUnmounted(() => {
-    window.removeEventListener('mousedown', onDocDown);
-    window.removeEventListener('keydown', onDocKey);
-  });
 }
 </script>
 

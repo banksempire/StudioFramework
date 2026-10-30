@@ -1,5 +1,6 @@
 <script setup lang="ts" generic="T">
 import { computed, inject, nextTick, onMounted, onUnmounted, type Ref, ref, watch } from 'vue';
+import { hostViewOf, overlayRootOf } from '../lib/overlayHost';
 import type { SingleMenuOption } from '../types/singleMenu';
 import Icon from './Icon.vue';
 
@@ -64,6 +65,8 @@ function optsOf(item: T): SingleMenuOption[] {
 
 function openRow(row: RowView<T>, x: number, y: number) {
   if (row.opts.length === 0) return;
+  sheetTarget.value = overlayRootOf(smEl.value);
+  bindDocListeners();
   ctxItem.value = row.item;
   ctxX.value = x;
   ctxY.value = y;
@@ -74,8 +77,25 @@ let lastPointerType = '';
 const ctxItem = ref(null) as Ref<T | null>;
 const ctxX = ref(0);
 const ctxY = ref(0);
+const smEl = ref<HTMLElement | null>(null);
 const menuEl = ref<HTMLElement | null>(null);
 const menuStyle = ref<{ left: string; top: string }>({ left: '0px', top: '0px' });
+
+let boundView: Window | null = null;
+function bindDocListeners() {
+  const view = hostViewOf(smEl.value);
+  if (boundView === view) return;
+  unbindDocListeners();
+  boundView = view;
+  boundView.addEventListener('mousedown', onDocDown);
+  boundView.addEventListener('keydown', onDocKey);
+}
+function unbindDocListeners() {
+  if (!boundView) return;
+  boundView.removeEventListener('mousedown', onDocDown);
+  boundView.removeEventListener('keydown', onDocKey);
+  boundView = null;
+}
 
 function onCtx(e: MouseEvent, row: RowView<T>) {
   if (row.opts.length === 0) return;
@@ -100,6 +120,7 @@ watch(ctxItem, async (v) => {
 
 function closeAll() {
   ctxItem.value = null;
+  unbindDocListeners();
 }
 
 function pick(item: T | null, opt: SingleMenuOption) {
@@ -134,19 +155,14 @@ const sheetTarget = ref<HTMLElement | 'body'>('body');
 
 if (typeof window !== 'undefined') {
   onMounted(() => {
-    sheetTarget.value = (document.querySelector('.sf-root') as HTMLElement | null) ?? 'body';
-    window.addEventListener('mousedown', onDocDown);
-    window.addEventListener('keydown', onDocKey);
+    sheetTarget.value = overlayRootOf(smEl.value);
   });
-  onUnmounted(() => {
-    window.removeEventListener('mousedown', onDocDown);
-    window.removeEventListener('keydown', onDocKey);
-  });
+  onUnmounted(unbindDocListeners);
 }
 </script>
 
 <template>
-  <div class="sf-sm" v-bind="$attrs">
+  <div ref="smEl" class="sf-sm" v-bind="$attrs">
     <div v-for="row in rowViews" :key="row.key" class="sf-sm-row">
       <div
         class="sf-sm-slide"

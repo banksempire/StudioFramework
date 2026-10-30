@@ -1,6 +1,6 @@
 import { type InjectionKey, inject, nextTick, type Ref, reactive, shallowReactive, watch } from 'vue';
 import type { MenuNodeDef, WorkspaceDef, WorkspaceTabDef } from '../types/layout';
-import { type AuxWindowHandle, type AuxWindowOptions, openAuxWindow } from '../workspace/auxWindow';
+import { type AuxWindowHandle, openAuxWindow } from '../workspace/auxWindow';
 import {
   captureSnapshot,
   restoreSnapshot,
@@ -47,11 +47,18 @@ export interface WorkspaceOps {
   splitTile(tileId: string, dir: SplitDir, side: 'start' | 'end', tabId: string): void;
   moveTab(tabId: string, targetTileId: string, index: number): void;
   focusTile(tileId: string): void;
-  detachTab(tabId: string, opts?: Pick<AuxWindowOptions, 'width' | 'height'>): boolean;
+  detachTab(tabId: string, opts?: AuxDetachOptions): boolean;
   reattachTab(tabId: string, tileId?: string, index?: number): boolean;
+  activateAuxTab(windowId: number, tabId: string): void;
 }
 
 export const BLANK_CONTENT = 'sf-blank';
+
+export interface AuxDetachOptions {
+  width?: number;
+  height?: number;
+  windowId?: number;
+}
 
 export interface DndRect {
   x: number;
@@ -114,7 +121,7 @@ export interface WorkspaceApi {
   dnd: DndState;
   readonly tabSlots: ReadonlyMap<string, TabSlot>;
   registerTabSlot(tabId: string, el: HTMLElement | null, tileId: string): void;
-  readonly detachedTabs: ReadonlyMap<string, AuxWindowHandle>;
+  readonly detachedTabs: ReadonlyMap<string, number>;
   isTabDetached(tabId: string): boolean;
   startDrag(tabId: string, tileId: string, index: number): void;
   endDrag(): void;
@@ -305,49 +312,117 @@ export function useWorkspace(def: WorkspaceDef): WorkspaceApi {
   );
 
   const tabSlots = reactive(new Map<string, TabSlot>());
-  const detached = shallowReactive(new Map<string, AuxWindowHandle>());
+  const detached = shallowReactive(new Map<string, number>());
+  const auxWindows = new Map<number, AuxWindowHandle>();
+  const auxActive = shallowReactive(new Map<number, string>());
 
-  function registerTabSlot(tabId: string, el: HTMLElement | null, tileId: string) {
-    if (el) {
-      tabSlots.set(tabId, { el, tileId });
-      return;
-    }
-    const current = tabSlots.get(tabId);
-    if (current && current.tileId === tileId) tabSlots.delete(tabId);
+  function auxSlotId(windowId: number): string {
+    return `aux:${windowId}`;
   }
 
-  function fillAuxHeader(handle: AuxWindowHandle, tabId: string) {
-    const def = tabDefs[tabId];
-    const icon = document.createElement('span');
-    icon.className = 'sf-aux-icon';
-    icon.textContent = typeof def?.icon === 'string' ? def.icon : '';
-    const title = document.createElement('span');
-    title.className = 'sf-aux-title';
-    title.textContent = def?.label ?? tabId;
+  function auxTabsOf(windowId: number): string[] {
+    return [...detached.entries()].filter(([, w]) => w === windowId).map(([t]) => t);
+  }
+
+  function syncAuxChrome(windowId: number) {
+    const handle = auxWindows.get(windowId);
+    if (!handle) return;
+    const active = auxActive.get(windowId) ?? '';
+    handle.chips.textContent = '';
+    for (const tabId of auxTabsOf(windowId)) {
+      const def = tabDefs[tabId];
+      const chip = document.createElement('div');
+      chip.className = active === tabId ? 'sf-aux-chip sf-aux-chip--active' : 'sf-aux-chip';
+      chip.setAttribute('data-test', 'aux-tab');
+      chip.setAttribute('data-tab-id', tabId);
+      chip.title = def?.label ?? tabId;
+      const icon = document.createElement('span');
+      icon.className = 'sf-aux-chip-icon';
+      icon.textContent = typeof def?.icon === 'string' ? def.icon : '';
+      const label = document.createElement('span');
+      label.className = 'sf-aux-chip-label';
+      label.textContent = def?.label ?? tabId;
+      chip.append(icon, label);
+      if (def?.closeable !== false) {
+        const closeChip = document.createElement('span');
+        closeChip.className = 'sf-aux-chip-close';
+        closeChip.setAttribute('data-test', 'aux-tab-close');
+        closeChip.title = 'Close tab';
+        closeChip.textContent = '✕';
+        closeChip.addEventListener('click', (e) => {
+          e.stopPropagation();
+          ops.closeTab(tabId);
+        });
+        chip.appendChild(closeChip);
+      }
+      chip.addEventListener('click', () => activateAuxTab(windowId, tabId));
+      handle.chips.appendChild(chip);
+    }
+    if (active) handle.document.title = tabDefs[active]?.label ?? handle.document.title;
+  }
+
+  function syncAllAuxChrome() {
+    for (const id of [...auxWindows.keys()]) syncAuxChrome(id);
+  }
+
+  watch([detached, auxActive, tabDefs], syncAllAuxChrome, { deep: true });
+
+  function activateAuxTab(windowId: number, tabId: string) {
+    if (detached.get(tabId) !== windowId) return;
+    if (auxActive.get(windowId) === tabId) return;
+    const handle = auxWindows.get(windowId);
+    if (!handle) return;
+    const prev = auxActive.get(windowId);
+    if (prev) {
+      const cur = tabSlots.get(prev);
+      if (cur && cur.tileId === auxSlotId(windowId)) tabSlots.delete(prev);
+    }
+    auxActive.set(windowId, tabId);
+    tabSlots.set(tabId, { el: handle.content, tileId: auxSlotId(windowId) });
+  }
+
+  function pullActiveInto(windowId: number): boolean {
+    const tile = findTileGlobal(state.focusedTileId);
+    const tabId = tile?.activeId;
+    if (!tabId) return false;
+    return ops.detachTab(tabId, { windowId });
+  }
+
+  function bindAuxWindow(handle: AuxWindowHandle) {
+    auxWindows.set(handle.id, handle);
+    const pull = document.createElement('button');
+    pull.className = 'sf-aux-tail-btn';
+    pull.setAttribute('data-test', 'aux-pull');
+    pull.title = 'Move the main window active tab here';
+    pull.textContent = '⇥';
+    pull.addEventListener('click', () => pullActiveInto(handle.id));
     const back = document.createElement('button');
-    back.className = 'sf-aux-btn';
-    back.type = 'button';
-    back.setAttribute('data-test', 'aux-reattach');
-    back.title = 'Return to main window';
-    back.textContent = 'Return';
-    back.addEventListener('click', () => ops.reattachTab(tabId));
-    const closeBtn = document.createElement('button');
-    closeBtn.className = 'sf-aux-btn sf-aux-btn--close';
-    closeBtn.type = 'button';
-    closeBtn.setAttribute('data-test', 'aux-close');
-    closeBtn.title = 'Close tab';
-    closeBtn.textContent = '✕';
-    closeBtn.addEventListener('click', () => ops.closeTab(tabId));
-    handle.header.append(icon, title, back, closeBtn);
+    back.className = 'sf-aux-tail-btn';
+    back.setAttribute('data-test', 'aux-return');
+    back.title = 'Return active tab to main window';
+    back.textContent = '⇤';
+    back.addEventListener('click', () => {
+      const active = auxActive.get(handle.id);
+      if (active) ops.reattachTab(active);
+    });
+    handle.tail.append(pull, back);
+    handle.onClosed(() => {
+      for (const tabId of auxTabsOf(handle.id)) {
+        reattachDetached(tabId, undefined, undefined, true);
+      }
+      auxWindows.delete(handle.id);
+      auxActive.delete(handle.id);
+    });
   }
 
   function reattachDetached(
     tabId: string,
     tileId: string | undefined,
     index: number | undefined,
-    handle: AuxWindowHandle,
     closeNow: boolean,
   ): boolean {
+    const windowId = detached.get(tabId);
+    if (windowId === undefined) return false;
     let target = tileId ? findTileGlobal(tileId) : findTileGlobal(state.focusedTileId);
     if (!target && state.roots.length > 0) target = firstTile(state.roots[0].node);
     if (!target) return false;
@@ -358,14 +433,27 @@ export function useWorkspace(def: WorkspaceDef): WorkspaceApi {
     root.node = treeInsertTab(root.node, target.id, tabId, index ?? target.tabs.length);
     state.focusedTileId = target.id;
     ensureFocus();
-    if (closeNow) {
-      handle.close();
-    } else {
+    const remaining = auxTabsOf(windowId);
+    const handle = auxWindows.get(windowId);
+    if (remaining.length > 0 && auxActive.get(windowId) === tabId) {
+      activateAuxTab(windowId, remaining[0]);
+    }
+    if (remaining.length > 0) syncAuxChrome(windowId);
+    if (handle && !closeNow) {
       void nextTick().then(() => {
         if (handle.content.childElementCount === 0) handle.close();
       });
     }
     return true;
+  }
+
+  function registerTabSlot(tabId: string, el: HTMLElement | null, tileId: string) {
+    if (el) {
+      tabSlots.set(tabId, { el, tileId });
+      return;
+    }
+    const current = tabSlots.get(tabId);
+    if (current && current.tileId === tileId) tabSlots.delete(tabId);
   }
 
   function findRootByTile(tileId: string): RootGroup | null {
@@ -454,7 +542,7 @@ export function useWorkspace(def: WorkspaceDef): WorkspaceApi {
     };
   }
   function currentSnapshot(withUi = false): WorkspaceSnapshot {
-    return captureSnapshot(
+    const snap = captureSnapshot(
       state.roots,
       state.rootDir,
       (id) => !!tabDefs[id]?.transient,
@@ -463,6 +551,17 @@ export function useWorkspace(def: WorkspaceDef): WorkspaceApi {
       withUi ? (uiProvider?.read() ?? undefined) : undefined,
       persistedTabDef,
     );
+    const auxIds = [...detached.keys()];
+    if (auxIds.length > 0) {
+      snap.aux = auxIds;
+      const defs = { ...(snap.defs ?? {}) };
+      for (const id of auxIds) {
+        const d = persistedTabDef(id);
+        if (d) defs[id] = d;
+      }
+      snap.defs = defs;
+    }
+    return snap;
   }
   function saveAutoSnapshot() {
     try {
@@ -523,9 +622,45 @@ export function useWorkspace(def: WorkspaceDef): WorkspaceApi {
     for (const tabId of [...tabResources.keys()]) {
       if (!live.has(tabId) && !detached.has(tabId)) releaseTabResources(tabId);
     }
+    const auxIds = (snap.aux ?? []).filter((id) => !live.has(id));
+    const windowsToMaybeClose = new Set<number>();
+    for (const id of auxIds) {
+      const detachedWindow = detached.get(id);
+      if (detachedWindow !== undefined) {
+        detached.delete(id);
+        tabSlots.delete(id);
+        if (auxTabsOf(detachedWindow).length === 0) windowsToMaybeClose.add(detachedWindow);
+      }
+      if (!tabDefs[id]) {
+        const restoredDef = snap.defs?.[id];
+        if (restoredDef) {
+          tabDefs[id] = { ...restoredDef, transient: false, tabClass: undefined };
+        } else {
+          tabDefs[id] = ghostDef(id);
+          ghosts.push(id);
+        }
+      }
+      live.add(id);
+    }
     state.roots = restored;
     state.rootDir = snap.rootDir ?? null;
     ensureFocus();
+    for (const id of auxIds) {
+      const tile = findTileGlobal(state.focusedTileId);
+      if (!tile) break;
+      const root = findRootByTile(tile.id);
+      if (!root) break;
+      root.node = treeInsertTab(root.node, tile.id, id, tile.tabs.length);
+      state.focusedTileId = tile.id;
+    }
+    ensureFocus();
+    for (const windowId of windowsToMaybeClose) {
+      const handle = auxWindows.get(windowId);
+      if (!handle) continue;
+      void nextTick().then(() => {
+        if (handle.content.childElementCount === 0) handle.close();
+      });
+    }
     if (snap.panels) {
       if (panelProvider) panelProvider.apply(snap.panels);
       else pendingPanels = snap.panels;
@@ -553,12 +688,22 @@ export function useWorkspace(def: WorkspaceDef): WorkspaceApi {
     },
 
     closeTab(tabId) {
-      const handle = detached.get(tabId);
-      if (handle) {
+      const windowId = detached.get(tabId);
+      if (windowId !== undefined) {
         detached.delete(tabId);
         tabSlots.delete(tabId);
         releaseTabResources(tabId);
-        void nextTick().then(() => handle.close());
+        const remaining = auxTabsOf(windowId);
+        if (remaining.length > 0 && auxActive.get(windowId) === tabId) {
+          activateAuxTab(windowId, remaining[0]);
+        }
+        syncAuxChrome(windowId);
+        const handle = auxWindows.get(windowId);
+        if (handle) {
+          void nextTick().then(() => {
+            if (handle.content.childElementCount === 0) handle.close();
+          });
+        }
         return;
       }
       releaseTabResources(tabId);
@@ -749,24 +894,35 @@ export function useWorkspace(def: WorkspaceDef): WorkspaceApi {
       const def = tabDefs[tabId];
       if (!def?.content || def.content === BLANK_CONTENT) return false;
       if (detached.has(tabId)) return false;
+      const targetWindowId = opts?.windowId;
+      if (targetWindowId !== undefined) {
+        const existing = auxWindows.get(targetWindowId);
+        if (!existing) return false;
+        detached.set(tabId, targetWindowId);
+        activateAuxTab(targetWindowId, tabId);
+        removeTabFromRoots(tabId);
+        ensureFocus();
+        syncAuxChrome(targetWindowId);
+        return true;
+      }
       const handle = openAuxWindow({ title: def.label, width: opts?.width, height: opts?.height });
       if (!handle) return false;
-      detached.set(tabId, handle);
-      tabSlots.set(tabId, { el: handle.content, tileId: `aux:${handle.id}` });
-      fillAuxHeader(handle, tabId);
-      handle.onClosed(() => {
-        if (detached.get(tabId) !== handle) return;
-        reattachDetached(tabId, undefined, undefined, handle, true);
-      });
+      bindAuxWindow(handle);
+      detached.set(tabId, handle.id);
+      activateAuxTab(handle.id, tabId);
       removeTabFromRoots(tabId);
       ensureFocus();
+      syncAuxChrome(handle.id);
       return true;
     },
 
     reattachTab(tabId, tileId, index) {
-      const handle = detached.get(tabId);
-      if (!handle) return false;
-      return reattachDetached(tabId, tileId, index, handle, false);
+      if (!detached.has(tabId)) return false;
+      return reattachDetached(tabId, tileId, index, false);
+    },
+
+    activateAuxTab(windowId, tabId) {
+      activateAuxTab(windowId, tabId);
     },
   };
 
@@ -840,8 +996,8 @@ export function useWorkspace(def: WorkspaceDef): WorkspaceApi {
   window.addEventListener('beforeunload', saveAutoSnapshot);
   window.addEventListener('pagehide', () => {
     if (detached.size === 0) return;
-    for (const [tabId, handle] of [...detached]) {
-      reattachDetached(tabId, undefined, undefined, handle, true);
+    for (const tabId of [...detached.keys()]) {
+      reattachDetached(tabId, undefined, undefined, true);
     }
     saveAutoSnapshot();
   });

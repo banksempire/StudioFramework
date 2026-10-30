@@ -3406,48 +3406,101 @@ body.sf-dragging-row * {
   background: var(--sf-bg);
 }
 
-.sf-aux-header {
+.sf-aux-strip {
   display: flex;
   align-items: center;
-  gap: 8px;
-  height: 32px;
-  padding: 0 8px;
-  background: var(--sf-bar);
-  border-bottom: 1px solid var(--sf-border);
+  height: 30px;
   flex-shrink: 0;
+  overflow: hidden;
+  border-bottom: 1px solid var(--sf-border);
+  background: var(--sf-bar);
 }
 
-.sf-aux-icon {
+.sf-aux-chips {
+  display: flex;
+  align-items: center;
+  flex: 1;
+  min-width: 0;
+  overflow-x: auto;
+  overflow-y: hidden;
+  scrollbar-width: thin;
+  height: 100%;
+}
+
+.sf-aux-chip {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 0 6px 0 10px;
+  height: 100%;
+  max-width: 200px;
+  min-width: 80px;
+  cursor: pointer;
+  background: #292929;
+  border-right: 2px solid #4d4d4d;
+  border-top: 2px solid transparent;
+  color: var(--sf-text);
+  font-size: 16px;
+  white-space: nowrap;
+  user-select: none;
+}
+
+.sf-aux-chip--active {
+  background: var(--sf-bg);
+  border-top-color: var(--sf-accent);
+}
+
+.sf-aux-chip-icon {
   font-size: 13px;
   flex-shrink: 0;
 }
 
-.sf-aux-title {
+.sf-aux-chip-label {
   flex: 1;
   min-width: 0;
   overflow: hidden;
   text-overflow: ellipsis;
-  white-space: nowrap;
-  color: var(--sf-text);
-  font-size: 12px;
 }
 
-.sf-aux-btn {
+.sf-aux-chip-close {
+  font-size: 14px;
+  padding: 2px;
+  width: 18px;
   display: inline-flex;
   align-items: center;
-  gap: 4px;
-  border: 1px solid var(--sf-border);
-  border-radius: var(--sf-radius-sm);
-  background: var(--sf-bg);
-  color: var(--sf-text);
-  font-family: var(--sf-font);
-  font-size: 11px;
-  padding: 2px 8px;
-  cursor: pointer;
+  justify-content: center;
+  border-radius: 3px;
   flex-shrink: 0;
 }
 
-.sf-aux-btn:hover {
+.sf-aux-chip-close:hover {
+  box-shadow: inset 0 0 0 999px var(--sf-hover-overlay);
+  color: var(--sf-text-bright);
+}
+
+.sf-aux-tail {
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+  height: 100%;
+}
+
+.sf-aux-tail-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 100%;
+  border: none;
+  border-left: 1px solid #4d4d4d;
+  background: var(--sf-bar);
+  color: var(--sf-text-muted);
+  font-size: 15px;
+  cursor: pointer;
+}
+
+.sf-aux-tail-btn:hover {
   box-shadow: inset 0 0 0 999px var(--sf-hover-overlay);
   color: var(--sf-text-bright);
 }

@@ -8,7 +8,9 @@ export interface AuxWindowHandle {
   readonly id: number;
   readonly window: Window;
   readonly document: Document;
-  readonly header: HTMLElement;
+  readonly strip: HTMLElement;
+  readonly chips: HTMLElement;
+  readonly tail: HTMLElement;
   readonly content: HTMLElement;
   close(): void;
   onClosed(listener: () => void): void;
@@ -102,13 +104,19 @@ export function openAuxWindow(options: AuxWindowOptions): AuxWindowHandle | null
   });
 
   const shell = document.createElement('div');
-  shell.className = 'sf-aux-shell';
-  const header = document.createElement('header');
-  header.className = 'sf-aux-header';
+  shell.className = 'sf-aux-shell sf-overlay-root';
+  const strip = document.createElement('div');
+  strip.className = 'sf-aux-strip';
+  strip.setAttribute('data-test', 'aux-strip');
+  const chips = document.createElement('div');
+  chips.className = 'sf-aux-chips';
+  const tail = document.createElement('div');
+  tail.className = 'sf-aux-tail';
+  strip.append(chips, tail);
   const content = document.createElement('div');
   content.className = 'sf-aux-content';
   content.setAttribute('data-test', 'aux-content');
-  shell.append(header, content);
+  shell.append(strip, content);
   doc.body.appendChild(shell);
 
   const listeners: Array<() => void> = [];
@@ -125,7 +133,9 @@ export function openAuxWindow(options: AuxWindowOptions): AuxWindowHandle | null
     id,
     window: popup,
     document: doc,
-    header,
+    strip,
+    chips,
+    tail,
     content,
     close() {
       if (closed) return;

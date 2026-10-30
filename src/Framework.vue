@@ -371,7 +371,7 @@ function onPanelAction(a: PanelAction) {
 
 <template>
   <div
-    class="sf-root"
+    class="sf-root sf-overlay-root"
     :class="{
       'sf-root--mobile': isMobile,
       'sf-status-dragging': isMobile && statusDragging,
