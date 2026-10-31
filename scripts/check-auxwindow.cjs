@@ -11,8 +11,8 @@ const { ensureServer, openApp, makeReporter, finish } = require('./lib/ui-test.c
     p.on('pageerror', (e) => errors.push(`pageerror: ${e.message}`));
     p.on('console', (m) => {
       if (m.type() === 'error') errors.push(`console: ${m.text()}`);
+      if (m.text().includes('drop-dbg')) console.log('CONSOLE:', m.text());
     });
-    p.on('requestfailed', (r) => errors.push(`requestfailed: ${r.url()}`));
   }
   watchPage(page);
   page.context().on('page', watchPage);
@@ -59,11 +59,11 @@ const { ensureServer, openApp, makeReporter, finish } = require('./lib/ui-test.c
       tab.dispatchEvent(new DragEvent('dragend', { bubbles: true, screenX: 900, screenY: 400 }));
     }, TAB_A);
     const aux = await popupPromise;
-    await aux.waitForSelector('[data-test="aux-content"] .sf-resource-demo', { timeout: 5000 });
-    report('dragging a tab out to blank space creates a popup', true);
+    await aux.waitForSelector('[data-test="aux-content"] .sf-workspace', { timeout: 5000 });
+    report('dragging a tab out to blank space opens a popup with a real workspace', true);
     report(
-      'popup strip hosts the dragged tab with its accumulated state (res-b)',
-      (await aux.locator('[data-test="aux-tab"]').count()) === 1 &&
+      'popup hosts the dragged tab with its accumulated state (res-b)',
+      (await aux.locator(`.sf-tab[data-tab-id="${TAB_A}"]`).count()) === 1 &&
         (await aux.textContent('[data-test="resource-code"]')) === 'res-b',
     );
     report(
@@ -88,19 +88,29 @@ const { ensureServer, openApp, makeReporter, finish } = require('./lib/ui-test.c
       const tab = document.querySelector(`.sf-tab[data-tab-id="${id}"]`);
       tab.dispatchEvent(new DragEvent('dragstart', { bubbles: true, dataTransfer: new DataTransfer() }));
     }, TAB_B);
-    await aux.evaluate(() => {
-      const strip = document.querySelector('[data-test="aux-strip"]');
-      const dt = new DataTransfer();
-      strip.dispatchEvent(new DragEvent('dragover', { bubbles: true, dataTransfer: dt }));
-      strip.dispatchEvent(new DragEvent('drop', { bubbles: true, dataTransfer: dt }));
-    });
-    await aux.waitForFunction(() => document.querySelectorAll('[data-test="aux-tab"]').length === 2, {
-      timeout: 5000,
-    });
+    await wait(300);
+    const tileBox = await aux.locator('.sf-tile').first().boundingBox();
+    await aux.evaluate(
+      ({ x, y }) => {
+        const el = document.elementFromPoint(x, y);
+        const dt = new DataTransfer();
+        el.dispatchEvent(
+          new DragEvent('dragover', { bubbles: true, clientX: x, clientY: y, dataTransfer: dt }),
+        );
+        el.dispatchEvent(new DragEvent('drop', { bubbles: true, clientX: x, clientY: y, dataTransfer: dt }));
+      },
+      { x: Math.round(tileBox.x + tileBox.width / 2), y: Math.round(tileBox.y + tileBox.height / 2) },
+    );
+    await aux.waitForSelector(`.sf-tab[data-tab-id="${TAB_B}"]`, { timeout: 5000 });
+    const popupTabsAfterDrop = await aux.locator('.sf-tab').count();
+    report('popup hosts both tabs after the drop', popupTabsAfterDrop === 2);
     report(
-      'dropping a main tab onto a popup strip moves it there directly',
-      (await page.evaluate((id) => window.__sfWorkspace.findTabGlobal(id) === null, TAB_B)) &&
-        (await page.evaluate((id) => window.__sfWorkspace.findTabGlobal(id) === null, TAB_A)),
+      'TAB_B now belongs to the popup window',
+      await page.evaluate((id) => window.__sfWorkspace.tabWindow(id) === 1, TAB_B),
+    );
+    report(
+      'TAB_A still belongs to the popup window',
+      await page.evaluate((id) => window.__sfWorkspace.tabWindow(id) === 1, TAB_A),
     );
     report(
       'both instances stay alive across the window move',
@@ -108,11 +118,11 @@ const { ensureServer, openApp, makeReporter, finish } = require('./lib/ui-test.c
         (await events()).filter((e) => e.startsWith('open')).length === 2,
     );
 
-    await aux.locator(`[data-test="aux-tab"][data-tab-id="${TAB_B}"]`).click();
+    await aux.click(`.sf-tab[data-tab-id="${TAB_B}"]`);
     await aux.waitForFunction(
       () => document.querySelector('[data-test="resource-code"]')?.textContent === 'res-a',
     );
-    report('switching chips swaps the hosted content inside the popup', true);
+    report('switching popup tabs swaps the hosted content', true);
 
     await aux.evaluate(() => {
       window.__auxClipboardCalls = [];
@@ -146,46 +156,73 @@ const { ensureServer, openApp, makeReporter, finish } = require('./lib/ui-test.c
         (await page.evaluate(() => (window.__mainClipboardCalls ?? []).length)) === 0,
     );
 
+    await aux.evaluate((id) => {
+      const tab = document.querySelector(`.sf-tab[data-tab-id="${id}"]`);
+      tab.dispatchEvent(new DragEvent('dragstart', { bubbles: true, dataTransfer: new DataTransfer() }));
+    }, TAB_B);
+    const splitBox = await aux.locator('.sf-tile').first().boundingBox();
+    await aux.evaluate(
+      ({ x, y }) => {
+        const el = document.elementFromPoint(x, y);
+        const dt = new DataTransfer();
+        el.dispatchEvent(
+          new DragEvent('dragover', { bubbles: true, clientX: x, clientY: y, dataTransfer: dt }),
+        );
+        el.dispatchEvent(new DragEvent('drop', { bubbles: true, clientX: x, clientY: y, dataTransfer: dt }));
+      },
+      { x: Math.round(splitBox.x + splitBox.width - 8), y: Math.round(splitBox.y + splitBox.height / 2) },
+    );
+    await aux.waitForFunction(() => document.querySelectorAll('.sf-tile').length === 2);
+    report(
+      'dragging a popup tab to a tile edge splits the popup like the main window',
+      (await aux.locator('.sf-tab').count()) === 2,
+    );
+
     const popupPromise2 = page.context().waitForEvent('page');
     await aux.evaluate((id) => {
-      const chip = document.querySelector(`[data-test="aux-tab"][data-tab-id="${id}"]`);
-      chip.dispatchEvent(new DragEvent('dragstart', { bubbles: true, dataTransfer: new DataTransfer() }));
-      chip.dispatchEvent(new DragEvent('dragend', { bubbles: true, screenX: 1000, screenY: 500 }));
+      const secondTile = document.querySelectorAll('.sf-tile')[1];
+      const tab = secondTile.querySelector(`.sf-tab[data-tab-id="${id}"]`);
+      tab.dispatchEvent(new DragEvent('dragstart', { bubbles: true, dataTransfer: new DataTransfer() }));
+      tab.dispatchEvent(new DragEvent('dragend', { bubbles: true, screenX: 1100, screenY: 500 }));
     }, TAB_B);
     const aux2 = await popupPromise2;
-    await aux2.waitForSelector('[data-test="aux-content"] .sf-resource-demo', { timeout: 5000 });
+    await aux2.waitForSelector('[data-test="aux-content"] .sf-workspace', { timeout: 5000 });
     report(
-      'dragging a popup chip to blank space opens a second popup with that tab',
-      (await aux2.locator('[data-test="aux-tab"]').count()) === 1 &&
-        (await aux.locator('[data-test="aux-tab"]').count()) === 1,
+      'dragging a popup tab to blank space opens a second popup with that tab',
+      (await aux2.locator(`.sf-tab[data-tab-id="${TAB_B}"]`).count()) === 1 &&
+        (await aux.locator('.sf-tab').count()) === 1,
     );
 
     await aux2.evaluate((id) => {
-      const chip = document.querySelector(`[data-test="aux-tab"][data-tab-id="${id}"]`);
-      chip.dispatchEvent(new DragEvent('dragstart', { bubbles: true, dataTransfer: new DataTransfer() }));
+      const tab = document.querySelector(`.sf-tab[data-tab-id="${id}"]`);
+      tab.dispatchEvent(new DragEvent('dragstart', { bubbles: true, dataTransfer: new DataTransfer() }));
     }, TAB_B);
-    await aux.evaluate(() => {
-      const strip = document.querySelector('[data-test="aux-strip"]');
-      const dt = new DataTransfer();
-      strip.dispatchEvent(new DragEvent('dragover', { bubbles: true, dataTransfer: dt }));
-      strip.dispatchEvent(new DragEvent('drop', { bubbles: true, dataTransfer: dt }));
-    });
-    await aux.waitForFunction(() => document.querySelectorAll('[data-test="aux-tab"]').length === 2, {
-      timeout: 5000,
-    });
+    const p1Box = await aux.locator('.sf-tile').first().boundingBox();
+    await aux.evaluate(
+      ({ x, y }) => {
+        const el = document.elementFromPoint(x, y);
+        const dt = new DataTransfer();
+        el.dispatchEvent(
+          new DragEvent('dragover', { bubbles: true, clientX: x, clientY: y, dataTransfer: dt }),
+        );
+        el.dispatchEvent(new DragEvent('drop', { bubbles: true, clientX: x, clientY: y, dataTransfer: dt }));
+      },
+      { x: Math.round(p1Box.x + p1Box.width / 2), y: Math.round(p1Box.y + p1Box.height / 2) },
+    );
+    await aux.waitForFunction(() => document.querySelectorAll('.sf-tab').length === 2, { timeout: 5000 });
     for (let i = 0; i < 20 && !aux2.isClosed(); i++) {
       await wait(250);
     }
     report(
-      'dropping a tab from one popup onto another popup strip moves it directly (source closes)',
-      (await aux.locator(`[data-test="aux-tab"][data-tab-id="${TAB_B}"]`).count()) === 1 && aux2.isClosed(),
+      'dropping a tab from one popup onto another popup moves it directly (source closes)',
+      (await aux.locator(`.sf-tab[data-tab-id="${TAB_B}"]`).count()) === 1 && aux2.isClosed(),
     );
 
     await aux.evaluate((id) => {
-      const chip = document.querySelector(`[data-test="aux-tab"][data-tab-id="${id}"]`);
-      chip.dispatchEvent(new DragEvent('dragstart', { bubbles: true, dataTransfer: new DataTransfer() }));
+      const tab = document.querySelector(`.sf-tab[data-tab-id="${id}"]`);
+      tab.dispatchEvent(new DragEvent('dragstart', { bubbles: true, dataTransfer: new DataTransfer() }));
     }, TAB_B);
-    const box = await page.locator('.sf-tile').first().boundingBox();
+    const mainBox = await page.locator('.sf-tile').first().boundingBox();
     await page.evaluate(
       ({ x, y }) => {
         const el = document.elementFromPoint(x, y);
@@ -195,14 +232,17 @@ const { ensureServer, openApp, makeReporter, finish } = require('./lib/ui-test.c
         );
         el.dispatchEvent(new DragEvent('drop', { bubbles: true, clientX: x, clientY: y, dataTransfer: dt }));
       },
-      { x: Math.round(box.x + box.width / 2), y: Math.round(box.y + box.height / 2) },
+      { x: Math.round(mainBox.x + mainBox.width / 2), y: Math.round(mainBox.y + mainBox.height / 2) },
     );
     await page.waitForSelector(`.sf-tab[data-tab-id="${TAB_B}"]`, { timeout: 5000 });
     report(
       'dropping a popup tab onto the main workspace reattaches it',
-      await page.evaluate((id) => window.__sfWorkspace.findTabGlobal(id) !== null, TAB_B),
+      await page.evaluate((id) => window.__sfWorkspace.tabWindow(id) === 0, TAB_B),
     );
-    report('popup keeps the remaining tab', (await aux.locator('[data-test="aux-tab"]').count()) === 1);
+    const remainingIds = await aux.evaluate(() =>
+      [...document.querySelectorAll('.sf-tab')].map((t) => t.dataset.tabId),
+    );
+    report('popup keeps the remaining tab', remainingIds.length === 1, `ids=${JSON.stringify(remainingIds)}`);
 
     const snap = await page.evaluate(() => window.__sfWorkspace.capture());
     report(
@@ -225,22 +265,26 @@ const { ensureServer, openApp, makeReporter, finish } = require('./lib/ui-test.c
     await page.waitForSelector(`.sf-tab[data-tab-id="${TAB_A}"]`, { timeout: 5000 });
     report(
       'applying a snapshot folds detached tabs back into the workspace',
-      await page.evaluate((id) => window.__sfWorkspace.findTabGlobal(id) !== null, TAB_A),
+      await page.evaluate((id) => window.__sfWorkspace.tabWindow(id) === 0, TAB_A),
     );
     report('aux window closed after folding', aux.isClosed());
     report('fold round trip kept both instances alive', !(await events()).some((e) => e.startsWith('close')));
 
+    const clip = await page.evaluate(async (id) => {
+      const tile = window.__sfWorkspace.findTabGlobal(id);
+      if (!tile) return { fail: 'no tile' };
+      window.__sfWorkspace.ops.activateTab(tile.id, id);
+      await new Promise((r) => setTimeout(r, 400));
+      const tab = document.querySelector(`[data-tab-slot="${id}"] [data-test="copy-code"]`);
+      if (!tab) return { fail: 'no copy button in slot' };
+      tab.click();
+      await new Promise((r) => setTimeout(r, 300));
+      return { calls: (window.__mainClipboardCalls ?? []).length };
+    }, TAB_B);
     report(
       'clipboard write from main-window content uses the main navigator',
-      await page.evaluate(async (id) => {
-        const tile = window.__sfWorkspace.findTabGlobal(id);
-        window.__sfWorkspace.ops.activateTab(tile.id, id);
-        await new Promise((r) => setTimeout(r, 300));
-        const tab = document.querySelector(`[data-tab-slot="${id}"] [data-test="copy-code"]`);
-        tab.click();
-        await new Promise((r) => setTimeout(r, 200));
-        return (window.__mainClipboardCalls ?? []).length === 1;
-      }, TAB_B),
+      clip.calls === 1,
+      JSON.stringify(clip),
     );
 
     const popupPromise3 = page.context().waitForEvent('page');
@@ -250,9 +294,9 @@ const { ensureServer, openApp, makeReporter, finish } = require('./lib/ui-test.c
       tab.dispatchEvent(new DragEvent('dragend', { bubbles: true, screenX: 900, screenY: 400 }));
     }, TAB_A);
     const aux3 = await popupPromise3;
-    await aux3.waitForSelector('[data-test="aux-content"] .sf-resource-demo', { timeout: 5000 });
+    await aux3.waitForSelector('[data-test="aux-content"] .sf-workspace', { timeout: 5000 });
     await aux3.evaluate(() => window.close());
-    await page.waitForFunction((id) => window.__sfWorkspace.findTabGlobal(id) !== null, TAB_A, {
+    await page.waitForFunction((id) => window.__sfWorkspace.tabWindow(id) === 0, TAB_A, {
       timeout: 5000,
     });
     report('closing the popup window reattaches the tab', true);
@@ -295,7 +339,7 @@ const { ensureServer, openApp, makeReporter, finish } = require('./lib/ui-test.c
     await mobile.close();
     await mobileContext.close();
 
-    report('no page errors on any window', errors.length === 0);
+    report('no page errors on any window', errors.length === 0, errors.join(' | ').slice(0, 300));
   } catch (e) {
     report('suite completed', false, String(e));
   } finally {

@@ -275,10 +275,10 @@ function onDrop(e: DragEvent) {
   if (!api.dnd.dragging) return;
 
   const { tabId, sourceTileId, tileId, zone, index, fromIndex } = api.dnd;
-  if (sourceTileId.startsWith('aux:')) {
+  if (api.tabWindow(tabId) !== api.ownWindowId) {
     api.endDrag();
     if (!tabId || !tileId) return;
-    api.ops.moveAuxTabIntoWorkspace(tabId, tileId, zone, index);
+    api.ops.moveTabIntoWindow(tabId, api.ownWindowId, tileId, zone, index);
     return;
   }
   api.endDrag();

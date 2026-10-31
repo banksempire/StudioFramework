@@ -22,6 +22,7 @@ import Panel from './components/Panel.vue';
 import PanelMissing from './components/PanelMissing.vue';
 import Workspace from './components/Workspace.vue';
 import TabContentHosts from './components/TabContentHosts.vue';
+import AuxWorkspaceView from './components/AuxWorkspaceView.vue';
 import StatusBar from './components/StatusBar.vue';
 import SvgIcon from './components/SvgIcon.vue';
 import {
@@ -496,6 +497,7 @@ function onPanelAction(a: PanelAction) {
 
     <StatusBar :left="L.status.left" :right="L.status.right" />
     <TabContentHosts />
+    <AuxWorkspaceView v-for="wid in api.auxWindowIds" :key="wid" :window-id="wid" />
     <slot name="overlay" />
   </div>
 </template>

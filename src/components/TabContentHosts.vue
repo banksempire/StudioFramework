@@ -33,9 +33,9 @@ function targetFor(id: string): HTMLElement {
 }
 
 function hostMobile(id: string): boolean {
-  const slot = ws.tabSlots.get(id);
-  if (slot?.tileId.startsWith('aux:')) {
-    return ws.auxMobile.get(Number(slot.tileId.slice(4))) ?? false;
+  const windowId = ws.detachedTabs.get(id);
+  if (windowId !== undefined) {
+    return ws.auxMobile.get(windowId) ?? false;
   }
   return mainMobile.value;
 }

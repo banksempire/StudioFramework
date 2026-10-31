@@ -10,9 +10,6 @@ export interface AuxWindowHandle {
   readonly id: number;
   readonly window: Window;
   readonly document: Document;
-  readonly strip: HTMLElement;
-  readonly chips: HTMLElement;
-  readonly tail: HTMLElement;
   readonly content: HTMLElement;
   isMobile(): boolean;
   onMobileChange(listener: () => void): () => void;
@@ -120,18 +117,10 @@ export function openAuxWindow(options: AuxWindowOptions): AuxWindowHandle | null
 
   const shell = document.createElement('div');
   shell.className = 'sf-root sf-overlay-root sf-aux-shell';
-  const strip = document.createElement('div');
-  strip.className = 'sf-aux-strip';
-  strip.setAttribute('data-test', 'aux-strip');
-  const chips = document.createElement('div');
-  chips.className = 'sf-aux-chips';
-  const tail = document.createElement('div');
-  tail.className = 'sf-aux-tail';
-  strip.append(chips, tail);
   const content = document.createElement('div');
   content.className = 'sf-aux-content';
   content.setAttribute('data-test', 'aux-content');
-  shell.append(strip, content);
+  shell.append(content);
   doc.body.appendChild(shell);
 
   const mobileListeners = new Set<() => void>();
@@ -162,9 +151,6 @@ export function openAuxWindow(options: AuxWindowOptions): AuxWindowHandle | null
     id,
     window: popup,
     document: doc,
-    strip,
-    chips,
-    tail,
     content,
     isMobile: () => mobileMq.matches,
     onMobileChange(listener: () => void) {

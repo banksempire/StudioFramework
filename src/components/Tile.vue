@@ -200,6 +200,10 @@ function onTabDragEnd(e: DragEvent, tabId: string) {
   if (isAnyWindowDraggedOver()) return;
   if (mainMobile?.value) return;
   if (source !== props.tile.id) return;
+  if (ws.isTabDetached(tabId)) {
+    void ws.ops.moveDetachedTab(tabId, undefined, { screenX: e.screenX, screenY: e.screenY });
+    return;
+  }
   if (ws.findTabGlobal(tabId) === null) return;
   void ws.ops.detachTab(tabId, {
     left: e.screenX ? Math.max(0, e.screenX - 80) : undefined,
