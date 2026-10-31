@@ -11,7 +11,7 @@ const { ensureServer, openApp, makeReporter, finish } = require('./lib/ui-test.c
     p.on('pageerror', (e) => errors.push(`pageerror: ${e.message}`));
     p.on('console', (m) => {
       if (m.type() === 'error') errors.push(`console: ${m.text()}`);
-      if (m.text().includes('drop-dbg')) console.log('CONSOLE:', m.text());
+      if (m.text().includes('-dbg')) console.log('CONSOLE:', m.text());
     });
   }
   watchPage(page);
@@ -60,6 +60,7 @@ const { ensureServer, openApp, makeReporter, finish } = require('./lib/ui-test.c
     }, TAB_A);
     const aux = await popupPromise;
     await aux.waitForSelector('[data-test="aux-content"] .sf-workspace', { timeout: 5000 });
+    console.log('[step-dbg] line 62 done');
     report('dragging a tab out to blank space opens a popup with a real workspace', true);
     report(
       'popup hosts the dragged tab with its accumulated state (res-b)',
@@ -94,6 +95,7 @@ const { ensureServer, openApp, makeReporter, finish } = require('./lib/ui-test.c
 
     await aux.click('[data-test="show-dialog"]');
     await aux.waitForSelector('[data-test="demo-dialog-body"]', { timeout: 5000 });
+    console.log('[step-dbg] line 96 done');
     report(
       'dialog opened from the popup renders inside the popup document',
       (await aux.locator('.sf-dialog-backdrop').count()) === 1 &&
@@ -101,6 +103,7 @@ const { ensureServer, openApp, makeReporter, finish } = require('./lib/ui-test.c
     );
     await aux.click('.sf-dialog-close');
     await aux.waitForSelector('.sf-dialog-backdrop', { state: 'detached', timeout: 5000 });
+    console.log('[step-dbg] line 103 done');
     report('dialog closes inside the popup', true);
 
     await openResourceTab(TAB_B, 'res-a');
@@ -122,6 +125,7 @@ const { ensureServer, openApp, makeReporter, finish } = require('./lib/ui-test.c
       { x: Math.round(tileBox.x + tileBox.width / 2), y: Math.round(tileBox.y + tileBox.height / 2) },
     );
     await aux.waitForSelector(`.sf-tab[data-tab-id="${TAB_B}"]`, { timeout: 5000 });
+    console.log('[step-dbg] line 124 done');
     const popupTabsAfterDrop = await aux.locator('.sf-tab').count();
     report('popup hosts both tabs after the drop', popupTabsAfterDrop === 2);
     report(
@@ -207,6 +211,7 @@ const { ensureServer, openApp, makeReporter, finish } = require('./lib/ui-test.c
     }, TAB_B);
     const aux2 = await popupPromise2;
     await aux2.waitForSelector('[data-test="aux-content"] .sf-workspace', { timeout: 5000 });
+    console.log('[step-dbg] line 209 done');
     report(
       'dragging a popup tab to blank space opens a second popup with that tab',
       (await aux2.locator(`.sf-tab[data-tab-id="${TAB_B}"]`).count()) === 1 &&
@@ -230,6 +235,7 @@ const { ensureServer, openApp, makeReporter, finish } = require('./lib/ui-test.c
       { x: Math.round(p1Box.x + p1Box.width / 2), y: Math.round(p1Box.y + p1Box.height / 2) },
     );
     await aux.waitForFunction(() => document.querySelectorAll('.sf-tab').length === 2, { timeout: 5000 });
+    console.log('[step-dbg] line 232 done');
     for (let i = 0; i < 20 && !aux2.isClosed(); i++) {
       await wait(250);
     }
@@ -255,6 +261,7 @@ const { ensureServer, openApp, makeReporter, finish } = require('./lib/ui-test.c
       { x: Math.round(mainBox.x + mainBox.width / 2), y: Math.round(mainBox.y + mainBox.height / 2) },
     );
     await page.waitForSelector(`.sf-tab[data-tab-id="${TAB_B}"]`, { timeout: 5000 });
+    console.log('[step-dbg] line 257 done');
     report(
       'dropping a popup tab onto the main workspace reattaches it',
       await page.evaluate((id) => window.__sfWorkspace.tabWindow(id) === 0, TAB_B),
@@ -283,6 +290,7 @@ const { ensureServer, openApp, makeReporter, finish } = require('./lib/ui-test.c
       window.__sfWorkspace.apply(JSON.parse(localStorage.getItem('sf.workspace.layout')));
     });
     await page.waitForSelector(`.sf-tab[data-tab-id="${TAB_A}"]`, { timeout: 5000 });
+    console.log('[step-dbg] line 285 done');
     report(
       'applying a snapshot folds detached tabs back into the workspace',
       await page.evaluate((id) => window.__sfWorkspace.tabWindow(id) === 0, TAB_A),
@@ -315,6 +323,7 @@ const { ensureServer, openApp, makeReporter, finish } = require('./lib/ui-test.c
     }, TAB_A);
     const aux3 = await popupPromise3;
     await aux3.waitForSelector('[data-test="aux-content"] .sf-workspace', { timeout: 5000 });
+    console.log('[step-dbg] line 317 done');
     await aux3.evaluate(() => window.close());
     await page.waitForFunction((id) => window.__sfWorkspace.tabWindow(id) === 0, TAB_A, {
       timeout: 5000,

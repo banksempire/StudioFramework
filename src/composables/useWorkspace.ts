@@ -73,11 +73,11 @@ export interface AuxDetachOptions {
   index?: number;
 }
 
-function dirOf(zone: DropZone): SplitDir {
+export function dirOf(zone: DropZone): SplitDir {
   return zone === 'left' || zone === 'right' ? 'row' : 'column';
 }
 
-function sideOf(zone: DropZone): 'start' | 'end' {
+export function sideOf(zone: DropZone): 'start' | 'end' {
   return zone === 'left' || zone === 'top' ? 'start' : 'end';
 }
 
@@ -526,7 +526,8 @@ export function useWorkspace(def: WorkspaceDef, opts?: { mobile?: Ref<boolean> }
     }
     const tile = focusedNode ? findTile(focusedNode, tree.focusedTileId) : null;
     const def = tile ? tabDefs[tile.activeId] : undefined;
-    if (def?.label) handle.document.title = def.label;
+    const title = def?.label;
+    if (title && handle.document.title !== title) handle.document.title = title;
   }
 
   watch(
