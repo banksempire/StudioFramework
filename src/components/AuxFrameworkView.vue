@@ -1,10 +1,11 @@
 <script setup lang="ts">
-import { createApp, onMounted, onUnmounted, ref } from 'vue';
-import { useWorkspaceContext } from '../composables/useWorkspace';
+import { createApp, inject, onMounted, onUnmounted, ref } from 'vue';
+import { kLayout, useWorkspaceContext } from '../composables/useWorkspace';
 import Framework from '../Framework.vue';
 
 const props = defineProps<{ windowId: number }>();
 const ws = useWorkspaceContext();
+const layout = inject(kLayout);
 const host = ref<HTMLElement | null>(null);
 let app: ReturnType<typeof createApp> | null = null;
 
@@ -14,6 +15,7 @@ onMounted(() => {
   if (!el || !viewport) return;
   try {
     app = createApp(Framework, {
+      layout: layout,
       api: ws.auxApi(props.windowId),
       viewportWindow: viewport,
       statusBar: false,

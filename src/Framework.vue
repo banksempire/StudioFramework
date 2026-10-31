@@ -33,7 +33,14 @@ import {
 import { readUiNumber, readUiString, writeUiValue, applyUiValues, readAllUiValues, uiEpoch } from './uiState';
 import { findTile } from './workspace/tree';
 import { installDebugLogCapture } from './debug/debugLog';
-import { kIsMobile, kMobilePanelDismiss, kTitleBarMenus, kWorkspace, useWorkspace  } from './composables/useWorkspace';
+import {
+  kIsMobile,
+  kLayout,
+  kMobilePanelDismiss,
+  kTitleBarMenus,
+  kWorkspace,
+  useWorkspace,
+} from './composables/useWorkspace';
 
 const props = withDefaults(defineProps<{
   layout?: LayoutDefinition;
@@ -67,6 +74,7 @@ provide(kIsMobile, isMobile);
 
 const api = props.api ?? useWorkspace(L.workspace, { mobile: isMobile });
 provide(kWorkspace, api);
+provide(kLayout, L);
 provide(kTitleBarMenus, { menus: L.menu, onAction: onMenuAction });
 onMounted(() => emit('workspace-ready', api));
 

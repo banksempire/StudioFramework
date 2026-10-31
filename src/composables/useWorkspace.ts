@@ -1,5 +1,5 @@
 import { type InjectionKey, inject, nextTick, type Ref, reactive, shallowReactive, watch } from 'vue';
-import type { MenuNodeDef, WorkspaceDef, WorkspaceTabDef } from '../types/layout';
+import type { LayoutDefinition, MenuNodeDef, WorkspaceDef, WorkspaceTabDef } from '../types/layout';
 import { type AuxWindowHandle, openAuxWindow } from '../workspace/auxWindow';
 import {
   captureSnapshot,
@@ -208,6 +208,8 @@ export interface TitleBarMenusApi {
 export const kTitleBarMenus: InjectionKey<TitleBarMenusApi> = Symbol('sf.titleBarMenus');
 
 export const kIsMobile: InjectionKey<Ref<boolean>> = Symbol('sf.isMobile');
+
+export const kLayout: InjectionKey<LayoutDefinition> = Symbol('sf.layout');
 
 export const kMobilePanelDismiss: InjectionKey<() => void> = Symbol('sf.mobilePanelDismiss');
 
