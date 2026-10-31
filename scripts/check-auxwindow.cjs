@@ -71,6 +71,26 @@ const { ensureServer, openApp, makeReporter, finish } = require('./lib/ui-test.c
       (await events()).filter((e) => e.startsWith('open')).length === 1 &&
         !(await events()).some((e) => e.startsWith('close')),
     );
+    report(
+      'popup shell: menu bar, docker, panels, no status bar',
+      (await aux.locator('.sf-menu-bar').count()) === 1 &&
+        (await aux.locator('.sf-docker').count()) === 1 &&
+        (await aux.locator('.sf-panel').count()) >= 1 &&
+        (await aux.locator('.sf-status-bar').count()) === 0,
+    );
+    await aux.setViewportSize({ width: 375, height: 700 });
+    await aux.waitForFunction(
+      () =>
+        document.querySelectorAll('.sf-root--mobile').length >= 1 &&
+        !!document.querySelector('.sf-mobile-tab-label'),
+      { timeout: 5000 },
+    );
+    report('narrow popup switches to the mobile layout', true);
+    await aux.setViewportSize({ width: 960, height: 720 });
+    await aux.waitForFunction(() => document.querySelectorAll('.sf-root--mobile').length === 0, {
+      timeout: 5000,
+    });
+    report('wide popup switches back to the desktop layout', true);
 
     await aux.click('[data-test="show-dialog"]');
     await aux.waitForSelector('[data-test="demo-dialog-body"]', { timeout: 5000 });

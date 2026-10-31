@@ -22,7 +22,7 @@ import Panel from './components/Panel.vue';
 import PanelMissing from './components/PanelMissing.vue';
 import Workspace from './components/Workspace.vue';
 import TabContentHosts from './components/TabContentHosts.vue';
-import AuxWorkspaceView from './components/AuxWorkspaceView.vue';
+import AuxFrameworkView from './components/AuxFrameworkView.vue';
 import StatusBar from './components/StatusBar.vue';
 import SvgIcon from './components/SvgIcon.vue';
 import {
@@ -37,12 +37,23 @@ import { kIsMobile, kMobilePanelDismiss, kTitleBarMenus, kWorkspace, useWorkspac
 
 const props = withDefaults(defineProps<{
   layout?: LayoutDefinition;
+  api?: WorkspaceApi;
+  statusBar?: boolean;
+  hostTabs?: boolean;
+  persistUiState?: boolean;
+  viewportWindow?: Window;
 }>(), {
   layout: () => loadLayout(),
+  statusBar: true,
+  hostTabs: true,
+  persistUiState: true,
 });
 const L = props.layout;
+const viewport = props.viewportWindow ?? window;
+const isMainViewport = viewport === window;
+const persistUi = props.persistUiState;
 
-installDebugLogCapture();
+if (isMainViewport) installDebugLogCapture();
 
 const emit = defineEmits<{
   action: [payload: FrameworkAction];
@@ -51,9 +62,10 @@ const emit = defineEmits<{
 
 
 const MOBILE_BREAKPOINT = 500;
-const isMobile = ref(window.innerWidth < MOBILE_BREAKPOINT);
+const isMobile = ref(viewport.innerWidth < MOBILE_BREAKPOINT);
 provide(kIsMobile, isMobile);
-const api = useWorkspace(L.workspace, { mobile: isMobile });
+
+const api = props.api ?? useWorkspace(L.workspace, { mobile: isMobile });
 provide(kWorkspace, api);
 provide(kTitleBarMenus, { menus: L.menu, onAction: onMenuAction });
 onMounted(() => emit('workspace-ready', api));
@@ -62,7 +74,9 @@ const persistedApp = readUiString('panel.activeApp');
 const activeDockerApp = ref(
   persistedApp && L.docker.some((d) => d.id === persistedApp) ? persistedApp : (L.docker[0]?.id ?? ''),
 );
-watch(activeDockerApp, (id) => writeUiValue('panel.activeApp', id));
+watch(activeDockerApp, (id) => {
+  if (persistUi) writeUiValue('panel.activeApp', id);
+});
 const leftPanelVisible = ref(true);
 const dockerPanelVisible = ref(true);
 const savedPanelState = ref(true);
@@ -92,19 +106,21 @@ function onStatusSettle(show: boolean) {
   statusReveal.value = show ? 1 : 0;
 }
 
-api.setPanelStateProvider({
-  read: () => ({
-    left: leftPanelVisible.value,
-    docker: dockerPanelVisible.value,
-    right: rightPanelVisible.value,
-  }),
-  apply: (panels) => {
-    leftPanelVisible.value = panels.left;
-    dockerPanelVisible.value = panels.docker;
-    rightPanelVisible.value = panels.right;
-    void nextTick(() => onWindowResize(true));
-  },
-});
+if (persistUi) {
+  api.setPanelStateProvider({
+    read: () => ({
+      left: leftPanelVisible.value,
+      docker: dockerPanelVisible.value,
+      right: rightPanelVisible.value,
+    }),
+    apply: (panels) => {
+      leftPanelVisible.value = panels.left;
+      dockerPanelVisible.value = panels.docker;
+      rightPanelVisible.value = panels.right;
+      void nextTick(() => onWindowResize(true));
+    },
+  });
+}
 
 watch(uiEpoch, () => {
   leftPanelWidth.value = restorePanelWidth('panel.width.left');
@@ -114,10 +130,12 @@ watch(uiEpoch, () => {
   void nextTick(() => onWindowResize(true));
 });
 
-api.setUiStateProvider({
-  read: () => readAllUiValues(),
-  apply: (values) => applyUiValues(values),
-});
+if (persistUi) {
+  api.setUiStateProvider({
+    read: () => readAllUiValues(),
+    apply: (values) => applyUiValues(values),
+  });
+}
 
 
 const MIN_WORKSPACE_WIDTH = 640;
@@ -141,7 +159,7 @@ function calcWorkspaceWidth(ignoreAutoHidden: boolean): number {
     && (ignoreAutoHidden || !leftAutoHidden.value);
   const rightOn = rightPanelVisible.value
     && (ignoreAutoHidden || !rightAutoHidden.value);
-  return window.innerWidth - DOCKER_WIDTH
+  return viewport.innerWidth - DOCKER_WIDTH
     - (leftOn ? leftPanelWidth.value : 0)
     - (rightOn ? rightPanelWidth.value : 0);
 }
@@ -151,7 +169,7 @@ let autoHideDecidedAt: number | null = null;
 
 function onWindowResize(force = false) {
   if (isMobile.value) return;
-  const w = window.innerWidth;
+  const w = viewport.innerWidth;
   const wAll = calcWorkspaceWidth(true);
   if (wAll >= MIN_WORKSPACE_WIDTH) {
     autoHideDecidedAt = w;
@@ -198,20 +216,20 @@ function onPanelResize(side: 'left' | 'right', newWidth: number) {
 }
 
 const onResize = () => {
-  isMobile.value = window.innerWidth < MOBILE_BREAKPOINT;
+  isMobile.value = viewport.innerWidth < MOBILE_BREAKPOINT;
   onWindowResize();
 };
 onMounted(() => {
   onWindowResize();
-  window.addEventListener('resize', onResize);
+  viewport.addEventListener('resize', onResize);
 });
-onUnmounted(() => window.removeEventListener('resize', onResize));
+onUnmounted(() => viewport.removeEventListener('resize', onResize));
 
 const standaloneMq = window.matchMedia('(display-mode: standalone)');
 const syncStandalone = () => {
   const active =
     standaloneMq.matches || (window.navigator as { standalone?: boolean }).standalone === true;
-  document.documentElement.classList.toggle('sf-standalone', active);
+  viewport.document.documentElement.classList.toggle('sf-standalone', active);
 };
 onMounted(() => {
   standaloneMq.addEventListener('change', syncStandalone);
@@ -495,9 +513,11 @@ function onPanelAction(a: PanelAction) {
       </div>
     </template>
 
-    <StatusBar :left="L.status.left" :right="L.status.right" />
-    <TabContentHosts />
-    <AuxWorkspaceView v-for="wid in api.auxWindowIds" :key="wid" :window-id="wid" />
+    <StatusBar v-if="statusBar" :left="L.status.left" :right="L.status.right" />
+    <TabContentHosts v-if="hostTabs" />
+    <template v-if="isMainViewport">
+      <AuxFrameworkView v-for="wid in api.auxWindowIds" :key="wid" :window-id="wid" />
+    </template>
     <slot name="overlay" />
   </div>
 </template>

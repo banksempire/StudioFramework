@@ -87,6 +87,8 @@ interface AuxTreeState {
   focusedTileId: string;
 }
 
+const EMPTY_AUX_TREE: AuxTreeState = { roots: [], rootDir: null, focusedTileId: '' };
+
 export interface DndRect {
   x: number;
   y: number;
@@ -537,6 +539,7 @@ export function useWorkspace(def: WorkspaceDef, opts?: { mobile?: Ref<boolean> }
     if (auxTabsOf(windowId).length > 0) return;
     const handle = auxWindows.get(windowId);
     auxTrees.delete(windowId);
+    auxApis.delete(windowId);
     if (handle) void nextTick().then(() => handle.close());
   }
 
@@ -810,11 +813,7 @@ export function useWorkspace(def: WorkspaceDef, opts?: { mobile?: Ref<boolean> }
   function auxApi(windowId: number): WorkspaceApi {
     const cached = auxApis.get(windowId);
     if (cached) return cached;
-    const treeRef = () => {
-      const t = auxTrees.get(windowId);
-      if (!t) throw new Error(`aux workspace ${windowId} is closed`);
-      return t;
-    };
+    const treeRef = () => auxTrees.get(windowId) ?? EMPTY_AUX_TREE;
     let tileElsForWindow = auxTileEls.get(windowId);
     if (!tileElsForWindow) {
       tileElsForWindow = new Map<string, HTMLElement>();
