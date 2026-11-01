@@ -223,12 +223,10 @@ function onDragOver(e: DragEvent) {
 
   if (zone === 'center') {
     dnd.preview = null;
-    const glow = rectToLocal(hit.rect, origin);
-    if (wsRect) glow.radius = radiusStr(cornerPx(hit.rect, wsRect, rightSeam, edgeR));
-    dnd.glow = glow;
     const tile = api.findTileGlobal(hit.id);
     const tabCount = tile ? tile.tabs.length : 0;
     if (inStrip && hit.stripR) {
+      dnd.glow = null;
       let idx = 0;
       for (const tr of hit.tabRects) {
         if (e.clientX > tr.left + tr.width / 2) idx += 1;
@@ -237,6 +235,9 @@ function onDragOver(e: DragEvent) {
       const left = idx < hit.tabRects.length ? hit.tabRects[idx].left : hit.stripR.right - 1;
       dnd.indicator = { x: left - origin.x, y: hit.stripR.top - origin.y, h: hit.stripR.height };
     } else {
+      const glow = rectToLocal(hit.rect, origin);
+      if (wsRect) glow.radius = radiusStr(cornerPx(hit.rect, wsRect, rightSeam, edgeR));
+      dnd.glow = glow;
       dnd.index = tabCount;
       dnd.indicator = null;
     }
