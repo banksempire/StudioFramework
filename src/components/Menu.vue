@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed, inject, nextTick, onMounted, onUnmounted, type Ref, ref, toRaw, watch } from 'vue';
 import { kIsMobile } from '../composables/useWorkspace';
-import { hostViewOf, overlayRootOf } from '../lib/overlayHost';
+import { createViewListenerBinder, hostViewOf, overlayRootOf } from '../lib/overlayHost';
 import type { MenuNodeDef } from '../types/layout';
 import Icon from './Icon.vue';
 import SvgIcon from './SvgIcon.vue';
@@ -116,20 +116,21 @@ const regionEl = ref<HTMLElement | null>(null);
 const popStyle = ref({ left: '0px', top: '0px' });
 
 const sheetTarget = ref<HTMLElement | 'body'>('body');
-let boundView: Window | null = null;
+const docBinding = createViewListenerBinder(
+  (view) => {
+    view.addEventListener('mousedown', onDocDown);
+    view.addEventListener('keydown', onDocKey);
+  },
+  (view) => {
+    view.removeEventListener('mousedown', onDocDown);
+    view.removeEventListener('keydown', onDocKey);
+  },
+);
 function bindDocListeners() {
-  const view = hostViewOf(anchorEl.value);
-  if (boundView === view) return;
-  unbindDocListeners();
-  boundView = view;
-  boundView.addEventListener('mousedown', onDocDown);
-  boundView.addEventListener('keydown', onDocKey);
+  docBinding.sync(anchorEl.value);
 }
 function unbindDocListeners() {
-  if (!boundView) return;
-  boundView.removeEventListener('mousedown', onDocDown);
-  boundView.removeEventListener('keydown', onDocKey);
-  boundView = null;
+  docBinding.release();
 }
 function syncOverlayTarget() {
   sheetTarget.value = overlayRootOf(anchorEl.value);

@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed, nextTick, onMounted, onUnmounted, ref, watch } from 'vue';
-import { hostViewOf, overlayRootOf } from '../lib/overlayHost';
+import { createViewListenerBinder, hostViewOf, overlayRootOf } from '../lib/overlayHost';
 import type { PopupOption } from '../types/popup';
 
 const props = withDefaults(
@@ -81,21 +81,23 @@ async function positionPopup() {
   popStyle.value = { left: `${left}px`, top: `${top}px`, width: `${width}px`, maxHeight: `${maxH}px` };
 }
 
-let boundView: Window | null = null;
+const viewTracking = createViewListenerBinder(
+  (view) => {
+    view.addEventListener('resize', positionPopup);
+    view.addEventListener('scroll', positionPopup, true);
+  },
+  (view) => {
+    view.removeEventListener('resize', positionPopup);
+    view.removeEventListener('scroll', positionPopup, true);
+  },
+);
+
 function startTracking() {
-  const view = hostViewOf(boxEl.value);
-  if (boundView === view) return;
-  stopTracking();
-  boundView = view;
-  boundView.addEventListener('resize', positionPopup);
-  boundView.addEventListener('scroll', positionPopup, true);
+  viewTracking.sync(boxEl.value);
 }
 
 function stopTracking() {
-  if (!boundView) return;
-  boundView.removeEventListener('resize', positionPopup);
-  boundView.removeEventListener('scroll', positionPopup, true);
-  boundView = null;
+  viewTracking.release();
 }
 
 watch(open, (v) => {

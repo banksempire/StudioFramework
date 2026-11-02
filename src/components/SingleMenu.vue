@@ -1,6 +1,6 @@
 <script setup lang="ts" generic="T">
 import { computed, inject, nextTick, onMounted, onUnmounted, type Ref, ref, watch } from 'vue';
-import { hostViewOf, overlayRootOf } from '../lib/overlayHost';
+import { clampIntoView, createViewListenerBinder, hostViewOf, overlayRootOf } from '../lib/overlayHost';
 import type { SingleMenuOption } from '../types/singleMenu';
 import Icon from './Icon.vue';
 
@@ -81,20 +81,21 @@ const smEl = ref<HTMLElement | null>(null);
 const menuEl = ref<HTMLElement | null>(null);
 const menuStyle = ref<{ left: string; top: string }>({ left: '0px', top: '0px' });
 
-let boundView: Window | null = null;
+const docBinding = createViewListenerBinder(
+  (view) => {
+    view.addEventListener('mousedown', onDocDown);
+    view.addEventListener('keydown', onDocKey);
+  },
+  (view) => {
+    view.removeEventListener('mousedown', onDocDown);
+    view.removeEventListener('keydown', onDocKey);
+  },
+);
 function bindDocListeners() {
-  const view = hostViewOf(smEl.value);
-  if (boundView === view) return;
-  unbindDocListeners();
-  boundView = view;
-  boundView.addEventListener('mousedown', onDocDown);
-  boundView.addEventListener('keydown', onDocKey);
+  docBinding.sync(smEl.value);
 }
 function unbindDocListeners() {
-  if (!boundView) return;
-  boundView.removeEventListener('mousedown', onDocDown);
-  boundView.removeEventListener('keydown', onDocKey);
-  boundView = null;
+  docBinding.release();
 }
 
 function onCtx(e: MouseEvent, row: RowView<T>) {
@@ -112,10 +113,13 @@ watch(ctxItem, async (v) => {
   const el = menuEl.value;
   if (!el) return;
   const view = hostViewOf(smEl.value);
-  const w = el.offsetWidth || 200;
-  const h = el.offsetHeight || 80;
-  const left = Math.max(4, Math.min(ctxX.value, view.innerWidth - w - 4));
-  const top = Math.max(4, Math.min(ctxY.value, view.innerHeight - h - 4));
+  const { left, top } = clampIntoView(
+    view,
+    ctxX.value,
+    ctxY.value,
+    el.offsetWidth || 200,
+    el.offsetHeight || 80,
+  );
   menuStyle.value = { left: `${left}px`, top: `${top}px` };
 });
 

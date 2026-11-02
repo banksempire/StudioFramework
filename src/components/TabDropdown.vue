@@ -1,6 +1,6 @@
 <script setup lang="ts">
-import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue';
-import { overlayRootOf } from '../lib/overlayHost';
+import { computed, onBeforeUnmount, ref, watch } from 'vue';
+import { useOverlayTarget } from '../composables/useOverlayTarget';
 import type { IconDef } from '../types/panel';
 import Icon from './Icon.vue';
 import SvgIcon from './SvgIcon.vue';
@@ -254,11 +254,7 @@ onBeforeUnmount(() => {
   stopBlockScroll();
 });
 
-const anchorEl = ref<HTMLElement | null>(null);
-const sheetTarget = ref<HTMLElement | 'body'>('body');
-onMounted(() => {
-  sheetTarget.value = overlayRootOf(anchorEl.value);
-});
+const { anchorEl, overlayTarget: sheetTarget } = useOverlayTarget();
 </script>
 
 <template>

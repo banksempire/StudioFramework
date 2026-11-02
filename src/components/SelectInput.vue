@@ -2,7 +2,7 @@
 import { computed, inject, nextTick, onMounted, onUnmounted, ref, watch } from 'vue';
 import { useFallbackMobile } from '../composables/useFallbackMobile';
 import { kIsMobile } from '../composables/useWorkspace';
-import { hostViewOf, overlayRootOf } from '../lib/overlayHost';
+import { createViewListenerBinder, hostViewOf, overlayRootOf } from '../lib/overlayHost';
 import type { PopupField, PopupOption, PopupValues } from '../types/popup';
 import SvgIcon from './SvgIcon.vue';
 
@@ -215,13 +215,17 @@ function onDocDown(e: MouseEvent) {
   closePopup(false);
 }
 
-let boundView: Window | null = null;
+const docBinding = createViewListenerBinder(
+  (view) => {
+    view.addEventListener('mousedown', onDocDown);
+  },
+  (view) => {
+    view.removeEventListener('mousedown', onDocDown);
+  },
+);
+
 function bindDocDown() {
-  const view = hostViewOf(triggerEl.value);
-  if (boundView === view) return;
-  if (boundView) boundView.removeEventListener('mousedown', onDocDown);
-  boundView = view;
-  boundView.addEventListener('mousedown', onDocDown);
+  docBinding.sync(triggerEl.value);
 }
 
 watch(open, (v) => {
@@ -231,7 +235,7 @@ watch(open, (v) => {
 });
 
 onUnmounted(() => {
-  boundView?.removeEventListener('mousedown', onDocDown);
+  docBinding.release();
   clearTimeout(typeTimer);
 });
 </script>

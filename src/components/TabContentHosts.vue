@@ -18,17 +18,17 @@ function hostable(id: string): Component | null {
 }
 
 const hosted = computed(() => {
-  const ids: string[] = [];
-  for (const root of ws.roots) ids.push(...collectAllTabs(root.node));
-  ids.push(...ws.detachedTabs.keys());
+  const ids = new Set<string>();
+  for (const root of ws.roots) {
+    for (const id of collectAllTabs(root.node)) ids.add(id);
+  }
+  for (const id of ws.detachedTabs.keys()) ids.add(id);
   for (const wid of ws.auxWindowIds) {
     for (const root of ws.auxApi(wid).roots) {
-      for (const id of collectAllTabs(root.node)) {
-        if (!ids.includes(id)) ids.push(id);
-      }
+      for (const id of collectAllTabs(root.node)) ids.add(id);
     }
   }
-  return ids.filter((id) => hostable(id) !== null);
+  return [...ids].filter((id) => hostable(id) !== null);
 });
 
 function compFor(id: string): Component {

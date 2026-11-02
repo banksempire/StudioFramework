@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed, onBeforeUnmount, ref, watch } from 'vue';
 import { copyTextToClipboard } from '../lib/clipboard';
-import { hostViewOf } from '../lib/overlayHost';
+import { createViewListenerBinder } from '../lib/overlayHost';
 import { hsvToRgb, parseHex, rgbToHsv, toColorHex } from '../utils/color';
 
 const props = withDefaults(
@@ -232,28 +232,21 @@ function onSchemePointer(e: PointerEvent) {
   if (schemeRoot.value && !schemeRoot.value.contains(e.target as Node)) schemeOpen.value = false;
 }
 
-let schemeView: Window | null = null;
-
-function bindSchemePointer() {
-  const view = hostViewOf(schemeRoot.value ?? discEl.value);
-  if (schemeView === view) return;
-  unbindSchemePointer();
-  schemeView = view;
-  view.addEventListener('pointerdown', onSchemePointer, true);
-}
-
-function unbindSchemePointer() {
-  if (!schemeView) return;
-  schemeView.removeEventListener('pointerdown', onSchemePointer, true);
-  schemeView = null;
-}
+const schemeBinding = createViewListenerBinder(
+  (view) => {
+    view.addEventListener('pointerdown', onSchemePointer, true);
+  },
+  (view) => {
+    view.removeEventListener('pointerdown', onSchemePointer, true);
+  },
+);
 
 watch(schemeOpen, (open) => {
-  if (open) bindSchemePointer();
-  else unbindSchemePointer();
+  if (open) schemeBinding.sync(schemeRoot.value ?? discEl.value);
+  else schemeBinding.release();
 });
 
-onBeforeUnmount(unbindSchemePointer);
+onBeforeUnmount(() => schemeBinding.release());
 </script>
 
 <template>

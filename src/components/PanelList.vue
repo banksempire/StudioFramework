@@ -1,7 +1,8 @@
 <script setup lang="ts">
 import { computed, inject, nextTick, onMounted, onUnmounted, ref, watch } from 'vue';
+import { useOverlayTarget } from '../composables/useOverlayTarget';
 import { kIsMobile, kMobilePanelDismiss } from '../composables/useWorkspace';
-import { hostDocOf, hostViewOf, overlayRootOf } from '../lib/overlayHost';
+import { clampIntoView, createViewListenerBinder, hostDocOf, hostViewOf } from '../lib/overlayHost';
 import type {
   PanelListAdd,
   PanelListBulk,
@@ -185,7 +186,18 @@ function onRowDrop(item: PanelListItem) {
 }
 
 let touchDrag: { id: string; pointerId: number; el: HTMLElement } | null = null;
-let touchView: Window | null = null;
+const touchBinding = createViewListenerBinder(
+  (view) => {
+    view.addEventListener('pointermove', onTouchDragMove);
+    view.addEventListener('pointerup', onTouchDragEnd);
+    view.addEventListener('pointercancel', onTouchDragEnd);
+  },
+  (view) => {
+    view.removeEventListener('pointermove', onTouchDragMove);
+    view.removeEventListener('pointerup', onTouchDragEnd);
+    view.removeEventListener('pointercancel', onTouchDragEnd);
+  },
+);
 
 function touchRowAt(x: number, y: number): string | null {
   const el = hostDocOf(anchorEl.value).elementFromPoint(x, y)?.closest<HTMLElement>('.sf-pl-item[data-id]');
@@ -208,10 +220,7 @@ function onTouchDragEnd(e: PointerEvent) {
   if (!touchDrag) return;
   const { id, pointerId, el } = touchDrag;
   touchDrag = null;
-  touchView?.removeEventListener('pointermove', onTouchDragMove);
-  touchView?.removeEventListener('pointerup', onTouchDragEnd);
-  touchView?.removeEventListener('pointercancel', onTouchDragEnd);
-  touchView = null;
+  touchBinding.release();
   try {
     el.releasePointerCapture(pointerId);
   } catch {
@@ -226,15 +235,11 @@ function onTouchDragEnd(e: PointerEvent) {
 function onGripPointerDown(item: PanelListItem, e: PointerEvent) {
   if (e.pointerType !== 'touch' || props.draggable !== true || !item.dragType) return;
   const el = e.currentTarget as HTMLElement;
-  const view = hostViewOf(el);
-  touchView = view;
+  touchBinding.sync(el);
   try {
     el.setPointerCapture(e.pointerId);
   } catch {
     touchDrag = { id: item.id, pointerId: -1, el };
-    view.addEventListener('pointermove', onTouchDragMove);
-    view.addEventListener('pointerup', onTouchDragEnd);
-    view.addEventListener('pointercancel', onTouchDragEnd);
     dragId.value = item.id;
     overId.value = item.id;
     return;
@@ -242,9 +247,6 @@ function onGripPointerDown(item: PanelListItem, e: PointerEvent) {
   touchDrag = { id: item.id, pointerId: e.pointerId, el };
   dragId.value = item.id;
   overId.value = item.id;
-  view.addEventListener('pointermove', onTouchDragMove);
-  view.addEventListener('pointerup', onTouchDragEnd);
-  view.addEventListener('pointercancel', onTouchDragEnd);
 }
 
 function onButtonClick(
@@ -294,9 +296,10 @@ watch(addOpen, async (v) => {
   const view = hostViewOf(anchorEl.value);
   const w = el.offsetWidth || 200;
   const h = el.offsetHeight || 80;
+  const { left, top } = clampIntoView(hostViewOf(anchorEl.value), addX.value, addY.value, w, h);
   addMenuStyle.value = {
-    left: `${Math.max(4, Math.min(addX.value, view.innerWidth - w - 4))}px`,
-    top: `${Math.max(4, Math.min(addY.value, view.innerHeight - h - 4))}px`,
+    left: `${left}px`,
+    top: `${top}px`,
   };
 });
 
@@ -312,8 +315,7 @@ function onAddDocKey(e: KeyboardEvent) {
   if (e.key === 'Escape') addOpen.value = false;
 }
 
-const anchorEl = ref<HTMLElement | null>(null);
-const addSheetTarget = ref<HTMLElement | 'body'>('body');
+const { anchorEl, overlayTarget: addSheetTarget } = useOverlayTarget();
 
 const addRow = ref<HTMLElement | null>(null);
 const addMinHeight = ref<number | null>(null);
@@ -352,18 +354,20 @@ onUnmounted(() => {
   addResize = null;
 });
 
-if (typeof window !== 'undefined') {
-  onMounted(() => {
-    addSheetTarget.value = overlayRootOf(anchorEl.value);
-    const view = hostViewOf(anchorEl.value);
+const addDocBinding = createViewListenerBinder(
+  (view) => {
     view.addEventListener('mousedown', onAddDocDown);
     view.addEventListener('keydown', onAddDocKey);
-  });
-  onUnmounted(() => {
-    const view = hostViewOf(anchorEl.value);
+  },
+  (view) => {
     view.removeEventListener('mousedown', onAddDocDown);
     view.removeEventListener('keydown', onAddDocKey);
-  });
+  },
+);
+
+if (typeof window !== 'undefined') {
+  onMounted(() => addDocBinding.sync(anchorEl.value));
+  onUnmounted(() => addDocBinding.release());
 }
 </script>
 

@@ -6,6 +6,7 @@ import Framework from '../Framework.vue';
 
 const props = defineProps<{ windowId: number }>();
 const ws = useWorkspaceContext();
+const auxApi = ws.auxApi(props.windowId);
 const layout = inject(kLayout);
 const host = ref<HTMLElement | null>(null);
 let app: ReturnType<typeof createApp> | null = null;
@@ -17,12 +18,12 @@ onMounted(() => {
   try {
     app = createApp(Framework, {
       layout: layout,
-      api: ws.auxApi(props.windowId),
+      api: auxApi,
       viewportWindow: viewport,
       statusBar: false,
       hostTabs: false,
       persistUiState: false,
-      onAction: (action: FrameworkAction) => ws.auxApi(props.windowId).emitAppAction(action),
+      onAction: (action: FrameworkAction) => auxApi.emitAppAction(action),
     });
     app.mount(el);
   } catch (e) {}

@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed, inject, nextTick, onBeforeUnmount, onMounted, reactive, ref, useSlots, watch } from 'vue';
 import { kIsMobile } from '../composables/useWorkspace';
-import { hostViewOf } from '../lib/overlayHost';
+import { createViewListenerBinder, hostViewOf } from '../lib/overlayHost';
 import type { TableColumn } from '../types/table';
 import PageNav from './PageNav.vue';
 import SvgIcon from './SvgIcon.vue';
@@ -488,20 +488,21 @@ function togglePopover(key: string) {
 }
 
 const rootEl = ref<HTMLElement | null>(null);
-let docView: Window | null = null;
+const docBinding = createViewListenerBinder(
+  (view) => {
+    view.addEventListener('pointerdown', onDocPointerDown);
+  },
+  (view) => {
+    view.removeEventListener('pointerdown', onDocPointerDown);
+  },
+);
 
 function bindDocListeners() {
-  const view = hostViewOf(rootEl.value);
-  if (docView === view) return;
-  if (docView) docView.removeEventListener('pointerdown', onDocPointerDown);
-  docView = view;
-  view.addEventListener('pointerdown', onDocPointerDown);
+  docBinding.sync(rootEl.value);
 }
 
 function unbindDocListeners() {
-  if (!docView) return;
-  docView.removeEventListener('pointerdown', onDocPointerDown);
-  docView = null;
+  docBinding.release();
 }
 
 function onDocPointerDown(e: Event) {
