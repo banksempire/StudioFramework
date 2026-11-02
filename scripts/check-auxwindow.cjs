@@ -503,7 +503,44 @@ const { ensureServer, openApp, makeReporter, finish } = require('./lib/ui-test.c
     });
     report('closing the popup window reattaches the tab', true);
 
+    const popupPromise4 = page.context().waitForEvent('page');
+    await page.evaluate((id) => {
+      const tab = document.querySelector(`.sf-tab[data-tab-id="${id}"]`);
+      tab.dispatchEvent(new DragEvent('dragstart', { bubbles: true, dataTransfer: new DataTransfer() }));
+      tab.dispatchEvent(new DragEvent('dragend', { bubbles: true, screenX: 900, screenY: 400 }));
+    }, TAB_A);
+    const aux4 = await popupPromise4;
+    await aux4.waitForSelector('[data-test="aux-content"] .sf-workspace', { timeout: 5000 });
+    await page.evaluate(() => {
+      const api = window.__sfWorkspace;
+      const wid = api.auxWindowIds[api.auxWindowIds.length - 1];
+      const aux = api.auxApi(wid);
+      aux.ops.openTab(aux.focusedTileId, {
+        id: 'aux-snap-test',
+        label: 'Snap',
+        icon: 'S',
+        content: 'table-demo',
+      });
+    });
+    report(
+      'capture() includes aux-native tabs in snap.aux',
+      await page.evaluate(() => (window.__sfWorkspace.capture().aux ?? []).includes('aux-snap-test')),
+    );
+    await page.reload({ waitUntil: 'domcontentloaded' });
+    await page.waitForFunction(() => !!window.__sfWorkspace, { timeout: 15000 });
+    await page.waitForSelector('.sf-tab[data-tab-id="aux-snap-test"]', { timeout: 10000 });
+    report(
+      'reloading folds aux-native tabs back into the main workspace',
+      await page.evaluate((id) => {
+        const api = window.__sfWorkspace;
+        return api.tabWindow(id) === 0 && !!api.findTabGlobal(id);
+      }, 'aux-snap-test'),
+    );
+    report('aux popup closed after the reload fold-back', aux4.isClosed());
+
+    await page.hover(`.sf-tab[data-tab-id="${TAB_A}"]`);
     await page.click(`.sf-tab[data-tab-id="${TAB_A}"] .sf-tab-close`);
+    await page.hover(`.sf-tab[data-tab-id="${TAB_B}"]`);
     await page.click(`.sf-tab[data-tab-id="${TAB_B}"] .sf-tab-close`);
     await page.waitForFunction(
       () => (window.__sfTabResources ?? []).filter((e) => e.kind === 'close').length === 2,

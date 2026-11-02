@@ -455,7 +455,16 @@ export function useWorkspace(def: WorkspaceDef, opts?: { mobile?: Ref<boolean> }
   }
 
   function auxFocusedTileId(windowId: number): string {
-    return auxTrees.get(windowId)?.focusedTileId ?? '';
+    const tree = auxTrees.get(windowId);
+    if (!tree) return '';
+    for (const root of tree.roots) {
+      if (findTile(root.node, tree.focusedTileId)) return tree.focusedTileId;
+    }
+    for (const root of tree.roots) {
+      const first = firstTile(root.node);
+      if (first) return first.id;
+    }
+    return '';
   }
 
   function auxRemoveTab(tabId: string): number | undefined {
@@ -1062,9 +1071,15 @@ export function useWorkspace(def: WorkspaceDef, opts?: { mobile?: Ref<boolean> }
       withUi ? (uiProvider?.read() ?? undefined) : undefined,
       persistedTabDef,
     );
-    const auxIds = [...detached.keys()];
-    if (auxIds.length > 0) {
-      snap.aux = auxIds;
+    const auxIds = new Set<string>();
+    for (const id of detached.keys()) auxIds.add(id);
+    for (const tree of auxTrees.values()) {
+      for (const root of tree.roots) {
+        for (const id of collectAllTabs(root.node)) auxIds.add(id);
+      }
+    }
+    if (auxIds.size > 0) {
+      snap.aux = [...auxIds];
       const defs = { ...(snap.defs ?? {}) };
       for (const id of auxIds) {
         const d = persistedTabDef(id);
@@ -1595,11 +1610,12 @@ export function useWorkspace(def: WorkspaceDef, opts?: { mobile?: Ref<boolean> }
   watch(() => state.roots, scheduleAutoSave, { deep: true });
   window.addEventListener('beforeunload', saveAutoSnapshot);
   window.addEventListener('pagehide', () => {
-    if (detached.size === 0) return;
+    if (detached.size === 0 && auxTrees.size === 0) return;
     for (const tabId of [...detached.keys()]) {
       reattachDetached(tabId, undefined, undefined, true);
     }
     saveAutoSnapshot();
+    for (const [, handle] of auxWindows) handle.close();
   });
 
   function applyPanelStateProvider(provider: PanelStateProvider | null) {
