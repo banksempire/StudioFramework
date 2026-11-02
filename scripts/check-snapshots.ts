@@ -1,4 +1,6 @@
 import {
+  auxWindowTabIds,
+  captureAuxWindows,
   captureSnapshot,
   nodeFromSnapshot,
   nodeToSnapshot,
@@ -316,6 +318,35 @@ function allTabs(node: WorkspaceNode): string[] {
   report('node round-trip preserves tabs', JSON.stringify(allTabs(back)) === JSON.stringify(['p', 'q', 'r']));
   report('node round-trip preserves ratio', back.kind === 'split' && back.ratio === 0.33);
   report('node round-trip preserves dir', back.kind === 'split' && back.dir === 'column');
+}
+
+{
+  const auxTree = split('row', 0.4, tile(['a']), tile(['b', 't1'], 'b'));
+  const snaps = captureAuxWindows(
+    [
+      {
+        id: 3,
+        rootDir: 'row',
+        roots: [{ node: auxTree, ratio: 1 }],
+        geometry: { left: 10, top: 20, width: 300, height: 200 },
+      },
+      { id: 4, rootDir: null, roots: [{ node: tile(['t2'], 't2'), ratio: 1 }] },
+    ],
+    (id) => id === 't1' || id === 't2',
+  );
+  report('transient-only aux windows are dropped', snaps.length === 1, JSON.stringify(snaps.length));
+  report('aux window snapshot keeps id and dir', snaps[0].id === 3 && snaps[0].rootDir === 'row');
+  report('aux window snapshot keeps geometry', snaps[0].geometry?.width === 300);
+  const kept = snaps[0].roots[0].node;
+  report(
+    'aux window snapshot strips transient tabs',
+    JSON.stringify(kept).includes('t1') === false &&
+      JSON.stringify(allTabs(nodeFromSnapshot(kept))) === JSON.stringify(['a', 'b']),
+  );
+  report(
+    'aux window tab ids collect across the tree',
+    JSON.stringify(auxWindowTabIds(snaps[0])) === JSON.stringify(['a', 'b']),
+  );
 }
 
 console.log(`\nSNAPSHOT CHECKS: ${passed} passed, ${failed} failed\n`);

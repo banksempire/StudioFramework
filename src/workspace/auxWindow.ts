@@ -4,6 +4,14 @@ export interface AuxWindowOptions {
   height?: number;
   left?: number;
   top?: number;
+  windowId?: number;
+}
+
+export interface AuxWindowGeometry {
+  left: number;
+  top: number;
+  width: number;
+  height: number;
 }
 
 export interface AuxWindowHandle {
@@ -11,6 +19,7 @@ export interface AuxWindowHandle {
   readonly window: Window;
   readonly document: Document;
   readonly content: HTMLElement;
+  geometry(): AuxWindowGeometry;
   isMobile(): boolean;
   onMobileChange(listener: () => void): () => void;
   close(): void;
@@ -30,7 +39,39 @@ export function focusedAuxWindow(): Window | null {
 
 let nextWindowId = 1;
 
-const isFirefox = typeof navigator !== 'undefined' && navigator.userAgent.includes('Firefox');
+const SESSION_KEY = 'sf.aux.session';
+let cachedSession: string | null = null;
+
+function sessionToken(): string {
+  if (cachedSession) return cachedSession;
+  const fresh = () =>
+    typeof crypto !== 'undefined' && 'randomUUID' in crypto
+      ? crypto.randomUUID()
+      : `${Date.now().toString(36)}-${Math.random().toString(36).slice(2)}`;
+  try {
+    const existing = sessionStorage.getItem(SESSION_KEY);
+    cachedSession = existing ?? fresh();
+    if (!existing) sessionStorage.setItem(SESSION_KEY, cachedSession);
+  } catch {
+    cachedSession = fresh();
+  }
+  return cachedSession;
+}
+
+export function auxWindowName(id: number): string {
+  return `sf-aux-${sessionToken()}-${id}`;
+}
+
+const WATCHDOG_SCRIPT =
+  '(function(){' +
+  'if(window.__sfAuxWatchdog)clearInterval(window.__sfAuxWatchdog);' +
+  'var misses=0;' +
+  'window.__sfAuxWatchdog=setInterval(function(){' +
+  'var dead=false;' +
+  'try{dead=!window.opener||window.opener.closed}catch(e){dead=true}' +
+  'misses=dead?misses+1:0;' +
+  'if(misses>=3){clearInterval(window.__sfAuxWatchdog);window.close()}' +
+  '},1000)})()';
 
 function absoluteStyleSheetUrl(href: string): string | null {
   try {
@@ -94,16 +135,28 @@ export function openAuxWindow(options: AuxWindowOptions): AuxWindowHandle | null
   const features = ['popup=yes', `left=${left}`, `top=${top}`, `width=${width}`, `height=${height}`].join(
     ',',
   );
-  const popup = window.open(isFirefox ? '' : 'about:blank', '_blank', features);
+  const id = options.windowId ?? nextWindowId++;
+  if (id >= nextWindowId) nextWindowId = id + 1;
+  const name = auxWindowName(id);
+  const popup = window.open('', name, features);
   if (!popup) return null;
 
-  const id = nextWindowId++;
+  const adopted = (popup as unknown as Record<string, unknown>).__sfAux === name;
+  (popup as unknown as Record<string, unknown>).__sfAux = name;
   const doc = popup.document;
   doc.title = options.title;
+  if (adopted) {
+    doc.head.replaceChildren();
+    doc.body.replaceChildren();
+  }
 
   const reset = document.createElement('style');
   reset.textContent = 'html,body{margin:0;padding:0;height:100%;overflow:hidden}body{background:#000}';
   doc.head.appendChild(reset);
+
+  const watchdog = doc.createElement('script');
+  watchdog.textContent = WATCHDOG_SCRIPT;
+  doc.head.appendChild(watchdog);
 
   const cloned = new Map<Element, Element>();
   syncAuxStyles(doc, cloned);
@@ -152,6 +205,14 @@ export function openAuxWindow(options: AuxWindowOptions): AuxWindowHandle | null
     window: popup,
     document: doc,
     content,
+    geometry() {
+      return {
+        left: popup.screenX,
+        top: popup.screenY,
+        width: popup.outerWidth,
+        height: popup.outerHeight,
+      };
+    },
     isMobile: () => mobileMq.matches,
     onMobileChange(listener: () => void) {
       mobileListeners.add(listener);

@@ -36,6 +36,38 @@ export interface WorkspaceSnapshot {
   ui?: Record<string, unknown>;
   defs?: Record<string, WorkspaceTabDef>;
   aux?: string[];
+  auxWindows?: AuxWindowSnapshot[];
+}
+
+export interface AuxWindowSnapshot {
+  id: number;
+  rootDir: SplitDir | null;
+  roots: RootSnapshot[];
+  geometry?: { left: number; top: number; width: number; height: number };
+}
+
+export function captureAuxWindows(
+  windows: Array<{
+    id: number;
+    rootDir: SplitDir | null;
+    roots: Array<{ node: WorkspaceNode; ratio: number }>;
+    geometry?: { left: number; top: number; width: number; height: number };
+  }>,
+  skipTab?: (tabId: string) => boolean,
+): AuxWindowSnapshot[] {
+  const out: AuxWindowSnapshot[] = [];
+  for (const w of windows) {
+    const roots: RootSnapshot[] = [];
+    for (const r of w.roots) {
+      const node = nodeToSnapshot(r.node, skipTab);
+      if (node) roots.push({ ratio: r.ratio, node });
+    }
+    if (roots.length === 0) continue;
+    const snap: AuxWindowSnapshot = { id: w.id, rootDir: w.rootDir, roots };
+    if (w.geometry) snap.geometry = { ...w.geometry };
+    out.push(snap);
+  }
+  return out;
 }
 
 export function nodeToSnapshot(
@@ -113,6 +145,12 @@ function collectTabIds(node: NodeSnapshot, out: Set<string>): void {
   }
   collectTabIds(node.children[0], out);
   collectTabIds(node.children[1], out);
+}
+
+export function auxWindowTabIds(w: AuxWindowSnapshot): string[] {
+  const out = new Set<string>();
+  for (const r of w.roots) collectTabIds(r.node, out);
+  return [...out];
 }
 
 export function restoreSnapshot(

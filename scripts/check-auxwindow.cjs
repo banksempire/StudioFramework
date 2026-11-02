@@ -497,6 +497,9 @@ const { ensureServer, openApp, makeReporter, finish } = require('./lib/ui-test.c
 
     const aux4 = await detachToPopup(TAB_A);
     await aux4.waitForSelector('[data-test="aux-content"] .sf-workspace', { timeout: 5000 });
+    const wid4 = await page.evaluate(
+      () => window.__sfWorkspace.auxWindowIds[window.__sfWorkspace.auxWindowIds.length - 1],
+    );
     await page.evaluate(() => {
       const api = window.__sfWorkspace;
       const wid = api.auxWindowIds[api.auxWindowIds.length - 1];
@@ -514,18 +517,35 @@ const { ensureServer, openApp, makeReporter, finish } = require('./lib/ui-test.c
     );
     await page.reload({ waitUntil: 'domcontentloaded' });
     await page.waitForFunction(() => !!window.__sfWorkspace, { timeout: 15000 });
-    await page.waitForSelector('.sf-tab[data-tab-id="aux-snap-test"]', { timeout: 10000 });
+    await aux4.waitForSelector('[data-test="aux-content"] .sf-tab[data-tab-id="aux-snap-test"]', {
+      timeout: 10000,
+    });
     report(
-      'reloading folds aux-native tabs back into the main workspace',
-      await page.evaluate((id) => {
-        const api = window.__sfWorkspace;
-        return api.tabWindow(id) === 0 && !!api.findTabGlobal(id);
-      }, 'aux-snap-test'),
+      'reloading restores the aux window with its native tab',
+      await page.evaluate(
+        ([id, w]) => {
+          const api = window.__sfWorkspace;
+          return api.tabWindow(id) === w && !!api.auxApi(w)?.findTabGlobal(id);
+        },
+        ['aux-snap-test', wid4],
+      ),
     );
-    report('aux popup closed after the reload fold-back', aux4.isClosed());
+    report(
+      'the earlier detached tab returns to the same restored window',
+      await page.evaluate(([id, w]) => window.__sfWorkspace.tabWindow(id) === w, [TAB_A, wid4]),
+    );
+    report(
+      'restored aux tab is not folded into the main window',
+      (await page.locator('.sf-tab[data-tab-id="aux-snap-test"]').count()) === 0,
+    );
+    await aux4.hover(`.sf-tab[data-tab-id="${TAB_A}"]`);
+    await aux4.click(`.sf-tab[data-tab-id="${TAB_A}"] .sf-tab-close`);
+    await aux4.hover('.sf-tab[data-tab-id="aux-snap-test"]');
+    await aux4.click('.sf-tab[data-tab-id="aux-snap-test"] .sf-tab-close');
+    const closeStart = Date.now();
+    while (!aux4.isClosed() && Date.now() - closeStart < 5000) await wait(100);
+    report('restored aux window closes on its last tab', aux4.isClosed());
 
-    await page.hover(`.sf-tab[data-tab-id="${TAB_A}"]`);
-    await page.click(`.sf-tab[data-tab-id="${TAB_A}"] .sf-tab-close`);
     await page.hover(`.sf-tab[data-tab-id="${TAB_B}"]`);
     await page.click(`.sf-tab[data-tab-id="${TAB_B}"] .sf-tab-close`);
     await page.waitForFunction(
@@ -536,6 +556,7 @@ const { ensureServer, openApp, makeReporter, finish } = require('./lib/ui-test.c
     report(
       'explicit closes release resources exactly once each',
       finalEvents.filter((e) => e.startsWith('close')).length === 2,
+      JSON.stringify(finalEvents.filter((e) => e.startsWith('close'))),
     );
 
     const mobileContext = await browser.newContext({ viewport: { width: 375, height: 700 } });

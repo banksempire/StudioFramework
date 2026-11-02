@@ -4,7 +4,11 @@ import type { FrameworkAction } from '../types/actions';
 import type { LayoutDefinition, MenuNodeDef, WorkspaceDef, WorkspaceTabDef } from '../types/layout';
 import { type AuxWindowHandle, openAuxWindow } from '../workspace/auxWindow';
 import {
+  type AuxWindowSnapshot,
+  auxWindowTabIds,
+  captureAuxWindows,
   captureSnapshot,
+  nodeFromSnapshot,
   restoreSnapshot,
   type SnapshotPanels,
   type WorkspaceSnapshot,
@@ -1092,6 +1096,17 @@ export function useWorkspace(def: WorkspaceDef, opts?: { mobile?: Ref<boolean> }
         if (d) defs[id] = d;
       }
       snap.defs = defs;
+      const skipTransient = (id: string) => !!tabDefs[id]?.transient;
+      const auxWindowSnaps = captureAuxWindows(
+        [...auxTrees.entries()].map(([id, tree]) => ({
+          id,
+          rootDir: tree.rootDir,
+          roots: tree.roots,
+          geometry: auxWindows.get(id)?.geometry(),
+        })),
+        skipTransient,
+      );
+      if (auxWindowSnaps.length > 0) snap.auxWindows = auxWindowSnaps;
     }
     return snap;
   }
@@ -1106,6 +1121,48 @@ export function useWorkspace(def: WorkspaceDef, opts?: { mobile?: Ref<boolean> }
 
   function ghostDef(id: string): WorkspaceTabDef {
     return { id, label: id, content: BLANK_CONTENT, tabClass: 'sf-tab--ghost' };
+  }
+
+  function foldTabsIntoFocusedTile(ids: string[]) {
+    for (const id of ids) {
+      const tile = findTileGlobal(state.focusedTileId);
+      if (!tile) break;
+      const root = findRootByTile(tile.id);
+      if (!root) break;
+      root.node = treeInsertTab(root.node, tile.id, id, tile.tabs.length);
+      state.focusedTileId = tile.id;
+    }
+    ensureFocus();
+  }
+
+  function restoreAuxWindows(windows: AuxWindowSnapshot[]) {
+    for (const w of windows) {
+      const ids = auxWindowTabIds(w);
+      const firstTile = w.roots[0]?.node;
+      const firstActive = firstTile?.kind === 'tile' ? firstTile.activeId : '';
+      const handle = openAuxWindow({
+        title: tabDefs[firstActive]?.label ?? 'Window',
+        width: w.geometry?.width,
+        height: w.geometry?.height,
+        left: w.geometry?.left,
+        top: w.geometry?.top,
+        windowId: w.id,
+      });
+      if (!handle) {
+        foldTabsIntoFocusedTile(ids);
+        continue;
+      }
+      bindAuxWindow(handle);
+      const tree: AuxTreeState = {
+        roots: w.roots.map((r) => ({ id: nextId('root'), node: nodeFromSnapshot(r.node), ratio: r.ratio })),
+        rootDir: w.rootDir ?? null,
+        focusedTileId: '',
+      };
+      for (const id of ids) detached.set(id, w.id);
+      auxTrees.set(w.id, tree);
+      auxEnsureFocus(tree);
+      syncAuxTitle(w.id);
+    }
   }
 
   let panelProvider: PanelStateProvider | null = null;
@@ -1154,7 +1211,17 @@ export function useWorkspace(def: WorkspaceDef, opts?: { mobile?: Ref<boolean> }
     for (const tabId of [...tabResources.keys()]) {
       if (!live.has(tabId) && !detached.has(tabId)) releaseTabResources(tabId);
     }
-    const auxIds = (snap.aux ?? []).filter((id) => !live.has(id));
+    const auxWindowSnaps = snap.auxWindows ?? [];
+    const restoreWindows =
+      auxWindowSnaps.length > 0 && auxTrees.size === 0 && detached.size === 0 && !mobileRef?.value;
+    const auxIds = new Set<string>((snap.aux ?? []).filter((id) => !live.has(id)));
+    if (restoreWindows) {
+      for (const w of auxWindowSnaps) {
+        for (const id of auxWindowTabIds(w)) {
+          if (!live.has(id)) auxIds.add(id);
+        }
+      }
+    }
     const windowsToMaybeClose = new Set<number>();
     for (const id of auxIds) {
       if (detached.has(id)) {
@@ -1175,15 +1242,10 @@ export function useWorkspace(def: WorkspaceDef, opts?: { mobile?: Ref<boolean> }
     state.roots = restored;
     state.rootDir = snap.rootDir ?? null;
     ensureFocus();
-    for (const id of auxIds) {
-      const tile = findTileGlobal(state.focusedTileId);
-      if (!tile) break;
-      const root = findRootByTile(tile.id);
-      if (!root) break;
-      root.node = treeInsertTab(root.node, tile.id, id, tile.tabs.length);
-      state.focusedTileId = tile.id;
-    }
-    ensureFocus();
+    const claimed = restoreWindows
+      ? new Set(auxWindowSnaps.flatMap((w) => auxWindowTabIds(w)))
+      : new Set<string>();
+    foldTabsIntoFocusedTile([...auxIds].filter((id) => !claimed.has(id)));
     for (const windowId of windowsToMaybeClose) closeIfEmpty(windowId);
     if (snap.panels) {
       if (panelProvider) panelProvider.apply(snap.panels);
@@ -1197,6 +1259,7 @@ export function useWorkspace(def: WorkspaceDef, opts?: { mobile?: Ref<boolean> }
       if (uiProvider) uiProvider.apply(snap.ui);
       else pendingUi = snap.ui;
     }
+    if (restoreWindows) restoreAuxWindows(auxWindowSnaps);
     return ghosts;
   }
 
@@ -1604,12 +1667,7 @@ export function useWorkspace(def: WorkspaceDef, opts?: { mobile?: Ref<boolean> }
   watch(() => state.roots, scheduleAutoSave, { deep: true });
   window.addEventListener('beforeunload', saveAutoSnapshot);
   window.addEventListener('pagehide', () => {
-    if (detached.size === 0 && auxTrees.size === 0) return;
-    for (const tabId of [...detached.keys()]) {
-      reattachDetached(tabId, undefined, undefined, true);
-    }
     saveAutoSnapshot();
-    for (const [, handle] of auxWindows) handle.close();
   });
 
   function applyPanelStateProvider(provider: PanelStateProvider | null) {
