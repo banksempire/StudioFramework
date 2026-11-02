@@ -3,19 +3,13 @@ import type { WorkspaceApi } from './composables/useWorkspace';
 import type { PanelDef } from './types/layout';
 import type { PanelAction } from './types/panel';
 
-export interface FrameworkAction {
-  source: 'menu' | 'utility' | 'panel';
-  action?: string;
-  subId?: string;
-  component?: string;
-  payload?: unknown;
-  auxWindow?: number;
-}
+export type { FrameworkAction } from './types/actions';
 </script>
 
 <script setup lang="ts">
 import { computed, nextTick, onMounted, onUnmounted, provide, ref, watch } from 'vue';
 import { loadLayout } from './layout/loadLayout';
+import type { FrameworkAction } from './types/actions';
 import type { LayoutDefinition } from './types/layout';
 import MenuBar from './components/MenuBar.vue';
 import Docker from './components/Docker.vue';

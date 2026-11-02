@@ -1,6 +1,6 @@
 import { type InjectionKey, inject, nextTick, type Ref, reactive, shallowReactive, watch } from 'vue';
-import type { FrameworkAction } from '../Framework.vue';
 import { beginInteractionDoc } from '../lib/overlayHost';
+import type { FrameworkAction } from '../types/actions';
 import type { LayoutDefinition, MenuNodeDef, WorkspaceDef, WorkspaceTabDef } from '../types/layout';
 import { type AuxWindowHandle, openAuxWindow } from '../workspace/auxWindow';
 import {
@@ -465,6 +465,12 @@ export function useWorkspace(def: WorkspaceDef, opts?: { mobile?: Ref<boolean> }
       if (first) return first.id;
     }
     return '';
+  }
+
+  function inActionWindow(run: (aux: WorkspaceOps, tileId: string) => void): boolean {
+    if (actionWindow === null) return false;
+    run(auxOps(actionWindow), auxFocusedTileId(actionWindow));
+    return true;
   }
 
   function auxRemoveTab(tabId: string): number | undefined {
@@ -1230,10 +1236,7 @@ export function useWorkspace(def: WorkspaceDef, opts?: { mobile?: Ref<boolean> }
     },
 
     newTab(tileId) {
-      if (actionWindow !== null) {
-        auxOps(actionWindow).newTab(auxFocusedTileId(actionWindow));
-        return;
-      }
+      if (inActionWindow((aux, tile) => aux.newTab(tile))) return;
       if (newTabHandler) {
         newTabHandler(tileId);
         return;
@@ -1246,10 +1249,7 @@ export function useWorkspace(def: WorkspaceDef, opts?: { mobile?: Ref<boolean> }
     },
 
     openTab(tileId, tab) {
-      if (actionWindow !== null) {
-        auxOps(actionWindow).openTab(auxFocusedTileId(actionWindow), tab);
-        return;
-      }
+      if (inActionWindow((aux, tile) => aux.openTab(tile, tab))) return;
       const root = findRootByTile(tileId);
       if (!root) return;
       tabDefs[tab.id] = tab;
@@ -1258,10 +1258,7 @@ export function useWorkspace(def: WorkspaceDef, opts?: { mobile?: Ref<boolean> }
     },
 
     insertTab(tileId, index, tab) {
-      if (actionWindow !== null) {
-        auxOps(actionWindow).insertTab(auxFocusedTileId(actionWindow), index, tab);
-        return;
-      }
+      if (inActionWindow((aux, tile) => aux.insertTab(tile, index, tab))) return;
       const root = findRootByTile(tileId);
       if (!root) return;
       tabDefs[tab.id] = tab;
@@ -1272,10 +1269,7 @@ export function useWorkspace(def: WorkspaceDef, opts?: { mobile?: Ref<boolean> }
     },
 
     splitOpen(tileId, dir, side, tab) {
-      if (actionWindow !== null) {
-        auxOps(actionWindow).splitOpen(auxFocusedTileId(actionWindow), dir, side, tab);
-        return;
-      }
+      if (inActionWindow((aux, tile) => aux.splitOpen(tile, dir, side, tab))) return;
       const root = findRootByTile(tileId);
       if (!root) return;
       tabDefs[tab.id] = tab;
