@@ -364,8 +364,8 @@ function startDrag(index: number, e: PointerEvent) {
   const el = e.currentTarget as HTMLElement;
   el.setPointerCapture(e.pointerId);
   dragState = { startY: e.clientY, aboveIds, belowIds, startHeights, el, pointerId: e.pointerId };
-  document.body.classList.add('sf-dragging');
-  document.body.style.userSelect = 'none';
+  el.ownerDocument.body.classList.add('sf-dragging');
+  el.ownerDocument.body.style.userSelect = 'none';
 }
 
 function onDragMove(e: PointerEvent) {
@@ -385,10 +385,11 @@ function onDragMove(e: PointerEvent) {
 
 function onDragEnd() {
   if (!dragState) return;
+  const body = dragState.el.ownerDocument.body;
   dragState.el.releasePointerCapture(dragState.pointerId);
   dragState = null;
-  document.body.classList.remove('sf-dragging');
-  document.body.style.userSelect = '';
+  body.classList.remove('sf-dragging');
+  body.style.userSelect = '';
   persistSubState();
 }
 

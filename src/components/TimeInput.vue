@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed, inject, onBeforeUnmount, type Ref, ref, watch } from 'vue';
 import { kIsMobile } from '../composables/useWorkspace';
+import { hostViewOf } from '../lib/overlayHost';
 
 const props = withDefaults(
   defineProps<{
@@ -77,21 +78,26 @@ function onKeydown(event: KeyboardEvent) {
 }
 
 let pickerSwallow: ((e: MouseEvent) => void) | null = null;
+let pickerView: Window | null = null;
 
 function disarmPickerSwallow() {
   if (!pickerSwallow) return;
-  window.removeEventListener('mousedown', pickerSwallow, true);
+  pickerView?.removeEventListener('mousedown', pickerSwallow, true);
+  pickerView = null;
   pickerSwallow = null;
 }
 
 function armPickerSwallow() {
   if (pickerSwallow) return;
+  const input = inputEl.value;
+  if (!input) return;
+  pickerView = hostViewOf(input);
   pickerSwallow = (e: MouseEvent) => {
     disarmPickerSwallow();
     if (e.target instanceof Node && inputEl.value?.contains(e.target)) return;
     e.stopPropagation();
   };
-  window.addEventListener('mousedown', pickerSwallow, true);
+  pickerView.addEventListener('mousedown', pickerSwallow, true);
 }
 
 function onNativeClick() {

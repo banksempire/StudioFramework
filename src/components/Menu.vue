@@ -83,11 +83,12 @@ const rootSubPos = ref<Record<number, { left: string; top: string; parentLeft?: 
 const menuState = { hoverPath: rootHoverPath, subPos: rootSubPos };
 
 function positionFor(rect: DOMRect): { left: string; top: string; parentLeft: number } {
+  const view = hostViewOf(anchorEl.value);
   const W = 224;
   let left = rect.right + 2;
-  if (left + W > window.innerWidth - 4) left = rect.left - W - 2;
+  if (left + W > view.innerWidth - 4) left = rect.left - W - 2;
   if (left < 4) left = 4;
-  const top = Math.max(4, Math.min(rect.top - 4, window.innerHeight - 240));
+  const top = Math.max(4, Math.min(rect.top - 4, view.innerHeight - 240));
   return { left: `${left}px`, top: `${top}px`, parentLeft: rect.left };
 }
 
@@ -163,9 +164,10 @@ async function positionPopup() {
   const w = pop.offsetWidth || 220;
   const h = pop.offsetHeight || 40;
   let left = a.left;
-  if (left + w > window.innerWidth - 4) left = Math.max(4, window.innerWidth - w - 4);
+  const view = hostViewOf(anchorEl.value);
+  if (left + w > view.innerWidth - 4) left = Math.max(4, view.innerWidth - w - 4);
   let top = a.bottom + 2;
-  if (top + h > window.innerHeight - 4) top = Math.max(4, a.top - h - 2);
+  if (top + h > view.innerHeight - 4) top = Math.max(4, a.top - h - 2);
   popStyle.value = { left: `${left}px`, top: `${top}px` };
 }
 
@@ -194,7 +196,7 @@ async function adjustBox() {
   const right = left + w;
   if (left < bs.parentLeft && right > bs.parentLeft - 2) {
     adjustedLeft.value = `${Math.max(4, bs.parentLeft - w - 2)}px`;
-  } else if (left >= bs.parentLeft && right > window.innerWidth - 4) {
+  } else if (left >= bs.parentLeft && right > hostViewOf(anchorEl.value).innerWidth - 4) {
     adjustedLeft.value = `${Math.max(4, bs.parentLeft - w - 2)}px`;
   } else {
     adjustedLeft.value = null;

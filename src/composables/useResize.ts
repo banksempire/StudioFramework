@@ -49,8 +49,9 @@ export function useResize(options: ResizeOptions) {
     handleEl = e.currentTarget as HTMLElement;
     pointerId = e.pointerId;
     handleEl.setPointerCapture(pointerId);
-    document.body.style.cursor = 'col-resize';
-    document.body.style.userSelect = 'none';
+    const body = handleEl.ownerDocument.body;
+    body.style.cursor = 'col-resize';
+    body.style.userSelect = 'none';
   }
 
   function onPointerMove(e: PointerEvent) {
@@ -65,11 +66,13 @@ export function useResize(options: ResizeOptions) {
   function onPointerUp() {
     if (!dragging.value) return;
     dragging.value = false;
+    const body = handleEl?.ownerDocument.body;
     handleEl?.releasePointerCapture(pointerId);
     handleEl = null;
-    document.body.style.cursor = '';
-    document.body.style.userSelect = '';
-
+    if (body) {
+      body.style.cursor = '';
+      body.style.userSelect = '';
+    }
     willCollapse.value = false;
 
     if (rawWidth <= collapseThreshold) {

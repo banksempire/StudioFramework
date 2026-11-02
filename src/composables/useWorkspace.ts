@@ -434,8 +434,15 @@ export function useWorkspace(def: WorkspaceDef, opts?: { mobile?: Ref<boolean> }
     return tree?.roots.find((r) => findTile(r.node, tileId)) ?? null;
   }
 
+  function auxWindowHoldingTab(tabId: string): number | undefined {
+    for (const [auxId, tree] of auxTrees) {
+      if (tree.roots.some((r) => findTileByTab(r.node, tabId))) return auxId;
+    }
+    return undefined;
+  }
+
   function auxRemoveTab(tabId: string): number | undefined {
-    const windowId = detached.get(tabId);
+    const windowId = detached.get(tabId) ?? auxWindowHoldingTab(tabId);
     if (windowId === undefined) return undefined;
     detached.delete(tabId);
     const tree = auxTrees.get(windowId);
@@ -676,7 +683,8 @@ export function useWorkspace(def: WorkspaceDef, opts?: { mobile?: Ref<boolean> }
   function tabWindow(tabId: string): number | null {
     const wid = detached.get(tabId);
     if (wid !== undefined) return wid;
-    return findRootByTab(tabId) ? 0 : null;
+    if (findRootByTab(tabId)) return 0;
+    return auxWindowHoldingTab(tabId) ?? null;
   }
 
   function auxDnd(): DndState {
@@ -1166,7 +1174,7 @@ export function useWorkspace(def: WorkspaceDef, opts?: { mobile?: Ref<boolean> }
     },
 
     closeTab(tabId) {
-      const windowId = detached.get(tabId);
+      const windowId = detached.get(tabId) ?? auxWindowHoldingTab(tabId);
       if (windowId !== undefined) {
         releaseTabResources(tabId);
         auxRemoveTab(tabId);

@@ -99,14 +99,15 @@ function positionPopup() {
   const trigger = triggerEl.value;
   const pop = popEl.value;
   if (!trigger || !pop) return;
+  const view = hostViewOf(trigger);
   const rect = trigger.getBoundingClientRect();
   const w =
     props.field.type === 'color' ? Math.min(Math.max(rect.width, 180), 260) : Math.max(rect.width, 120);
   const h = pop.offsetHeight || 40;
   let left = rect.left;
-  if (left + w > window.innerWidth - 4) left = Math.max(4, window.innerWidth - w - 4);
+  if (left + w > view.innerWidth - 4) left = Math.max(4, view.innerWidth - w - 4);
   let top = rect.bottom + 2;
-  if (top + h > window.innerHeight - 4) top = Math.max(4, rect.top - h - 2);
+  if (top + h > view.innerHeight - 4) top = Math.max(4, rect.top - h - 2);
   popStyle.value = { left: `${left}px`, top: `${top}px`, width: `${w}px` };
 }
 

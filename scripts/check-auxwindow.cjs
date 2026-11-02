@@ -153,6 +153,78 @@ const { ensureServer, openApp, makeReporter, finish } = require('./lib/ui-test.c
     );
     await aux.setViewportSize({ width: 960, height: 720 });
 
+    await aux.evaluate(() => window.dispatchEvent(new KeyboardEvent('keydown', { key: 's', ctrlKey: true })));
+    report(
+      'menu keyboard shortcut pressed in the popup routes to the main embedder with the aux window id',
+      await page.evaluate(() =>
+        (window.__sfActions ?? []).some(
+          (a) => a.source === 'menu' && a.action === 'save' && a.auxWindow === 1,
+        ),
+      ),
+    );
+
+    await page.evaluate(() => {
+      const api = window.__sfWorkspace.auxApi(1);
+      const tile = api.findTabGlobal('aux-e2e-a');
+      if (!tile) return;
+      api.ops.openTab(tile.id, {
+        id: 'aux-tbl',
+        label: 'Tbl',
+        icon: 'T',
+        content: 'table-demo',
+        props: {},
+      });
+      api.ops.activateTab(tile.id, 'aux-tbl');
+    });
+    await aux.waitForSelector('.sf-tbl-wrap', { timeout: 5000 });
+
+    const daysHead = aux.locator('.sf-table-demo-block:first-child .sf-tbl-th', { hasText: 'Days' });
+    await daysHead.scrollIntoViewIfNeeded();
+    const headBox = await daysHead.boundingBox();
+    const preDrag = await aux.evaluate(() => {
+      const block = document.querySelector('.sf-table-demo-block');
+      return getComputedStyle(block.querySelector('.sf-tbl-head'))
+        .gridTemplateColumns.split(' ')
+        .map(parseFloat);
+    });
+    const handleX = headBox.x + headBox.width - 1;
+    const handleY = headBox.y + headBox.height / 2;
+    await aux.mouse.move(handleX, handleY);
+    await aux.mouse.down();
+    await aux.mouse.move(handleX + 40, handleY, { steps: 8 });
+    await aux.mouse.up();
+    await wait(150);
+    const resized = await aux.evaluate(() => {
+      const block = document.querySelector('.sf-table-demo-block');
+      return getComputedStyle(block.querySelector('.sf-tbl-head'))
+        .gridTemplateColumns.split(' ')
+        .map(parseFloat);
+    });
+    report(
+      'table column resize works inside the popup window',
+      Math.abs(resized[4] - preDrag[4] - 40) <= 2,
+      JSON.stringify({ pre: preDrag[4], post: resized[4] }),
+    );
+
+    await aux.setViewportSize({ width: 520, height: 320 });
+    await wait(200);
+    await daysHead.scrollIntoViewIfNeeded();
+    const smallHead = await daysHead.boundingBox();
+    await aux.mouse.click(smallHead.x + smallHead.width / 2, smallHead.y + smallHead.height / 2, {
+      button: 'right',
+    });
+    await aux.waitForSelector('.sf-tbl-colmenu', { timeout: 5000 });
+    const menuBox = await aux.locator('.sf-tbl-colmenu').first().boundingBox();
+    const innerH = await aux.evaluate(() => window.innerHeight);
+    report(
+      'table column menu clamps to the popup viewport',
+      menuBox.y + menuBox.height <= innerH + 2,
+      JSON.stringify({ menuBottom: menuBox.y + menuBox.height, innerH }),
+    );
+    await page.evaluate(() => window.__sfWorkspace.auxApi(1).ops.closeTab('aux-tbl'));
+    await aux.waitForSelector('.sf-tbl-wrap', { state: 'detached', timeout: 5000 });
+    await aux.setViewportSize({ width: 960, height: 720 });
+
     await aux.click('[data-test="show-dialog"]');
     await aux.waitForSelector('[data-test="demo-dialog-body"]', { timeout: 5000 });
     console.log('[step-dbg] line 96 done');

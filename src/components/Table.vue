@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed, inject, nextTick, onBeforeUnmount, onMounted, reactive, ref, useSlots, watch } from 'vue';
 import { kIsMobile } from '../composables/useWorkspace';
+import { hostViewOf } from '../lib/overlayHost';
 import type { TableColumn } from '../types/table';
 import PageNav from './PageNav.vue';
 import SvgIcon from './SvgIcon.vue';
@@ -289,10 +290,12 @@ function resetWidths() {
 }
 
 function openColMenu(e: MouseEvent, c: TableColumn) {
+  bindDocListeners();
+  const view = hostViewOf(e.currentTarget as HTMLElement);
   colMenu.value = {
     key: c.key,
-    x: Math.min(e.clientX, window.innerWidth - 230),
-    y: Math.min(e.clientY, window.innerHeight - 260),
+    x: Math.min(e.clientX, view.innerWidth - 230),
+    y: Math.min(e.clientY, view.innerHeight - 260),
   };
 }
 
@@ -412,6 +415,7 @@ function toggleSizeMenu(e: Event) {
     sizeMenu.value = null;
     return;
   }
+  bindDocListeners();
   const r = (e.currentTarget as HTMLElement).getBoundingClientRect();
   sizeMenu.value = { x: r.left, y: r.top };
 }
@@ -479,7 +483,25 @@ function onHeadClick(c: TableColumn) {
 }
 
 function togglePopover(key: string) {
+  bindDocListeners();
   openFilter.value = openFilter.value === key ? null : key;
+}
+
+const rootEl = ref<HTMLElement | null>(null);
+let docView: Window | null = null;
+
+function bindDocListeners() {
+  const view = hostViewOf(rootEl.value);
+  if (docView === view) return;
+  if (docView) docView.removeEventListener('pointerdown', onDocPointerDown);
+  docView = view;
+  view.addEventListener('pointerdown', onDocPointerDown);
+}
+
+function unbindDocListeners() {
+  if (!docView) return;
+  docView.removeEventListener('pointerdown', onDocPointerDown);
+  docView = null;
 }
 
 function onDocPointerDown(e: Event) {
@@ -516,6 +538,8 @@ function startResize(e: PointerEvent, c: TableColumn) {
   if (!above.length || !below.length) return;
   const handle = e.currentTarget as HTMLElement;
   const startX = e.clientX;
+  const view = hostViewOf(handle);
+  const body = handle.ownerDocument.body;
   const base = new Map([...above, ...below].map((col) => [col.key, varWidths[col.key] ?? col.min ?? 48]));
   const onMove = (ev: PointerEvent) => {
     const delta = Math.round(ev.clientX - startX);
@@ -532,10 +556,10 @@ function startResize(e: PointerEvent, c: TableColumn) {
   };
   const onUp = () => {
     handle.releasePointerCapture(e.pointerId);
-    window.removeEventListener('pointermove', onMove);
-    window.removeEventListener('pointerup', onUp);
-    document.body.style.cursor = '';
-    document.body.style.userSelect = '';
+    view.removeEventListener('pointermove', onMove);
+    view.removeEventListener('pointerup', onUp);
+    body.style.cursor = '';
+    body.style.userSelect = '';
     resizeDragging = false;
     for (const col of [...above, ...below]) {
       if (varWidths[col.key] !== undefined) restWidths[col.key] = varWidths[col.key];
@@ -543,10 +567,10 @@ function startResize(e: PointerEvent, c: TableColumn) {
     emitColumns();
   };
   handle.setPointerCapture(e.pointerId);
-  document.body.style.cursor = 'col-resize';
-  document.body.style.userSelect = 'none';
-  window.addEventListener('pointermove', onMove);
-  window.addEventListener('pointerup', onUp);
+  body.style.cursor = 'col-resize';
+  body.style.userSelect = 'none';
+  view.addEventListener('pointermove', onMove);
+  view.addEventListener('pointerup', onUp);
 }
 
 function rowId(row: Record<string, unknown>, index: number): string | number {
@@ -559,15 +583,15 @@ function setHeadRef(key: string, el: unknown) {
   headRefs[key] = (el as HTMLElement) ?? undefined;
 }
 
-onMounted(() => document.addEventListener('pointerdown', onDocPointerDown));
+onMounted(bindDocListeners);
 onBeforeUnmount(() => {
-  document.removeEventListener('pointerdown', onDocPointerDown);
+  unbindDocListeners();
   sizerObserver.disconnect();
 });
 </script>
 
 <template>
-  <div class="sf-tbl-wrap">
+  <div ref="rootEl" class="sf-tbl-wrap">
     <div v-if="searchable || hasToolbarSides" class="sf-tbl-search">
       <div v-if="hasLeadSlot" class="sf-tbl-search-side">
         <slot name="search-lead" />

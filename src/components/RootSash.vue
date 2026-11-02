@@ -42,7 +42,7 @@ function onPointerDown(e: PointerEvent) {
   maxPos =
     combinedSize - subtreeMinSize(right.node, isRow ? 'width' : 'height', ws.minTileWidth, ws.minTileHeight);
 
-  document.body.classList.add(isRow ? 'sf-dragging-row' : 'sf-dragging-col');
+  el.value?.ownerDocument.body.classList.add(isRow ? 'sf-dragging-row' : 'sf-dragging-col');
 }
 
 function onPointerMove(e: PointerEvent) {
@@ -58,9 +58,10 @@ function onPointerMove(e: PointerEvent) {
 function onPointerUp(e: PointerEvent) {
   if (!dragging.value) return;
   dragging.value = false;
+  const body = el.value?.ownerDocument.body;
   el.value?.releasePointerCapture(e.pointerId);
-  document.body.classList.remove('sf-dragging-row');
-  document.body.classList.remove('sf-dragging-col');
+  body?.classList.remove('sf-dragging-row');
+  body?.classList.remove('sf-dragging-col');
 }
 </script>
 

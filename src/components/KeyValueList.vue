@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { ref } from 'vue';
+import { copyTextToClipboard } from '../lib/clipboard';
 import type { KeyValueItem } from '../types/panel';
 
 const props = defineProps<{
@@ -8,21 +9,8 @@ const props = defineProps<{
 }>();
 
 const copiedIndex = ref<number | null>(null);
+const rootEl = ref<HTMLElement | null>(null);
 let copyTimer: number | undefined;
-
-function legacyCopy(text: string, done: () => void) {
-  try {
-    const ta = document.createElement('textarea');
-    ta.value = text;
-    ta.style.position = 'fixed';
-    ta.style.opacity = '0';
-    document.body.appendChild(ta);
-    ta.select();
-    document.execCommand('copy');
-    document.body.removeChild(ta);
-    done();
-  } catch {}
-}
 
 function copyRow(item: KeyValueItem, index: number) {
   const text = `${item.key}: ${item.title ?? item.value ?? ''}`;
@@ -33,16 +21,9 @@ function copyRow(item: KeyValueItem, index: number) {
       copiedIndex.value = null;
     }, 1200);
   };
-  try {
-    if (navigator.clipboard?.writeText) {
-      navigator.clipboard
-        .writeText(text)
-        .then(done)
-        .catch(() => legacyCopy(text, done));
-      return;
-    }
-  } catch {}
-  legacyCopy(text, done);
+  copyTextToClipboard(text, rootEl.value)
+    .then(done)
+    .catch(() => {});
 }
 
 function copyTitle(item: KeyValueItem): string {
@@ -52,7 +33,7 @@ function copyTitle(item: KeyValueItem): string {
 
 <template>
   <div v-if="props.items.length === 0 && props.empty" class="sf-empty">{{ props.empty }}</div>
-  <div v-else class="kv-list">
+  <div v-else ref="rootEl" class="kv-list">
     <template v-for="(item, i) in props.items" :key="i">
       <div v-if="item.header" class="kv-header" :data-key="item.key">{{ item.key }}</div>
       <div

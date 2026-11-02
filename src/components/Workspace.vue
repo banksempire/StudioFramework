@@ -8,6 +8,7 @@ import {
   useWorkspace,
   type WorkspaceApi,
 } from '../composables/useWorkspace';
+import { hostViewOf } from '../lib/overlayHost';
 import type { WorkspaceDef } from '../types/layout';
 import { collectAllTabs, type DropZone, type TileNode } from '../workspace/tree';
 import RootSash from './RootSash.vue';
@@ -162,12 +163,14 @@ watch(
   },
 );
 onMounted(() => {
-  window.addEventListener('resize', invalidateGeoms);
-  window.addEventListener('scroll', invalidateGeoms, true);
+  const view = hostViewOf(wsEl.value);
+  view.addEventListener('resize', invalidateGeoms);
+  view.addEventListener('scroll', invalidateGeoms, true);
 });
 onUnmounted(() => {
-  window.removeEventListener('resize', invalidateGeoms);
-  window.removeEventListener('scroll', invalidateGeoms, true);
+  const view = hostViewOf(wsEl.value);
+  view.removeEventListener('resize', invalidateGeoms);
+  view.removeEventListener('scroll', invalidateGeoms, true);
 });
 
 function onDragOver(e: DragEvent) {

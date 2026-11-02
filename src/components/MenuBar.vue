@@ -1,8 +1,11 @@
 <script setup lang="ts">
 import { onMounted, onUnmounted, ref } from 'vue';
+import { hostViewOf } from '../lib/overlayHost';
 import type { MenuNodeDef } from '../types/layout';
 import Menu from './Menu.vue';
 import SvgIcon from './SvgIcon.vue';
+
+const barEl = ref<HTMLElement | null>(null);
 
 interface AccelKey {
   key: string;
@@ -123,11 +126,11 @@ function onKeyDown(e: KeyboardEvent) {
 
 onMounted(() => {
   bindings = collectBindings(props.menus);
-  window.addEventListener('keydown', onKeyDown);
+  hostViewOf(barEl.value).addEventListener('keydown', onKeyDown);
 });
 
 onUnmounted(() => {
-  window.removeEventListener('keydown', onKeyDown);
+  hostViewOf(barEl.value).removeEventListener('keydown', onKeyDown);
   if (armTimer !== null) window.clearTimeout(armTimer);
 });
 
@@ -165,7 +168,7 @@ function onItemAction(item: MenuNodeDef) {
 </script>
 
 <template>
-  <div class="sf-menu-bar">
+  <div ref="barEl" class="sf-menu-bar">
     <div class="sf-menu-actions sf-menu-actions--left">
       <button
         class="sf-menu-action-btn"

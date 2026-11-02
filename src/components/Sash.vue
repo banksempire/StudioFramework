@@ -27,7 +27,7 @@ function onPointerDown(e: PointerEvent) {
     (props.split.dir === 'row' ? parentRect.width : parentRect.height) -
     subtreeMinSize(b, dim, ws.minTileWidth, ws.minTileHeight);
   const dragClass = props.split.dir === 'row' ? 'sf-dragging-row' : 'sf-dragging-col';
-  document.body.classList.add(dragClass);
+  el.value?.ownerDocument.body.classList.add(dragClass);
 }
 
 function onPointerMove(e: PointerEvent) {
@@ -45,10 +45,11 @@ function onPointerMove(e: PointerEvent) {
 function onPointerUp(e: PointerEvent) {
   if (!dragging.value) return;
   dragging.value = false;
+  const body = el.value?.ownerDocument.body;
   el.value?.releasePointerCapture(e.pointerId);
   parentRect = null;
-  document.body.classList.remove('sf-dragging-row');
-  document.body.classList.remove('sf-dragging-col');
+  body?.classList.remove('sf-dragging-row');
+  body?.classList.remove('sf-dragging-col');
 }
 </script>
 

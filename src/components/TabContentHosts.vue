@@ -21,6 +21,13 @@ const hosted = computed(() => {
   const ids: string[] = [];
   for (const root of ws.roots) ids.push(...collectAllTabs(root.node));
   ids.push(...ws.detachedTabs.keys());
+  for (const wid of ws.auxWindowIds) {
+    for (const root of ws.auxApi(wid).roots) {
+      for (const id of collectAllTabs(root.node)) {
+        if (!ids.includes(id)) ids.push(id);
+      }
+    }
+  }
   return ids.filter((id) => hostable(id) !== null);
 });
 
@@ -33,10 +40,8 @@ function targetFor(id: string): HTMLElement {
 }
 
 function hostMobile(id: string): boolean {
-  const windowId = ws.detachedTabs.get(id);
-  if (windowId !== undefined) {
-    return ws.auxMobile.get(windowId) ?? false;
-  }
+  const windowId = ws.tabWindow(id);
+  if (windowId) return ws.auxWindowIsMobile(windowId);
   return mainMobile.value;
 }
 </script>

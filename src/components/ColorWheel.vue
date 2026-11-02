@@ -1,5 +1,7 @@
 <script setup lang="ts">
 import { computed, onBeforeUnmount, ref, watch } from 'vue';
+import { copyTextToClipboard } from '../lib/clipboard';
+import { hostViewOf } from '../lib/overlayHost';
 import { hsvToRgb, parseHex, rgbToHsv, toColorHex } from '../utils/color';
 
 const props = withDefaults(
@@ -223,21 +225,35 @@ function chipText(hex: string): string {
 }
 
 function copyVariant(hex: string) {
-  void navigator.clipboard?.writeText(hex);
+  void copyTextToClipboard(hex, schemeRoot.value ?? discEl.value);
 }
 
 function onSchemePointer(e: PointerEvent) {
   if (schemeRoot.value && !schemeRoot.value.contains(e.target as Node)) schemeOpen.value = false;
 }
 
+let schemeView: Window | null = null;
+
+function bindSchemePointer() {
+  const view = hostViewOf(schemeRoot.value ?? discEl.value);
+  if (schemeView === view) return;
+  unbindSchemePointer();
+  schemeView = view;
+  view.addEventListener('pointerdown', onSchemePointer, true);
+}
+
+function unbindSchemePointer() {
+  if (!schemeView) return;
+  schemeView.removeEventListener('pointerdown', onSchemePointer, true);
+  schemeView = null;
+}
+
 watch(schemeOpen, (open) => {
-  if (open) document.addEventListener('pointerdown', onSchemePointer, true);
-  else document.removeEventListener('pointerdown', onSchemePointer, true);
+  if (open) bindSchemePointer();
+  else unbindSchemePointer();
 });
 
-onBeforeUnmount(() => {
-  document.removeEventListener('pointerdown', onSchemePointer, true);
-});
+onBeforeUnmount(unbindSchemePointer);
 </script>
 
 <template>

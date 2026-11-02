@@ -111,10 +111,11 @@ watch(ctxItem, async (v) => {
   await nextTick();
   const el = menuEl.value;
   if (!el) return;
+  const view = hostViewOf(smEl.value);
   const w = el.offsetWidth || 200;
   const h = el.offsetHeight || 80;
-  const left = Math.max(4, Math.min(ctxX.value, window.innerWidth - w - 4));
-  const top = Math.max(4, Math.min(ctxY.value, window.innerHeight - h - 4));
+  const left = Math.max(4, Math.min(ctxX.value, view.innerWidth - w - 4));
+  const top = Math.max(4, Math.min(ctxY.value, view.innerHeight - h - 4));
   menuStyle.value = { left: `${left}px`, top: `${top}px` };
 });
 
