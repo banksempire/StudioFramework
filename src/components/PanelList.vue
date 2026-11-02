@@ -288,12 +288,14 @@ function pickAdd(opt: PanelListOption) {
   emit('add', opt.id);
 }
 
+const { anchorEl, overlayTarget: addSheetTarget, resolve: resolveSheetTarget } = useOverlayTarget();
+
 watch(addOpen, async (v) => {
   if (!v) return;
+  resolveSheetTarget();
   await nextTick();
   const el = addMenuEl.value;
   if (!el) return;
-  const view = hostViewOf(anchorEl.value);
   const w = el.offsetWidth || 200;
   const h = el.offsetHeight || 80;
   const { left, top } = clampIntoView(hostViewOf(anchorEl.value), addX.value, addY.value, w, h);
@@ -314,8 +316,6 @@ function onAddDocDown(e: MouseEvent) {
 function onAddDocKey(e: KeyboardEvent) {
   if (e.key === 'Escape') addOpen.value = false;
 }
-
-const { anchorEl, overlayTarget: addSheetTarget } = useOverlayTarget();
 
 const addRow = ref<HTMLElement | null>(null);
 const addMinHeight = ref<number | null>(null);

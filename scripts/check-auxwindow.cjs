@@ -96,6 +96,20 @@ const { ensureServer, openApp, makeReporter, finish } = require('./lib/ui-test.c
     );
     await aux.click('.sf-tab-dropdown-close');
     await aux.waitForSelector('.sf-tab-dropdown', { state: 'detached', timeout: 5000 });
+    await page.setViewportSize({ width: 390, height: 800 });
+    await wait(300);
+    await aux.click('.sf-mobile-tab-label');
+    await aux.waitForSelector('.sf-tab-dropdown', { timeout: 5000 });
+    report(
+      'both windows mobile: the popup sheet stays in the popup and lists its tab',
+      (await aux.locator('.sf-tab-dropdown').count()) === 1 &&
+        (await page.locator('.sf-tab-dropdown').count()) === 0 &&
+        (await aux.locator('.sf-tab-dropdown-row').count()) === 1,
+    );
+    await aux.click('.sf-tab-dropdown-close');
+    await aux.waitForSelector('.sf-tab-dropdown', { state: 'detached', timeout: 5000 });
+    await page.setViewportSize({ width: 1440, height: 900 });
+    await wait(300);
     await aux.setViewportSize({ width: 960, height: 720 });
     await aux.waitForFunction(() => document.querySelectorAll('.sf-root--mobile').length === 0, {
       timeout: 5000,

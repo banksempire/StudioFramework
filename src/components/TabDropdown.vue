@@ -254,7 +254,13 @@ onBeforeUnmount(() => {
   stopBlockScroll();
 });
 
-const { anchorEl, overlayTarget: sheetTarget } = useOverlayTarget();
+const { anchorEl, overlayTarget: sheetTarget, resolve: resolveSheetTarget } = useOverlayTarget();
+watch(
+  () => props.open,
+  (open) => {
+    if (open) resolveSheetTarget();
+  },
+);
 </script>
 
 <template>
