@@ -1,4 +1,5 @@
-import { createApp, reactive } from 'vue';
+import { createApp, h, reactive, ref } from 'vue';
+import Dialog from './components/Dialog.vue';
 import DialogDemo from './components/DialogDemo.vue';
 import ResourceDemo from './components/ResourceDemo.vue';
 import SelectorDemo from './components/SelectorDemo.vue';
@@ -365,6 +366,13 @@ registerPanelData('demo-menu', () => [
 ]);
 
 function onAction(e: FrameworkAction) {
+  const w = window as unknown as { __sfActions?: FrameworkAction[] };
+  if (!w.__sfActions) w.__sfActions = [];
+  w.__sfActions.push({ ...e });
+  if (e.source === 'utility' && e.action === 'demo-dialog') {
+    appDialogOpen.value = true;
+    return;
+  }
   if (e.source === 'panel' && e.action === 'bulk') {
     const p = e.payload as {
       gesture?: string;
@@ -494,7 +502,21 @@ declare global {
   }
 }
 
-createApp(Framework, {
-  onWorkspaceReady: (api: WorkspaceApi) => (window.__sfWorkspace = api),
-  onAction,
+const appDialogOpen = ref(false);
+
+createApp({
+  setup() {
+    return () => [
+      h(Framework, {
+        onWorkspaceReady: (api: WorkspaceApi) => (window.__sfWorkspace = api),
+        onAction,
+      }),
+      h(Dialog, {
+        open: appDialogOpen.value,
+        title: 'New file',
+        'onUpdate:open': (v: boolean) => (appDialogOpen.value = v),
+        onClose: () => (appDialogOpen.value = false),
+      }),
+    ];
+  },
 }).mount('#framework');

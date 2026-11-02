@@ -56,7 +56,7 @@ const { ensureServer, openApp, makeReporter, finish } = require('./lib/ui-test.c
     report('found "Project" sub-section', !!projectSub);
     report('found "Outline" sub-section', !!outlineSub);
 
-    report('project has 4 utility buttons', (await utilButtonCount(projectSub)) === 4);
+    report('project has 5 utility buttons', (await utilButtonCount(projectSub)) === 5);
     report('utils visible with no hover and no interaction', (await getUtilsDisplay(projectSub)) === 'shown');
 
     if (outlineSub) await hoverSub(outlineSub);
@@ -66,7 +66,7 @@ const { ensureServer, openApp, makeReporter, finish } = require('./lib/ui-test.c
     await moveMouseAway();
     report('utils stay visible after moving mouse away', (await getUtilsDisplay(projectSub)) === 'shown');
 
-    const projectHeader = await projectSub.$('.sf-subsection-header');
+    const projectHeader = await projectSub.$('.sf-subsection-label');
     await projectHeader.click();
     await page.waitForTimeout(50);
     report(

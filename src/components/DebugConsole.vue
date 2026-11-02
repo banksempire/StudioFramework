@@ -73,7 +73,7 @@ watch(open, (v) => {
   if (v) {
     document.addEventListener('click', onDocClick);
     document.addEventListener('keydown', onEsc);
-    void nextTick(() => {
+    void nextTick().then(() => {
       const el = listEl.value;
       if (el) el.scrollTop = el.scrollHeight;
     });

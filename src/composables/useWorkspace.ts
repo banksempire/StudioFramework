@@ -1,4 +1,6 @@
 import { type InjectionKey, inject, nextTick, type Ref, reactive, shallowReactive, watch } from 'vue';
+import type { FrameworkAction } from '../Framework.vue';
+import { beginInteractionDoc } from '../lib/overlayHost';
 import type { LayoutDefinition, MenuNodeDef, WorkspaceDef, WorkspaceTabDef } from '../types/layout';
 import { type AuxWindowHandle, openAuxWindow } from '../workspace/auxWindow';
 import {
@@ -171,6 +173,8 @@ export interface WorkspaceApi {
   notifyTabClick(tabId: string): void;
   setTabLongPressHandler(handler: ((tabId: string) => void) | null): void;
   notifyTabLongPress(tabId: string): void;
+  setAppActionSink(sink: ((action: FrameworkAction) => void) | null): void;
+  emitAppAction(action: FrameworkAction): void;
   readonly mobileSheetEpoch: number;
   dismissMobileSheets(): void;
   registerTabResources(tabId: string, lifecycle: TabResourceLifecycle): void;
@@ -302,6 +306,24 @@ export function useWorkspace(def: WorkspaceDef, opts?: { mobile?: Ref<boolean> }
 
   function notifyTabLongPress(tabId: string) {
     tabLongPressHandler?.(tabId);
+  }
+
+  let appActionSink: ((action: FrameworkAction) => void) | null = null;
+
+  function setAppActionSink(sink: ((action: FrameworkAction) => void) | null) {
+    appActionSink = sink;
+  }
+
+  function deliverAppAction(action: FrameworkAction, windowId: number) {
+    const sink = appActionSink;
+    if (!sink) return;
+    if (windowId === 0) {
+      sink(action);
+      return;
+    }
+    const el = auxWindows.get(windowId)?.content ?? null;
+    if (el) beginInteractionDoc(el.ownerDocument);
+    sink({ ...action, auxWindow: windowId });
   }
 
   function dismissMobileSheets() {
@@ -872,6 +894,8 @@ export function useWorkspace(def: WorkspaceDef, opts?: { mobile?: Ref<boolean> }
       },
       startDrag,
       endDrag,
+      setAppActionSink,
+      emitAppAction: (action: FrameworkAction) => deliverAppAction(action, windowId),
       registerTileEl(id, el) {
         const m = auxTileEls.get(windowId);
         if (!m) return;
@@ -1609,6 +1633,8 @@ export function useWorkspace(def: WorkspaceDef, opts?: { mobile?: Ref<boolean> }
     notifyTabClick,
     setTabLongPressHandler,
     notifyTabLongPress,
+    setAppActionSink,
+    emitAppAction: (action: FrameworkAction) => deliverAppAction(action, 0),
     get mobileSheetEpoch() {
       return state.mobileSheetEpoch;
     },

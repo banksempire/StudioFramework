@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue';
+import { overlayRootOf } from '../lib/overlayHost';
 import type { IconDef } from '../types/panel';
 import Icon from './Icon.vue';
 import SvgIcon from './SvgIcon.vue';
@@ -253,13 +254,15 @@ onBeforeUnmount(() => {
   stopBlockScroll();
 });
 
+const anchorEl = ref<HTMLElement | null>(null);
 const sheetTarget = ref<HTMLElement | 'body'>('body');
 onMounted(() => {
-  sheetTarget.value = (document.querySelector('.sf-root') as HTMLElement | null) ?? 'body';
+  sheetTarget.value = overlayRootOf(anchorEl.value);
 });
 </script>
 
 <template>
+  <span ref="anchorEl" hidden />
   <Teleport :to="sheetTarget">
     <div v-if="open" class="sf-tab-dropdown">
       <div class="sf-tab-dropdown-bar">

@@ -26,7 +26,7 @@ const popEl = ref<HTMLElement | null>(null);
 
 function syncCursorToSelection() {
   const at = matches.value.findIndex((o) => o.value === props.modelValue);
-  cursor.value = at >= 0 ? at : 0;
+  cursor.value = Math.max(at, 0);
 }
 
 async function scrollCursorIntoView() {

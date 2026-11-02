@@ -843,8 +843,8 @@ const WS = '.sf-workspace';
   );
   const projSub = page.locator('.sf-mobile-panel .sf-subsection', { hasText: 'Project' });
   report(
-    'utility-dismiss: Project subsection shows its 4 utility buttons',
-    (await projSub.locator('.sf-subsection-util').count()) === 4,
+    'utility-dismiss: Project subsection shows its 5 utility buttons',
+    (await projSub.locator('.sf-subsection-util').count()) === 5,
   );
   await projSub.locator('.sf-subsection-util[title="New File"]').click();
   await page.waitForTimeout(300);

@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed, inject, nextTick, onMounted, onUnmounted, ref, watch } from 'vue';
 import { kIsMobile, kMobilePanelDismiss } from '../composables/useWorkspace';
+import { hostDocOf, hostViewOf, overlayRootOf } from '../lib/overlayHost';
 import type {
   PanelListAdd,
   PanelListBulk,
@@ -184,9 +185,10 @@ function onRowDrop(item: PanelListItem) {
 }
 
 let touchDrag: { id: string; pointerId: number; el: HTMLElement } | null = null;
+let touchView: Window | null = null;
 
 function touchRowAt(x: number, y: number): string | null {
-  const el = document.elementFromPoint(x, y)?.closest<HTMLElement>('.sf-pl-item[data-id]');
+  const el = hostDocOf(anchorEl.value).elementFromPoint(x, y)?.closest<HTMLElement>('.sf-pl-item[data-id]');
   return el?.dataset.id ?? null;
 }
 
@@ -206,9 +208,10 @@ function onTouchDragEnd(e: PointerEvent) {
   if (!touchDrag) return;
   const { id, pointerId, el } = touchDrag;
   touchDrag = null;
-  window.removeEventListener('pointermove', onTouchDragMove);
-  window.removeEventListener('pointerup', onTouchDragEnd);
-  window.removeEventListener('pointercancel', onTouchDragEnd);
+  touchView?.removeEventListener('pointermove', onTouchDragMove);
+  touchView?.removeEventListener('pointerup', onTouchDragEnd);
+  touchView?.removeEventListener('pointercancel', onTouchDragEnd);
+  touchView = null;
   try {
     el.releasePointerCapture(pointerId);
   } catch {
@@ -223,13 +226,15 @@ function onTouchDragEnd(e: PointerEvent) {
 function onGripPointerDown(item: PanelListItem, e: PointerEvent) {
   if (e.pointerType !== 'touch' || props.draggable !== true || !item.dragType) return;
   const el = e.currentTarget as HTMLElement;
+  const view = hostViewOf(el);
+  touchView = view;
   try {
     el.setPointerCapture(e.pointerId);
   } catch {
-    touchDrag = { id: item.id, pointerId: -1, el: document.body };
-    window.addEventListener('pointermove', onTouchDragMove);
-    window.addEventListener('pointerup', onTouchDragEnd);
-    window.addEventListener('pointercancel', onTouchDragEnd);
+    touchDrag = { id: item.id, pointerId: -1, el };
+    view.addEventListener('pointermove', onTouchDragMove);
+    view.addEventListener('pointerup', onTouchDragEnd);
+    view.addEventListener('pointercancel', onTouchDragEnd);
     dragId.value = item.id;
     overId.value = item.id;
     return;
@@ -237,9 +242,9 @@ function onGripPointerDown(item: PanelListItem, e: PointerEvent) {
   touchDrag = { id: item.id, pointerId: e.pointerId, el };
   dragId.value = item.id;
   overId.value = item.id;
-  window.addEventListener('pointermove', onTouchDragMove);
-  window.addEventListener('pointerup', onTouchDragEnd);
-  window.addEventListener('pointercancel', onTouchDragEnd);
+  view.addEventListener('pointermove', onTouchDragMove);
+  view.addEventListener('pointerup', onTouchDragEnd);
+  view.addEventListener('pointercancel', onTouchDragEnd);
 }
 
 function onButtonClick(
@@ -286,11 +291,12 @@ watch(addOpen, async (v) => {
   await nextTick();
   const el = addMenuEl.value;
   if (!el) return;
+  const view = hostViewOf(anchorEl.value);
   const w = el.offsetWidth || 200;
   const h = el.offsetHeight || 80;
   addMenuStyle.value = {
-    left: `${Math.max(4, Math.min(addX.value, window.innerWidth - w - 4))}px`,
-    top: `${Math.max(4, Math.min(addY.value, window.innerHeight - h - 4))}px`,
+    left: `${Math.max(4, Math.min(addX.value, view.innerWidth - w - 4))}px`,
+    top: `${Math.max(4, Math.min(addY.value, view.innerHeight - h - 4))}px`,
   };
 });
 
@@ -306,6 +312,7 @@ function onAddDocKey(e: KeyboardEvent) {
   if (e.key === 'Escape') addOpen.value = false;
 }
 
+const anchorEl = ref<HTMLElement | null>(null);
 const addSheetTarget = ref<HTMLElement | 'body'>('body');
 
 const addRow = ref<HTMLElement | null>(null);
@@ -347,18 +354,21 @@ onUnmounted(() => {
 
 if (typeof window !== 'undefined') {
   onMounted(() => {
-    addSheetTarget.value = (document.querySelector('.sf-root') as HTMLElement | null) ?? 'body';
-    window.addEventListener('mousedown', onAddDocDown);
-    window.addEventListener('keydown', onAddDocKey);
+    addSheetTarget.value = overlayRootOf(anchorEl.value);
+    const view = hostViewOf(anchorEl.value);
+    view.addEventListener('mousedown', onAddDocDown);
+    view.addEventListener('keydown', onAddDocKey);
   });
   onUnmounted(() => {
-    window.removeEventListener('mousedown', onAddDocDown);
-    window.removeEventListener('keydown', onAddDocKey);
+    const view = hostViewOf(anchorEl.value);
+    view.removeEventListener('mousedown', onAddDocDown);
+    view.removeEventListener('keydown', onAddDocKey);
   });
 }
 </script>
 
 <template>
+  <span ref="anchorEl" hidden />
   <div v-if="showEmpty" class="sf-empty">{{ props.empty }}</div>
   <div v-if="!rich && (!showEmpty || props.add)" class="sf-pc-list">
     <div v-if="props.searchable" class="sf-pl-search">

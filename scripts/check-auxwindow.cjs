@@ -87,11 +87,71 @@ const { ensureServer, openApp, makeReporter, finish } = require('./lib/ui-test.c
       { timeout: 5000 },
     );
     report('narrow popup switches to the mobile layout', true);
+    await aux.click('.sf-mobile-tab-label');
+    await aux.waitForSelector('.sf-tab-dropdown', { timeout: 5000 });
+    report(
+      'mobile tab sheet opened in the popup renders inside the popup document',
+      (await aux.locator('.sf-tab-dropdown').count()) === 1 &&
+        (await page.locator('.sf-tab-dropdown').count()) === 0,
+    );
+    await aux.click('.sf-tab-dropdown-close');
+    await aux.waitForSelector('.sf-tab-dropdown', { state: 'detached', timeout: 5000 });
     await aux.setViewportSize({ width: 960, height: 720 });
     await aux.waitForFunction(() => document.querySelectorAll('.sf-root--mobile').length === 0, {
       timeout: 5000,
     });
     report('wide popup switches back to the desktop layout', true);
+
+    await aux.setViewportSize({ width: 2000, height: 900 });
+    if (
+      !(await aux
+        .locator('.sf-docker-app[title="Explorer"]')
+        .evaluate((el) => el.classList.contains('active')))
+    ) {
+      await aux.click('.sf-docker-app[title="Explorer"]');
+    }
+    await aux.click('.sf-subsection-util[title="Open dialog"]');
+    await aux.waitForSelector('.sf-dialog-backdrop', { timeout: 5000 });
+    report(
+      'panel utility action fired in the popup reaches the main embedder with the aux window id',
+      await page.evaluate(() =>
+        (window.__sfActions ?? []).some(
+          (a) => a.source === 'utility' && a.action === 'demo-dialog' && a.auxWindow === 1,
+        ),
+      ),
+    );
+    report(
+      'dialog opened by the embedder in response renders inside the popup document',
+      (await aux.locator('.sf-dialog-backdrop').count()) === 1 &&
+        (await page.locator('.sf-dialog-backdrop').count()) === 0,
+    );
+    await aux.click('.sf-dialog-close');
+    await aux.waitForSelector('.sf-dialog-backdrop', { state: 'detached', timeout: 5000 });
+
+    await aux.click('.sf-docker-app[title="Fields"]');
+    await aux.waitForSelector('.sf-pl-item--add', { timeout: 5000 });
+    await aux.click('.sf-pl-item--add');
+    await aux.waitForSelector('.sf-sm-menu', { timeout: 5000 });
+    report(
+      'panel list add sheet opened in the popup renders inside the popup document',
+      (await aux.locator('.sf-sm-menu').count()) === 1 && (await page.locator('.sf-sm-menu').count()) === 0,
+    );
+    await aux.click('.sf-sm-menu-row:has-text("Text field")');
+    await aux.waitForSelector('.sf-sm-menu', { state: 'detached', timeout: 5000 });
+    report(
+      'panel list add action from the popup routes to the main embedder with the aux window id',
+      await page.evaluate(() =>
+        (window.__sfActions ?? []).some(
+          (a) =>
+            a.source === 'panel' &&
+            a.action === 'fields-demo-add' &&
+            a.auxWindow === 1 &&
+            a.payload?.gesture === 'add' &&
+            a.payload?.option === 'text',
+        ),
+      ),
+    );
+    await aux.setViewportSize({ width: 960, height: 720 });
 
     await aux.click('[data-test="show-dialog"]');
     await aux.waitForSelector('[data-test="demo-dialog-body"]', { timeout: 5000 });

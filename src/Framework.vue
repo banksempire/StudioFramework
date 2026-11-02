@@ -9,6 +9,7 @@ export interface FrameworkAction {
   subId?: string;
   component?: string;
   payload?: unknown;
+  auxWindow?: number;
 }
 </script>
 
@@ -73,10 +74,17 @@ const isMobile = ref(viewport.innerWidth < MOBILE_BREAKPOINT);
 provide(kIsMobile, isMobile);
 
 const api = props.api ?? useWorkspace(L.workspace, { mobile: isMobile });
+const ownsWorkspace = !props.api;
 provide(kWorkspace, api);
 provide(kLayout, L);
 provide(kTitleBarMenus, { menus: L.menu, onAction: onMenuAction });
-onMounted(() => emit('workspace-ready', api));
+onMounted(() => {
+  if (ownsWorkspace) api.setAppActionSink((a) => emit('action', a));
+  emit('workspace-ready', api);
+});
+onUnmounted(() => {
+  if (ownsWorkspace) api.setAppActionSink(null);
+});
 
 const persistedApp = readUiString('panel.activeApp');
 const activeDockerApp = ref(

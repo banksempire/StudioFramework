@@ -1,12 +1,28 @@
+let interactionDoc: Document | null = null;
+let interactionReset: ReturnType<typeof setTimeout> | null = null;
+
+export function beginInteractionDoc(doc: Document): void {
+  interactionDoc = doc;
+  if (interactionReset !== null) clearTimeout(interactionReset);
+  interactionReset = setTimeout(() => {
+    interactionDoc = null;
+    interactionReset = null;
+  }, 0);
+}
+
+function resolveDoc(el: Element | null | undefined): Document {
+  return interactionDoc ?? el?.ownerDocument ?? document;
+}
+
 export function hostDocOf(el: Element | null | undefined): Document {
-  return el?.ownerDocument ?? document;
+  return resolveDoc(el);
 }
 
 export function overlayRootOf(el: Element | null | undefined): HTMLElement | 'body' {
-  const root = hostDocOf(el).querySelector('.sf-overlay-root') as HTMLElement | null;
+  const root = resolveDoc(el).querySelector('.sf-overlay-root') as HTMLElement | null;
   return root ?? 'body';
 }
 
 export function hostViewOf(el: Element | null | undefined): Window {
-  return (el?.ownerDocument?.defaultView ?? window) as Window;
+  return (resolveDoc(el).defaultView ?? window) as Window;
 }

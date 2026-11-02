@@ -103,7 +103,7 @@ watch(
     visibleCount.value = 100;
     overflowOpen.value = false;
     visibilityMenuOpen.value = false;
-    nextTick(() => recompute());
+    void nextTick().then(() => recompute());
   },
 );
 
@@ -116,7 +116,7 @@ function selectSection(idx: number) {
 watch(uiEpoch, () => {
   savedIndex.clear();
   restoreSectionState(lastKey, props.h1s);
-  nextTick(() => recompute());
+  void nextTick().then(() => recompute());
 });
 
 function selectOverflowSection(sectionId: string) {
@@ -192,7 +192,7 @@ watch(
     if (el) {
       observer = new ResizeObserver(() => scheduleRecompute());
       observer.observe(el);
-      nextTick(() => recompute());
+      void nextTick().then(() => recompute());
     }
   },
   { immediate: true },

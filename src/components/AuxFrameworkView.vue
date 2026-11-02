@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { createApp, inject, onMounted, onUnmounted, ref } from 'vue';
 import { kLayout, useWorkspaceContext } from '../composables/useWorkspace';
+import type { FrameworkAction } from '../Framework.vue';
 import Framework from '../Framework.vue';
 
 const props = defineProps<{ windowId: number }>();
@@ -21,6 +22,7 @@ onMounted(() => {
       statusBar: false,
       hostTabs: false,
       persistUiState: false,
+      onAction: (action: FrameworkAction) => ws.auxApi(props.windowId).emitAppAction(action),
     });
     app.mount(el);
   } catch (e) {}

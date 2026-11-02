@@ -450,6 +450,11 @@
                     "tooltip": "New Folder"
                   },
                   {
+                    "id": "demo-dialog",
+                    "icon": "🗂",
+                    "tooltip": "Open dialog"
+                  },
+                  {
                     "id": "refresh",
                     "icon": "↻",
                     "tooltip": "Refresh"
