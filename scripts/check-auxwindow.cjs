@@ -177,6 +177,33 @@ const { ensureServer, openApp, makeReporter, finish } = require('./lib/ui-test.c
       ),
     );
 
+    await aux.locator('.sf-menu-item', { hasText: 'File' }).click();
+    await aux.waitForSelector('.sf-menu-row', { timeout: 5000 });
+    await aux.locator('.sf-menu-row', { hasText: 'Open demo tab' }).click();
+    await aux.waitForSelector('.sf-tab[data-tab-id="aux-menu-demo"]', { timeout: 5000 });
+    report(
+      'menu-driven tab open from the popup lands in the popup window',
+      await page.evaluate(() => window.__sfWorkspace.tabWindow('aux-menu-demo') === 1),
+    );
+    await aux.waitForSelector('[data-tab-slot="aux-menu-demo"] .sf-tbl-wrap', { timeout: 5000 });
+    report(
+      'menu-opened tab content is hosted inside the popup document',
+      (await aux.locator('[data-tab-slot="aux-menu-demo"] .sf-tbl-wrap').count()) >= 1 &&
+        (await page.locator('[data-tab-slot="aux-menu-demo"] .sf-tbl-wrap').count()) === 0,
+    );
+    report(
+      'activating an aux-resident tab from the main api keeps it in the popup',
+      await page.evaluate(() => {
+        const api = window.__sfWorkspace;
+        const tile = api.findTabGlobal('aux-menu-demo');
+        if (!tile) return false;
+        api.ops.activateTab(tile.id, 'aux-menu-demo');
+        return api.tabWindow('aux-menu-demo') === 1 && api.auxApi(1).focusedTileId === tile.id;
+      }),
+    );
+    await page.evaluate(() => window.__sfWorkspace.ops.closeTab('aux-menu-demo'));
+    await aux.waitForSelector('.sf-tab[data-tab-id="aux-menu-demo"]', { state: 'detached', timeout: 5000 });
+
     await page.evaluate(() => {
       const api = window.__sfWorkspace.auxApi(1);
       const tile = api.findTabGlobal('aux-e2e-a');

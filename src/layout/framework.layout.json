@@ -60,6 +60,11 @@
           "action": "save-as"
         },
         {
+          "id": "demo-open-tab",
+          "label": "Open demo tab",
+          "action": "demo-open-tab"
+        },
+        {
           "separator": true
         },
         {

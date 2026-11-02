@@ -323,6 +323,7 @@ export function useWorkspace(def: WorkspaceDef, opts?: { mobile?: Ref<boolean> }
     }
     const el = auxWindows.get(windowId)?.content ?? null;
     if (el) beginInteractionDoc(el.ownerDocument);
+    beginActionWindow(windowId);
     sink({ ...action, auxWindow: windowId });
   }
 
@@ -439,6 +440,22 @@ export function useWorkspace(def: WorkspaceDef, opts?: { mobile?: Ref<boolean> }
       if (tree.roots.some((r) => findTileByTab(r.node, tabId))) return auxId;
     }
     return undefined;
+  }
+
+  let actionWindow: number | null = null;
+  let actionWindowReset: ReturnType<typeof setTimeout> | null = null;
+
+  function beginActionWindow(windowId: number) {
+    actionWindow = windowId;
+    if (actionWindowReset !== null) clearTimeout(actionWindowReset);
+    actionWindowReset = setTimeout(() => {
+      actionWindow = null;
+      actionWindowReset = null;
+    }, 0);
+  }
+
+  function auxFocusedTileId(windowId: number): string {
+    return auxTrees.get(windowId)?.focusedTileId ?? '';
   }
 
   function auxRemoveTab(tabId: string): number | undefined {
@@ -1164,6 +1181,17 @@ export function useWorkspace(def: WorkspaceDef, opts?: { mobile?: Ref<boolean> }
 
   const ops: WorkspaceOps = {
     activateTab(tileId, tabId) {
+      const owner = auxWindowHoldingTab(tabId);
+      if (owner !== undefined) {
+        const tree = auxTrees.get(owner);
+        const root = tree?.roots.find((r) => findTileByTab(r.node, tabId));
+        const tile = root ? findTileByTab(root.node, tabId) : null;
+        if (tree && root && tile) {
+          tile.activeId = tabId;
+          tree.focusedTileId = tile.id;
+          return;
+        }
+      }
       const root = findRootByTile(tileId);
       if (!root) return;
       const tile = findTile(root.node, tileId);
@@ -1187,6 +1215,10 @@ export function useWorkspace(def: WorkspaceDef, opts?: { mobile?: Ref<boolean> }
     },
 
     newTab(tileId) {
+      if (actionWindow !== null) {
+        auxOps(actionWindow).newTab(auxFocusedTileId(actionWindow));
+        return;
+      }
       if (newTabHandler) {
         newTabHandler(tileId);
         return;
@@ -1199,6 +1231,10 @@ export function useWorkspace(def: WorkspaceDef, opts?: { mobile?: Ref<boolean> }
     },
 
     openTab(tileId, tab) {
+      if (actionWindow !== null) {
+        auxOps(actionWindow).openTab(auxFocusedTileId(actionWindow), tab);
+        return;
+      }
       const root = findRootByTile(tileId);
       if (!root) return;
       tabDefs[tab.id] = tab;
@@ -1207,6 +1243,10 @@ export function useWorkspace(def: WorkspaceDef, opts?: { mobile?: Ref<boolean> }
     },
 
     insertTab(tileId, index, tab) {
+      if (actionWindow !== null) {
+        auxOps(actionWindow).insertTab(auxFocusedTileId(actionWindow), index, tab);
+        return;
+      }
       const root = findRootByTile(tileId);
       if (!root) return;
       tabDefs[tab.id] = tab;
@@ -1217,6 +1257,10 @@ export function useWorkspace(def: WorkspaceDef, opts?: { mobile?: Ref<boolean> }
     },
 
     splitOpen(tileId, dir, side, tab) {
+      if (actionWindow !== null) {
+        auxOps(actionWindow).splitOpen(auxFocusedTileId(actionWindow), dir, side, tab);
+        return;
+      }
       const root = findRootByTile(tileId);
       if (!root) return;
       tabDefs[tab.id] = tab;
