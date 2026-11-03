@@ -369,21 +369,25 @@ function onAction(e: FrameworkAction) {
   const w = window as unknown as { __sfActions?: FrameworkAction[] };
   if (!w.__sfActions) w.__sfActions = [];
   w.__sfActions.push({ ...e });
-  if (e.source === 'menu' && e.action === 'demo-open-tab') {
+  if (e.source === 'menu' && (e.action === 'demo-open-tab' || e.action === 'demo-open-tab-async')) {
     const api = window.__sfWorkspace;
     if (!api) return;
-    const existing = api.findTabGlobal('aux-menu-demo');
-    if (existing) {
-      api.ops.activateTab(existing.id, 'aux-menu-demo');
-      return;
-    }
-    const tileId = api.focusedTileId && api.findTileGlobal(api.focusedTileId) ? api.focusedTileId : '';
-    api.ops.openTab(tileId, {
-      id: 'aux-menu-demo',
-      label: 'Menu demo',
-      icon: '🧮',
-      content: 'table-demo',
-    });
+    const open = () => {
+      const existing = api.findTabGlobal('aux-menu-demo');
+      if (existing) {
+        api.ops.activateTab(existing.id, 'aux-menu-demo');
+        return;
+      }
+      const tileId = api.focusedTileId && api.findTileGlobal(api.focusedTileId) ? api.focusedTileId : '';
+      api.ops.openTab(tileId, {
+        id: 'aux-menu-demo',
+        label: 'Menu demo',
+        icon: '🧮',
+        content: 'table-demo',
+      });
+    };
+    if (e.action === 'demo-open-tab-async') setTimeout(open, 80);
+    else open();
     return;
   }
   if (e.source === 'utility' && e.action === 'demo-dialog') {

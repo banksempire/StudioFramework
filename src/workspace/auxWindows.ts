@@ -47,9 +47,12 @@ export interface AuxTreeState {
 export const EMPTY_AUX_TREE: AuxTreeState = { roots: [], rootDir: null, focusedTileId: '' };
 
 export interface AuxWindowsHost {
+  readonly mainWindow: Window;
   readonly tabDefs: Record<string, WorkspaceTabDef>;
   readonly mobile: Ref<boolean> | null;
   mainOps(): WorkspaceOps;
+  onGesture(windowId: number): void;
+  onAuxWindowClosed(windowId: number): void;
   releaseTabResources(tabId: string): void;
   ownsTab(tabId: string): boolean;
   evictTab(tabId: string): void;
@@ -82,7 +85,7 @@ export interface AuxWindows {
     position?: { screenX?: number; screenY?: number },
   ): boolean;
   inActionWindow(run: (ops: WorkspaceOps, tileId: string) => void): boolean;
-  beginActionWindow(windowId: number): void;
+  latchActionWindow(windowId: number): void;
   ops(windowId: number): WorkspaceOps;
   allTabIds(): string[];
   windowSnapshots(skipTab?: (tabId: string) => boolean): AuxWindowSnapshot[];
@@ -176,17 +179,20 @@ export function createAuxWindows(host: AuxWindowsHost): AuxWindows {
     return undefined;
   }
 
-  let actionWindow: number | null = null;
-  let actionWindowReset: ReturnType<typeof setTimeout> | null = null;
+  let actionWindow = 0;
+  const gestureCleanups = new Map<number, () => void>();
 
-  function beginActionWindow(windowId: number) {
+  function latchActionWindow(windowId: number) {
     actionWindow = windowId;
-    if (actionWindowReset !== null) clearTimeout(actionWindowReset);
-    actionWindowReset = setTimeout(() => {
-      actionWindow = null;
-      actionWindowReset = null;
-    }, 0);
+    host.onGesture(windowId);
   }
+
+  function latchFromWindow(windowId: number) {
+    return () => latchActionWindow(windowId);
+  }
+
+  host.mainWindow.addEventListener('pointerdown', latchFromWindow(0), true);
+  host.mainWindow.addEventListener('keydown', latchFromWindow(0), true);
 
   function auxFocusedTileId(windowId: number): string {
     const tree = auxTrees.get(windowId);
@@ -202,7 +208,7 @@ export function createAuxWindows(host: AuxWindowsHost): AuxWindows {
   }
 
   function inActionWindow(run: (ops: WorkspaceOps, tileId: string) => void): boolean {
-    if (actionWindow === null) return false;
+    if (actionWindow === 0 || !auxWindows.has(actionWindow)) return false;
     run(auxOps(actionWindow), auxFocusedTileId(actionWindow));
     return true;
   }
@@ -339,6 +345,13 @@ export function createAuxWindows(host: AuxWindowsHost): AuxWindows {
       auxMobile.set(handle.id, handle.isMobile());
     });
     registerWindowForDragTracking(handle.window, handle.id);
+    const latch = latchFromWindow(handle.id);
+    handle.window.addEventListener('pointerdown', latch, true);
+    handle.window.addEventListener('keydown', latch, true);
+    gestureCleanups.set(handle.id, () => {
+      handle.window.removeEventListener('pointerdown', latch, true);
+      handle.window.removeEventListener('keydown', latch, true);
+    });
     handle.onClosed(() => {
       auxMobile.delete(handle.id);
       for (const tabId of auxTabsOf(handle.id)) {
@@ -346,6 +359,10 @@ export function createAuxWindows(host: AuxWindowsHost): AuxWindows {
       }
       auxWindows.delete(handle.id);
       auxTrees.delete(handle.id);
+      if (actionWindow === handle.id) actionWindow = 0;
+      gestureCleanups.get(handle.id)?.();
+      gestureCleanups.delete(handle.id);
+      host.onAuxWindowClosed(handle.id);
     });
   }
 
@@ -702,7 +719,7 @@ export function createAuxWindows(host: AuxWindowsHost): AuxWindows {
       return moveDetachedTab(tabId, targetWindowId, position);
     },
     inActionWindow,
-    beginActionWindow,
+    latchActionWindow,
     ops: auxOps,
     allTabIds() {
       const ids = new Set<string>();

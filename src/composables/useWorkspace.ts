@@ -1,5 +1,5 @@
 import { type InjectionKey, inject, type Ref, reactive, watch } from 'vue';
-import { beginInteractionDoc } from '../lib/overlayHost';
+import { setInteractionDoc } from '../lib/overlayHost';
 import type { FrameworkAction } from '../types/actions';
 import type { LayoutDefinition, MenuNodeDef, WorkspaceDef, WorkspaceTabDef } from '../types/layout';
 import { type AuxDetachOptions, createAuxWindows, EMPTY_AUX_TREE } from '../workspace/auxWindows';
@@ -287,17 +287,13 @@ export function useWorkspace(def: WorkspaceDef, opts?: { mobile?: Ref<boolean> }
     appActionSink = sink;
   }
 
+  let interactionDocWindowId: number | null = null;
+
   function deliverAppAction(action: FrameworkAction, windowId: number) {
     const sink = appActionSink;
     if (!sink) return;
-    if (windowId === 0) {
-      sink(action);
-      return;
-    }
-    const el = auxWindows.contentEl(windowId);
-    if (el) beginInteractionDoc(el.ownerDocument);
-    auxWindows.beginActionWindow(windowId);
-    sink({ ...action, auxWindow: windowId });
+    auxWindows.latchActionWindow(windowId);
+    sink(windowId === 0 ? action : { ...action, auxWindow: windowId });
   }
 
   function dismissMobileSheets() {
@@ -352,9 +348,26 @@ export function useWorkspace(def: WorkspaceDef, opts?: { mobile?: Ref<boolean> }
   registerWindowForDragTracking(window, 0);
 
   const auxWindows = createAuxWindows({
+    mainWindow: window,
     tabDefs,
     mobile: mobileRef,
     mainOps: () => ops,
+    onGesture: (windowId) => {
+      const el = windowId === 0 ? null : auxWindows.contentEl(windowId);
+      if (el) {
+        setInteractionDoc(el.ownerDocument);
+        interactionDocWindowId = windowId;
+      } else {
+        setInteractionDoc(null);
+        interactionDocWindowId = null;
+      }
+    },
+    onAuxWindowClosed: (windowId) => {
+      if (interactionDocWindowId === windowId) {
+        setInteractionDoc(null);
+        interactionDocWindowId = null;
+      }
+    },
     releaseTabResources,
     ownsTab: (tabId) => findRootByTab(tabId) !== null,
     evictTab: (tabId) => {

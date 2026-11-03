@@ -162,7 +162,7 @@ const {
 
     await aux.locator('.sf-menu-item', { hasText: 'File' }).click();
     await aux.waitForSelector('.sf-menu-row', { timeout: 5000 });
-    await aux.locator('.sf-menu-row', { hasText: 'Open demo tab' }).click();
+    await aux.locator('.sf-menu-row', { hasText: 'Open demo tab' }).first().click();
     await aux.waitForSelector('.sf-tab[data-tab-id="aux-menu-demo"]', { timeout: 5000 });
     report(
       'menu-driven tab open from the popup lands in the popup window',
@@ -183,6 +183,17 @@ const {
         api.ops.activateTab(tile.id, 'aux-menu-demo');
         return api.tabWindow('aux-menu-demo') === 1 && api.auxApi(1).focusedTileId === tile.id;
       }),
+    );
+    await page.evaluate(() => window.__sfWorkspace.ops.closeTab('aux-menu-demo'));
+    await aux.waitForSelector('.sf-tab[data-tab-id="aux-menu-demo"]', { state: 'detached', timeout: 5000 });
+
+    await aux.locator('.sf-menu-item', { hasText: 'File' }).click();
+    await aux.waitForSelector('.sf-menu-row', { timeout: 5000 });
+    await aux.locator('.sf-menu-row', { hasText: 'Open demo tab (async)' }).click();
+    await aux.waitForSelector('.sf-tab[data-tab-id="aux-menu-demo"]', { timeout: 5000 });
+    report(
+      'async menu-driven tab open from the popup still lands in the popup window',
+      await page.evaluate(() => window.__sfWorkspace.tabWindow('aux-menu-demo') === 1),
     );
     await page.evaluate(() => window.__sfWorkspace.ops.closeTab('aux-menu-demo'));
     await aux.waitForSelector('.sf-tab[data-tab-id="aux-menu-demo"]', { state: 'detached', timeout: 5000 });
@@ -260,6 +271,7 @@ const {
     await aux.waitForSelector('.sf-dialog-backdrop', { state: 'detached', timeout: 5000 });
     report('dialog closes inside the popup', true);
 
+    await page.evaluate(() => window.dispatchEvent(new PointerEvent('pointerdown', { bubbles: true })));
     await openResourceTab(page, TAB_B, 'Aux B');
     await page.evaluate((id) => {
       const tab = document.querySelector(`.sf-tab[data-tab-id="${id}"]`);

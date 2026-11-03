@@ -1,13 +1,7 @@
 let interactionDoc: Document | null = null;
-let interactionReset: ReturnType<typeof setTimeout> | null = null;
 
-export function beginInteractionDoc(doc: Document): void {
+export function setInteractionDoc(doc: Document | null): void {
   interactionDoc = doc;
-  if (interactionReset !== null) clearTimeout(interactionReset);
-  interactionReset = setTimeout(() => {
-    interactionDoc = null;
-    interactionReset = null;
-  }, 0);
 }
 
 function resolveDoc(el: Element | null | undefined): Document {

@@ -65,6 +65,11 @@
           "action": "demo-open-tab"
         },
         {
+          "id": "demo-open-tab-async",
+          "label": "Open demo tab (async)",
+          "action": "demo-open-tab-async"
+        },
+        {
           "separator": true
         },
         {
