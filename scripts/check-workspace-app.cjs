@@ -2,7 +2,8 @@ const { chromium } = require('playwright');
 const { ensureServer, makeReporter, finish } = require('./lib/ui-test.cjs');
 
 const WS = '.sf-workspace';
-const PANEL = '.sf-ws-panel';
+const PANEL = '[data-sub-body="ws-list"]';
+const SAVE_BTN = '.sf-subsection-util[title="Save the current layout as a workspace"]';
 
 (async () => {
   const serverProc = await ensureServer();
@@ -31,13 +32,33 @@ const PANEL = '.sf-ws-panel';
   const tileTabs = (i) => page.locator('.sf-tile').nth(i).locator('.sf-tab-label').allTextContents();
   const tileBox = (i) => page.locator('.sf-tile').nth(i).boundingBox();
   const wsBox = () => page.locator(WS).boundingBox();
-  const wsItem = (name) => page.locator('.sf-ws-item', { hasText: name });
+  const wsItem = (name) => page.locator(`${PANEL} .sf-pl-item`, { hasText: name });
   const panelVisible = () => page.locator(PANEL).isVisible();
   const openWsPanel = async () => {
     for (let i = 0; i < 2 && !(await panelVisible()); i++) {
       await page.locator('.sf-docker-app[title="Workspace"]').click();
       await page.waitForTimeout(300);
     }
+  };
+  const menuRow = (label) => page.locator('.sf-sm-menu-row', { hasText: label }).first();
+  const renameFirstWorkspace = async (name) => {
+    await page.locator(`${PANEL} .sf-pl-item`).first().click({ button: 'right' });
+    await page.waitForSelector('.sf-sm-menu', { timeout: 3000 });
+    await menuRow('Rename').click();
+    await page.fill('#sf-ws-rename-input', name);
+    await page.locator('.sf-dialog-foot button', { hasText: 'Save' }).click();
+    await page.waitForTimeout(300);
+  };
+  const saveWorkspaceAs = async (name) => {
+    await page.click(SAVE_BTN);
+    await page.waitForTimeout(300);
+    await renameFirstWorkspace(name);
+  };
+  const itemMenu = async (name, option) => {
+    await wsItem(name).click({ button: 'right' });
+    await page.waitForSelector('.sf-sm-menu', { timeout: 3000 });
+    await menuRow(option).click();
+    await page.waitForTimeout(300);
   };
 
   const wsApp = page.locator('.sf-docker-app[title="Workspace"]');
@@ -46,9 +67,8 @@ const PANEL = '.sf-ws-panel';
   await page.waitForTimeout(300);
   report('Workspace panel opens', await panelVisible());
   report(
-    'save input + empty hint visible',
-    (await page.locator('.sf-ws-save .sf-ws-input').isVisible()) &&
-      (await page.locator('.sf-ws-empty').count()) === 1,
+    'save utility + empty hint visible',
+    (await page.locator(SAVE_BTN).isVisible()) && (await page.locator(`${PANEL} .sf-empty`).isVisible()),
   );
   report(
     'initial layout: single tile with 5 demo tabs',
@@ -179,11 +199,14 @@ const PANEL = '.sf-ws-panel';
   const wR = (await tileBox(1)).width;
   report('sash resize makes left tile wider', wL > wR + 40, `${wL.toFixed(0)} vs ${wR.toFixed(0)}`);
 
-  await page.fill('.sf-ws-save .sf-ws-input', 'My Layout');
-  await page.click('.sf-ws-save .sf-ws-btn--primary');
+  await page.click(SAVE_BTN);
   await page.waitForTimeout(300);
-  report('saved workspace appears in the list', (await wsItem('My Layout').count()) === 1);
-  report('save input cleared', (await page.inputValue('.sf-ws-save .sf-ws-input')) === '');
+  report(
+    'saved workspace appears in the list (auto-named)',
+    (await page.locator(`${PANEL} .sf-pl-item`).count()) === 1,
+  );
+  await renameFirstWorkspace('My Layout');
+  report('rename applies from the row menu', (await wsItem('My Layout').count()) === 1);
 
   await tab('framework.ts').hover();
   await tab('framework.ts').locator('.sf-tab-close').click();
@@ -193,7 +216,7 @@ const PANEL = '.sf-ws-panel';
     (await tileCount()) === 1 && (await tileTabs(0)).length === 4,
   );
 
-  await wsItem('My Layout').locator('.sf-ws-btn[title="Load this workspace"]').click();
+  await wsItem('My Layout').click();
   await page.waitForTimeout(400);
   report('load restores 2 tiles', (await tileCount()) === 2);
   report(
@@ -207,7 +230,7 @@ const PANEL = '.sf-ws-panel';
     Math.abs(rL - rR - (wL - wR)) < 24,
     `Δ ${(rL - rR).toFixed(0)} vs saved Δ ${(wL - wR).toFixed(0)}`,
   );
-  report('no ghost note for a complete load', (await page.locator('.sf-ws-ghosts').count()) === 0);
+  report('no ghost note for a complete load', (await page.locator(`${PANEL} .sf-banner`).count()) === 0);
 
   await page.evaluate(() => {
     const api = window.__sfWorkspace;
@@ -275,7 +298,7 @@ const PANEL = '.sf-ws-panel';
   await page.reload({ waitUntil: 'networkidle' });
   await page.waitForTimeout(600);
   await openWsPanel();
-  await wsItem('With Ghost').locator('.sf-ws-btn[title="Load this workspace"]').click();
+  await wsItem('With Ghost').click();
   await page.waitForTimeout(400);
   report(
     'ghost load keeps the tile structure',
@@ -293,7 +316,7 @@ const PANEL = '.sf-ws-panel';
   );
   report(
     'panel notes the unavailable window',
-    (await page.locator('.sf-ws-ghosts').textContent()).includes('1 unavailable window'),
+    (await page.locator(`${PANEL} .sf-banner`).textContent()).includes('1 unavailable window'),
   );
   report('existing window keeps its content', (await tileTabs(0))[0] === 'framework.ts');
 
@@ -304,13 +327,13 @@ const PANEL = '.sf-ws-panel';
       while (inst && !inst.setupState?.api) inst = inst.parent;
       return !('ghost-session-42' in (inst?.setupState?.api?.tabDefs ?? {}));
     });
-  await wsItem('My Layout').locator('.sf-ws-btn[title="Load this workspace"]').click();
+  await wsItem('My Layout').click();
   await page.waitForTimeout(400);
   report(
     'loading without the ghost drops its def',
     (await ghostDefGone()) && (await page.locator('.sf-tab--ghost').count()) === 0,
   );
-  await wsItem('With Ghost').locator('.sf-ws-btn[title="Load this workspace"]').click();
+  await wsItem('With Ghost').click();
   await page.waitForTimeout(400);
   report(
     'loading the ghost workspace recreates the blank window',
@@ -318,40 +341,29 @@ const PANEL = '.sf-ws-panel';
       (await page.locator('.sf-tab--ghost').count()) === 1,
   );
 
-  await wsItem('My Layout').locator('.sf-ws-btn[title="Rename"]').click();
-  await page.fill('.sf-ws-rename', 'Renamed Layout');
-  await page.keyboard.press('Enter');
+  await itemMenu('My Layout', 'Rename');
+  await page.fill('#sf-ws-rename-input', 'Renamed Layout');
+  await page.locator('.sf-dialog-foot button', { hasText: 'Save' }).click();
   await page.waitForTimeout(250);
   report(
     'rename applies',
     (await wsItem('Renamed Layout').count()) === 1 && (await wsItem('My Layout').count()) === 0,
   );
 
-  await page.fill('.sf-ws-search', 'Ghost');
+  await page.fill(`${PANEL} .sf-pl-search-input`, 'Ghost');
   await page.waitForTimeout(250);
   report(
     'search filters the list',
-    (await page.locator('.sf-ws-item').count()) === 1 &&
-      (await page.locator('.sf-ws-item .sf-ws-name').first().textContent()) === 'With Ghost',
+    (await page.locator(`${PANEL} .sf-pl-item`).count()) === 1 &&
+      (await page.locator(`${PANEL} .sf-pl-item .sf-pl-label`).first().textContent()) === 'With Ghost',
   );
-  await page.fill('.sf-ws-search', '');
+  await page.fill(`${PANEL} .sf-pl-search-input`, '');
 
-  const namesBefore = () => page.locator('.sf-ws-item .sf-ws-name').allTextContents();
-  const before = await namesBefore();
-  await wsItem('With Ghost').locator('.sf-ws-btn[title="Move up"]').click();
+  await itemMenu('With Ghost', 'Delete');
   await page.waitForTimeout(250);
-  const after = await namesBefore();
-  report(
-    'reorder moves the item up',
-    after[0] === 'With Ghost' && before[0] === 'Renamed Layout',
-    JSON.stringify(after),
-  );
+  report('delete removes the item', (await page.locator(`${PANEL} .sf-pl-item`).count()) === 1);
 
-  await wsItem('With Ghost').locator('.sf-ws-btn[title="Delete"]').click();
-  await page.waitForTimeout(250);
-  report('delete removes the item', (await page.locator('.sf-ws-item').count()) === 1);
-
-  await wsItem('Renamed Layout').locator('.sf-ws-btn[title="Load this workspace"]').click();
+  await wsItem('Renamed Layout').click();
   await page.waitForTimeout(400);
   report('2-tile layout loaded for the reload test', (await tileCount()) === 2);
   await page.reload({ waitUntil: 'networkidle' });
@@ -370,8 +382,8 @@ const PANEL = '.sf-ws-panel';
   await openWsPanel();
   report(
     'saved workspaces survive reload',
-    (await page.locator('.sf-ws-item').count()) === 1 &&
-      (await page.locator('.sf-ws-item .sf-ws-name').first().textContent()) === 'Renamed Layout',
+    (await page.locator(`${PANEL} .sf-pl-item`).count()) === 1 &&
+      (await page.locator(`${PANEL} .sf-pl-item .sf-pl-label`).first().textContent()) === 'Renamed Layout',
   );
 
   const rightPanel = page.locator('.sf-panel--right');
@@ -381,13 +393,11 @@ const PANEL = '.sf-ws-panel';
   await rpBtn('Collapse Right Panel').click();
   await page.waitForTimeout(400);
   report('right panel collapses', !(await rightPanel.isVisible()));
-  await page.fill('.sf-ws-save .sf-ws-input', 'Panels Off');
-  await page.click('.sf-ws-save .sf-ws-btn--primary');
-  await page.waitForTimeout(300);
+  await saveWorkspaceAs('Panels Off');
   await rpBtn('Expand Right Panel').click();
   await page.waitForTimeout(400);
   report('right panel expands again', await rightPanel.isVisible());
-  await wsItem('Panels Off').locator('.sf-ws-btn[title="Load this workspace"]').click();
+  await wsItem('Panels Off').click();
   await page.waitForTimeout(500);
   report('loading a workspace restores the collapsed right panel', !(await rightPanel.isVisible()));
   await rpBtn('Expand Right Panel').click();
@@ -432,10 +442,8 @@ const PANEL = '.sf-ws-panel';
   report('docker click overrides auto-hide (left opens)', (await panelDisplayed('left')) === true);
   await page.locator('.sf-docker-app[title="Workspace"]').click();
   await page.waitForTimeout(400);
-  await page.fill('.sf-ws-save .sf-ws-input', 'AH');
-  await page.click('.sf-ws-save .sf-ws-btn--primary');
-  await page.waitForTimeout(300);
-  await wsItem('AH').locator('.sf-ws-btn[title="Load this workspace"]').click();
+  await saveWorkspaceAs('AH');
+  await wsItem('AH').click();
   await page.waitForTimeout(600);
   report(
     'loading a workspace re-enforces auto-hide',

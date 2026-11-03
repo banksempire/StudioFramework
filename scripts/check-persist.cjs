@@ -36,7 +36,7 @@ async function dragSubsectionHandle(page, index, deltaPx) {
 
 async function openWsPanel(page) {
   const panelVisible = async () => {
-    const el = await page.$('.sf-ws-panel');
+    const el = await page.$('[data-sub-body="ws-list"]');
     return el !== null && (await el.isVisible());
   };
   for (let i = 0; i < 2 && !(await panelVisible()); i++) {
@@ -158,11 +158,12 @@ function projectMinHeight() {
         typeof savedUi.values['panel.width.left'] === 'number',
     );
 
-    const wsName = `Persist ${Date.now()}`;
+    let wsName = `Persist ${Date.now()}`;
     await openWsPanel(page);
-    await page.fill('.sf-ws-save .sf-ws-input', wsName);
-    await page.click('.sf-ws-save .sf-ws-btn--primary');
-    await page.waitForTimeout(300);
+    await page.click('.sf-subsection-util[title="Save the current layout as a workspace"]');
+    await page.waitForTimeout(400);
+    wsName = (await page.textContent('[data-sub-body="ws-list"] .sf-pl-item .sf-pl-label'))?.trim() ?? wsName;
+    await page.waitForTimeout(200);
 
     const snapshotInventory = await page.evaluate((name) => {
       const list = JSON.parse(localStorage.getItem('sf.workspaces') || '[]');
@@ -207,10 +208,7 @@ function projectMinHeight() {
     );
 
     await openWsPanel(page);
-    await page
-      .locator('.sf-ws-item', { hasText: wsName })
-      .locator('.sf-ws-btn[title="Load this workspace"]')
-      .click();
+    await page.locator('[data-sub-body="ws-list"] .sf-pl-item', { hasText: wsName }).click();
     await page.waitForTimeout(500);
     report('load restores the left panel width', near(await panelWidth(page, 'left'), wLeft1));
     report('load restores the right panel width', near(await panelWidth(page, 'right'), wRight1));

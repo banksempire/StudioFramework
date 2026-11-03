@@ -86,6 +86,14 @@ Tabs whose content is a registered tab component can move into real browser popu
 
 Limitations: popup panel/dock ui state (active docker app, panel visibility) starts at defaults per popup and is not persisted across reloads; per-tab ✕ closes that tab for real (resources released exactly once); overlay opens from async embedder handlers (after an `await`) resolve to the main window — only overlays opened synchronously while handling a popup action land in the popup; clipboard writes are gesture-scoped and may need the host window focused.
 
+## Workspace management
+
+Saved workspaces are a framework-level feature (`workspace/manager.ts`). The Workspace docker app's panel is fully declarative — an h2 with a `💾 Save` utility, a `banner` bound to `workspace-banner` (status/error notices) and a `list` bound to `workspace-list` (rows with relative-time meta, a tabs/tiles/windows summary, row options: Load, Overwrite with current, Rename, Delete; click a row to load). The framework registers both panel-data binds and intercepts the row actions (`sf-workspace`) and the save utility (`sf-save-workspace`) internally — they never reach the embedder's `action` handler; the per-instance rename dialog (a built-in `PopupDialog` in `Framework.vue`) opens in the window that raised the action.
+
+- Saving captures `api.capture()` and loading calls `api.apply(snapshot)` — the exact code paths behind browser-refresh survival (`sf.workspace.layout` auto-snapshot), so a saved workspace is by construction the refresh-survivable state: tile trees, tab defs with props, main + aux windows, panel/window/ui state. Accumulating in-memory data (engines, ring buffers) lives in tab content components, never in `props`, and is never captured.
+- Storage is pluggable: `registerWorkspaceStorage(storage)` (async CRUD over `WorkspaceMeta`/`WorkspaceSnapshot`) replaces the built-in localStorage backend (`sf.workspaces`, the demo default). Embedders register a backend-backed provider so saved workspaces are shared by every frontend; pi-agent-studio wires it to `/api/workspaces` (JSON-file store `workspaces.json` next to `studio.db`, CRUD routes mirroring peak-hours).
+- The manager binds the workspace-owning Framework instance (`ownsWorkspace`), so save/load from any window (aux popups included) operate on the main tree.
+
 ## Terminology (used across both repos)
 
 "panel" not "sidebar"; "RightPanel" not "PropertyPanel"; Workspace = central box; Tile = split-tree node; Tab = items in a tile; the whole UI shell = the **"framework"** (not "app"); each icon on the Docker bar = an **"app"** (not "tag" / "docker icon").

@@ -11,10 +11,12 @@ import { computed, nextTick, onMounted, onUnmounted, provide, ref, watch } from 
 import { loadLayout } from './layout/loadLayout';
 import type { FrameworkAction } from './types/actions';
 import type { LayoutDefinition } from './types/layout';
+import type { PopupDocument, PopupValues } from './types/popup';
 import MenuBar from './components/MenuBar.vue';
 import Docker from './components/Docker.vue';
 import Panel from './components/Panel.vue';
 import PanelMissing from './components/PanelMissing.vue';
+import PopupDialog from './components/PopupDialog.vue';
 import Workspace from './components/Workspace.vue';
 import TabContentHosts from './components/TabContentHosts.vue';
 import AuxFrameworkView from './components/AuxFrameworkView.vue';
@@ -27,6 +29,14 @@ import {
 } from './composables/useResize';
 import { readUiNumber, readUiString, writeUiValue, applyUiValues, readAllUiValues, uiEpoch } from './uiState';
 import { findTile } from './workspace/tree';
+import {
+  WORKSPACE_ITEM_ACTION,
+  WORKSPACE_SAVE_UTILITY,
+  bindWorkspaceManager,
+  handleWorkspaceItemAction,
+  handleWorkspaceSaveUtility,
+  renameWorkspace,
+} from './workspace/manager';
 import { installDebugLogCapture } from './debug/debugLog';
 import {
   kIsMobile,
@@ -73,11 +83,17 @@ provide(kWorkspace, api);
 provide(kLayout, L);
 provide(kTitleBarMenus, { menus: L.menu, onAction: onMenuAction });
 onMounted(() => {
-  if (ownsWorkspace) api.setAppActionSink((a) => emit('action', a));
+  if (ownsWorkspace) {
+    api.setAppActionSink((a) => emit('action', a));
+    bindWorkspaceManager(api);
+  }
   emit('workspace-ready', api);
 });
 onUnmounted(() => {
-  if (ownsWorkspace) api.setAppActionSink(null);
+  if (ownsWorkspace) {
+    api.setAppActionSink(null);
+    bindWorkspaceManager(null);
+  }
 });
 
 const persistedApp = readUiString('panel.activeApp');
@@ -383,15 +399,75 @@ function utilityClosesMobilePanel(subId: string, utilityId: string): boolean {
   return false;
 }
 
+const wsRename = ref<{ id: string; name: string } | null>(null);
+const wsRenameOpen = ref(false);
+const wsRenameValues = ref<PopupValues>({ name: '' });
+
+const wsRenameDoc: PopupDocument = {
+  title: 'Rename workspace',
+  h1: [
+    {
+      id: 'rename',
+      title: 'Rename',
+      h2: [
+        {
+          title: 'Rename',
+          fields: [
+            {
+              key: 'name',
+              type: 'input',
+              label: 'Workspace name',
+              placeholder: 'Workspace name',
+              id: 'sf-ws-rename-input',
+              spellcheck: false,
+            },
+          ],
+        },
+      ],
+    },
+  ],
+  actions: [
+    { id: 'cancel', label: 'Cancel', close: true },
+    { id: 'save', label: 'Save', tone: 'accent' },
+  ],
+};
+
+function openWorkspaceRename(target: { id: string; name: string }) {
+  wsRename.value = target;
+  wsRenameValues.value = { name: target.name };
+  wsRenameOpen.value = true;
+  void nextTick(() => viewport.document.getElementById('sf-ws-rename-input')?.focus());
+}
+
+async function commitWorkspaceRename() {
+  const target = wsRename.value;
+  if (!target) {
+    wsRenameOpen.value = false;
+    return;
+  }
+  const name = String(wsRenameValues.value.name ?? '').trim();
+  if (!name) return;
+  wsRenameOpen.value = false;
+  await renameWorkspace(target.id, name);
+}
+
 function onPanelUtility(subId: string, utilityId: string, itemId?: string) {
   if (utilityClosesMobilePanel(subId, utilityId)) {
     mobilePanelOpen.value = false;
     mobileRightOpen.value = false;
   }
+  if (utilityId === WORKSPACE_SAVE_UTILITY && handleWorkspaceSaveUtility()) return;
   emit('action', { source: 'utility', subId, action: utilityId, payload: itemId });
 }
 
 function onPanelAction(a: PanelAction) {
+  if (a.action === WORKSPACE_ITEM_ACTION) {
+    const outcome = handleWorkspaceItemAction(a.payload);
+    if (outcome.handled) {
+      if (outcome.rename) openWorkspaceRename(outcome.rename);
+      return;
+    }
+  }
   emit('action', { source: 'panel', component: a.source, action: a.action, payload: a.payload });
 }
 </script>
@@ -528,6 +604,12 @@ function onPanelAction(a: PanelAction) {
     <template v-if="isMainViewport">
       <AuxFrameworkView v-for="wid in api.auxWindowIds" :key="wid" :window-id="wid" />
     </template>
+    <PopupDialog
+      v-model:open="wsRenameOpen"
+      v-model:values="wsRenameValues"
+      :doc="wsRenameDoc"
+      @action="(id) => (id === 'save' ? commitWorkspaceRename() : undefined)"
+    />
     <slot name="overlay" />
   </div>
 </template>
