@@ -1,27 +1,28 @@
-import { type InjectionKey, inject, nextTick, type Ref, reactive, shallowReactive, watch } from 'vue';
+import { type InjectionKey, inject, type Ref, reactive, watch } from 'vue';
 import { beginInteractionDoc } from '../lib/overlayHost';
 import type { FrameworkAction } from '../types/actions';
 import type { LayoutDefinition, MenuNodeDef, WorkspaceDef, WorkspaceTabDef } from '../types/layout';
-import { type AuxWindowHandle, openAuxWindow } from '../workspace/auxWindow';
+import { type AuxDetachOptions, createAuxWindows, EMPTY_AUX_TREE } from '../workspace/auxWindows';
 import {
-  type AuxWindowSnapshot,
   auxWindowTabIds,
-  captureAuxWindows,
   captureSnapshot,
-  nodeFromSnapshot,
   restoreSnapshot,
   type SnapshotPanels,
   type WorkspaceSnapshot,
 } from '../workspace/snapshots';
 import {
+  BLANK_CONTENT,
   collectAllTabs,
   type DropZone,
+  dirOf,
   findNode,
   findTile,
   findTileByTab,
   firstTile,
   nextId,
+  type RootGroup,
   type SplitDir,
+  sideOf,
   type TileNode,
   treeCloseTab,
   treeInsertTab,
@@ -34,11 +35,8 @@ import {
 import { registerWindowForDragTracking } from '../workspace/windowDragTracker';
 import type { TabResourceLifecycle, TabStateChange } from './tabResources';
 
-export interface RootGroup {
-  id: string;
-  node: WorkspaceNode;
-  ratio: number;
-}
+export type { AuxDetachOptions, RootGroup };
+export { BLANK_CONTENT, dirOf, sideOf };
 
 export interface WorkspaceOps {
   activateTab(tileId: string, tabId: string): void;
@@ -65,35 +63,6 @@ export interface WorkspaceOps {
     position?: { screenX?: number; screenY?: number },
   ): boolean;
 }
-
-export const BLANK_CONTENT = 'sf-blank';
-
-export interface AuxDetachOptions {
-  width?: number;
-  height?: number;
-  windowId?: number;
-  left?: number;
-  top?: number;
-  tileId?: string;
-  zone?: DropZone;
-  index?: number;
-}
-
-export function dirOf(zone: DropZone): SplitDir {
-  return zone === 'left' || zone === 'right' ? 'row' : 'column';
-}
-
-export function sideOf(zone: DropZone): 'start' | 'end' {
-  return zone === 'left' || zone === 'top' ? 'start' : 'end';
-}
-
-interface AuxTreeState {
-  roots: RootGroup[];
-  rootDir: SplitDir | null;
-  focusedTileId: string;
-}
-
-const EMPTY_AUX_TREE: AuxTreeState = { roots: [], rootDir: null, focusedTileId: '' };
 
 export interface DndRect {
   x: number;
@@ -325,9 +294,9 @@ export function useWorkspace(def: WorkspaceDef, opts?: { mobile?: Ref<boolean> }
       sink(action);
       return;
     }
-    const el = auxWindows.get(windowId)?.content ?? null;
+    const el = auxWindows.contentEl(windowId);
     if (el) beginInteractionDoc(el.ownerDocument);
-    beginActionWindow(windowId);
+    auxWindows.beginActionWindow(windowId);
     sink({ ...action, auxWindow: windowId });
   }
 
@@ -377,351 +346,33 @@ export function useWorkspace(def: WorkspaceDef, opts?: { mobile?: Ref<boolean> }
   );
 
   const tabSlots = reactive(new Map<string, TabSlot>());
-  const detached = shallowReactive(new Map<string, number>());
-  const auxWindows = new Map<number, AuxWindowHandle>();
-  const auxTrees = reactive(new Map<number, AuxTreeState>());
-  const auxMobile = shallowReactive(new Map<number, boolean>());
   const auxTileEls = new Map<number, Map<string, HTMLElement>>();
-  const auxApis = new Map<number, WorkspaceApi>();
   const mobileRef = opts?.mobile ?? null;
 
   registerWindowForDragTracking(window, 0);
 
-  function auxTabsOf(windowId: number): string[] {
-    const tree = auxTrees.get(windowId);
-    if (!tree) return [];
-    const tabs: string[] = [];
-    for (const root of tree.roots) tabs.push(...collectAllTabs(root.node));
-    return tabs;
-  }
-
-  function auxEnsureFocus(tree: AuxTreeState) {
-    for (const root of tree.roots) {
-      if (findTile(root.node, tree.focusedTileId)) return;
-    }
-    const first = tree.roots[0];
-    if (!first) return;
-    const stack: WorkspaceNode[] = [first.node];
-    while (stack.length) {
-      const n = stack.pop();
-      if (!n) break;
-      if (n.kind === 'tile') {
-        tree.focusedTileId = n.id;
-        return;
-      }
-      stack.push(n.children[1], n.children[0]);
-    }
-  }
-
-  function auxRemoveRoot(tree: AuxTreeState, index: number) {
-    const removed = tree.roots[index];
-    if (!removed) return;
-    tree.roots.splice(index, 1);
-    if (tree.roots.length <= 1) tree.rootDir = null;
-    if (tree.roots.length === 0) return;
-    const total = tree.roots.reduce((s, r) => s + r.ratio, 0);
-    if (total > 0) {
-      for (const r of tree.roots) r.ratio += removed.ratio * (r.ratio / total);
-    } else {
-      tree.roots.forEach((r) => {
-        r.ratio = 1 / tree.roots.length;
-      });
-    }
-  }
-
-  function auxRootByTab(windowId: number, tabId: string): RootGroup | null {
-    const tree = auxTrees.get(windowId);
-    return tree?.roots.find((r) => findTileByTab(r.node, tabId)) ?? null;
-  }
-
-  function auxRootForTile(windowId: number, tileId: string): RootGroup | null {
-    const tree = auxTrees.get(windowId);
-    return tree?.roots.find((r) => findTile(r.node, tileId)) ?? null;
-  }
-
-  function auxWindowHoldingTab(tabId: string): number | undefined {
-    for (const [auxId, tree] of auxTrees) {
-      if (tree.roots.some((r) => findTileByTab(r.node, tabId))) return auxId;
-    }
-    return undefined;
-  }
-
-  let actionWindow: number | null = null;
-  let actionWindowReset: ReturnType<typeof setTimeout> | null = null;
-
-  function beginActionWindow(windowId: number) {
-    actionWindow = windowId;
-    if (actionWindowReset !== null) clearTimeout(actionWindowReset);
-    actionWindowReset = setTimeout(() => {
-      actionWindow = null;
-      actionWindowReset = null;
-    }, 0);
-  }
-
-  function auxFocusedTileId(windowId: number): string {
-    const tree = auxTrees.get(windowId);
-    if (!tree) return '';
-    for (const root of tree.roots) {
-      if (findTile(root.node, tree.focusedTileId)) return tree.focusedTileId;
-    }
-    for (const root of tree.roots) {
-      const first = firstTile(root.node);
-      if (first) return first.id;
-    }
-    return '';
-  }
-
-  function inActionWindow(run: (aux: WorkspaceOps, tileId: string) => void): boolean {
-    if (actionWindow === null) return false;
-    run(auxOps(actionWindow), auxFocusedTileId(actionWindow));
-    return true;
-  }
-
-  function auxRemoveTab(tabId: string): number | undefined {
-    const windowId = detached.get(tabId) ?? auxWindowHoldingTab(tabId);
-    if (windowId === undefined) return undefined;
-    detached.delete(tabId);
-    const tree = auxTrees.get(windowId);
-    if (!tree) return windowId;
-    const root = tree.roots.find((r) => findTileByTab(r.node, tabId));
-    if (root) {
-      root.node = treeCloseTab(root.node, tabId);
-      if (root.node.kind === 'tile' && root.node.tabs.length === 0 && tree.roots.length > 1) {
-        auxRemoveRoot(tree, tree.roots.indexOf(root));
-      }
-      auxEnsureFocus(tree);
-    }
-    return windowId;
-  }
-
-  function auxInsertIntoTile(
-    windowId: number,
-    tileId: string,
-    tabId: string,
-    index: number | undefined,
-  ): boolean {
-    const root = auxRootForTile(windowId, tileId);
-    if (!root) return false;
-    const tile = findTile(root.node, tileId);
-    if (!tile) return false;
-    root.node = treeInsertTab(root.node, tileId, tabId, index ?? tile.tabs.length);
-    const tree = auxTrees.get(windowId);
-    if (tree) tree.focusedTileId = tileId;
-    detached.set(tabId, windowId);
-    return true;
-  }
-
-  function auxInsertFocused(windowId: number, tabId: string): boolean {
-    const tree = auxTrees.get(windowId);
-    if (!tree) return false;
-    return auxInsertIntoTile(windowId, tree.focusedTileId, tabId, undefined);
-  }
-
-  function auxSplitTile(
-    windowId: number,
-    tileId: string,
-    dir: SplitDir,
-    side: 'start' | 'end',
-    tabId: string,
-  ): boolean {
-    const tree = auxTrees.get(windowId);
-    if (!tree) return false;
-    const targetRoot = auxRootForTile(windowId, tileId);
-    if (!targetRoot) return false;
-    const sourceRoot = auxRootByTab(windowId, tabId);
-    if (sourceRoot && sourceRoot !== targetRoot) {
-      sourceRoot.node = treeCloseTab(sourceRoot.node, tabId);
-      if (sourceRoot.node.kind === 'tile' && sourceRoot.node.tabs.length === 0 && tree.roots.length > 1) {
-        auxRemoveRoot(tree, tree.roots.indexOf(sourceRoot));
-      }
-    }
-    const isRootTile = targetRoot.node.kind === 'tile' && targetRoot.node.id === tileId;
-    const createsNewRoot = isRootTile && (tree.rootDir === null || tree.rootDir === dir);
-    if (createsNewRoot) {
-      if (sourceRoot) {
-        sourceRoot.node = treeCloseTab(sourceRoot.node, tabId);
-        if (sourceRoot.node.kind === 'tile' && sourceRoot.node.tabs.length === 0 && tree.roots.length > 1) {
-          auxRemoveRoot(tree, tree.roots.indexOf(sourceRoot));
-        }
-      }
-      if (tree.rootDir === null) tree.rootDir = dir;
-      const targetIdx = tree.roots.indexOf(targetRoot);
-      const newTile: TileNode = { kind: 'tile', id: nextId('tile'), tabs: [tabId], activeId: tabId };
-      const newRoot: RootGroup = { id: nextId('root'), node: newTile, ratio: targetRoot.ratio / 2 };
-      targetRoot.ratio /= 2;
-      tree.roots.splice(side === 'start' ? targetIdx : targetIdx + 1, 0, newRoot);
-      tree.focusedTileId = newTile.id;
-      return true;
-    }
-    targetRoot.node = treeSplitTile(targetRoot.node, tileId, dir, side, tabId);
-    const newTile = findTileByTab(targetRoot.node, tabId);
-    if (newTile) tree.focusedTileId = newTile.id;
-    return true;
-  }
-
-  function auxMoveTab(windowId: number, tabId: string, targetTileId: string, index: number): boolean {
-    const tree = auxTrees.get(windowId);
-    if (!tree) return false;
-    const sourceRoot = auxRootByTab(windowId, tabId);
-    const targetRoot = auxRootForTile(windowId, targetTileId);
-    if (!sourceRoot || !targetRoot) return false;
-    if (sourceRoot === targetRoot) {
-      sourceRoot.node = treeMoveTab(sourceRoot.node, tabId, targetTileId, index);
-    } else {
-      sourceRoot.node = treeCloseTab(sourceRoot.node, tabId);
-      if (sourceRoot.node.kind === 'tile' && sourceRoot.node.tabs.length === 0 && tree.roots.length > 1) {
-        auxRemoveRoot(tree, tree.roots.indexOf(sourceRoot));
-      }
-      targetRoot.node = treeInsertTab(targetRoot.node, targetTileId, tabId, index);
-    }
-    tree.focusedTileId = targetTileId;
-    return true;
-  }
-
-  function syncAuxTitle(windowId: number) {
-    const handle = auxWindows.get(windowId);
-    const tree = auxTrees.get(windowId);
-    if (!handle || !tree) return;
-    let focusedNode: WorkspaceNode | null = null;
-    for (const root of tree.roots) {
-      if (findTile(root.node, tree.focusedTileId)) {
-        focusedNode = root.node;
-        break;
-      }
-    }
-    const tile = focusedNode ? findTile(focusedNode, tree.focusedTileId) : null;
-    const def = tile ? tabDefs[tile.activeId] : undefined;
-    const title = def?.label;
-    if (title && handle.document.title !== title) handle.document.title = title;
-  }
-
-  watch(
-    auxTrees,
-    () => {
-      for (const id of auxTrees.keys()) syncAuxTitle(id);
+  const auxWindows = createAuxWindows({
+    tabDefs,
+    mobile: mobileRef,
+    mainOps: () => ops,
+    releaseTabResources,
+    ownsTab: (tabId) => findRootByTab(tabId) !== null,
+    evictTab: (tabId) => {
+      removeTabFromRoots(tabId);
+      ensureFocus();
     },
-    { deep: true },
-  );
-
-  function closeIfEmpty(windowId: number) {
-    if (auxTabsOf(windowId).length > 0) return;
-    const handle = auxWindows.get(windowId);
-    auxTrees.delete(windowId);
-    auxApis.delete(windowId);
-    if (handle) void nextTick().then(() => handle.close());
-  }
-
-  function bindAuxWindow(handle: AuxWindowHandle) {
-    auxWindows.set(handle.id, handle);
-    auxMobile.set(handle.id, handle.isMobile());
-    handle.onMobileChange(() => {
-      auxMobile.set(handle.id, handle.isMobile());
-    });
-    registerWindowForDragTracking(handle.window, handle.id);
-    handle.onClosed(() => {
-      auxMobile.delete(handle.id);
-      for (const tabId of auxTabsOf(handle.id)) {
-        reattachDetached(tabId, undefined, undefined, true);
-      }
-      auxWindows.delete(handle.id);
-      auxTrees.delete(handle.id);
-    });
-  }
-
-  function moveDetachedTab(
-    tabId: string,
-    targetWindowId: number | undefined,
-    position?: { screenX?: number; screenY?: number },
-  ): boolean {
-    const currentWindowId = detached.get(tabId);
-    if (currentWindowId === undefined) return false;
-    if (targetWindowId !== undefined) {
-      if (targetWindowId === currentWindowId) return false;
-      if (!auxTrees.has(targetWindowId)) return false;
-      auxRemoveTab(tabId);
-      if (!auxInsertFocused(targetWindowId, tabId)) return false;
-      syncAuxTitle(targetWindowId);
-      closeIfEmpty(currentWindowId);
+    adoptTab: (tabId, tileId, index) => {
+      let target = tileId ? findTileGlobal(tileId) : findTileGlobal(state.focusedTileId);
+      if (!target && state.roots.length > 0) target = firstTile(state.roots[0].node);
+      if (!target) return false;
+      const root = findRootByTile(target.id);
+      if (!root) return false;
+      root.node = treeInsertTab(root.node, target.id, tabId, index ?? target.tabs.length);
+      state.focusedTileId = target.id;
+      ensureFocus();
       return true;
-    }
-    const def = tabDefs[tabId];
-    const handle = openAuxWindow({
-      title: def?.label ?? 'Window',
-      width: 960,
-      height: 720,
-      left: position?.screenX ? Math.max(0, position.screenX - 80) : undefined,
-      top: position?.screenY ? Math.max(0, position.screenY - 24) : undefined,
-    });
-    if (!handle) return false;
-    bindAuxWindow(handle);
-    auxRemoveTab(tabId);
-    auxTrees.set(handle.id, {
-      roots: [
-        {
-          id: nextId('root'),
-          node: { kind: 'tile', id: nextId('tile'), tabs: [tabId], activeId: tabId },
-          ratio: 1,
-        },
-      ],
-      rootDir: null,
-      focusedTileId: '',
-    });
-    const tree = auxTrees.get(handle.id);
-    if (tree) auxEnsureFocus(tree);
-    detached.set(tabId, handle.id);
-    closeIfEmpty(currentWindowId);
-    syncAuxTitle(handle.id);
-    return true;
-  }
-
-  function reattachDetached(
-    tabId: string,
-    tileId: string | undefined,
-    index: number | undefined,
-    closeNow: boolean,
-  ): boolean {
-    const windowId = detached.get(tabId);
-    if (windowId === undefined) return false;
-    let target = tileId ? findTileGlobal(tileId) : findTileGlobal(state.focusedTileId);
-    if (!target && state.roots.length > 0) target = firstTile(state.roots[0].node);
-    if (!target) return false;
-    const root = findRootByTile(target.id);
-    if (!root) return false;
-    auxRemoveTab(tabId);
-    root.node = treeInsertTab(root.node, target.id, tabId, index ?? target.tabs.length);
-    state.focusedTileId = target.id;
-    ensureFocus();
-    if (auxTabsOf(windowId).length === 0) {
-      auxTrees.delete(windowId);
-      const handle = auxWindows.get(windowId);
-      if (handle) {
-        if (closeNow) handle.close();
-        else void nextTick().then(() => handle.close());
-      }
-    }
-    return true;
-  }
-
-  function activateAuxTab(windowId: number, tabId: string) {
-    if (detached.get(tabId) !== windowId) return;
-    const tree = auxTrees.get(windowId);
-    if (!tree) return;
-    for (const root of tree.roots) {
-      const tile = findTileByTab(root.node, tabId);
-      if (tile) {
-        tile.activeId = tabId;
-        tree.focusedTileId = tile.id;
-        return;
-      }
-    }
-  }
-
-  function tabWindow(tabId: string): number | null {
-    const wid = detached.get(tabId);
-    if (wid !== undefined) return wid;
-    if (findRootByTab(tabId)) return 0;
-    return auxWindowHoldingTab(tabId) ?? null;
-  }
+    },
+  });
 
   function auxDnd(): DndState {
     const local = reactive<DndState>({
@@ -765,124 +416,10 @@ export function useWorkspace(def: WorkspaceDef, opts?: { mobile?: Ref<boolean> }
     return local;
   }
 
-  function auxOps(windowId: number): WorkspaceOps {
-    return {
-      activateTab(tileId, tabId) {
-        const root = auxRootForTile(windowId, tileId);
-        if (!root) return;
-        const tile = findTile(root.node, tileId);
-        if (!tile) return;
-        tile.activeId = tabId;
-        const tree = auxTrees.get(windowId);
-        if (tree) tree.focusedTileId = tileId;
-      },
-      closeTab(tabId) {
-        ops.closeTab(tabId);
-      },
-      newTab(tileId) {
-        const root = auxRootForTile(windowId, tileId);
-        if (!root) return;
-        const id = `untitled-${nextId('tab')}`;
-        root.node = treeNewTab(root.node, tileId, id);
-        tabDefs[id] = { id, label: 'Untitled', icon: '📄' };
-      },
-      openTab(tileId, tab) {
-        const root = auxRootForTile(windowId, tileId);
-        if (!root) return;
-        tabDefs[tab.id] = tab;
-        root.node = treeNewTab(root.node, tileId, tab.id);
-        const tree = auxTrees.get(windowId);
-        if (tree) tree.focusedTileId = tileId;
-      },
-      insertTab(tileId, index, tab) {
-        const root = auxRootForTile(windowId, tileId);
-        if (!root) return;
-        tabDefs[tab.id] = tab;
-        root.node = treeInsertTab(root.node, tileId, tab.id, index);
-        const tree = auxTrees.get(windowId);
-        if (tree) tree.focusedTileId = tileId;
-      },
-      splitOpen(tileId, dir, side, tab) {
-        const root = auxRootForTile(windowId, tileId);
-        if (!root) return;
-        tabDefs[tab.id] = tab;
-        root.node = treeNewTab(root.node, tileId, tab.id);
-        auxSplitTile(windowId, tileId, dir, side, tab.id);
-        const newTile = findTileByTab(root.node, tab.id);
-        const tree = auxTrees.get(windowId);
-        if (newTile && tree) tree.focusedTileId = newTile.id;
-      },
-      setRatio(splitId, ratio) {
-        const tree = auxTrees.get(windowId);
-        if (!tree) return;
-        const root = tree.roots.find((r) => findNode(r.node, splitId));
-        if (!root) return;
-        root.node = treeSetRatio(root.node, splitId, ratio);
-      },
-      setRootRatio(index, ratio) {
-        const tree = auxTrees.get(windowId);
-        if (!tree) return;
-        if (index < 0 || index >= tree.roots.length - 1) return;
-        const left = tree.roots[index];
-        const right = tree.roots[index + 1];
-        const total = left.ratio + right.ratio;
-        const r = Math.min(0.95, Math.max(0.05, ratio));
-        left.ratio = r * total;
-        right.ratio = (1 - r) * total;
-      },
-      evenlySpace() {
-        const tree = auxTrees.get(windowId);
-        if (!tree) return;
-        const n = tree.roots.length;
-        if (n === 0) return;
-        for (const r of tree.roots) r.ratio = 1 / n;
-      },
-      mergeAll() {
-        const tree = auxTrees.get(windowId);
-        if (!tree) return;
-        const allTabs: string[] = [];
-        for (const root of tree.roots) allTabs.push(...collectAllTabs(root.node));
-        if (allTabs.length === 0) return;
-        const newTile: TileNode = { kind: 'tile', id: nextId('tile'), tabs: allTabs, activeId: allTabs[0] };
-        tree.roots = [{ id: nextId('root'), node: newTile, ratio: 1 }];
-        tree.rootDir = null;
-        tree.focusedTileId = newTile.id;
-      },
-      splitTile(tileId, dir, side, tabId) {
-        auxSplitTile(windowId, tileId, dir, side, tabId);
-      },
-      moveTab(tabId, targetTileId, index) {
-        auxMoveTab(windowId, tabId, targetTileId, index);
-      },
-      focusTile(tileId) {
-        const tree = auxTrees.get(windowId);
-        if (tree && auxRootForTile(windowId, tileId)) tree.focusedTileId = tileId;
-      },
-      detachTab(t, o) {
-        return ops.detachTab(t, o);
-      },
-      reattachTab(t, tileId, index) {
-        return ops.reattachTab(t, tileId, index);
-      },
-      activateAuxTab(w, t) {
-        ops.activateAuxTab(w, t);
-      },
-      moveAuxTabIntoWorkspace(t, tileId, zone, index) {
-        ops.moveTabIntoWindow(t, 0, tileId, zone, index);
-      },
-      moveTabIntoWindow(t, w, tileId, zone, index) {
-        ops.moveTabIntoWindow(t, w, tileId, zone, index);
-      },
-      moveDetachedTab(t, w, p) {
-        return ops.moveDetachedTab(t, w, p);
-      },
-    };
-  }
-
   function auxApi(windowId: number): WorkspaceApi {
-    const cached = auxApis.get(windowId);
+    const cached = auxWindows.cachedApi(windowId) as WorkspaceApi | undefined;
     if (cached) return cached;
-    const treeRef = () => auxTrees.get(windowId) ?? EMPTY_AUX_TREE;
+    const treeRef = () => auxWindows.auxTrees.get(windowId) ?? EMPTY_AUX_TREE;
     let tileElsForWindow = auxTileEls.get(windowId);
     if (!tileElsForWindow) {
       tileElsForWindow = new Map<string, HTMLElement>();
@@ -907,24 +444,24 @@ export function useWorkspace(def: WorkspaceDef, opts?: { mobile?: Ref<boolean> }
       emptyContent: def.emptyContent ?? '',
       minTileWidth,
       minTileHeight,
-      ops: auxOps(windowId),
+      ops: auxWindows.ops(windowId),
       dnd: auxDnd(),
       tabSlots,
       registerTabSlot,
       get detachedTabs() {
-        return detached;
+        return auxWindows.detached;
       },
       get auxMobile() {
-        return auxMobile;
+        return auxWindows.auxMobile;
       },
       auxWindowIsMobile(w) {
-        return auxWindows.get(w)?.isMobile() ?? false;
+        return auxWindows.isMobile(w);
       },
       get auxWindowIds() {
-        return [...auxTrees.keys()];
+        return auxWindows.ids();
       },
       auxWindowContentEl(w) {
-        return auxWindows.get(w)?.content ?? null;
+        return auxWindows.contentEl(w);
       },
       auxApi(w) {
         return auxApi(w);
@@ -932,9 +469,9 @@ export function useWorkspace(def: WorkspaceDef, opts?: { mobile?: Ref<boolean> }
       get ownWindowId() {
         return windowId;
       },
-      tabWindow,
+      tabWindow: (tabId) => auxWindows.tabWindow(tabId),
       isTabDetached(t) {
-        return detached.has(t);
+        return auxWindows.detached.has(t);
       },
       startDrag,
       endDrag,
@@ -973,7 +510,7 @@ export function useWorkspace(def: WorkspaceDef, opts?: { mobile?: Ref<boolean> }
       setUiStateProvider: (provider) => applyUiStateProvider(provider),
       persistNow: () => saveAutoSnapshot(),
     };
-    auxApis.set(windowId, api);
+    auxWindows.registerApi(windowId, api);
     return api;
   }
 
@@ -1081,13 +618,7 @@ export function useWorkspace(def: WorkspaceDef, opts?: { mobile?: Ref<boolean> }
       withUi ? (uiProvider?.read() ?? undefined) : undefined,
       persistedTabDef,
     );
-    const auxIds = new Set<string>();
-    for (const id of detached.keys()) auxIds.add(id);
-    for (const tree of auxTrees.values()) {
-      for (const root of tree.roots) {
-        for (const id of collectAllTabs(root.node)) auxIds.add(id);
-      }
-    }
+    const auxIds = new Set(auxWindows.allTabIds());
     if (auxIds.size > 0) {
       snap.aux = [...auxIds];
       const defs = { ...(snap.defs ?? {}) };
@@ -1096,16 +627,7 @@ export function useWorkspace(def: WorkspaceDef, opts?: { mobile?: Ref<boolean> }
         if (d) defs[id] = d;
       }
       snap.defs = defs;
-      const skipTransient = (id: string) => !!tabDefs[id]?.transient;
-      const auxWindowSnaps = captureAuxWindows(
-        [...auxTrees.entries()].map(([id, tree]) => ({
-          id,
-          rootDir: tree.rootDir,
-          roots: tree.roots,
-          geometry: auxWindows.get(id)?.geometry(),
-        })),
-        skipTransient,
-      );
+      const auxWindowSnaps = auxWindows.windowSnapshots((id) => !!tabDefs[id]?.transient);
       if (auxWindowSnaps.length > 0) snap.auxWindows = auxWindowSnaps;
     }
     return snap;
@@ -1133,36 +655,6 @@ export function useWorkspace(def: WorkspaceDef, opts?: { mobile?: Ref<boolean> }
       state.focusedTileId = tile.id;
     }
     ensureFocus();
-  }
-
-  function restoreAuxWindows(windows: AuxWindowSnapshot[]) {
-    for (const w of windows) {
-      const ids = auxWindowTabIds(w);
-      const firstTile = w.roots[0]?.node;
-      const firstActive = firstTile?.kind === 'tile' ? firstTile.activeId : '';
-      const handle = openAuxWindow({
-        title: tabDefs[firstActive]?.label ?? 'Window',
-        width: w.geometry?.width,
-        height: w.geometry?.height,
-        left: w.geometry?.left,
-        top: w.geometry?.top,
-        windowId: w.id,
-      });
-      if (!handle) {
-        foldTabsIntoFocusedTile(ids);
-        continue;
-      }
-      bindAuxWindow(handle);
-      const tree: AuxTreeState = {
-        roots: w.roots.map((r) => ({ id: nextId('root'), node: nodeFromSnapshot(r.node), ratio: r.ratio })),
-        rootDir: w.rootDir ?? null,
-        focusedTileId: '',
-      };
-      for (const id of ids) detached.set(id, w.id);
-      auxTrees.set(w.id, tree);
-      auxEnsureFocus(tree);
-      syncAuxTitle(w.id);
-    }
   }
 
   let panelProvider: PanelStateProvider | null = null;
@@ -1209,23 +701,24 @@ export function useWorkspace(def: WorkspaceDef, opts?: { mobile?: Ref<boolean> }
       if (tabDefs[id].content === BLANK_CONTENT && !live.has(id)) delete tabDefs[id];
     }
     for (const tabId of [...tabResources.keys()]) {
-      if (!live.has(tabId) && !detached.has(tabId)) releaseTabResources(tabId);
+      if (!live.has(tabId) && !auxWindows.detached.has(tabId)) releaseTabResources(tabId);
     }
     const auxWindowSnaps = snap.auxWindows ?? [];
-    const restoreWindows =
-      auxWindowSnaps.length > 0 && auxTrees.size === 0 && detached.size === 0 && !mobileRef?.value;
+    const restoreWindows = auxWindowSnaps.length > 0 && auxWindows.isIdle() && !mobileRef?.value;
+    const planned = auxWindowSnaps.map((w) => ({ w, ids: auxWindowTabIds(w) }));
+    const claimed = restoreWindows ? new Set(planned.flatMap((p) => p.ids)) : new Set<string>();
     const auxIds = new Set<string>((snap.aux ?? []).filter((id) => !live.has(id)));
     if (restoreWindows) {
-      for (const w of auxWindowSnaps) {
-        for (const id of auxWindowTabIds(w)) {
+      for (const p of planned) {
+        for (const id of p.ids) {
           if (!live.has(id)) auxIds.add(id);
         }
       }
     }
     const windowsToMaybeClose = new Set<number>();
     for (const id of auxIds) {
-      if (detached.has(id)) {
-        const w = auxRemoveTab(id);
+      if (auxWindows.detached.has(id)) {
+        const w = auxWindows.removeTab(id);
         if (w !== undefined) windowsToMaybeClose.add(w);
       }
       if (!tabDefs[id]) {
@@ -1242,11 +735,8 @@ export function useWorkspace(def: WorkspaceDef, opts?: { mobile?: Ref<boolean> }
     state.roots = restored;
     state.rootDir = snap.rootDir ?? null;
     ensureFocus();
-    const claimed = restoreWindows
-      ? new Set(auxWindowSnaps.flatMap((w) => auxWindowTabIds(w)))
-      : new Set<string>();
     foldTabsIntoFocusedTile([...auxIds].filter((id) => !claimed.has(id)));
-    for (const windowId of windowsToMaybeClose) closeIfEmpty(windowId);
+    for (const windowId of windowsToMaybeClose) auxWindows.closeEmpty(windowId);
     if (snap.panels) {
       if (panelProvider) panelProvider.apply(snap.panels);
       else pendingPanels = snap.panels;
@@ -1259,23 +749,17 @@ export function useWorkspace(def: WorkspaceDef, opts?: { mobile?: Ref<boolean> }
       if (uiProvider) uiProvider.apply(snap.ui);
       else pendingUi = snap.ui;
     }
-    if (restoreWindows) restoreAuxWindows(auxWindowSnaps);
+    if (restoreWindows)
+      auxWindows.restoreWindows(
+        planned.map((p) => p.w),
+        foldTabsIntoFocusedTile,
+      );
     return ghosts;
   }
 
   const ops: WorkspaceOps = {
     activateTab(tileId, tabId) {
-      const owner = auxWindowHoldingTab(tabId);
-      if (owner !== undefined) {
-        const tree = auxTrees.get(owner);
-        const root = tree?.roots.find((r) => findTileByTab(r.node, tabId));
-        const tile = root ? findTileByTab(root.node, tabId) : null;
-        if (tree && root && tile) {
-          tile.activeId = tabId;
-          tree.focusedTileId = tile.id;
-          return;
-        }
-      }
+      if (auxWindows.focusTab(tabId)) return;
       const root = findRootByTile(tileId);
       if (!root) return;
       const tile = findTile(root.node, tileId);
@@ -1286,20 +770,14 @@ export function useWorkspace(def: WorkspaceDef, opts?: { mobile?: Ref<boolean> }
     },
 
     closeTab(tabId) {
-      const windowId = detached.get(tabId) ?? auxWindowHoldingTab(tabId);
-      if (windowId !== undefined) {
-        releaseTabResources(tabId);
-        auxRemoveTab(tabId);
-        closeIfEmpty(windowId);
-        return;
-      }
+      if (auxWindows.closeTab(tabId)) return;
       releaseTabResources(tabId);
       removeTabFromRoots(tabId);
       ensureFocus();
     },
 
     newTab(tileId) {
-      if (inActionWindow((aux, tile) => aux.newTab(tile))) return;
+      if (auxWindows.inActionWindow((aux, tile) => aux.newTab(tile))) return;
       if (newTabHandler) {
         newTabHandler(tileId);
         return;
@@ -1312,7 +790,7 @@ export function useWorkspace(def: WorkspaceDef, opts?: { mobile?: Ref<boolean> }
     },
 
     openTab(tileId, tab) {
-      if (inActionWindow((aux, tile) => aux.openTab(tile, tab))) return;
+      if (auxWindows.inActionWindow((aux, tile) => aux.openTab(tile, tab))) return;
       const root = findRootByTile(tileId);
       if (!root) return;
       tabDefs[tab.id] = tab;
@@ -1321,7 +799,7 @@ export function useWorkspace(def: WorkspaceDef, opts?: { mobile?: Ref<boolean> }
     },
 
     insertTab(tileId, index, tab) {
-      if (inActionWindow((aux, tile) => aux.insertTab(tile, index, tab))) return;
+      if (auxWindows.inActionWindow((aux, tile) => aux.insertTab(tile, index, tab))) return;
       const root = findRootByTile(tileId);
       if (!root) return;
       tabDefs[tab.id] = tab;
@@ -1332,7 +810,7 @@ export function useWorkspace(def: WorkspaceDef, opts?: { mobile?: Ref<boolean> }
     },
 
     splitOpen(tileId, dir, side, tab) {
-      if (inActionWindow((aux, tile) => aux.splitOpen(tile, dir, side, tab))) return;
+      if (auxWindows.inActionWindow((aux, tile) => aux.splitOpen(tile, dir, side, tab))) return;
       const root = findRootByTile(tileId);
       if (!root) return;
       tabDefs[tab.id] = tab;
@@ -1482,63 +960,15 @@ export function useWorkspace(def: WorkspaceDef, opts?: { mobile?: Ref<boolean> }
     },
 
     detachTab(tabId, opts) {
-      const def = tabDefs[tabId];
-      if (!def?.content || def.content === BLANK_CONTENT) return false;
-      if (detached.has(tabId)) return false;
-      if (mobileRef?.value) return false;
-      const targetWindowId = opts?.windowId;
-      if (targetWindowId === undefined) {
-        const handle = openAuxWindow({
-          title: def.label,
-          width: opts?.width,
-          height: opts?.height,
-          left: opts?.left,
-          top: opts?.top,
-        });
-        if (!handle) return false;
-        bindAuxWindow(handle);
-        removeTabFromRoots(tabId);
-        ensureFocus();
-        auxTrees.set(handle.id, {
-          roots: [
-            {
-              id: nextId('root'),
-              node: { kind: 'tile', id: nextId('tile'), tabs: [tabId], activeId: tabId },
-              ratio: 1,
-            },
-          ],
-          rootDir: null,
-          focusedTileId: '',
-        });
-        const tree = auxTrees.get(handle.id);
-        if (tree) auxEnsureFocus(tree);
-        detached.set(tabId, handle.id);
-        syncAuxTitle(handle.id);
-        return true;
-      }
-      if (!auxTrees.has(targetWindowId)) return false;
-      removeTabFromRoots(tabId);
-      if (opts?.tileId) {
-        if (!auxInsertIntoTile(targetWindowId, opts.tileId, tabId, opts.index)) return false;
-      } else if (!auxInsertFocused(targetWindowId, tabId)) {
-        return false;
-      }
-      if (opts?.zone && opts.zone !== 'center') {
-        const dir = opts.zone === 'left' || opts.zone === 'right' ? 'row' : 'column';
-        const side = opts.zone === 'left' || opts.zone === 'top' ? 'start' : 'end';
-        auxSplitTile(targetWindowId, opts.tileId ?? '', dir, side, tabId);
-      }
-      syncAuxTitle(targetWindowId);
-      return true;
+      return auxWindows.detachTab(tabId, opts);
     },
 
     reattachTab(tabId, tileId, index) {
-      if (!detached.has(tabId)) return false;
-      return reattachDetached(tabId, tileId, index, false);
+      return auxWindows.reattachTab(tabId, tileId, index);
     },
 
     activateAuxTab(windowId, tabId) {
-      activateAuxTab(windowId, tabId);
+      auxWindows.activateAuxTab(windowId, tabId);
     },
 
     moveAuxTabIntoWorkspace(tabId, tileId, zone, index) {
@@ -1546,43 +976,11 @@ export function useWorkspace(def: WorkspaceDef, opts?: { mobile?: Ref<boolean> }
     },
 
     moveTabIntoWindow(tabId, windowId, tileId, zone, index) {
-      if (windowId === 0) {
-        if (mobileRef?.value) return;
-        if (!detached.has(tabId)) return;
-        if (!reattachDetached(tabId, tileId, undefined, false)) return;
-        if (zone === 'center') {
-          if (typeof index === 'number' && index >= 0) ops.moveTab(tabId, tileId, index);
-          return;
-        }
-        ops.splitTile(tileId, dirOf(zone), sideOf(zone), tabId);
-        return;
-      }
-      if (mobileRef?.value) return;
-      const def = tabDefs[tabId];
-      if (!def?.content || def.content === BLANK_CONTENT) return;
-      if (!auxTrees.has(windowId)) return;
-      const srcWin = tabWindow(tabId);
-      if (srcWin === windowId) {
-        if (zone === 'center') {
-          if (typeof index === 'number' && index >= 0) auxMoveTab(windowId, tabId, tileId, index);
-          return;
-        }
-        auxSplitTile(windowId, tileId, dirOf(zone), sideOf(zone), tabId);
-        return;
-      }
-      if (srcWin === 0) {
-        return ops.detachTab(tabId, { windowId, tileId, zone, index });
-      }
-      if (!moveDetachedTab(tabId, windowId, undefined)) return;
-      if (zone === 'center') {
-        if (typeof index === 'number' && index >= 0) auxMoveTab(windowId, tabId, tileId, index);
-        return;
-      }
-      auxSplitTile(windowId, tileId, dirOf(zone), sideOf(zone), tabId);
+      auxWindows.moveTabIntoWindow(tabId, windowId, tileId, zone, index);
     },
+
     moveDetachedTab(tabId, targetWindowId, position) {
-      if (mobileRef?.value) return false;
-      return moveDetachedTab(tabId, targetWindowId, position);
+      return auxWindows.moveDetachedTab(tabId, targetWindowId, position);
     },
   };
 
@@ -1636,7 +1034,7 @@ export function useWorkspace(def: WorkspaceDef, opts?: { mobile?: Ref<boolean> }
       const tile = findTile(root.node, tileId);
       if (tile) return tile;
     }
-    for (const tree of auxTrees.values()) {
+    for (const tree of auxWindows.auxTrees.values()) {
       for (const root of tree.roots) {
         const tile = findTile(root.node, tileId);
         if (tile) return tile;
@@ -1650,7 +1048,7 @@ export function useWorkspace(def: WorkspaceDef, opts?: { mobile?: Ref<boolean> }
       const tile = findTileByTab(root.node, tabId);
       if (tile) return tile;
     }
-    for (const tree of auxTrees.values()) {
+    for (const tree of auxWindows.auxTrees.values()) {
       for (const root of tree.roots) {
         const tile = findTileByTab(root.node, tabId);
         if (tile) return tile;
@@ -1719,28 +1117,28 @@ export function useWorkspace(def: WorkspaceDef, opts?: { mobile?: Ref<boolean> }
     dnd,
     tabSlots,
     registerTabSlot,
-    detachedTabs: detached,
-    auxMobile,
+    detachedTabs: auxWindows.detached,
+    auxMobile: auxWindows.auxMobile,
     get ownWindowId() {
       return 0;
     },
     get auxWindowIds() {
-      return [...auxTrees.keys()];
+      return auxWindows.ids();
     },
     auxWindowIsMobile(windowId: number) {
-      return auxWindows.get(windowId)?.isMobile() ?? false;
+      return auxWindows.isMobile(windowId);
     },
     auxWindowContentEl(windowId: number) {
-      return auxWindows.get(windowId)?.content ?? null;
+      return auxWindows.contentEl(windowId);
     },
     auxApi(windowId: number) {
       return auxApi(windowId);
     },
     tabWindow(tabId: string) {
-      return tabWindow(tabId);
+      return auxWindows.tabWindow(tabId);
     },
     isTabDetached(tabId: string) {
-      return detached.has(tabId);
+      return auxWindows.detached.has(tabId);
     },
     startDrag,
     endDrag,

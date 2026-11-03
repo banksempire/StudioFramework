@@ -1,4 +1,11 @@
-const { ensureServer, makeReporter, finish, URL } = require('./lib/ui-test.cjs');
+const {
+  ensureServer,
+  makeReporter,
+  finish,
+  detachToPopup,
+  openResourceTab,
+  URL,
+} = require('./lib/ui-test.cjs');
 
 const TAB_RES = 'aux-re-a';
 const TAB_RES2 = 'aux-re-b';
@@ -14,35 +21,6 @@ async function openReady(context) {
   });
   await page.waitForFunction(() => !!window.__sfWorkspace, { timeout: 10000 });
   return page;
-}
-
-async function openResourceTab(page, id, label) {
-  await page.evaluate(
-    ([tabId, tabLabel]) => {
-      const ws = window.__sfWorkspace;
-      ws.ops.openTab(ws.focusedTileId, {
-        id: tabId,
-        label: tabLabel,
-        icon: '🧩',
-        content: 'resource-demo',
-        props: { code: 'res-a' },
-      });
-    },
-    [id, label],
-  );
-  await page.waitForSelector(`[data-tab-slot="${id}"] .sf-resource-demo`, { timeout: 5000 });
-}
-
-async function detachToPopup(context, page, tabId) {
-  const popupPromise = context.waitForEvent('page');
-  await page.evaluate((id) => {
-    const tab = document.querySelector(`.sf-tab[data-tab-id="${id}"]`);
-    tab.dispatchEvent(new DragEvent('dragstart', { bubbles: true, dataTransfer: new DataTransfer() }));
-    tab.dispatchEvent(new DragEvent('dragend', { bubbles: true, screenX: 900, screenY: 400 }));
-  }, tabId);
-  const popup = await popupPromise;
-  await popup.waitForSelector('[data-test="aux-content"] .sf-workspace', { timeout: 5000 });
-  return popup;
 }
 
 const wait = (ms) => new Promise((r) => setTimeout(r, ms));

@@ -67,4 +67,36 @@ async function finish(browser, serverProc, failed, label = 'CHECKS') {
   process.exit(failed ? 1 : 0);
 }
 
-module.exports = { URL, ensureServer, openApp, makeReporter, finish };
+async function detachToPopup(context, page, tabId, screenX = 900, screenY = 400) {
+  const popupPromise = context.waitForEvent('page');
+  await page.evaluate(
+    ([id, sx, sy]) => {
+      const tab = document.querySelector(`.sf-tab[data-tab-id="${id}"]`);
+      tab.dispatchEvent(new DragEvent('dragstart', { bubbles: true, dataTransfer: new DataTransfer() }));
+      tab.dispatchEvent(new DragEvent('dragend', { bubbles: true, screenX: sx, screenY: sy }));
+    },
+    [tabId, screenX, screenY],
+  );
+  const popup = await popupPromise;
+  await popup.waitForSelector('[data-test="aux-content"] .sf-workspace', { timeout: 5000 });
+  return popup;
+}
+
+async function openResourceTab(page, tabId, label, code = 'res-a') {
+  await page.evaluate(
+    ([id, tabLabel, tabCode]) => {
+      const ws = window.__sfWorkspace;
+      ws.ops.openTab(ws.focusedTileId, {
+        id,
+        label: tabLabel,
+        icon: '🧩',
+        content: 'resource-demo',
+        props: { code: tabCode },
+      });
+    },
+    [tabId, label, code],
+  );
+  await page.waitForSelector(`[data-tab-slot="${tabId}"] .sf-resource-demo`, { timeout: 5000 });
+}
+
+module.exports = { URL, ensureServer, openApp, makeReporter, finish, detachToPopup, openResourceTab };

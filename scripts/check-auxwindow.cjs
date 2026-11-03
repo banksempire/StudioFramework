@@ -1,4 +1,11 @@
-const { ensureServer, openApp, makeReporter, finish } = require('./lib/ui-test.cjs');
+const {
+  ensureServer,
+  openApp,
+  makeReporter,
+  finish,
+  detachToPopup,
+  openResourceTab,
+} = require('./lib/ui-test.cjs');
 
 (async () => {
   const serverProc = await ensureServer();
@@ -17,42 +24,12 @@ const { ensureServer, openApp, makeReporter, finish } = require('./lib/ui-test.c
   watchPage(page);
   page.context().on('page', watchPage);
 
-  const detachToPopup = async (tabId, screenX = 900, screenY = 400) => {
-    const popupPromise = page.context().waitForEvent('page');
-    await page.evaluate(
-      ({ id, sx, sy }) => {
-        const tab = document.querySelector(`.sf-tab[data-tab-id="${id}"]`);
-        tab.dispatchEvent(new DragEvent('dragstart', { bubbles: true, dataTransfer: new DataTransfer() }));
-        tab.dispatchEvent(new DragEvent('dragend', { bubbles: true, screenX: sx, screenY: sy }));
-      },
-      { id: tabId, sx: screenX, sy: screenY },
-    );
-    return popupPromise;
-  };
-
   const wait = (ms) => new Promise((r) => setTimeout(r, ms));
 
   try {
     const events = async () =>
       page.evaluate(() => (window.__sfTabResources ?? []).map((e) => `${e.kind}:${e.detail}`));
-    const openResourceTab = async (id, code) => {
-      await page.evaluate(
-        ([tabId, tabCode]) => {
-          const ws = window.__sfWorkspace;
-          ws.ops.openTab(ws.focusedTileId, {
-            id: tabId,
-            label: tabId === 'aux-e2e-a' ? 'Aux A' : 'Aux B',
-            icon: '🧩',
-            content: 'resource-demo',
-            props: { code: tabCode },
-          });
-        },
-        [id, code],
-      );
-      await page.waitForSelector(`[data-tab-slot="${id}"] .sf-resource-demo`);
-    };
-
-    await openResourceTab(TAB_A, 'res-a');
+    await openResourceTab(page, TAB_A, 'Aux A');
     report(
       'tab opens and resources are requested exactly once',
       (await events()).filter((e) => e.startsWith('open')).length === 1,
@@ -65,7 +42,7 @@ const { ensureServer, openApp, makeReporter, finish } = require('./lib/ui-test.c
       TAB_A,
     );
 
-    const aux = await detachToPopup(TAB_A);
+    const aux = await detachToPopup(page.context(), page, TAB_A);
     await aux.waitForSelector('[data-test="aux-content"] .sf-workspace', { timeout: 5000 });
     report('dragging a tab out to blank space opens a popup with a real workspace', true);
     report(
@@ -283,7 +260,7 @@ const { ensureServer, openApp, makeReporter, finish } = require('./lib/ui-test.c
     await aux.waitForSelector('.sf-dialog-backdrop', { state: 'detached', timeout: 5000 });
     report('dialog closes inside the popup', true);
 
-    await openResourceTab(TAB_B, 'res-a');
+    await openResourceTab(page, TAB_B, 'Aux B');
     await page.evaluate((id) => {
       const tab = document.querySelector(`.sf-tab[data-tab-id="${id}"]`);
       tab.dispatchEvent(new DragEvent('dragstart', { bubbles: true, dataTransfer: new DataTransfer() }));
@@ -487,7 +464,7 @@ const { ensureServer, openApp, makeReporter, finish } = require('./lib/ui-test.c
       JSON.stringify(clip),
     );
 
-    const aux3 = await detachToPopup(TAB_A);
+    const aux3 = await detachToPopup(page.context(), page, TAB_A);
     await aux3.waitForSelector('[data-test="aux-content"] .sf-workspace', { timeout: 5000 });
     await aux3.evaluate(() => window.close());
     await page.waitForFunction((id) => window.__sfWorkspace.tabWindow(id) === 0, TAB_A, {
@@ -495,7 +472,7 @@ const { ensureServer, openApp, makeReporter, finish } = require('./lib/ui-test.c
     });
     report('closing the popup window reattaches the tab', true);
 
-    const aux4 = await detachToPopup(TAB_A);
+    const aux4 = await detachToPopup(page.context(), page, TAB_A);
     await aux4.waitForSelector('[data-test="aux-content"] .sf-workspace', { timeout: 5000 });
     const wid4 = await page.evaluate(
       () => window.__sfWorkspace.auxWindowIds[window.__sfWorkspace.auxWindowIds.length - 1],

@@ -19,6 +19,22 @@ export interface TileNode {
 
 export type WorkspaceNode = SplitNode | TileNode;
 
+export interface RootGroup {
+  id: string;
+  node: WorkspaceNode;
+  ratio: number;
+}
+
+export const BLANK_CONTENT = 'sf-blank';
+
+export function dirOf(zone: DropZone): SplitDir {
+  return zone === 'left' || zone === 'right' ? 'row' : 'column';
+}
+
+export function sideOf(zone: DropZone): 'start' | 'end' {
+  return zone === 'left' || zone === 'top' ? 'start' : 'end';
+}
+
 let seq = 0;
 export function nextId(prefix: 'tile' | 'split' | 'tab' | 'root'): string {
   seq += 1;
