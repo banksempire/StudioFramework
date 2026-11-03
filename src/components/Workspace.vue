@@ -235,7 +235,10 @@ function onDragOver(e: DragEvent) {
         if (e.clientX > tr.left + tr.width / 2) idx += 1;
       }
       dnd.index = idx;
-      const left = idx < hit.tabRects.length ? hit.tabRects[idx].left : hit.stripR.right - 1;
+      const last = hit.tabRects[hit.tabRects.length - 1];
+      const raw =
+        idx < hit.tabRects.length ? hit.tabRects[idx].left : last ? last.right : hit.stripR.left + 1;
+      const left = Math.min(Math.max(raw, hit.stripR.left + 1), hit.stripR.right - 1);
       dnd.indicator = { x: left - origin.x, y: hit.stripR.top - origin.y, h: hit.stripR.height };
     } else {
       const glow = rectToLocal(hit.rect, origin);

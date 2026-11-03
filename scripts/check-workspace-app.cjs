@@ -102,6 +102,57 @@ const PANEL = '.sf-ws-panel';
       Math.abs(gb.height - tb.height) <= 1,
     `glow ${gb.x.toFixed(1)},${gb.y.toFixed(1)} ${gb.width.toFixed(1)}x${gb.height.toFixed(1)} vs tile ${tb.x.toFixed(1)},${tb.y.toFixed(1)} ${tb.width.toFixed(1)}x${tb.height.toFixed(1)}`,
   );
+  const geo = await page.evaluate(() => {
+    const strip = document.querySelector('.sf-tile-tabs');
+    const sr = strip.getBoundingClientRect();
+    const tabs = [...strip.querySelectorAll('.sf-tab')].map((t) => {
+      const r = t.getBoundingClientRect();
+      return { left: r.left, right: r.right, mid: r.left + r.width / 2 };
+    });
+    return { strip: { left: sr.left, right: sr.right, midY: sr.top + sr.height / 2 }, tabs };
+  });
+  const lastTab = geo.tabs[geo.tabs.length - 1];
+  const overAt = async (x, y) => {
+    await page.evaluate(
+      ([cx, cy]) => {
+        const dt = new DataTransfer();
+        document.querySelector('.sf-workspace').dispatchEvent(
+          new DragEvent('dragover', {
+            bubbles: true,
+            cancelable: true,
+            clientX: cx,
+            clientY: cy,
+            dataTransfer: dt,
+          }),
+        );
+      },
+      [x, y],
+    );
+    await page.waitForTimeout(120);
+  };
+  const indicatorBox = () => page.locator('.sf-dnd-indicator').boundingBox();
+
+  await overAt(geo.tabs[1].left + 1, geo.strip.midY);
+  let ib = await indicatorBox();
+  report(
+    'tab reorder indicator sits between tabs at the gap',
+    Math.abs(ib.x - geo.tabs[1].left) <= 2,
+    `indicator ${ib.x.toFixed(1)} vs tab edge ${geo.tabs[1].left.toFixed(1)}`,
+  );
+
+  report(
+    'strip has slack after the last tab',
+    geo.strip.right - lastTab.right > 40,
+    `slack ${(geo.strip.right - lastTab.right).toFixed(0)}px`,
+  );
+  await overAt(lastTab.mid + 6, geo.strip.midY);
+  ib = await indicatorBox();
+  report(
+    'tab reorder indicator hugs the last tab at end-of-strip insertion',
+    Math.abs(ib.x - lastTab.right) <= 2,
+    `indicator ${ib.x.toFixed(1)} vs last tab right ${lastTab.right.toFixed(1)}`,
+  );
+
   await page.evaluate(() => {
     const ws = document.querySelector('.sf-workspace');
     ws.dispatchEvent(new DragEvent('dragleave', { bubbles: true }));
