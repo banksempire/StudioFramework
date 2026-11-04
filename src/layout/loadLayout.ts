@@ -27,6 +27,7 @@ import type {
   TreeNode,
 } from '../types/panel';
 import type { PopupField, PopupOption, PopupOptionGroup, PopupValues } from '../types/popup';
+import builtinsJson from './builtins.json' with { type: 'json' };
 import frameworkJson from './framework.layout.json' with { type: 'json' };
 
 let sourceLabel = 'framework.layout.json';
@@ -676,6 +677,20 @@ function toDockerApp(v: unknown, path: string): DockerAppDef {
   };
 }
 
+function toDockerEntry(v: unknown, path: string): { app: DockerAppDef; builtin?: string } {
+  const r = needRecord(v, path);
+  if (r.builtin === undefined) return { app: toDockerApp(v, path) };
+  if (Object.keys(r).length !== 1) {
+    fail(`${path}.builtin`, 'a builtin entry is exactly { "builtin": "<name>" } — no other keys');
+  }
+  const name = needString(r.builtin, `${path}.builtin`);
+  const catalog = builtinsJson as Record<string, unknown>;
+  if (!(name in catalog)) {
+    fail(`${path}.builtin`, `unknown builtin "${name}" (available: ${Object.keys(catalog).join(', ')})`);
+  }
+  return { app: toDockerApp(catalog[name], `${path}.builtin(${name})`), builtin: name };
+}
+
 function toStatusItem(v: unknown, path: string): StatusItemDef {
   const r = needRecord(v, path);
   const component = optString(r.component, `${path}.component`);
@@ -709,14 +724,39 @@ function optIntUsedByWorkspace(v: unknown, path: string): number | undefined {
   return optInt(v, path);
 }
 
+function toBuiltinFlags(v: unknown, path: string): Record<string, boolean> {
+  const rec = needRecord(v, path);
+  const catalog = builtinsJson as Record<string, unknown>;
+  const out: Record<string, boolean> = {};
+  for (const key of Object.keys(rec)) {
+    if (!(key in catalog)) {
+      fail(`${path}.${key}`, `unknown builtin "${key}" (available: ${Object.keys(catalog).join(', ')})`);
+    }
+    out[key] =
+      optBool(rec[key] ?? true, `${path}.${key}`) ?? fail(`${path}.${key}`, 'expected true or false');
+  }
+  return out;
+}
+
 export function loadLayout(json: unknown = frameworkJson, label = 'framework.layout.json'): LayoutDefinition {
   sourceLabel = label;
   const root = needRecord(json, '<root>');
 
+  const builtinFlags = root.builtins === undefined ? {} : toBuiltinFlags(root.builtins, '<root>.builtins');
   const menu = needArray(root.menu ?? [], '<root>.menu').map((m, i) => toMenuNode(m, `<root>.menu[${i}]`));
-  const docker = needArray(root.docker ?? [], '<root>.docker').map((d, i) =>
-    toDockerApp(d, `<root>.docker[${i}]`),
-  );
+  const docker: DockerAppDef[] = [];
+  const placedBuiltins = new Set<string>();
+  needArray(root.docker ?? [], '<root>.docker').forEach((d, i) => {
+    const { app, builtin } = toDockerEntry(d, `<root>.docker[${i}]`);
+    if (builtin) placedBuiltins.add(builtin);
+    docker.push(app);
+  });
+  const catalog = builtinsJson as Record<string, unknown>;
+  for (const name of Object.keys(catalog)) {
+    if (!placedBuiltins.has(name) && builtinFlags[name] !== false) {
+      docker.push(toDockerApp(catalog[name], `<root>.docker[builtin:${name}]`));
+    }
+  }
   if (docker.length === 0) fail('<root>.docker', 'at least one docker item is required');
 
   return {

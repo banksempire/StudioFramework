@@ -31,6 +31,7 @@ export interface WorkspaceSnapshot {
   version: 1;
   rootDir: SplitDir | null;
   roots: RootSnapshot[];
+  focusedTileId?: string;
   panels?: SnapshotPanels;
   windows?: Record<string, unknown>;
   ui?: Record<string, unknown>;
@@ -108,6 +109,7 @@ export function captureSnapshot(
   windows?: Record<string, unknown>,
   ui?: Record<string, unknown>,
   pickTabDef?: (tabId: string) => WorkspaceTabDef | undefined,
+  focusedTileId?: string,
 ): WorkspaceSnapshot {
   const kept: RootSnapshot[] = [];
   for (const r of roots) {
@@ -122,6 +124,7 @@ export function captureSnapshot(
     else for (const r of kept) r.ratio = 1 / kept.length;
   }
   const snap: WorkspaceSnapshot = { version: 1, rootDir, roots: kept };
+  if (focusedTileId) snap.focusedTileId = focusedTileId;
   if (panels) snap.panels = { ...panels };
   if (windows) snap.windows = { ...windows };
   if (ui) snap.ui = { ...ui };

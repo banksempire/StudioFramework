@@ -6,7 +6,6 @@ import SelectorDemo from './components/SelectorDemo.vue';
 import SingleMenuDemo from './components/SingleMenuDemo.vue';
 import TableDemo from './components/TableDemo.vue';
 import WelcomeContent from './components/WelcomeContent.vue';
-import WorkspacePanel from './components/WorkspacePanel.vue';
 import type { WorkspaceApi } from './composables/useWorkspace';
 import Framework, { type FrameworkAction } from './Framework.vue';
 import {
@@ -17,14 +16,15 @@ import {
 } from './registry';
 import type { PanelListItem, TreeNode } from './types/panel';
 import type { PopupField, PopupValues } from './types/popup';
+import { registerWorkspaceProfileIdentity } from './workspace/manager';
 
 registerTabContent('welcome', WelcomeContent);
+
+registerWorkspaceProfileIdentity('studio-framework-demo');
 
 registerTabContent('table-demo', TableDemo);
 
 registerTabContent('resource-demo', ResourceDemo);
-
-registerBuiltinPanelComponent('workspace-panel', WorkspacePanel);
 
 registerBuiltinPanelComponent('single-menu-demo', SingleMenuDemo);
 

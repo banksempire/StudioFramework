@@ -1,10 +1,7 @@
 <script setup lang="ts">
 import { computed, provide, reactive, watch } from 'vue';
 import { kPanelAction } from '../composables/usePanelAction';
-import { getPanelComponent, getPanelData, registerBuiltinPanelComponent } from '../registry';
-import WorkspacePanel from './WorkspacePanel.vue';
-
-registerBuiltinPanelComponent('workspace-panel', WorkspacePanel);
+import { getPanelComponent, getPanelData } from '../registry';
 
 import type {
   ButtonData,

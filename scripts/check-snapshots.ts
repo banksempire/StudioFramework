@@ -347,6 +347,45 @@ function allTabs(node: WorkspaceNode): string[] {
     'aux window tab ids collect across the tree',
     JSON.stringify(auxWindowTabIds(snaps[0])) === JSON.stringify(['a', 'b']),
   );
+
+  const focusRoots = [
+    {
+      ratio: 0.5,
+      node: {
+        kind: 'tile' as const,
+        id: 'tile-a',
+        tabs: ['a'],
+        activeId: 'a',
+      },
+    },
+    {
+      ratio: 0.5,
+      node: {
+        kind: 'tile' as const,
+        id: 'tile-b',
+        tabs: ['b'],
+        activeId: 'b',
+      },
+    },
+  ];
+  const noFocus = captureSnapshot(focusRoots, 'row');
+  report('focused tile is omitted when not given', noFocus.focusedTileId === undefined);
+  const withFocus = captureSnapshot(
+    focusRoots,
+    'row',
+    undefined,
+    undefined,
+    undefined,
+    undefined,
+    undefined,
+    'tile-b',
+  );
+  report('focused tile rides the snapshot', withFocus.focusedTileId === 'tile-b');
+  const roundTrip = restoreSnapshot(withFocus);
+  report(
+    'focused tile round-trips to the restored tile set',
+    JSON.stringify(roundTrip.map((r) => allTabs(r.node))) === JSON.stringify([['a'], ['b']]),
+  );
 }
 
 console.log(`\nSNAPSHOT CHECKS: ${passed} passed, ${failed} failed\n`);
