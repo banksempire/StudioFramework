@@ -19,13 +19,11 @@
                 {
                   "id": "sf-save-workspace",
                   "icon": "💾",
-                  "label": "Save",
                   "tooltip": "Save the current layout as a workspace"
                 },
                 {
                   "id": "sf-import-workspace",
-                  "icon": "↑",
-                  "label": "Import",
+                  "icon": "↓",
                   "tooltip": "Import a workspace profile from a file"
                 }
               ],

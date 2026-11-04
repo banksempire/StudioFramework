@@ -404,7 +404,7 @@ function workspaceItems(): PanelListItem[] {
       { id: 'load', label: 'Load', icon: '▶' },
       { id: 'overwrite', label: 'Overwrite with current', icon: '↻' },
       { id: 'rename', label: 'Rename', icon: '✎' },
-      { id: 'export', label: 'Export to file', icon: '↓' },
+      { id: 'export', label: 'Export to file', icon: '↑' },
       { id: 'delete', label: 'Delete', icon: '🗑', danger: true },
     ],
     buttons: [{ id: 'more', icon: '⋮', title: 'More', visibility: 'mobile' }],
@@ -416,8 +416,6 @@ registerPanelData(WORKSPACE_LIST_BIND, () => {
   return {
     items: workspaceItems(),
     empty: 'No saved workspaces yet — save the current layout with Save above.',
-    searchable: true,
-    searchPlaceholder: 'Search workspaces…',
   };
 });
 

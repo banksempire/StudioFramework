@@ -4,6 +4,7 @@ const { ensureServer, makeReporter, finish } = require('./lib/ui-test.cjs');
 const WS = '.sf-workspace';
 const PANEL = '[data-sub-body="ws-list"]';
 const SAVE_BTN = '.sf-subsection-util[title="Save the current layout as a workspace"]';
+const IMPORT_BTN = '.sf-subsection-util[title="Import a workspace profile from a file"]';
 
 (async () => {
   const serverProc = await ensureServer();
@@ -350,16 +351,23 @@ const SAVE_BTN = '.sf-subsection-util[title="Save the current layout as a worksp
     (await wsItem('Renamed Layout').count()) === 1 && (await wsItem('My Layout').count()) === 0,
   );
 
-  await page.fill(`${PANEL} .sf-pl-search-input`, 'Ghost');
-  await page.waitForTimeout(250);
   report(
-    'search filters the list',
-    (await page.locator(`${PANEL} .sf-pl-item`).count()) === 1 &&
-      (await page.locator(`${PANEL} .sf-pl-item .sf-pl-label`).first().textContent()) === 'With Ghost',
+    'workspace utilities render icon-only',
+    (await page.locator(`${PANEL} .sf-subsection-util-label`).count()) === 0,
   );
-  await page.fill(`${PANEL} .sf-pl-search-input`, '');
+  report(
+    'import utility shows the down arrow',
+    (await page.locator(`${IMPORT_BTN} svg path[d^="M12 5"]`).count()) >= 1 &&
+      (await page.locator(`${IMPORT_BTN} svg path[d^="M12 19"]`).count()) === 0,
+  );
 
-  await itemMenu('With Ghost', 'Delete');
+  await wsItem('With Ghost').click({ button: 'right' });
+  await page.waitForSelector('.sf-sm-menu', { timeout: 3000 });
+  report(
+    'export option shows the up arrow',
+    (await page.locator('.sf-sm-menu .sf-sm-menu-row svg path[d^="M12 19"]').count()) >= 1,
+  );
+  await menuRow('Delete').click();
   await page.waitForTimeout(250);
   report('delete removes the item', (await page.locator(`${PANEL} .sf-pl-item`).count()) === 1);
 
