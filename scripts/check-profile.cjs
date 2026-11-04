@@ -55,6 +55,15 @@ const IMPORT_BTN = '.sf-subsection-util[title="Import a workspace profile from a
     await menuRow(option).click();
     await page.waitForTimeout(300);
   };
+  const confirmDelete = async (name) => {
+    await page.waitForSelector('.sf-dialog', { timeout: 3000 });
+    report(
+      `delete of "${name}" asks for confirmation`,
+      ((await page.locator('.sf-dialog').textContent()) ?? '').includes(name),
+    );
+    await page.locator('.sf-dialog-foot button', { hasText: 'Delete' }).click();
+    await page.waitForTimeout(300);
+  };
 
   report('initial layout: single tile', (await tileCount()) === 1);
   const wb = await page.locator(WS).boundingBox();
@@ -115,7 +124,7 @@ const IMPORT_BTN = '.sf-subsection-util[title="Import a workspace profile from a
   );
 
   await itemMenu('Export Me', 'Delete');
-  await page.waitForTimeout(300);
+  await confirmDelete('Export Me');
   report('workspace deleted before import', (await page.locator(`${PANEL} .sf-pl-item`).count()) === 0);
 
   const [chooser] = await Promise.all([
@@ -131,7 +140,7 @@ const IMPORT_BTN = '.sf-subsection-util[title="Import a workspace profile from a
   );
 
   await itemMenu('Export Me', 'Delete');
-  await page.waitForTimeout(300);
+  await confirmDelete('Export Me');
 
   const foreign = {
     format: 'sf.workspace-profile',

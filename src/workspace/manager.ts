@@ -269,9 +269,16 @@ export async function deleteWorkspace(id: string): Promise<void> {
   }
 }
 
+export interface WorkspaceConfirmRequest {
+  kind: 'delete' | 'overwrite';
+  id: string;
+  name: string;
+}
+
 export interface WorkspaceActionOutcome {
   handled: boolean;
   rename?: { id: string; name: string };
+  confirm?: WorkspaceConfirmRequest;
 }
 
 interface ItemActionPayload {
@@ -301,8 +308,10 @@ export function handleWorkspaceItemAction(payload: unknown): WorkspaceActionOutc
       return { handled: true };
     }
     if (p.option === 'overwrite') {
-      void overwriteWorkspace(p.id);
-      return { handled: true };
+      const m = metaOf(p.id);
+      return m
+        ? { handled: true, confirm: { kind: 'overwrite', id: p.id, name: m.name } }
+        : { handled: true };
     }
     if (p.option === 'rename') {
       const m = metaOf(p.id);
@@ -313,8 +322,8 @@ export function handleWorkspaceItemAction(payload: unknown): WorkspaceActionOutc
       return { handled: true };
     }
     if (p.option === 'delete') {
-      void deleteWorkspace(p.id);
-      return { handled: true };
+      const m = metaOf(p.id);
+      return m ? { handled: true, confirm: { kind: 'delete', id: p.id, name: m.name } } : { handled: true };
     }
   }
   return { handled: false };

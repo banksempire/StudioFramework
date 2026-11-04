@@ -61,6 +61,8 @@ const IMPORT_BTN = '.sf-subsection-util[title="Import a workspace profile from a
     await menuRow(option).click();
     await page.waitForTimeout(300);
   };
+  const dialogBtn = (label) => page.locator('.sf-dialog-foot button', { hasText: label });
+  const confirmDialog = () => page.locator('.sf-dialog');
 
   const wsApp = page.locator('.sf-docker-app[title="Workspace"]');
   report('Workspace app in the docker bar', (await wsApp.count()) === 1);
@@ -351,6 +353,36 @@ const IMPORT_BTN = '.sf-subsection-util[title="Import a workspace profile from a
     (await wsItem('Renamed Layout').count()) === 1 && (await wsItem('My Layout').count()) === 0,
   );
 
+  await page.locator('.sf-tab--ghost .sf-tab-close').click();
+  await page.waitForTimeout(400);
+  report(
+    'ghost tab closed: one tab left in the current layout',
+    (await page.locator('.sf-tab--ghost').count()) === 0 && (await tileTabs(0)).length === 1,
+  );
+  await itemMenu('With Ghost', 'Overwrite with current');
+  await page.waitForSelector('.sf-dialog', { timeout: 3000 });
+  report(
+    'overwrite opens a confirm dialog naming the workspace',
+    ((await confirmDialog().textContent()) ?? '').includes('With Ghost') &&
+      ((await confirmDialog().textContent()) ?? '').includes('Overwrite'),
+  );
+  await dialogBtn('Cancel').click();
+  await page.waitForTimeout(300);
+  report(
+    'cancelled overwrite keeps the saved snapshot (2 tabs)',
+    (await confirmDialog().count()) === 0 &&
+      ((await wsItem('With Ghost').textContent()) ?? '').includes('2 tabs'),
+  );
+  await itemMenu('With Ghost', 'Overwrite with current');
+  await page.waitForSelector('.sf-dialog', { timeout: 3000 });
+  await dialogBtn('Overwrite').click();
+  await page.waitForTimeout(400);
+  report(
+    'confirmed overwrite stores the current layout (1 tab)',
+    (await confirmDialog().count()) === 0 &&
+      ((await wsItem('With Ghost').textContent()) ?? '').includes('1 tab'),
+  );
+
   report(
     'workspace utilities render icon-only',
     (await page.locator(`${PANEL} .sf-subsection-util-label`).count()) === 0,
@@ -368,7 +400,20 @@ const IMPORT_BTN = '.sf-subsection-util[title="Import a workspace profile from a
     (await page.locator('.sf-sm-menu .sf-sm-menu-row svg path[d^="M12 19"]').count()) >= 1,
   );
   await menuRow('Delete').click();
-  await page.waitForTimeout(250);
+  await page.waitForSelector('.sf-dialog', { timeout: 3000 });
+  report(
+    'delete opens a confirm dialog and keeps the item',
+    ((await confirmDialog().textContent()) ?? '').includes('With Ghost') &&
+      ((await confirmDialog().textContent()) ?? '').includes('cannot be undone') &&
+      (await page.locator(`${PANEL} .sf-pl-item`).count()) === 2,
+  );
+  await dialogBtn('Cancel').click();
+  await page.waitForTimeout(300);
+  report('cancelled delete keeps the item', (await page.locator(`${PANEL} .sf-pl-item`).count()) === 2);
+  await itemMenu('With Ghost', 'Delete');
+  await page.waitForSelector('.sf-dialog', { timeout: 3000 });
+  await dialogBtn('Delete').click();
+  await page.waitForTimeout(300);
   report('delete removes the item', (await page.locator(`${PANEL} .sf-pl-item`).count()) === 1);
 
   await wsItem('Renamed Layout').click();

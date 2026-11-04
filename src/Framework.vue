@@ -34,11 +34,14 @@ import {
   WORKSPACE_ITEM_ACTION,
   WORKSPACE_SAVE_UTILITY,
   bindWorkspaceManager,
+  deleteWorkspace,
   handleWorkspaceImportUtility,
   handleWorkspaceItemAction,
   handleWorkspaceSaveUtility,
+  overwriteWorkspace,
   renameWorkspace,
 } from './workspace/manager';
+import type { WorkspaceConfirmRequest } from './workspace/manager';
 import { installDebugLogCapture } from './debug/debugLog';
 import {
   kIsMobile,
@@ -453,6 +456,56 @@ async function commitWorkspaceRename() {
   await renameWorkspace(target.id, name);
 }
 
+const wsConfirm = ref<WorkspaceConfirmRequest | null>(null);
+const wsConfirmOpen = ref(false);
+
+const wsConfirmDoc = computed<PopupDocument>(() => {
+  const name = wsConfirm.value?.name ?? '';
+  const overwrite = wsConfirm.value?.kind === 'overwrite';
+  return {
+    title: overwrite ? 'Overwrite workspace' : 'Delete workspace',
+    h1: [
+      {
+        id: 'confirm',
+        title: overwrite ? 'Overwrite' : 'Delete',
+        h2: [
+          {
+            title: overwrite ? 'Overwrite workspace' : 'Delete workspace',
+            fields: [
+              {
+                key: 'confirm-text',
+                type: 'info',
+                text: overwrite
+                  ? `Overwrite "${name}" with the current layout? Its saved snapshot will be replaced.`
+                  : `Delete "${name}"? This cannot be undone.`,
+              },
+            ],
+          },
+        ],
+      },
+    ],
+    actions: [
+      { id: 'cancel', label: 'Cancel', close: true },
+      overwrite
+        ? { id: 'confirm', label: 'Overwrite', tone: 'accent' }
+        : { id: 'confirm', label: 'Delete', tone: 'danger' },
+    ],
+  };
+});
+
+function openWorkspaceConfirm(target: WorkspaceConfirmRequest) {
+  wsConfirm.value = target;
+  wsConfirmOpen.value = true;
+}
+
+async function commitWorkspaceConfirm() {
+  const target = wsConfirm.value;
+  wsConfirmOpen.value = false;
+  if (!target) return;
+  if (target.kind === 'overwrite') await overwriteWorkspace(target.id);
+  else await deleteWorkspace(target.id);
+}
+
 function onPanelUtility(subId: string, utilityId: string, itemId?: string) {
   if (utilityClosesMobilePanel(subId, utilityId)) {
     mobilePanelOpen.value = false;
@@ -468,6 +521,7 @@ function onPanelAction(a: PanelAction) {
     const outcome = handleWorkspaceItemAction(a.payload);
     if (outcome.handled) {
       if (outcome.rename) openWorkspaceRename(outcome.rename);
+      if (outcome.confirm) openWorkspaceConfirm(outcome.confirm);
       return;
     }
   }
@@ -612,6 +666,12 @@ function onPanelAction(a: PanelAction) {
       v-model:values="wsRenameValues"
       :doc="wsRenameDoc"
       @action="(id) => (id === 'save' ? commitWorkspaceRename() : undefined)"
+    />
+    <PopupDialog
+      v-model:open="wsConfirmOpen"
+      :doc="wsConfirmDoc"
+      narrow
+      @action="(id) => (id === 'confirm' ? commitWorkspaceConfirm() : undefined)"
     />
     <slot name="overlay" />
   </div>
