@@ -115,6 +115,54 @@ expectsFailure(
   /exactly \{ "builtin"/,
 );
 
+report(
+  'workspaces builtin is enabled by default (appended when not placed)',
+  (() => {
+    try {
+      const doc = loadLayout(panel(), 'loader-check');
+      return doc.docker.length === 2 && doc.docker[1].id === 'workspace' && doc.docker[1].icon === '🗂';
+    } catch (e) {
+      return (e as Error).message;
+    }
+  })() === true,
+);
+
+report(
+  'explicit placement suppresses the default append (no duplicate)',
+  (() => {
+    try {
+      const doc = loadLayout(panel({ docker: [{ builtin: 'workspaces' }] }), 'loader-check');
+      return doc.docker.length === 1 && doc.docker[0].id === 'workspace';
+    } catch (e) {
+      return (e as Error).message;
+    }
+  })() === true,
+);
+
+report(
+  'builtins map can disable the workspaces app',
+  (() => {
+    try {
+      const doc = loadLayout(panel({ builtins: { workspaces: false } }), 'loader-check');
+      return doc.docker.length === 1 && doc.docker[0].id === 'app';
+    } catch (e) {
+      return (e as Error).message;
+    }
+  })() === true,
+);
+
+expectsFailure(
+  'builtins map with an unknown name fails fast',
+  panel({ builtins: { nope: false } }),
+  /unknown builtin "nope"/,
+);
+
+expectsFailure(
+  'builtins map with a non-boolean value fails fast',
+  panel({ builtins: { workspaces: 'off' } }),
+  /expected true or false/,
+);
+
 expectsFailure(
   'panel without groups fails fast (h1 missing)',
   withDockerPanel({ h1: [] }),
