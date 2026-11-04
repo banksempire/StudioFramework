@@ -173,6 +173,10 @@ const bannerData = computed<PanelBannerData>(() => {
   return { text: rec.text ?? props.component.text, tone: rec.tone ?? props.component.tone };
 });
 
+const bannerHidden = computed(
+  () => !bindMissing.value && props.component.type === 'banner' && !bannerData.value.text,
+);
+
 const tableData = computed<PanelTableData>(() => {
   if (props.component.type !== 'table') return { rows: [] };
   const rec = (bound.value ?? {}) as PanelTableData;
@@ -290,7 +294,7 @@ function onNodeClick(node: TreeNode) {
 </script>
 
 <template>
-  <div class="sf-pc" :style="wrapStyle">
+  <div v-if="!bannerHidden" class="sf-pc" :style="wrapStyle">
     <span v-if="bindMissing" class="sf-pc-bind-missing">no data: {{ bindKey }}</span>
 
     <span
