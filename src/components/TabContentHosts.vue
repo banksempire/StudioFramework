@@ -44,12 +44,16 @@ function hostMobile(id: string): boolean {
   if (windowId) return ws.auxWindowIsMobile(windowId);
   return mainMobile.value;
 }
+
+function hostViewFor(id: string): Window | null {
+  return ws.tabSlots.get(id)?.el.ownerDocument.defaultView ?? null;
+}
 </script>
 
 <template>
   <div class="sf-tab-hosts" aria-hidden="true">
     <Teleport v-for="id in hosted" :key="id" :to="targetFor(id)">
-      <TabInstanceShell :tab-id="id" :parked="!ws.tabSlots.get(id)" :mobile="hostMobile(id)">
+      <TabInstanceShell :tab-id="id" :parked="!ws.tabSlots.get(id)" :mobile="hostMobile(id)" :view="hostViewFor(id)">
         <component :is="compFor(id)" class="sf-tile-custom" v-bind="ws.tabDefs[id]?.props ?? {}" />
       </TabInstanceShell>
     </Teleport>
