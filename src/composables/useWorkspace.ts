@@ -630,6 +630,7 @@ export function useWorkspace(def: WorkspaceDef, opts?: { mobile?: Ref<boolean> }
       windowProvider?.read() ?? undefined,
       withUi ? (uiProvider?.read() ?? undefined) : undefined,
       persistedTabDef,
+      state.focusedTileId,
     );
     const auxIds = new Set(auxWindows.allTabIds());
     if (auxIds.size > 0) {
@@ -748,6 +749,9 @@ export function useWorkspace(def: WorkspaceDef, opts?: { mobile?: Ref<boolean> }
     state.roots = restored;
     state.rootDir = snap.rootDir ?? null;
     ensureFocus();
+    if (snap.focusedTileId && findRootByTile(snap.focusedTileId)) {
+      state.focusedTileId = snap.focusedTileId;
+    }
     foldTabsIntoFocusedTile([...auxIds].filter((id) => !claimed.has(id)));
     for (const windowId of windowsToMaybeClose) auxWindows.closeEmpty(windowId);
     if (snap.panels) {

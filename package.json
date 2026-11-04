@@ -22,6 +22,7 @@
     "check:mobile": "node scripts/check-mobile.cjs",
     "check:nested": "node scripts/check-nested.cjs",
     "check:persist": "node scripts/check-persist.cjs",
+    "check:profile": "node scripts/check-profile.cjs",
     "check:popupdoc": "node --experimental-strip-types scripts/check-popup-doc.ts",
     "check:registryguard": "node scripts/check-registry-guard.ts",
     "check:seam": "node scripts/check-seam.cjs",

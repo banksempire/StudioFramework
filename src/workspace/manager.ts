@@ -1,11 +1,14 @@
 import { ref } from 'vue';
 import type { WorkspaceApi } from '../composables/useWorkspace';
+import { downloadTextFile, pickJsonFile } from '../lib/fileTransfer';
 import { registerPanelData } from '../registry';
 import type { PanelListItem } from '../types/panel';
+import { downloadFileNameFor, PROFILE_FORMAT, PROFILE_VERSION, parseWorkspaceProfile } from './profile';
 import type { NodeSnapshot, WorkspaceSnapshot } from './snapshots';
 
 export const WORKSPACE_ITEM_ACTION = 'sf-workspace';
 export const WORKSPACE_SAVE_UTILITY = 'sf-save-workspace';
+export const WORKSPACE_IMPORT_UTILITY = 'sf-import-workspace';
 export const WORKSPACE_LIST_BIND = 'workspace-list';
 export const WORKSPACE_BANNER_BIND = 'workspace-banner';
 
@@ -158,6 +161,11 @@ async function refreshWorkspaces(): Promise<void> {
 }
 
 let boundApi: WorkspaceApi | null = null;
+let profileIdentity = 'unknown';
+
+export function registerWorkspaceProfileIdentity(app: string): void {
+  profileIdentity = app.trim() || 'unknown';
+}
 
 export function bindWorkspaceManager(api: WorkspaceApi | null): void {
   boundApi = api;
@@ -300,12 +308,81 @@ export function handleWorkspaceItemAction(payload: unknown): WorkspaceActionOutc
       const m = metaOf(p.id);
       return m ? { handled: true, rename: { id: p.id, name: m.name } } : { handled: true };
     }
+    if (p.option === 'export') {
+      void exportWorkspaceToFile(p.id);
+      return { handled: true };
+    }
     if (p.option === 'delete') {
       void deleteWorkspace(p.id);
       return { handled: true };
     }
   }
   return { handled: false };
+}
+
+function uniqueImportName(base: string): string {
+  const taken = new Set(metas.value.map((m) => m.name));
+  if (!taken.has(base)) return base;
+  for (let n = 2; ; n += 1) {
+    const candidate = `${base} (${n})`;
+    if (!taken.has(candidate)) return candidate;
+  }
+}
+
+export async function exportWorkspaceToFile(id: string): Promise<void> {
+  const name = metaOf(id)?.name ?? 'workspace';
+  try {
+    const snapshot = await storage.load(id);
+    downloadTextFile(
+      downloadFileNameFor(name),
+      JSON.stringify(
+        {
+          format: PROFILE_FORMAT,
+          profileVersion: PROFILE_VERSION,
+          app: profileIdentity,
+          capturedAt: Date.now(),
+          name,
+          snapshot,
+        },
+        null,
+        2,
+      ),
+    );
+    notice.value = { text: `Exported "${name}" to ${downloadFileNameFor(name)}`, tone: 'info' };
+  } catch (e) {
+    notice.value = { text: `Could not export "${name}": ${errMsg(e)}`, tone: 'error' };
+  }
+}
+
+export async function importWorkspaceFromFile(): Promise<void> {
+  let file: File | null = null;
+  try {
+    file = await pickJsonFile();
+  } catch {
+    file = null;
+  }
+  if (!file) return;
+  try {
+    const text = await file.text();
+    if (text.length > 20_000_000) throw new Error('file is too large');
+    const profile = parseWorkspaceProfile(JSON.parse(text));
+    const name = uniqueImportName(profile.name);
+    const meta = await storage.save(name, profile.snapshot);
+    await refreshWorkspaces();
+    await loadWorkspace(meta.id);
+    notice.value = {
+      text: `Imported "${name}" (from ${profile.app}) — loading it now`,
+      tone: 'info',
+    };
+  } catch (e) {
+    notice.value = { text: `Could not import workspace: ${errMsg(e)}`, tone: 'error' };
+  }
+}
+
+export function handleWorkspaceImportUtility(): boolean {
+  if (!boundApi) return false;
+  void importWorkspaceFromFile();
+  return true;
 }
 
 export function handleWorkspaceSaveUtility(): boolean {
@@ -327,6 +404,7 @@ function workspaceItems(): PanelListItem[] {
       { id: 'load', label: 'Load', icon: '▶' },
       { id: 'overwrite', label: 'Overwrite with current', icon: '↻' },
       { id: 'rename', label: 'Rename', icon: '✎' },
+      { id: 'export', label: 'Export to file', icon: '↓' },
       { id: 'delete', label: 'Delete', icon: '🗑', danger: true },
     ],
     buttons: [{ id: 'more', icon: '⋮', title: 'More', visibility: 'mobile' }],

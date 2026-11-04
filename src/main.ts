@@ -16,8 +16,11 @@ import {
 } from './registry';
 import type { PanelListItem, TreeNode } from './types/panel';
 import type { PopupField, PopupValues } from './types/popup';
+import { registerWorkspaceProfileIdentity } from './workspace/manager';
 
 registerTabContent('welcome', WelcomeContent);
+
+registerWorkspaceProfileIdentity('studio-framework-demo');
 
 registerTabContent('table-demo', TableDemo);
 

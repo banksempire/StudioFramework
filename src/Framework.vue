@@ -30,9 +30,11 @@ import {
 import { readUiNumber, readUiString, writeUiValue, applyUiValues, readAllUiValues, uiEpoch } from './uiState';
 import { findTile } from './workspace/tree';
 import {
+  WORKSPACE_IMPORT_UTILITY,
   WORKSPACE_ITEM_ACTION,
   WORKSPACE_SAVE_UTILITY,
   bindWorkspaceManager,
+  handleWorkspaceImportUtility,
   handleWorkspaceItemAction,
   handleWorkspaceSaveUtility,
   renameWorkspace,
@@ -457,6 +459,7 @@ function onPanelUtility(subId: string, utilityId: string, itemId?: string) {
     mobileRightOpen.value = false;
   }
   if (utilityId === WORKSPACE_SAVE_UTILITY && handleWorkspaceSaveUtility()) return;
+  if (utilityId === WORKSPACE_IMPORT_UTILITY && handleWorkspaceImportUtility()) return;
   emit('action', { source: 'utility', subId, action: utilityId, payload: itemId });
 }
 
