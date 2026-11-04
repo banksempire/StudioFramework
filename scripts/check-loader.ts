@@ -69,6 +69,52 @@ report(
   })() === true,
 );
 
+report(
+  'builtin docker entry expands to the canonical workspaces app',
+  (() => {
+    try {
+      const doc = loadLayout(panel({ docker: [{ builtin: 'workspaces' }] }), 'loader-check');
+      const app = doc.docker[0];
+      return (
+        doc.docker.length === 1 &&
+        app.id === 'workspace' &&
+        app.displayName === 'Workspace' &&
+        app.icon === '🗂' &&
+        app.panel.title === 'Workspaces' &&
+        app.panel.h1[0]?.h2[0]?.id === 'ws-list'
+      );
+    } catch (e) {
+      return (e as Error).message;
+    }
+  })() === true,
+);
+
+report(
+  'builtin entry can sit alongside regular docker apps, in order',
+  (() => {
+    try {
+      const base = panel() as { docker: unknown[] };
+      base.docker = [{ builtin: 'workspaces' }, base.docker[0]];
+      const doc = loadLayout(base, 'loader-check');
+      return doc.docker.length === 2 && doc.docker[0].id === 'workspace' && doc.docker[1].id === 'app';
+    } catch (e) {
+      return (e as Error).message;
+    }
+  })() === true,
+);
+
+expectsFailure(
+  'unknown builtin name fails fast',
+  panel({ docker: [{ builtin: 'nope' }] }),
+  /unknown builtin "nope"/,
+);
+
+expectsFailure(
+  'builtin entry mixed with other keys fails fast',
+  panel({ docker: [{ builtin: 'workspaces', id: 'x' }] }),
+  /exactly \{ "builtin"/,
+);
+
 expectsFailure(
   'panel without groups fails fast (h1 missing)',
   withDockerPanel({ h1: [] }),

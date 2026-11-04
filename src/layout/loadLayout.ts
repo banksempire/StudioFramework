@@ -27,6 +27,7 @@ import type {
   TreeNode,
 } from '../types/panel';
 import type { PopupField, PopupOption, PopupOptionGroup, PopupValues } from '../types/popup';
+import builtinsJson from './builtins.json' with { type: 'json' };
 import frameworkJson from './framework.layout.json' with { type: 'json' };
 
 let sourceLabel = 'framework.layout.json';
@@ -676,6 +677,20 @@ function toDockerApp(v: unknown, path: string): DockerAppDef {
   };
 }
 
+function toDockerEntry(v: unknown, path: string): DockerAppDef {
+  const r = needRecord(v, path);
+  if (r.builtin === undefined) return toDockerApp(v, path);
+  if (Object.keys(r).length !== 1) {
+    fail(`${path}.builtin`, 'a builtin entry is exactly { "builtin": "<name>" } — no other keys');
+  }
+  const name = needString(r.builtin, `${path}.builtin`);
+  const catalog = builtinsJson as Record<string, unknown>;
+  if (!(name in catalog)) {
+    fail(`${path}.builtin`, `unknown builtin "${name}" (available: ${Object.keys(catalog).join(', ')})`);
+  }
+  return toDockerApp(catalog[name], `${path}.builtin(${name})`);
+}
+
 function toStatusItem(v: unknown, path: string): StatusItemDef {
   const r = needRecord(v, path);
   const component = optString(r.component, `${path}.component`);
@@ -715,7 +730,7 @@ export function loadLayout(json: unknown = frameworkJson, label = 'framework.lay
 
   const menu = needArray(root.menu ?? [], '<root>.menu').map((m, i) => toMenuNode(m, `<root>.menu[${i}]`));
   const docker = needArray(root.docker ?? [], '<root>.docker').map((d, i) =>
-    toDockerApp(d, `<root>.docker[${i}]`),
+    toDockerEntry(d, `<root>.docker[${i}]`),
   );
   if (docker.length === 0) fail('<root>.docker', 'at least one docker item is required');
 

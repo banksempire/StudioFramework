@@ -126,7 +126,9 @@ let storage: WorkspaceStorage = localWorkspaceStorage;
 
 export function registerWorkspaceStorage(next: WorkspaceStorage | null): void {
   storage = next ?? localWorkspaceStorage;
-  void refreshWorkspaces();
+  refreshSeq += 1;
+  listEverLoaded = false;
+  metas.value = [];
 }
 
 export function workspaceStorage(): WorkspaceStorage {
@@ -138,12 +140,16 @@ const activeId = ref('');
 const notice = ref<{ text: string; tone: 'info' | 'error' } | null>(null);
 
 let refreshSeq = 0;
+let listEverLoaded = false;
 
-export async function refreshWorkspaces(): Promise<void> {
+async function refreshWorkspaces(): Promise<void> {
   const seq = ++refreshSeq;
   try {
     const list = await storage.list();
-    if (seq === refreshSeq) metas.value = list;
+    if (seq === refreshSeq) {
+      metas.value = list;
+      listEverLoaded = true;
+    }
   } catch (e) {
     if (seq === refreshSeq) {
       notice.value = { text: `Could not load workspaces: ${errMsg(e)}`, tone: 'error' };
@@ -157,7 +163,6 @@ export function bindWorkspaceManager(api: WorkspaceApi | null): void {
   boundApi = api;
   activeId.value = '';
   notice.value = null;
-  void refreshWorkspaces();
 }
 
 function errMsg(e: unknown): string {
@@ -328,11 +333,14 @@ function workspaceItems(): PanelListItem[] {
   }));
 }
 
-registerPanelData(WORKSPACE_LIST_BIND, () => ({
-  items: workspaceItems(),
-  empty: 'No saved workspaces yet — save the current layout with Save above.',
-  searchable: true,
-  searchPlaceholder: 'Search workspaces…',
-}));
+registerPanelData(WORKSPACE_LIST_BIND, () => {
+  if (!listEverLoaded) void refreshWorkspaces();
+  return {
+    items: workspaceItems(),
+    empty: 'No saved workspaces yet — save the current layout with Save above.',
+    searchable: true,
+    searchPlaceholder: 'Search workspaces…',
+  };
+});
 
 registerPanelData(WORKSPACE_BANNER_BIND, () => notice.value ?? {});
