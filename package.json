@@ -10,6 +10,7 @@
     "check:auxreload": "node scripts/check-auxreload.cjs",
     "check:auxwindow": "node scripts/check-auxwindow.cjs",
     "check:bulklist": "node scripts/check-bulklist.cjs",
+    "check:clipboard": "node scripts/check-clipboard.cjs",
     "check:colorwheel": "node scripts/check-color-wheel.cjs",
     "check:corners": "node scripts/check-corners.cjs",
     "check:debug": "node scripts/check-debug.cjs",
