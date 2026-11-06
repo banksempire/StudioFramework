@@ -177,18 +177,6 @@ export function openAuxWindow(options: AuxWindowOptions): AuxWindowHandle | null
   doc.body.appendChild(shell);
 
   const mobileListeners = new Set<() => void>();
-  const mobileMq = popup.matchMedia('(max-width: 499px)');
-  const applyMobile = () => {
-    shell.classList.toggle('sf-root--mobile', mobileMq.matches);
-    shell.classList.toggle('sf-root--mobile-no-docker', mobileMq.matches);
-    for (const listener of mobileListeners) listener();
-  };
-  applyMobile();
-  try {
-    mobileMq.addEventListener('change', applyMobile);
-  } catch {
-    mobileMq.addListener(applyMobile);
-  }
 
   const listeners: Array<() => void> = [];
   let closed = false;
@@ -214,7 +202,7 @@ export function openAuxWindow(options: AuxWindowOptions): AuxWindowHandle | null
         height: popup.outerHeight,
       };
     },
-    isMobile: () => mobileMq.matches,
+    isMobile: () => false,
     onMobileChange(listener: () => void) {
       mobileListeners.add(listener);
       return () => mobileListeners.delete(listener);

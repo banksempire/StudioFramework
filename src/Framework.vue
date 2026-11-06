@@ -79,7 +79,7 @@ const emit = defineEmits<{
 
 
 const MOBILE_BREAKPOINT = 500;
-const isMobile = ref(viewport.innerWidth < MOBILE_BREAKPOINT);
+const isMobile = ref(isMainViewport && viewport.innerWidth < MOBILE_BREAKPOINT);
 provide(kIsMobile, isMobile);
 
 const api = props.api ?? useWorkspace(L.workspace, { mobile: isMobile });
@@ -247,7 +247,7 @@ function onPanelResize(side: 'left' | 'right', newWidth: number) {
 }
 
 const onResize = () => {
-  isMobile.value = viewport.innerWidth < MOBILE_BREAKPOINT;
+  isMobile.value = isMainViewport && viewport.innerWidth < MOBILE_BREAKPOINT;
   onWindowResize();
 };
 onMounted(() => {
@@ -269,8 +269,6 @@ onMounted(() => {
 onUnmounted(() => {
   standaloneMq.removeEventListener('change', syncStandalone);
 });
-
-const mobileDockerVisible = computed(() => isMobile.value && isMainViewport);
 
 const effDockerPanelVisible = computed(() =>
   dockerPanelVisible.value && leftPanelVisible.value && !leftAutoHidden.value,
@@ -536,7 +534,6 @@ function onPanelAction(a: PanelAction) {
     class="sf-root sf-overlay-root"
     :class="{
       'sf-root--mobile': isMobile,
-      'sf-root--mobile-no-docker': isMobile && !mobileDockerVisible,
       'sf-status-dragging': isMobile && statusDragging,
     }"
     :style="{ '--sf-status-reveal': String(statusReveal) }"
@@ -614,7 +611,6 @@ function onPanelAction(a: PanelAction) {
 
     <template v-if="isMobile">
       <Docker
-        v-if="mobileDockerVisible"
         position="bottom"
         :items="L.docker"
         :active-app="activeDockerApp"
