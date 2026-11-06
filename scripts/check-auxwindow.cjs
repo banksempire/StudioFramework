@@ -64,63 +64,35 @@ const {
         (await aux.locator('.sf-status-bar').count()) === 0,
     );
     await aux.setViewportSize({ width: 375, height: 700 });
-    await aux.waitForFunction(
-      () =>
-        document.querySelectorAll('.sf-root--mobile').length >= 1 &&
-        !!document.querySelector('.sf-mobile-tab-label'),
-      { timeout: 5000 },
+    await wait(300);
+    const narrowAux = await aux.evaluate(() => ({
+      mobileRoots: document.querySelectorAll('.sf-root--mobile').length,
+      menuBar: document.querySelectorAll('.sf-menu-bar').length,
+      dockerRail: document.querySelectorAll('.sf-docker').length,
+      desktopTabs: document.querySelectorAll('.sf-tab').length,
+      mobileChrome: document.querySelectorAll(
+        '.sf-mobile-tab-label, .sf-mobile-menu-btn, .sf-mobile-rp-btn, .sf-docker--bottom',
+      ).length,
+    }));
+    report(
+      'narrow popup stays desktop: menu bar, docker rail, desktop tabs, no mobile chrome',
+      narrowAux.mobileRoots === 0 &&
+        narrowAux.menuBar === 1 &&
+        narrowAux.dockerRail === 1 &&
+        narrowAux.desktopTabs >= 1 &&
+        narrowAux.mobileChrome === 0,
     );
-    report('narrow popup switches to the mobile layout', true);
-    await aux.waitForFunction(() => document.querySelectorAll('.sf-root--mobile-no-docker').length >= 2, {
+    await page.setViewportSize({ width: 390, height: 800 });
+    await page.waitForFunction(() => document.querySelectorAll('.sf-root--mobile').length >= 1, {
       timeout: 5000,
     });
-    report('narrow popup hides the bottom docker', (await aux.locator('.sf-docker--bottom').count()) === 0);
-    const wsBottom = await aux.locator('.sf-workspace').evaluate((el) => el.getBoundingClientRect().bottom);
-    report('workspace fills the space the docker freed (popup bottom edge)', Math.abs(wsBottom - 700) < 3);
-    await aux.click('.sf-mobile-tab-label');
-    await aux.waitForSelector('.sf-tab-dropdown', { timeout: 5000 });
-    await wait(400);
-    const sheetBox = await aux.locator('.sf-tab-dropdown').boundingBox();
     report(
-      'mobile tab sheet reaches the popup bottom edge',
-      sheetBox !== null && Math.abs(sheetBox.y + sheetBox.height - 700) < 3,
+      'main window goes mobile while the narrow popup stays desktop',
+      (await page.locator('.sf-docker--bottom').count()) === 1 &&
+        (await aux.locator('.sf-menu-bar').count()) === 1,
     );
-    report(
-      'mobile tab sheet opened in the popup renders inside the popup document',
-      (await aux.locator('.sf-tab-dropdown').count()) === 1 &&
-        (await page.locator('.sf-tab-dropdown').count()) === 0,
-    );
-    await aux.click('.sf-tab-dropdown-close');
-    await aux.waitForSelector('.sf-tab-dropdown', { state: 'detached', timeout: 5000 });
-    await aux.click('.sf-mobile-rp-btn');
-    await aux.waitForSelector('.sf-mobile-panel', { timeout: 5000 });
-    await wait(400);
-    const panelBox = await aux.locator('.sf-mobile-panel').boundingBox();
-    report(
-      'mobile panel sheet reaches the popup bottom edge',
-      panelBox !== null && Math.abs(panelBox.y + panelBox.height - 700) < 3,
-    );
-    await aux.click('.sf-panel-close-btn');
-    await aux.waitForSelector('.sf-mobile-panel', { state: 'detached', timeout: 5000 });
-    await page.setViewportSize({ width: 390, height: 800 });
-    await wait(300);
-    await aux.click('.sf-mobile-tab-label');
-    await aux.waitForSelector('.sf-tab-dropdown', { timeout: 5000 });
-    report(
-      'both windows mobile: the popup sheet stays in the popup and lists its tab',
-      (await aux.locator('.sf-tab-dropdown').count()) === 1 &&
-        (await page.locator('.sf-tab-dropdown').count()) === 0 &&
-        (await aux.locator('.sf-tab-dropdown-row').count()) === 1,
-    );
-    await aux.click('.sf-tab-dropdown-close');
-    await aux.waitForSelector('.sf-tab-dropdown', { state: 'detached', timeout: 5000 });
     await page.setViewportSize({ width: 1440, height: 900 });
     await wait(300);
-    await aux.setViewportSize({ width: 960, height: 720 });
-    await aux.waitForFunction(() => document.querySelectorAll('.sf-root--mobile').length === 0, {
-      timeout: 5000,
-    });
-    report('wide popup switches back to the desktop layout', true);
 
     await aux.setViewportSize({ width: 2000, height: 900 });
     if (
