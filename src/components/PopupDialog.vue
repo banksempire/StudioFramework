@@ -62,7 +62,7 @@ const actions = computed(
   () =>
     props.doc.actions ?? [
       { id: 'cancel', label: props.cancelLabel, close: true },
-      { id: 'submit', label: props.submitLabel, tone: 'accent' as const },
+      { id: 'submit', label: props.submitLabel, tone: 'accent' as const, close: false },
     ],
 );
 

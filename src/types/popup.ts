@@ -103,7 +103,7 @@ export interface PopupAction {
   align?: 'left' | 'right';
   disabled?: boolean;
   title?: string;
-  close?: boolean;
+  close: boolean;
   class?: string;
 }
 

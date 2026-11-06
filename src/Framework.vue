@@ -433,7 +433,7 @@ const wsRenameDoc: PopupDocument = {
   ],
   actions: [
     { id: 'cancel', label: 'Cancel', close: true },
-    { id: 'save', label: 'Save', tone: 'accent' },
+    { id: 'save', label: 'Save', tone: 'accent', close: false },
   ],
 };
 
@@ -487,8 +487,8 @@ const wsConfirmDoc = computed<PopupDocument>(() => {
     actions: [
       { id: 'cancel', label: 'Cancel', close: true },
       overwrite
-        ? { id: 'confirm', label: 'Overwrite', tone: 'accent' }
-        : { id: 'confirm', label: 'Delete', tone: 'danger' },
+        ? { id: 'confirm', label: 'Overwrite', tone: 'accent', close: false }
+        : { id: 'confirm', label: 'Delete', tone: 'danger', close: false },
     ],
   };
 });

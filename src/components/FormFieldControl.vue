@@ -124,7 +124,7 @@ const wheelDoc: PopupDocument = {
   ],
   actions: [
     { id: 'cancel', label: 'Cancel', close: true },
-    { id: 'apply', label: 'Apply', tone: 'accent' },
+    { id: 'apply', label: 'Apply', tone: 'accent', close: false },
   ],
 };
 

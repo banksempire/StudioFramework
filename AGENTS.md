@@ -34,7 +34,7 @@ Task-specific manual. The workspace contract (ground rules, workflow, ports) liv
 - `components: []` is illegal for H2 and H3 alike; every section carries at least one entry (leaf or nested H3).
 - An H3 declares `heading: 3`, may not set `height`, and cannot contain further sections. H2 `heading` is always 2.
 - Every panel has at least one H1; every H1 has at least one H2.
-- Popups follow the same shape one level shallower: `PopupH2` carries `fields` (optional when a `list: { bind }` component is bound instead) plus an optional `h3: PopupH3[]` nesting list — there is no heading flag.
+- Popups follow the same shape one level shallower: `PopupH2` carries `fields` (optional when a `list: { bind }` component is bound instead) plus an optional `h3: PopupH3[]` nesting list — there is no heading flag. Every `PopupAction` declares `close` explicitly: `true` has the framework dismiss the dialog after emitting the action; `false` means the consumer's action handler owns closing (form submits stay open on validation/API errors and close on success). The required field turns a forgotten decision into a compile error in every consumer.
 
 ### Component registration guard
 
