@@ -180,6 +180,7 @@ export function openAuxWindow(options: AuxWindowOptions): AuxWindowHandle | null
   const mobileMq = popup.matchMedia('(max-width: 499px)');
   const applyMobile = () => {
     shell.classList.toggle('sf-root--mobile', mobileMq.matches);
+    shell.classList.toggle('sf-root--mobile-no-docker', mobileMq.matches);
     for (const listener of mobileListeners) listener();
   };
   applyMobile();

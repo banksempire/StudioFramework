@@ -2083,6 +2083,17 @@ body.sf-dragging-row * {
   transition: none;
 }
 
+.sf-root--mobile-no-docker .sf-center-group,
+.sf-root--mobile-no-docker .sf-workspace {
+  border-radius: var(--sf-radius);
+}
+
+.sf-root--mobile-no-docker .sf-menu-sheet,
+.sf-root--mobile-no-docker .sf-tab-dropdown,
+.sf-root--mobile-no-docker .sf-mobile-panel {
+  bottom: var(--sf-safe-bottom, 0px);
+}
+
 .sf-sm {
   display: flex;
   flex-direction: column;
