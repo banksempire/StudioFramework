@@ -270,6 +270,8 @@ onUnmounted(() => {
   standaloneMq.removeEventListener('change', syncStandalone);
 });
 
+const mobileDockerVisible = computed(() => isMobile.value && isMainViewport);
+
 const effDockerPanelVisible = computed(() =>
   dockerPanelVisible.value && leftPanelVisible.value && !leftAutoHidden.value,
 );
@@ -534,6 +536,7 @@ function onPanelAction(a: PanelAction) {
     class="sf-root sf-overlay-root"
     :class="{
       'sf-root--mobile': isMobile,
+      'sf-root--mobile-no-docker': isMobile && !mobileDockerVisible,
       'sf-status-dragging': isMobile && statusDragging,
     }"
     :style="{ '--sf-status-reveal': String(statusReveal) }"
@@ -611,6 +614,7 @@ function onPanelAction(a: PanelAction) {
 
     <template v-if="isMobile">
       <Docker
+        v-if="mobileDockerVisible"
         position="bottom"
         :items="L.docker"
         :active-app="activeDockerApp"

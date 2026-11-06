@@ -1,4 +1,5 @@
 const {
+  URL: APP_URL,
   ensureServer,
   openApp,
   makeReporter,
@@ -70,8 +71,20 @@ const {
       { timeout: 5000 },
     );
     report('narrow popup switches to the mobile layout', true);
+    await aux.waitForFunction(() => document.querySelectorAll('.sf-root--mobile-no-docker').length >= 2, {
+      timeout: 5000,
+    });
+    report('narrow popup hides the bottom docker', (await aux.locator('.sf-docker--bottom').count()) === 0);
+    const wsBottom = await aux.locator('.sf-workspace').evaluate((el) => el.getBoundingClientRect().bottom);
+    report('workspace fills the space the docker freed (popup bottom edge)', Math.abs(wsBottom - 700) < 3);
     await aux.click('.sf-mobile-tab-label');
     await aux.waitForSelector('.sf-tab-dropdown', { timeout: 5000 });
+    await wait(400);
+    const sheetBox = await aux.locator('.sf-tab-dropdown').boundingBox();
+    report(
+      'mobile tab sheet reaches the popup bottom edge',
+      sheetBox !== null && Math.abs(sheetBox.y + sheetBox.height - 700) < 3,
+    );
     report(
       'mobile tab sheet opened in the popup renders inside the popup document',
       (await aux.locator('.sf-tab-dropdown').count()) === 1 &&
@@ -79,6 +92,16 @@ const {
     );
     await aux.click('.sf-tab-dropdown-close');
     await aux.waitForSelector('.sf-tab-dropdown', { state: 'detached', timeout: 5000 });
+    await aux.click('.sf-mobile-rp-btn');
+    await aux.waitForSelector('.sf-mobile-panel', { timeout: 5000 });
+    await wait(400);
+    const panelBox = await aux.locator('.sf-mobile-panel').boundingBox();
+    report(
+      'mobile panel sheet reaches the popup bottom edge',
+      panelBox !== null && Math.abs(panelBox.y + panelBox.height - 700) < 3,
+    );
+    await aux.click('.sf-panel-close-btn');
+    await aux.waitForSelector('.sf-mobile-panel', { state: 'detached', timeout: 5000 });
     await page.setViewportSize({ width: 390, height: 800 });
     await wait(300);
     await aux.click('.sf-mobile-tab-label');
@@ -551,7 +574,7 @@ const {
     const mobileContext = await browser.newContext({ viewport: { width: 375, height: 700 } });
     const mobile = await mobileContext.newPage();
     watchPage(mobile);
-    await mobile.goto('http://localhost:7493/', { waitUntil: 'domcontentloaded', timeout: 15000 });
+    await mobile.goto(APP_URL, { waitUntil: 'domcontentloaded', timeout: 15000 });
     await mobile.waitForFunction(() => (document.getElementById('framework')?.innerHTML.length ?? 0) > 1000, {
       timeout: 10000,
     });
