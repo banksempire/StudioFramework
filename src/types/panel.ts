@@ -158,6 +158,7 @@ export interface PanelTableColumn {
   mobile?: 'lead' | 'sub' | 'title' | 'hidden';
   kind?: 'text' | 'status' | 'time' | 'mono' | 'danger';
   titleKey?: string;
+  align?: 'left' | 'right' | 'center';
 }
 
 export interface PanelTableRow {
