@@ -12,7 +12,7 @@ const props = defineProps<{
 }>();
 
 const tableColumns = computed<TableColumn[]>(() =>
-  props.columns.map((c) => ({ key: c.key, label: c.label, min: c.min, mobile: c.mobile })),
+  props.columns.map((c) => ({ key: c.key, label: c.label, min: c.min, mobile: c.mobile, align: c.align })),
 );
 
 const tableRows = computed(() => props.rows.map((r) => ({ ...r.cells, __id: r.id })));

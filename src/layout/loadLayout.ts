@@ -314,6 +314,10 @@ function toTableColumn(v: unknown, path: string): PanelTableColumn {
   ) {
     fail(`${path}.mobile`, `expected "lead", "sub", "title" or "hidden", got "${mobile}"`);
   }
+  const align = optString(r.align, `${path}.align`);
+  if (align !== undefined && align !== 'left' && align !== 'right' && align !== 'center') {
+    fail(`${path}.align`, `expected "left", "right" or "center", got "${align}"`);
+  }
   return {
     key: needId(r.key, `${path}.key`),
     label: needString(r.label, `${path}.label`),
@@ -321,6 +325,7 @@ function toTableColumn(v: unknown, path: string): PanelTableColumn {
     mobile: mobile as PanelTableColumn['mobile'],
     kind: kind as PanelTableColumn['kind'],
     titleKey: optString(r.titleKey, `${path}.titleKey`),
+    align: align as PanelTableColumn['align'],
   };
 }
 
