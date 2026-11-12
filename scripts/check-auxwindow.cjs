@@ -473,11 +473,50 @@ const {
 
     const aux3 = await detachToPopup(page.context(), page, TAB_A);
     await aux3.waitForSelector('[data-test="aux-content"] .sf-workspace', { timeout: 5000 });
+    const closesBeforeAux3 = await page.evaluate(
+      () => (window.__sfTabResources ?? []).filter((e) => e.kind === 'close').length,
+    );
     await aux3.evaluate(() => window.close());
-    await page.waitForFunction((id) => window.__sfWorkspace.tabWindow(id) === 0, TAB_A, {
-      timeout: 5000,
-    });
-    report('closing the popup window reattaches the tab', true);
+    const aux3CloseStart = Date.now();
+    while (!aux3.isClosed() && Date.now() - aux3CloseStart < 5000) await wait(100);
+    await page.waitForFunction(
+      (id) => window.__sfWorkspace.tabWindow(id) === null && !window.__sfWorkspace.findTabGlobal(id),
+      TAB_A,
+      { timeout: 5000 },
+    );
+    const afterAux3 = await page.evaluate((id) => {
+      const api = window.__sfWorkspace;
+      const closes = (window.__sfTabResources ?? []).filter((e) => e.kind === 'close');
+      return {
+        tabWindow: api.tabWindow(id),
+        hosted: !!api.findTabGlobal(id),
+        auxWindows: api.auxWindowIds.length,
+        snapAux: api.capture().aux ?? [],
+        closeEvents: closes.map((e) => e.detail),
+      };
+    }, TAB_A);
+    report(
+      'closing the popup window closes its tab — nothing returns to the main window',
+      afterAux3.tabWindow === null &&
+        !afterAux3.hosted &&
+        afterAux3.auxWindows === 0 &&
+        !afterAux3.snapAux.includes(TAB_A),
+      JSON.stringify(afterAux3),
+    );
+    report(
+      'popup close released the tab resources exactly once',
+      afterAux3.closeEvents.length === closesBeforeAux3 + 1 &&
+        afterAux3.closeEvents[afterAux3.closeEvents.length - 1] === 'res-b',
+      JSON.stringify(afterAux3.closeEvents),
+    );
+    report(
+      'main window untouched by the popup close',
+      await page.evaluate(
+        (id) => window.__sfWorkspace.tabWindow(id) === 0 && !!window.__sfWorkspace.findTabGlobal(id),
+        TAB_B,
+      ),
+    );
+    await openResourceTab(page, TAB_A, 'Aux A');
 
     const aux4 = await detachToPopup(page.context(), page, TAB_A);
     await aux4.waitForSelector('[data-test="aux-content"] .sf-workspace', { timeout: 5000 });
@@ -492,7 +531,8 @@ const {
         id: 'aux-snap-test',
         label: 'Snap',
         icon: 'S',
-        content: 'table-demo',
+        content: 'resource-demo',
+        props: { code: 'res-a' },
       });
     });
     report(
@@ -522,6 +562,9 @@ const {
       'restored aux tab is not folded into the main window',
       (await page.locator('.sf-tab[data-tab-id="aux-snap-test"]').count()) === 0,
     );
+    const closesAfterRestore = await page.evaluate(
+      () => (window.__sfTabResources ?? []).filter((e) => e.kind === 'close').length,
+    );
     await aux4.hover(`.sf-tab[data-tab-id="${TAB_A}"]`);
     await aux4.click(`.sf-tab[data-tab-id="${TAB_A}"] .sf-tab-close`);
     await aux4.hover('.sf-tab[data-tab-id="aux-snap-test"]');
@@ -533,13 +576,14 @@ const {
     await page.hover(`.sf-tab[data-tab-id="${TAB_B}"]`);
     await page.click(`.sf-tab[data-tab-id="${TAB_B}"] .sf-tab-close`);
     await page.waitForFunction(
-      () => (window.__sfTabResources ?? []).filter((e) => e.kind === 'close').length === 2,
+      (n) => (window.__sfTabResources ?? []).filter((e) => e.kind === 'close').length === n + 3,
+      closesAfterRestore,
       { timeout: 5000 },
     );
     const finalEvents = await events();
     report(
       'explicit closes release resources exactly once each',
-      finalEvents.filter((e) => e.startsWith('close')).length === 2,
+      finalEvents.filter((e) => e.startsWith('close')).length === closesAfterRestore + 3,
       JSON.stringify(finalEvents.filter((e) => e.startsWith('close'))),
     );
 

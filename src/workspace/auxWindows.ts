@@ -355,7 +355,8 @@ export function createAuxWindows(host: AuxWindowsHost): AuxWindows {
     handle.onClosed(() => {
       auxMobile.delete(handle.id);
       for (const tabId of auxTabsOf(handle.id)) {
-        reattachDetached(tabId, undefined, undefined, true);
+        host.releaseTabResources(tabId);
+        auxRemoveTab(tabId);
       }
       auxWindows.delete(handle.id);
       auxTrees.delete(handle.id);

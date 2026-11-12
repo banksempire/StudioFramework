@@ -165,16 +165,20 @@ const wait = (ms) => new Promise((r) => setTimeout(r, ms));
       await openResourceTab(page, TAB_CLOSE, 'Reload D');
       const aux = await detachToPopup(context, page, TAB_CLOSE);
       await aux.close();
-      await page.waitForFunction((id) => window.__sfWorkspace.tabWindow(id) === 0, TAB_CLOSE, {
-        timeout: 5000,
-      });
+      const auxCloseStart = Date.now();
+      while (!aux.isClosed() && Date.now() - auxCloseStart < 5000) await wait(100);
+      await page.waitForFunction(
+        (id) => window.__sfWorkspace.tabWindow(id) === null && !window.__sfWorkspace.findTabGlobal(id),
+        TAB_CLOSE,
+        { timeout: 5000 },
+      );
       await page.reload({ waitUntil: 'networkidle' });
       await page.waitForFunction(() => !!window.__sfWorkspace, { timeout: 15000 });
       await wait(800);
       report(
-        'closing the popup before refresh keeps the tab in the main window',
-        (await page.evaluate((id) => window.__sfWorkspace.tabWindow(id) === 0, TAB_CLOSE)) &&
-          (await page.locator(`.sf-tab[data-tab-id="${TAB_CLOSE}"]`).count()) === 1 &&
+        'closing the popup before refresh closes its tab for real',
+        (await page.evaluate((id) => window.__sfWorkspace.tabWindow(id) === null, TAB_CLOSE)) &&
+          (await page.locator(`.sf-tab[data-tab-id="${TAB_CLOSE}"]`).count()) === 0 &&
           (await page.evaluate(() => window.__sfWorkspace.auxWindowIds.length === 0)) &&
           context.pages().length === 1,
       );
