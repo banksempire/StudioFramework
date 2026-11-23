@@ -43,16 +43,6 @@ const sectionEntries = computed<(PanelComponentModel | PanelH3)[]>(() => [...pro
 
 const utilities = computed(() => (isPanelH3(props.section) ? undefined : props.section.utilities));
 
-const leafComponents = computed<PanelComponentModel[]>(() =>
-  (sectionEntries.value as (PanelComponentModel | PanelH3)[]).filter(
-    (c): c is PanelComponentModel => !isPanelH3(c),
-  ),
-);
-
-const nestedH3s = computed<PanelH3[]>(() =>
-  (sectionEntries.value as (PanelComponentModel | PanelH3)[]).filter((c): c is PanelH3 => isPanelH3(c)),
-);
-
 interface BulkRec {
   active?: boolean;
   entry?: PanelBulkAction;
@@ -61,7 +51,9 @@ interface BulkRec {
 }
 
 const bulkList = computed<{ bind: string; bulk: BulkRec } | null>(() => {
-  const list = leafComponents.value.find((c) => c.type === 'list') as { bind?: string } | undefined;
+  const list = sectionEntries.value.find((c) => !isPanelH3(c) && c.type === 'list') as
+    | { bind?: string }
+    | undefined;
   if (!list?.bind) return null;
   const getter = getPanelData(list.bind);
   const rec = getter ? (getter() as { bulk?: BulkRec } | undefined) : undefined;
@@ -114,7 +106,9 @@ function emitBulkAction(id: string) {
 }
 
 const displayTitle = computed(() => {
-  const list = leafComponents.value.find((c) => c.type === 'list') as { bind?: string } | undefined;
+  const list = sectionEntries.value.find((c) => !isPanelH3(c) && c.type === 'list') as
+    | { bind?: string }
+    | undefined;
   if (!list?.bind) return props.section.title;
   const getter = getPanelData(list.bind);
   const rec = getter ? (getter() as { title?: string } | undefined) : undefined;
@@ -259,31 +253,31 @@ function menuItemsOf(utilId: string) {
       :data-sub-body="section.id"
       :style="bodyHeight !== null ? { height: bodyHeight + 'px', overflowY: 'auto' } : {}"
     >
-      <PanelComponent
-        v-for="(comp, i) in leafComponents"
-        :key="i"
-        :component="comp"
-        @content-changed="emit('content-changed')"
-        @action="(a) => emit('component-action', a)"
-      >
-        <template v-for="name in passthroughSlots" :key="name" #[name]="sp">
-          <slot :name="name" v-bind="sp ?? {}" />
-        </template>
-      </PanelComponent>
-      <SubSection
-        v-for="h3 in nestedH3s"
-        :key="h3.id"
-        :section="h3"
-        :is-expanded="true"
-        :body-height="null"
-        @utility="(utilityId, itemId) => emit('utility', utilityId, itemId)"
-        @content-changed="emit('content-changed')"
-        @component-action="(a) => emit('component-action', a)"
-      >
-        <template v-for="name in passthroughSlots" :key="name" #[name]="sp">
-          <slot :name="name" v-bind="sp ?? {}" />
-        </template>
-      </SubSection>
+      <template v-for="(entry, i) in sectionEntries" :key="isPanelH3(entry) ? entry.id : i">
+        <PanelComponent
+          v-if="!isPanelH3(entry)"
+          :component="entry"
+          @content-changed="emit('content-changed')"
+          @action="(a) => emit('component-action', a)"
+        >
+          <template v-for="name in passthroughSlots" :key="name" #[name]="sp">
+            <slot :name="name" v-bind="sp ?? {}" />
+          </template>
+        </PanelComponent>
+        <SubSection
+          v-else
+          :section="entry"
+          :is-expanded="true"
+          :body-height="null"
+          @utility="(utilityId, itemId) => emit('utility', utilityId, itemId)"
+          @content-changed="emit('content-changed')"
+          @component-action="(a) => emit('component-action', a)"
+        >
+          <template v-for="name in passthroughSlots" :key="name" #[name]="sp">
+            <slot :name="name" v-bind="sp ?? {}" />
+          </template>
+        </SubSection>
+      </template>
     </div>
   </div>
 </template>
