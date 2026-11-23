@@ -2,6 +2,7 @@
 import { computed, provide, reactive, watch } from 'vue';
 import { kPanelAction } from '../composables/usePanelAction';
 import { getPanelComponent, getPanelData } from '../registry';
+import type { MenuNodeDef } from '../types/layout';
 
 import type {
   ButtonData,
@@ -20,8 +21,8 @@ import { readUiStringArray, writeUiValue } from '../uiState';
 import FormFields from './FormFields.vue';
 import Icon from './Icon.vue';
 import KeyValueList from './KeyValueList.vue';
-import MenuButton from './MenuButton.vue';
 import PanelBanner from './PanelBanner.vue';
+import PanelButton from './PanelButton.vue';
 import PanelHeader from './PanelHeader.vue';
 import PanelList from './PanelList.vue';
 import PanelTable from './PanelTable.vue';
@@ -192,26 +193,22 @@ const tableColumns = computed<PanelTableColumn[]>(() =>
   props.component.type === 'table' ? props.component.columns : [],
 );
 
-const menuItems = computed(() => {
-  if (props.component.type !== 'menuButton') return [];
-  const b = bound.value;
-  if (Array.isArray(b)) return b;
+const buttonItems = computed<MenuNodeDef[]>(() => {
+  if (props.component.type !== 'button') return [];
+  if (Array.isArray(bound.value)) return bound.value;
   return props.component.items ?? [];
 });
 
-const menuButtonAction = computed(() => {
-  if (props.component.type !== 'menuButton') return undefined;
-  return props.component.action;
-});
+const buttonAction = computed(() => (props.component.type === 'button' ? props.component.action : undefined));
 
-const buttonData = computed<ButtonData>(() => {
-  if (props.component.type !== 'button') return {};
-  const rec = (bound.value ?? {}) as ButtonData;
+const buttonData = computed(() => {
+  const fallback = props.component.type === 'button' ? props.component : undefined;
+  const rec = (Array.isArray(bound.value) ? {} : (bound.value ?? {})) as ButtonData;
   return {
-    label: rec.label ?? props.component.label,
-    icon: rec.icon ?? props.component.icon,
-    disabled: rec.disabled ?? props.component.disabled,
-    title: rec.title ?? props.component.title,
+    label: rec.label ?? fallback?.label ?? '',
+    icon: rec.icon ?? fallback?.icon,
+    disabled: rec.disabled ?? fallback?.disabled,
+    title: rec.title ?? fallback?.title,
   };
 });
 
@@ -315,17 +312,17 @@ function onNodeClick(node: TreeNode) {
       @input="onInputInput"
     />
 
-    <button
+    <PanelButton
       v-else-if="component.type === 'button'"
-      class="sf-dialog-btn"
-      :class="component.variant && component.variant !== 'default' ? `sf-dialog-btn--${component.variant}` : undefined"
-      :disabled="buttonData.disabled"
+      :label="buttonData.label"
+      :icon="buttonData.icon"
       :title="buttonData.title"
-      @click="emitAction(component.action)"
-    >
-      <Icon v-if="buttonData.icon" :icon="buttonData.icon" />
-      {{ buttonData.label }}
-    </button>
+      :variant="component.variant"
+      :items="buttonItems"
+      :disabled="buttonData.disabled"
+      @press="emitAction(buttonAction)"
+      @select="(item) => emitAction(buttonAction, item)"
+    />
 
     <div v-else-if="component.type === 'tree'" class="sf-pc-tree">
       <div v-if="flatTree.length === 0 && component.empty" class="sf-empty">{{ component.empty }}</div>
@@ -434,16 +431,6 @@ function onNodeClick(node: TreeNode) {
         :resizable="component.resizable"
       />
     </template>
-
-    <MenuButton
-      v-else-if="component.type === 'menuButton'"
-      :label="component.label"
-      :icon="component.icon"
-      :title="component.title"
-      :items="menuItems"
-      :disabled="component.disabled"
-      @select="(item) => emitAction(menuButtonAction, item)"
-    />
 
     <component
       v-else-if="customComp"

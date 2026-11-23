@@ -86,7 +86,6 @@ const COMPONENT_TYPES = [
   'header',
   'banner',
   'table',
-  'menuButton',
   'component',
 ] as const;
 
@@ -333,6 +332,12 @@ function toComponent(v: unknown, path: string): PanelComponent {
   const r = needRecord(v, path);
   const type = needString(r.type, `${path}.type`);
   if (!(COMPONENT_TYPES as readonly string[]).includes(type)) {
+    if (type === 'menuButton') {
+      fail(
+        `${path}.type`,
+        'menuButton was unified into button — declare type "button" (items may come from the field or the bind)',
+      );
+    }
     fail(`${path}.type`, `unknown component type "${type}" (expected one of ${COMPONENT_TYPES.join(', ')})`);
   }
   const bind = optString(r.bind, `${path}.bind`);
@@ -373,6 +378,10 @@ function toComponent(v: unknown, path: string): PanelComponent {
         variant: variant as Extract<PanelComponentBase, { type: 'button' }>['variant'],
         title: optString(r.title, `${path}.title`),
         disabled: optBool(r.disabled, `${path}.disabled`),
+        items:
+          r.items === undefined
+            ? undefined
+            : needArray(r.items, `${path}.items`).map((m, i) => toMenuNode(m, `${path}.items[${i}]`)),
         bind,
       };
       break;
@@ -482,20 +491,10 @@ function toComponent(v: unknown, path: string): PanelComponent {
       };
       break;
     case 'menuButton':
-      base = {
-        type,
-        label: needString(r.label, `${path}.label`),
-        icon: toIcon(r.icon, `${path}.icon`),
-        title: optString(r.title, `${path}.title`),
-        items:
-          r.items === undefined
-            ? undefined
-            : needArray(r.items, `${path}.items`).map((m, i) => toMenuNode(m, `${path}.items[${i}]`)),
-        bind,
-        action: optString(r.action, `${path}.action`),
-        disabled: optBool(r.disabled, `${path}.disabled`),
-      };
-      break;
+      return fail(
+        `${path}.type`,
+        'menuButton was unified into button — declare type "button" (items may come from the field or the bind)',
+      );
     default:
       return fail(`${path}.type`, 'unreachable');
   }

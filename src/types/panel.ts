@@ -204,6 +204,7 @@ export type PanelComponentBase =
       variant?: ButtonVariant;
       title?: string;
       disabled?: boolean;
+      items?: MenuNodeDef[];
       bind?: string;
     }
   | {
@@ -249,16 +250,6 @@ export type PanelComponentBase =
       columns: PanelTableColumn[];
       empty?: string;
       resizable?: boolean;
-    }
-  | {
-      type: 'menuButton';
-      label: string;
-      icon?: IconDef;
-      title?: string;
-      items?: MenuNodeDef[];
-      bind?: string;
-      action?: string;
-      disabled?: boolean;
     }
   | { type: 'component'; key: string; props?: Record<string, unknown> };
 

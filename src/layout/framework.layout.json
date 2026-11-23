@@ -1303,7 +1303,7 @@
                 "height": "fixed",
                 "components": [
                   {
-                    "type": "menuButton",
+                    "type": "button",
                     "label": "Change Demo",
                     "bind": "demo-menu",
                     "action": "demo-menu-pick"
