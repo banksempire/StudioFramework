@@ -4,6 +4,7 @@ import { popupH1Groups, toPanelH1 } from '../lib/popupPanel';
 import type { PanelAction } from '../types/panel';
 import type { PopupDocument, PopupValues } from '../types/popup';
 import Dialog from './Dialog.vue';
+import PanelButton from './PanelButton.vue';
 import SubsectionBody from './SubsectionBody.vue';
 
 const props = withDefaults(
@@ -204,31 +205,27 @@ defineExpose({ validate });
       </div>
     </div>
     <template #actions>
-      <button
+      <PanelButton
         v-for="a in leftActions"
         :key="a.id"
-        type="button"
-        class="sf-dialog-btn"
-        :class="[a.tone === 'accent' ? 'sf-dialog-btn--accent' : a.tone === 'danger' ? 'sf-dialog-btn--danger' : '', a.class]"
-        :disabled="a.disabled || busy"
+        :label="a.label"
         :title="a.title"
-        @click="runAction(a.id)"
-      >
-        {{ a.label }}
-      </button>
+        :variant="a.tone"
+        :class="a.class"
+        :disabled="a.disabled || busy"
+        @press="runAction(a.id)"
+      />
       <span v-if="leftActions.length" class="sf-form-actions-space" />
-      <button
+      <PanelButton
         v-for="a in rightActions"
         :key="a.id"
-        type="button"
-        class="sf-dialog-btn"
-        :class="[a.tone === 'accent' ? 'sf-dialog-btn--accent' : a.tone === 'danger' ? 'sf-dialog-btn--danger' : '', a.class]"
-        :disabled="a.disabled || busy"
+        :label="a.label"
         :title="a.title"
-        @click="runAction(a.id)"
-      >
-        {{ a.label }}
-      </button>
+        :variant="a.tone"
+        :class="a.class"
+        :disabled="a.disabled || busy"
+        @press="runAction(a.id)"
+      />
     </template>
   </Dialog>
 </template>

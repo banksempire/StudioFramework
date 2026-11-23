@@ -4,14 +4,17 @@ import type { MenuNodeDef } from '../types/layout';
 import Icon from './Icon.vue';
 import Menu from './Menu.vue';
 
-const props = defineProps<{
-  label: string;
-  icon?: MenuNodeDef['icon'];
-  title?: string;
-  variant?: string;
-  items: MenuNodeDef[];
-  disabled?: boolean;
-}>();
+const props = withDefaults(
+  defineProps<{
+    label: string;
+    icon?: MenuNodeDef['icon'];
+    title?: string;
+    variant?: string;
+    items?: MenuNodeDef[];
+    disabled?: boolean;
+  }>(),
+  { items: () => [] },
+);
 
 const emit = defineEmits<{ press: []; select: [item: MenuNodeDef] }>();
 
